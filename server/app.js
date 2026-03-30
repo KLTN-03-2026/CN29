@@ -9,23 +9,7 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var authRouter = require('./routes/auth');
-var changePasswordRouter = require('./routes/change-password');
-var jobsRouter = require('./routes/jobs');
-var applicationsRouter = require('./routes/applications');
-var cvsRouter = require('./routes/cvs');
-var mockJobsRouter = require('./routes/mock-jobs');
-var universitiesRouter = require('./routes/universities');
-var aiRouter = require('./routes/ai');
-var provincesRouter = require('./routes/provinces');
-var companiesRouter = require('./routes/companies');
-var adminRouter = require('./routes/admin');
-var employerRouter = require('./routes/employer');
-var messagesRouter = require('./routes/messages');
-var careerGuideRouter = require('./routes/career-guide');
+const { registerRoutes } = require('./routes/registerRoutes');
 
 var app = express();
 
@@ -61,23 +45,7 @@ app.use(BASE, express.static(path.join(__dirname, 'public')));
 // Mount routers under BASE
 // Helper to concatenate paths without double slashes
 const mountPath = (sub) => BASE === '/' ? sub : BASE + sub;
-
-app.use(mountPath('/'), indexRouter);
-app.use(mountPath('/users'), usersRouter);
-app.use(mountPath('/auth'), authRouter);
-app.use(mountPath('/auth/change-password'), changePasswordRouter);
-app.use(mountPath('/jobs'), jobsRouter);
-app.use(mountPath('/applications'), applicationsRouter);
-app.use(mountPath('/api/cvs'), cvsRouter);
-app.use(mountPath('/api/mock-jobs'), mockJobsRouter);
-app.use(mountPath('/api/universities'), universitiesRouter);
-app.use(mountPath('/api/ai'), aiRouter);
-app.use(mountPath('/api/provinces'), provincesRouter);
-app.use(mountPath('/api/companies'), companiesRouter);
-app.use(mountPath('/api/admin'), adminRouter);
-app.use(mountPath('/api/employer'), employerRouter);
-app.use(mountPath('/api/messages'), messagesRouter);
-app.use(mountPath('/api/career-guide'), careerGuideRouter);
+registerRoutes(app, mountPath);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
