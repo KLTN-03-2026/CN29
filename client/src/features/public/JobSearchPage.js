@@ -68,6 +68,78 @@ const mapMockJob = (j) => {
     };
 };
 
+const ADV_DEFAULTS = {
+    exp: 'Tất cả',
+    level: 'Tất cả',
+    salary: 'Tất cả',
+    salaryFrom: '',
+    salaryTo: '',
+    companyField: 'Tất cả lĩnh vực',
+    jobField: 'Tất cả lĩnh vực',
+    workingForm: 'Tất cả',
+};
+
+const toNumber = (v) => {
+    // IMPORTANT: Number(null) === 0 and Number('') === 0.
+    // For filtering, empty values must be treated as "no constraint".
+    if (v === '' || v === null || v === undefined) return null;
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+};
+
+const norm = (v) => String(v ?? '').trim().toLowerCase();
+
+const parseMillionVnd = (v) => {
+    if (v === '' || v == null) return null;
+    const n = Number(v);
+    // Guard against 0 / negative / NaN values that could unintentionally filter out everything.
+    if (!Number.isFinite(n) || n <= 0) return null;
+    return n * 1_000_000;
+};
+
+const salaryOverlap = (jobFrom, jobTo, filterFrom, filterTo) => {
+    const jf = toNumber(jobFrom);
+    const jt = toNumber(jobTo);
+    const ff = toNumber(filterFrom);
+    const ft = toNumber(filterTo);
+    if (ff == null && ft == null) return true;
+    // Treat missing job salaries as no match for bounded filters
+    if (jf == null && jt == null) return false;
+
+    // Convert to numeric bounds
+    const low = jf == null ? jt : jf;
+    const high = jt == null ? jf : jt;
+
+    if (ff != null && ft != null) return (high ?? low) >= ff && (low ?? high) <= ft ? true : !(high < ff || low > ft);
+    if (ff != null) return (high ?? low) >= ff;
+    if (ft != null) return (low ?? high) <= ft;
+    return true;
+};
+
+const salaryAdvMatches = (job, salaryLabel) => {
+    const label = salaryLabel;
+    if (label === 'Tất cả') return true;
+    const jf = toNumber(job.LuongTu);
+    const jt = toNumber(job.LuongDen);
+    const kieu = (job.KieuLuong || '').toLowerCase();
+    if (label === 'Thỏa thuận') return kieu.includes('thỏa') || (jf == null && jt == null);
+
+    const toRange = (l) => {
+        switch (l) {
+            case '10 - 15 triệu': return [10e6, 15e6];
+            case '15 - 20 triệu': return [15e6, 20e6];
+            case '20 - 25 triệu': return [20e6, 25e6];
+            case '25 - 30 triệu': return [25e6, 30e6];
+            case '30 - 50 triệu': return [30e6, 50e6];
+            case 'Trên 50 triệu': return [50e6, Number.MAX_SAFE_INTEGER];
+            default: return null;
+        }
+    };
+    const range = toRange(label);
+    if (!range) return true;
+    return salaryOverlap(jf, jt, range[0], range[1]);
+};
+
 const JobSearchPage = () => {
     const navigate = useNavigate();
     const { notify } = useNotification();
@@ -90,7 +162,6 @@ const JobSearchPage = () => {
 
     // UI state
     const [selectedCategory, setSelectedCategory] = useState('');
-    const [experience, setExperience] = useState('Tất cả kinh nghiệm');
 
     useEffect(() => {
         let cancelled = false;
@@ -211,91 +282,19 @@ const JobSearchPage = () => {
         return () => { cancelled = true; };
     }, [API_BASE]);
 
-    const toNumber = (v) => {
-        // IMPORTANT: Number(null) === 0 and Number('') === 0.
-        // For filtering, empty values must be treated as "no constraint".
-        if (v === '' || v === null || v === undefined) return null;
-        const n = Number(v);
-        return Number.isFinite(n) ? n : null;
-    };
-
-    const norm = (v) => String(v ?? '').trim().toLowerCase();
-    const parseMillionVnd = (v) => {
-        if (v === '' || v == null) return null;
-        const n = Number(v);
-        // Guard against 0 / negative / NaN values that could unintentionally filter out everything.
-        if (!Number.isFinite(n) || n <= 0) return null;
-        return n * 1_000_000;
-    };
-
-    const salaryOverlap = (jobFrom, jobTo, filterFrom, filterTo) => {
-        const jf = toNumber(jobFrom);
-        const jt = toNumber(jobTo);
-        const ff = toNumber(filterFrom);
-        const ft = toNumber(filterTo);
-        if (ff == null && ft == null) return true;
-        // Treat missing job salaries as no match for bounded filters
-        if (jf == null && jt == null) return false;
-
-        // Convert to numeric bounds
-        const low = jf == null ? jt : jf;
-        const high = jt == null ? jf : jt;
-
-        if (ff != null && ft != null) return (high ?? low) >= ff && (low ?? high) <= ft ? true : !(high < ff || low > ft);
-        if (ff != null) return (high ?? low) >= ff;
-        if (ft != null) return (low ?? high) <= ft;
-        return true;
-    };
-
-    const salaryAdvMatches = (job) => {
-        const label = salaryAdv;
-        if (label === 'Tất cả') return true;
-        const jf = toNumber(job.LuongTu);
-        const jt = toNumber(job.LuongDen);
-        const kieu = (job.KieuLuong || '').toLowerCase();
-        if (label === 'Thỏa thuận') return kieu.includes('thỏa') || (jf == null && jt == null);
-
-        const toRange = (l) => {
-            switch (l) {
-                case '10 - 15 triệu': return [10e6, 15e6];
-                case '15 - 20 triệu': return [15e6, 20e6];
-                case '20 - 25 triệu': return [20e6, 25e6];
-                case '25 - 30 triệu': return [25e6, 30e6];
-                case '30 - 50 triệu': return [30e6, 50e6];
-                case 'Trên 50 triệu': return [50e6, Number.MAX_SAFE_INTEGER];
-                default: return null;
-            }
-        };
-        const range = toRange(label);
-        if (!range) return true;
-        return salaryOverlap(jf, jt, range[0], range[1]);
-    };
-
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');
     const mm = String(today.getMonth() + 1).padStart(2, '0');
     const yyyy = today.getFullYear();
 
-    // Advanced filter state (UI-only)
-    const advDefaults = {
-        exp: 'Tất cả',
-        level: 'Tất cả',
-        salary: 'Tất cả',
-        salaryFrom: '',
-        salaryTo: '',
-        companyField: 'Tất cả lĩnh vực',
-        jobField: 'Tất cả lĩnh vực',
-        workingForm: 'Tất cả',
-    };
-
-    const [expAdv, setExpAdv] = useState(advDefaults.exp);
-    const [levelAdv, setLevelAdv] = useState(advDefaults.level);
-    const [salaryAdv, setSalaryAdv] = useState(advDefaults.salary);
-    const [salaryFrom, setSalaryFrom] = useState(advDefaults.salaryFrom);
-    const [salaryTo, setSalaryTo] = useState(advDefaults.salaryTo);
-    const [companyField, setCompanyField] = useState(advDefaults.companyField);
-    const [jobField, setJobField] = useState(advDefaults.jobField);
-    const [workingForm, setWorkingForm] = useState(advDefaults.workingForm);
+    const [expAdv, setExpAdv] = useState(ADV_DEFAULTS.exp);
+    const [levelAdv, setLevelAdv] = useState(ADV_DEFAULTS.level);
+    const [salaryAdv, setSalaryAdv] = useState(ADV_DEFAULTS.salary);
+    const [salaryFrom, setSalaryFrom] = useState(ADV_DEFAULTS.salaryFrom);
+    const [salaryTo, setSalaryTo] = useState(ADV_DEFAULTS.salaryTo);
+    const [companyField, setCompanyField] = useState(ADV_DEFAULTS.companyField);
+    const [jobField, setJobField] = useState(ADV_DEFAULTS.jobField);
+    const [workingForm, setWorkingForm] = useState(ADV_DEFAULTS.workingForm);
 
     // Hover preview panel (TopCV-like)
     const previewRef = useRef(null);
@@ -311,11 +310,6 @@ const JobSearchPage = () => {
             clearTimeout(hideTimerRef.current);
             hideTimerRef.current = null;
         }
-    };
-
-    const closePreview = () => {
-        clearHideTimer();
-        setPreviewOpen(false);
     };
 
     const scheduleClosePreview = (delayMs = 120) => {
@@ -372,25 +366,25 @@ const JobSearchPage = () => {
 
     const resetAdvancedFilters = () => {
         setSelectedCategory('');
-        setExpAdv(advDefaults.exp);
-        setLevelAdv(advDefaults.level);
-        setSalaryAdv(advDefaults.salary);
-        setSalaryFrom(advDefaults.salaryFrom);
-        setSalaryTo(advDefaults.salaryTo);
-        setCompanyField(advDefaults.companyField);
-        setJobField(advDefaults.jobField);
-        setWorkingForm(advDefaults.workingForm);
+        setExpAdv(ADV_DEFAULTS.exp);
+        setLevelAdv(ADV_DEFAULTS.level);
+        setSalaryAdv(ADV_DEFAULTS.salary);
+        setSalaryFrom(ADV_DEFAULTS.salaryFrom);
+        setSalaryTo(ADV_DEFAULTS.salaryTo);
+        setCompanyField(ADV_DEFAULTS.companyField);
+        setJobField(ADV_DEFAULTS.jobField);
+        setWorkingForm(ADV_DEFAULTS.workingForm);
     };
 
     const isAdvancedDirty = useMemo(() => (
-        expAdv !== advDefaults.exp ||
-        levelAdv !== advDefaults.level ||
-        salaryAdv !== advDefaults.salary ||
-        salaryFrom !== advDefaults.salaryFrom ||
-        salaryTo !== advDefaults.salaryTo ||
-        companyField !== advDefaults.companyField ||
-        jobField !== advDefaults.jobField ||
-        workingForm !== advDefaults.workingForm
+        expAdv !== ADV_DEFAULTS.exp ||
+        levelAdv !== ADV_DEFAULTS.level ||
+        salaryAdv !== ADV_DEFAULTS.salary ||
+        salaryFrom !== ADV_DEFAULTS.salaryFrom ||
+        salaryTo !== ADV_DEFAULTS.salaryTo ||
+        companyField !== ADV_DEFAULTS.companyField ||
+        jobField !== ADV_DEFAULTS.jobField ||
+        workingForm !== ADV_DEFAULTS.workingForm
     ), [
         expAdv,
         levelAdv,
@@ -422,7 +416,7 @@ const JobSearchPage = () => {
                 || norm(companyFieldValueRaw).includes(norm(companyField));
             const matchWorkingForm = workingForm === 'Tất cả' || norm(j.HinhThuc).includes(norm(workingForm));
 
-            const matchSalaryPreset = salaryAdvMatches(j);
+            const matchSalaryPreset = salaryAdvMatches(j, salaryAdv);
             const matchSalaryCustom = salaryOverlap(j.LuongTu, j.LuongDen, customFrom, customTo);
 
             return matchKw && matchProvince && matchCategory && matchExp && matchLevel && matchJobField && matchCompanyField && matchWorkingForm && matchSalaryPreset && matchSalaryCustom;
@@ -458,7 +452,7 @@ const JobSearchPage = () => {
                     || (!companyFieldValueRaw)
                     || norm(companyFieldValueRaw).includes(norm(companyField));
                 const matchWorkingForm = workingForm === 'Tất cả' || norm(j?.HinhThuc).includes(norm(workingForm));
-                const matchSalaryPreset = salaryAdvMatches(j || {});
+                const matchSalaryPreset = salaryAdvMatches(j || {}, salaryAdv);
                 const matchSalaryCustom = salaryOverlap(j?.LuongTu, j?.LuongDen, customFrom, customTo);
 
                 if (matchKw) breakdown.matchKw++;

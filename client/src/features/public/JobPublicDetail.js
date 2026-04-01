@@ -122,7 +122,7 @@ const JobPublicDetail = () => {
         };
         loadAppliedStatus();
         return () => { cancelled = true; };
-    }, [job?.MaTin, token, userId]);
+    }, [job?.MaTin, token, userId, user?.role]);
 
     useEffect(() => {
         let cancelled = false;

@@ -243,7 +243,7 @@ const JobList = () => {
             <div className="d-flex align-items-center mb-2 gap-2">
                 <h1 className="fw-bold text-success mb-0" style={{fontSize: '2.5rem'}}>Việc làm tốt nhất</h1>
                 <div className="ms-auto d-flex align-items-center gap-2">
-                    <a href="#" className="text-decoration-none">Xem tất cả</a>
+                    <button type="button" className="btn btn-link p-0 text-decoration-none">Xem tất cả</button>
                     <button className="btn btn-outline-success btn-sm rounded-circle"><i className="bi bi-chevron-left"></i></button>
                     <button className="btn btn-outline-success btn-sm rounded-circle"><i className="bi bi-chevron-right"></i></button>
                 </div>
@@ -411,7 +411,6 @@ const CompanyCard = ({ company }) => (
 
 const FeaturedCompaniesSection = () => {
     const [selectedIndustry, setSelectedIndustry] = useState('Tất cả');
-    const [scrollX, setScrollX] = useState(0);
     const scrollRef = React.useRef(null);
     const SCROLL_AMOUNT = 200;
 
@@ -422,7 +421,6 @@ const FeaturedCompaniesSection = () => {
         const container = scrollRef.current;
         const newScroll = dir === 'left' ? container.scrollLeft - SCROLL_AMOUNT : container.scrollLeft + SCROLL_AMOUNT;
         container.scrollTo({ left: newScroll, behavior: 'smooth' });
-        setScrollX(newScroll);
     };
 
     return (
