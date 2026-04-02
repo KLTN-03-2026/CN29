@@ -27,6 +27,8 @@ const normalizeParams = (params, callback) => {
   return { params: Array.isArray(params) ? params : [params], callback };
 };
 
+const normalizeBindValue = (value) => (typeof value === 'undefined' ? null : value);
+
 if (!useMysql) {
   const sqliteDb = require('./sqlite');
 
@@ -62,12 +64,14 @@ const pool = mysql.createPool({
 });
 
 const getRows = async (sql, params = []) => {
-  const [rows] = await pool.query(normalizeSql(sql), params);
+  const safeParams = Array.isArray(params) ? params.map(normalizeBindValue) : params;
+  const [rows] = await pool.query(normalizeSql(sql), safeParams);
   return rows;
 };
 
 const runStatement = async (sql, params = []) => {
-  const [result] = await pool.execute(normalizeSql(sql), params);
+  const safeParams = Array.isArray(params) ? params.map(normalizeBindValue) : params;
+  const [result] = await pool.execute(normalizeSql(sql), safeParams);
   return {
     lastID: result?.insertId || 0,
     changes: result?.affectedRows || 0
