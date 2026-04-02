@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 const VerifyOTP = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const email = location.state?.email || '';
-    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
+    const apiBase = CLIENT_API_BASE;
     
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');

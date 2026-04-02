@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const EmployerOverview = () => {
     const [stats, setStats] = useState({
@@ -16,7 +17,7 @@ const EmployerOverview = () => {
     }, []);
 
     const fetchStats = async () => {
-        const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+        const API_BASE = CLIENT_API_BASE;
         const token = localStorage.getItem('token');
         if (!token) return;
 

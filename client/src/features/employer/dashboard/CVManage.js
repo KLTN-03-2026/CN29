@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const CVManage = () => {
-    const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+    const API_BASE = CLIENT_API_BASE;
     const [savedCVs, setSavedCVs] = useState([]);
     const [filter, setFilter] = useState('all');
     const [loading, setLoading] = useState(false);

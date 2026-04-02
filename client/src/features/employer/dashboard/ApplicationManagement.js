@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const ApplicationManagement = () => {
-    const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+    const API_BASE = CLIENT_API_BASE;
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');

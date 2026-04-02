@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 const fmtVnd = new Intl.NumberFormat('vi-VN');
 
@@ -146,7 +147,7 @@ const JobSearchPage = () => {
 
     // Use explicit API base so the page works both with CRA proxy (dev)
     // and when serving a production build without proxy.
-    const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+    const API_BASE = CLIENT_API_BASE;
 
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);

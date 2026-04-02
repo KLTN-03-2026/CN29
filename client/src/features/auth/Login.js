@@ -2,11 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ForgotPassword from './ForgotPassword';
 import { useNotification } from '../../components/NotificationProvider';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 export const LoginForm = ({ onSuccess, onCreateAccount, onForgotPassword }) => {
     const navigate = useNavigate();
     const { notify } = useNotification();
-    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
+    const apiBase = CLIENT_API_BASE;
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);

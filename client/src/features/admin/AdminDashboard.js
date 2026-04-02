@@ -1,11 +1,12 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
 
-    const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+    const API_BASE = CLIENT_API_BASE;
     const token = localStorage.getItem('token');
 
     const user = useMemo(() => {

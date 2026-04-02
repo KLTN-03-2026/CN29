@@ -6,9 +6,8 @@ import 'bootstrap/dist/js/bootstrap.bundle.min';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import App from './App';
 import { NotificationProvider } from './components/NotificationProvider';
+import { API_BASE } from './config/apiBase';
 import reportWebVitals from './reportWebVitals';
-
-const API_BASE = (process.env.REACT_APP_API_BASE || 'localhost:3001').replace(/\/+$/, '');
 
 if (API_BASE && typeof window !== 'undefined' && typeof window.fetch === 'function') {
   const nativeFetch = window.fetch.bind(window);

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 const fmtVnd = new Intl.NumberFormat('vi-VN');
 
@@ -21,7 +22,7 @@ const formatSalary = (job) => {
 const SavedJobsPage = () => {
   const navigate = useNavigate();
   const { notify } = useNotification();
-  const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+  const API_BASE = CLIENT_API_BASE;
 
   const token = useMemo(() => localStorage.getItem('token') || '', []);
 

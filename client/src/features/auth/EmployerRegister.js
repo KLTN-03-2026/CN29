@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 export const EmployerRegisterForm = ({ onSuccess, onSwitchToLogin }) => {
     const navigate = useNavigate();
     const { notify } = useNotification();
-    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
+    const apiBase = CLIENT_API_BASE;
     const [formData, setFormData] = useState({
         companyName: '',
         taxCode: '',

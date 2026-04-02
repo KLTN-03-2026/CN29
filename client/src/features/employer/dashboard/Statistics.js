@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const Statistics = () => {
     const [loading, setLoading] = useState(true);
@@ -11,7 +12,7 @@ const Statistics = () => {
     useEffect(() => {
         let cancelled = false;
         const load = async () => {
-            const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+            const API_BASE = CLIENT_API_BASE;
             if (!token) {
                 setLoading(false);
                 setJobs([]);

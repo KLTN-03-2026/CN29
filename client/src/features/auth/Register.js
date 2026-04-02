@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 const days = Array.from({ length: 31 }, (_, idx) => idx + 1);
 const years = Array.from({ length: 80 }, (_, idx) => new Date().getFullYear() - idx);
@@ -12,7 +13,7 @@ const months = [
 export const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
     const navigate = useNavigate();
     const { notify } = useNotification();
-    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
+    const apiBase = CLIENT_API_BASE;
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({

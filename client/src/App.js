@@ -38,9 +38,8 @@ import AIAssistantWidget from './components/AIAssistantWidget';
 import CareerGuide from './features/career-guide/CareerGuide';
 import CareerGuideDetail from './features/career-guide/CareerGuideDetail';
 import CareerGuideManage from './features/career-guide/CareerGuideManage';
+import { API_BASE } from './config/apiBase';
 import './App.css';
-
-const API_BASE = process.env.REACT_APP_API_BASE || 'localhost:3001';
 
 function AppContent() {
   const [showLoginModal, setShowLoginModal] = useState(false);

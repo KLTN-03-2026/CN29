@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 const fmtVnd = new Intl.NumberFormat('vi-VN');
 
@@ -19,7 +20,7 @@ const formatSalary = (job) => {
 
 const AppliedJobsPage = () => {
   const navigate = useNavigate();
-  const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:3001';
+  const API_BASE = CLIENT_API_BASE;
 
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
