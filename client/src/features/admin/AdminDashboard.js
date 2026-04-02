@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
+import AdminTemplateManager from './AdminTemplateManager';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -202,6 +203,7 @@ const AdminDashboard = () => {
         { key: 'users', icon: 'bi-people', label: 'Quản lý người dùng' },
         { key: 'jobs', icon: 'bi-briefcase', label: 'Tin tuyển dụng' },
         { key: 'companies', icon: 'bi-building', label: 'Công ty' },
+        { key: 'templates', icon: 'bi-file-earmark-code', label: 'Quản lý template CV' },
         { key: 'reports', icon: 'bi-flag', label: 'Báo cáo' },
     ];
 
@@ -317,8 +319,26 @@ const AdminDashboard = () => {
                                         </div>
                                     </div>
                                 </div>
+                                <div className="col-md-3">
+                                    <div className="card border-0 shadow-sm h-100">
+                                        <div className="card-body text-center">
+                                            <div className="text-secondary mb-3"><i className="bi bi-file-earmark-code fs-1"></i></div>
+                                            <h3 className="mb-1">{counts?.CvTemplate ?? 0}</h3>
+                                            <p className="text-muted mb-2">Template CV</p>
+                                            <button className="btn btn-sm btn-outline-secondary" onClick={() => setActive('templates')}>Quản lý</button>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </>
+                    )}
+
+                    {active === 'templates' && (
+                        <AdminTemplateManager
+                            API_BASE={API_BASE}
+                            authHeaders={authHeaders}
+                            requestConfirm={requestConfirm}
+                        />
                     )}
 
                     {active === 'users' && (

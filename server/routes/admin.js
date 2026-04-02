@@ -46,6 +46,65 @@ const toInt = (v, def) => {
   return Number.isFinite(n) ? n : def;
 };
 
+const isMysql = /^mysql:\/\//i.test(process.env.DATABASE_URL || '');
+
+let ensureCvTemplateTablePromise = null;
+const ensureCvTemplateTable = async () => {
+  if (ensureCvTemplateTablePromise) return ensureCvTemplateTablePromise;
+
+  ensureCvTemplateTablePromise = (async () => {
+    const mysqlSql = `
+      CREATE TABLE IF NOT EXISTS CvTemplate (
+        MaTemplateCV INT AUTO_INCREMENT PRIMARY KEY,
+        TenTemplate VARCHAR(255) NOT NULL,
+        Slug VARCHAR(191) NOT NULL UNIQUE,
+        MoTa TEXT NULL,
+        HtmlContent LONGTEXT NOT NULL,
+        TrangThai TINYINT DEFAULT 1,
+        NguoiTao INT NULL,
+        NguoiCapNhat INT NULL,
+        NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP,
+        NgayCapNhat DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+
+    const sqliteSql = `
+      CREATE TABLE IF NOT EXISTS CvTemplate (
+        MaTemplateCV INTEGER PRIMARY KEY AUTOINCREMENT,
+        TenTemplate TEXT NOT NULL,
+        Slug TEXT NOT NULL UNIQUE,
+        MoTa TEXT,
+        HtmlContent TEXT NOT NULL,
+        TrangThai INTEGER DEFAULT 1,
+        NguoiTao INTEGER,
+        NguoiCapNhat INTEGER,
+        NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
+        NgayCapNhat TEXT DEFAULT (datetime('now', 'localtime'))
+      )
+    `;
+
+    await dbRun(isMysql ? mysqlSql : sqliteSql);
+  })();
+
+  try {
+    await ensureCvTemplateTablePromise;
+  } catch (err) {
+    ensureCvTemplateTablePromise = null;
+    throw err;
+  }
+};
+
+const normalizeSlug = (value) => String(value || '')
+  .trim()
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[đĐ]/g, 'd')
+  .replace(/[^a-z0-9\s-]/g, '')
+  .replace(/\s+/g, '-')
+  .replace(/-+/g, '-')
+  .replace(/^-|-$/g, '');
+
 router.use(authenticateToken, authorizeRole(['Quản trị', 'Siêu quản trị viên']));
 
 const requireSuperAdmin = (req, res, next) => {
@@ -56,6 +115,8 @@ const requireSuperAdmin = (req, res, next) => {
 };
 
 router.get('/overview', async (req, res) => {
+  await ensureCvTemplateTable().catch(() => null);
+
   const tables = [
     'NguoiDung',
     'CongTy',
@@ -69,7 +130,8 @@ router.get('/overview', async (req, res) => {
     'BaoCao',
     'NhatKyQuanTri',
     'DanhMucCongViec',
-    'KyNang'
+    'KyNang',
+    'CvTemplate'
   ];
 
   const counts = {};
@@ -390,6 +452,219 @@ router.patch('/reports/:id', async (req, res) => {
     );
 
     return res.json({ success: true, report });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.get('/templates', async (req, res) => {
+  try {
+    await ensureCvTemplateTable();
+
+    const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
+    const offset = Math.max(toInt(req.query.offset, 0), 0);
+    const search = String(req.query.search || '').trim().toLowerCase();
+
+    const whereParts = [];
+    const whereParams = [];
+
+    if (search) {
+      whereParts.push('(lower(TenTemplate) LIKE ? OR lower(Slug) LIKE ? OR lower(IFNULL(MoTa, "")) LIKE ?)');
+      const like = `%${search}%`;
+      whereParams.push(like, like, like);
+    }
+
+    const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+
+    const templates = await dbAll(
+      `SELECT
+          MaTemplateCV,
+          TenTemplate,
+          Slug,
+          MoTa,
+          TrangThai,
+          NgayTao,
+          NgayCapNhat
+       FROM CvTemplate
+       ${whereSql}
+       ORDER BY MaTemplateCV DESC
+       LIMIT ? OFFSET ?`,
+      [...whereParams, limit, offset]
+    );
+
+    const totalRow = await dbGet(
+      `SELECT COUNT(*) AS c
+       FROM CvTemplate
+       ${whereSql}`,
+      whereParams
+    );
+
+    return res.json({ success: true, templates, total: Number(totalRow?.c || 0) });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.get('/templates/:id', async (req, res) => {
+  try {
+    await ensureCvTemplateTable();
+
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+
+    const template = await dbGet(
+      `SELECT
+          MaTemplateCV,
+          TenTemplate,
+          Slug,
+          MoTa,
+          HtmlContent,
+          TrangThai,
+          NgayTao,
+          NgayCapNhat
+       FROM CvTemplate
+       WHERE MaTemplateCV = ?`,
+      [id]
+    );
+
+    if (!template) return res.status(404).json({ success: false, error: 'Không tìm thấy template' });
+    return res.json({ success: true, template });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.post('/templates', async (req, res) => {
+  try {
+    await ensureCvTemplateTable();
+
+    const name = String(req.body?.name || '').trim();
+    const slug = normalizeSlug(req.body?.slug || name);
+    const description = String(req.body?.description || '').trim();
+    const htmlContent = String(req.body?.htmlContent || '');
+    const status = req.body?.status != null ? toInt(req.body.status, null) : 1;
+
+    if (!name) return res.status(400).json({ success: false, error: 'Tên template là bắt buộc' });
+    if (!slug) return res.status(400).json({ success: false, error: 'Slug không hợp lệ' });
+    if (!htmlContent.trim()) return res.status(400).json({ success: false, error: 'HTML content là bắt buộc' });
+    if (![0, 1].includes(status)) return res.status(400).json({ success: false, error: 'TrangThai không hợp lệ (0/1)' });
+
+    const duplicate = await dbGet('SELECT MaTemplateCV FROM CvTemplate WHERE lower(Slug) = ?', [slug]);
+    if (duplicate) {
+      return res.status(409).json({ success: false, error: 'Slug đã tồn tại, vui lòng dùng slug khác' });
+    }
+
+    await dbRun(
+      `INSERT INTO CvTemplate (
+        TenTemplate, Slug, MoTa, HtmlContent, TrangThai, NguoiTao, NguoiCapNhat, NgayTao, NgayCapNhat
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now", "localtime"), datetime("now", "localtime"))`,
+      [name, slug, description || null, htmlContent, status, req.user?.id || null, req.user?.id || null]
+    );
+
+    const template = await dbGet(
+      `SELECT MaTemplateCV, TenTemplate, Slug, MoTa, HtmlContent, TrangThai, NgayTao, NgayCapNhat
+       FROM CvTemplate
+       WHERE lower(Slug) = ?`,
+      [slug]
+    );
+
+    return res.status(201).json({ success: true, template });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.patch('/templates/:id', async (req, res) => {
+  try {
+    await ensureCvTemplateTable();
+
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+
+    const existing = await dbGet('SELECT MaTemplateCV, TenTemplate, Slug FROM CvTemplate WHERE MaTemplateCV = ?', [id]);
+    if (!existing) return res.status(404).json({ success: false, error: 'Không tìm thấy template' });
+
+    const fields = [];
+    const params = [];
+
+    if (req.body?.name != null) {
+      const name = String(req.body.name || '').trim();
+      if (!name) return res.status(400).json({ success: false, error: 'Tên template là bắt buộc' });
+      fields.push('TenTemplate = ?');
+      params.push(name);
+    }
+
+    if (req.body?.slug != null || req.body?.name != null) {
+      const nextName = req.body?.name != null ? String(req.body.name || '').trim() : existing.TenTemplate;
+      const slug = normalizeSlug(req.body?.slug || nextName);
+      if (!slug) return res.status(400).json({ success: false, error: 'Slug không hợp lệ' });
+
+      const duplicate = await dbGet(
+        'SELECT MaTemplateCV FROM CvTemplate WHERE lower(Slug) = ? AND MaTemplateCV <> ?',
+        [slug, id]
+      );
+      if (duplicate) {
+        return res.status(409).json({ success: false, error: 'Slug đã tồn tại, vui lòng dùng slug khác' });
+      }
+
+      fields.push('Slug = ?');
+      params.push(slug);
+    }
+
+    if (req.body?.description != null) {
+      fields.push('MoTa = ?');
+      params.push(String(req.body.description || '').trim() || null);
+    }
+
+    if (req.body?.htmlContent != null) {
+      const htmlContent = String(req.body.htmlContent || '');
+      if (!htmlContent.trim()) return res.status(400).json({ success: false, error: 'HTML content là bắt buộc' });
+      fields.push('HtmlContent = ?');
+      params.push(htmlContent);
+    }
+
+    if (req.body?.status != null) {
+      const status = toInt(req.body.status, null);
+      if (![0, 1].includes(status)) return res.status(400).json({ success: false, error: 'TrangThai không hợp lệ (0/1)' });
+      fields.push('TrangThai = ?');
+      params.push(status);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ success: false, error: 'Không có dữ liệu cập nhật' });
+    }
+
+    fields.push('NguoiCapNhat = ?');
+    params.push(req.user?.id || null);
+    fields.push('NgayCapNhat = datetime("now", "localtime")');
+
+    await dbRun(`UPDATE CvTemplate SET ${fields.join(', ')} WHERE MaTemplateCV = ?`, [...params, id]);
+
+    const template = await dbGet(
+      `SELECT MaTemplateCV, TenTemplate, Slug, MoTa, HtmlContent, TrangThai, NgayTao, NgayCapNhat
+       FROM CvTemplate
+       WHERE MaTemplateCV = ?`,
+      [id]
+    );
+
+    return res.json({ success: true, template });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.delete('/templates/:id', async (req, res) => {
+  try {
+    await ensureCvTemplateTable();
+
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+
+    const existing = await dbGet('SELECT MaTemplateCV FROM CvTemplate WHERE MaTemplateCV = ?', [id]);
+    if (!existing) return res.status(404).json({ success: false, error: 'Không tìm thấy template' });
+
+    await dbRun('DELETE FROM CvTemplate WHERE MaTemplateCV = ?', [id]);
+    return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }

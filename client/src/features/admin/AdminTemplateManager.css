@@ -1,0 +1,113 @@
+.admin-template-section .card {
+    border-radius: 16px;
+}
+
+.admin-template-search {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.admin-template-search .form-control {
+    flex: 1 1 240px;
+    min-width: 220px;
+}
+
+.admin-template-table-wrap {
+    max-height: 560px;
+    overflow: auto;
+}
+
+.admin-template-table-wrap thead th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #ffffff;
+}
+
+.admin-template-editor-form .form-label {
+    font-weight: 600;
+}
+
+.admin-template-basic-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.admin-template-tabs .nav-link {
+    color: #475569;
+    font-weight: 600;
+}
+
+.admin-template-tabs .nav-link.active {
+    color: #2563eb;
+}
+
+.admin-template-code-input {
+    min-height: 420px;
+    resize: vertical;
+    font-family: Consolas, Monaco, 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.admin-template-preview-pane {
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+.admin-template-preview-frame {
+    width: 100%;
+    height: 520px;
+    border: 0;
+    display: block;
+    background: #ffffff;
+}
+
+.admin-template-preview-frame.preview-tab {
+    height: 640px;
+}
+
+.admin-template-preview-empty {
+    height: 220px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-size: 14px;
+    padding: 16px;
+    text-align: center;
+}
+
+.admin-template-preview-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    z-index: 3200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.admin-template-preview-dialog {
+    width: min(1180px, 100%);
+    max-height: 95vh;
+    overflow: hidden;
+}
+
+.admin-template-preview-frame.modal-frame {
+    height: min(84vh, 860px);
+}
+
+@media (max-width: 992px) {
+    .admin-template-preview-frame {
+        height: 420px;
+    }
+
+    .admin-template-preview-frame.preview-tab {
+        height: 500px;
+    }
+}

@@ -198,6 +198,31 @@
   font-family: Arial, sans-serif;
 }
 
+.cv-preview-live-editor {
+  display: grid;
+  grid-template-columns: 36% 1fr;
+  gap: 6px;
+}
+
+.cv-preview-live-sidebar {
+  border-radius: 6px;
+  padding: 8px 6px;
+}
+
+.cv-preview-avatar-square.live {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 auto 6px;
+}
+
+.cv-preview-live-main {
+  border-radius: 6px;
+  background: #ffffff;
+  padding: 6px;
+}
+
 /* Text styles for preview */
 .cv-preview-text-name {
   font-size: 11px;
