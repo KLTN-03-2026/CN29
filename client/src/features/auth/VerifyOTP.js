@@ -5,7 +5,7 @@ const VerifyOTP = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const email = location.state?.email || '';
-    const apiBase = process.env.REACT_APP_API_BASE || '';
+    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
     
     const [otp, setOtp] = useState('');
     const [error, setError] = useState('');

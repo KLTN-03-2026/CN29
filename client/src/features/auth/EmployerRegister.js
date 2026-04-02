@@ -5,7 +5,7 @@ import { useNotification } from '../../components/NotificationProvider';
 export const EmployerRegisterForm = ({ onSuccess, onSwitchToLogin }) => {
     const navigate = useNavigate();
     const { notify } = useNotification();
-    const apiBase = process.env.REACT_APP_API_BASE || '';
+    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
     const [formData, setFormData] = useState({
         companyName: '',
         taxCode: '',

@@ -40,7 +40,7 @@ import CareerGuideDetail from './features/career-guide/CareerGuideDetail';
 import CareerGuideManage from './features/career-guide/CareerGuideManage';
 import './App.css';
 
-const API_BASE = process.env.REACT_APP_API_BASE || '';
+const API_BASE = process.env.REACT_APP_API_BASE || 'localhost:3001';
 
 function AppContent() {
   const [showLoginModal, setShowLoginModal] = useState(false);

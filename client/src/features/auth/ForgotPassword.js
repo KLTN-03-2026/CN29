@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import './ForgotPassword.css';
 
 const ForgotPassword = ({ onClose, inline = false }) => {
-    const apiBase = process.env.REACT_APP_API_BASE || '';
+    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
     const [step, setStep] = useState(1);
     const [email, setEmail] = useState('');
     const [otp, setOtp] = useState('');

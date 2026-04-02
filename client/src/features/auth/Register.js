@@ -12,7 +12,7 @@ const months = [
 export const RegisterForm = ({ onSuccess, onSwitchToLogin }) => {
     const navigate = useNavigate();
     const { notify } = useNotification();
-    const apiBase = process.env.REACT_APP_API_BASE || '';
+    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [formData, setFormData] = useState({

@@ -6,7 +6,7 @@ import { useNotification } from '../../components/NotificationProvider';
 export const LoginForm = ({ onSuccess, onCreateAccount, onForgotPassword }) => {
     const navigate = useNavigate();
     const { notify } = useNotification();
-    const apiBase = process.env.REACT_APP_API_BASE || '';
+    const apiBase = process.env.REACT_APP_API_BASE || 'localhost:3001';
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
