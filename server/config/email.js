@@ -4,14 +4,40 @@ const nodemailer = require('nodemailer');
 // 1) OAuth2 (không cần bật 2FA/App Password) với CLIENT_ID/SECRET + REFRESH_TOKEN
 // 2) App Password (yêu cầu bật 2FA) với EMAIL_USER/EMAIL_PASSWORD
 
+const MAIL_TIMEOUT_MS = Number(process.env.EMAIL_TIMEOUT_MS || 15000);
+
 let useOAuth2 = Boolean(
     process.env.EMAIL_OAUTH_CLIENT_ID &&
     process.env.EMAIL_OAUTH_CLIENT_SECRET &&
     process.env.EMAIL_OAUTH_REFRESH_TOKEN &&
     process.env.EMAIL_USER
 );
+const hasAppPassword = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
 
 let transporter;
+let fetchOAuthAccessToken = null;
+
+const createTransport = (auth) => nodemailer.createTransport({
+    service: 'gmail',
+    auth,
+    connectionTimeout: MAIL_TIMEOUT_MS,
+    greetingTimeout: MAIL_TIMEOUT_MS,
+    socketTimeout: MAIL_TIMEOUT_MS,
+});
+
+const withTimeout = (promiseFactory, label) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(`${label} timed out after ${MAIL_TIMEOUT_MS}ms`)), MAIL_TIMEOUT_MS);
+    Promise.resolve()
+        .then(promiseFactory)
+        .then((result) => {
+            clearTimeout(timer);
+            resolve(result);
+        })
+        .catch((err) => {
+            clearTimeout(timer);
+            reject(err);
+        });
+});
 
 if (useOAuth2) {
     // Dùng OAuth2 (không cần 2FA). Cần cài package googleapis: npm i googleapis
@@ -31,34 +57,32 @@ if (useOAuth2) {
         oAuth2Client.setCredentials({ refresh_token: process.env.EMAIL_OAUTH_REFRESH_TOKEN });
 
         // Tạo transporter động để luôn có accessToken mới
-        transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                type: 'OAuth2',
-                user: process.env.EMAIL_USER,
-                clientId: process.env.EMAIL_OAUTH_CLIENT_ID,
-                clientSecret: process.env.EMAIL_OAUTH_CLIENT_SECRET,
-                refreshToken: process.env.EMAIL_OAUTH_REFRESH_TOKEN,
-            },
+        transporter = createTransport({
+            type: 'OAuth2',
+            user: process.env.EMAIL_USER,
+            clientId: process.env.EMAIL_OAUTH_CLIENT_ID,
+            clientSecret: process.env.EMAIL_OAUTH_CLIENT_SECRET,
+            refreshToken: process.env.EMAIL_OAUTH_REFRESH_TOKEN,
         });
 
         // Thêm hàm helper để lấy access token trước khi gửi (đảm bảo token mới)
-        transporter.getAccessToken = async () => {
+        fetchOAuthAccessToken = async () => {
             const accessToken = await oAuth2Client.getAccessToken();
             return accessToken?.token || accessToken;
         };
     }
 }
 
-if (!transporter) {
+if (!transporter && hasAppPassword) {
     // Fallback: App Password
-    transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER || 'your-email@gmail.com',
-            pass: process.env.EMAIL_PASSWORD || 'your-app-password',
-        },
+    transporter = createTransport({
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
     });
+}
+
+if (!transporter) {
+    console.warn('[email] EMAIL_USER/EMAIL_PASSWORD (hoặc OAuth2) chưa cấu hình. OTP email sẽ không gửi được.');
 }
 
 // Hàm tạo mã OTP 6 số
@@ -68,8 +92,12 @@ function generateOTP() {
 
 // Hàm gửi email xác thực
 async function sendVerificationEmail(email, otp, userName) {
+    if (!transporter) {
+        return { success: false, error: 'Email transporter is not configured' };
+    }
+
     const mailOptions = {
-        from: process.env.EMAIL_USER || 'your-email@gmail.com',
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
         to: email,
         subject: 'Xác thực tài khoản JobFinder',
         html: `
@@ -93,8 +121,8 @@ async function sendVerificationEmail(email, otp, userName) {
 
     try {
         // Nếu dùng OAuth2, đảm bảo có accessToken mới
-        if (transporter && typeof transporter.getAccessToken === 'function') {
-            const accessToken = await transporter.getAccessToken();
+        if (typeof fetchOAuthAccessToken === 'function') {
+            const accessToken = await withTimeout(() => fetchOAuthAccessToken(), 'Get OAuth access token');
             if (accessToken) {
                 mailOptions.auth = {
                     type: 'OAuth2',
@@ -103,7 +131,7 @@ async function sendVerificationEmail(email, otp, userName) {
                 };
             }
         }
-        await transporter.sendMail(mailOptions);
+        await withTimeout(() => transporter.sendMail(mailOptions), 'Send verification email');
         return { success: true };
     } catch (error) {
         console.error('Email sending error:', error);

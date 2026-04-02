@@ -18,6 +18,20 @@ const PUBLIC_PREFIX = BASE_PATH === '/' ? '' : BASE_PATH;
 const buildAbsoluteUrl = (req, relativePath) => (relativePath ? `${req.protocol}://${req.get('host')}${relativePath}` : '');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
+
+const sendVerificationEmailAsync = (email, otp, userName) => {
+    Promise.resolve()
+        .then(() => sendVerificationEmail(email, otp, userName))
+        .then((emailResult) => {
+            if (!emailResult?.success) {
+                console.error('Email sending failed:', emailResult?.error || 'Unknown email error');
+            }
+        })
+        .catch((emailError) => {
+            console.error('Email error:', emailError);
+        });
+};
+
 router.post('/register', async (req, res) => {
     const { email, password, confirmPassword, role, name, phone, address } = req.body;
     try {
@@ -65,16 +79,9 @@ router.post('/register', async (req, res) => {
                         }
                         return res.status(500).json({ error: err.message });
                     }
-                    
-                    // Gửi email xác thực
-                    try {
-                        const emailResult = await sendVerificationEmail(email, otp, name);
-                        if (!emailResult.success) {
-                            console.error('Email sending failed:', emailResult.error);
-                        }
-                    } catch (emailError) {
-                        console.error('Email error:', emailError);
-                    }
+
+                    // Trigger email send without blocking API response.
+                    sendVerificationEmailAsync(email, otp, name);
                     
                     res.status(201).json({ 
                         message: 'Vui lòng kiểm tra email để lấy mã xác thực',
@@ -298,16 +305,9 @@ router.post('/change-password', (req, res) => {
                             if (err) {
                                 return res.status(500).json({ error: err.message });
                             }
-                            
-                            // Gửi email xác thực
-                            try {
-                                const emailResult = await sendVerificationEmail(email, otp, name);
-                                if (!emailResult.success) {
-                                    console.error('Email sending failed:', emailResult.error);
-                                }
-                            } catch (emailError) {
-                                console.error('Email error:', emailError);
-                            }
+
+                            // Trigger email send without blocking API response.
+                            sendVerificationEmailAsync(email, otp, name);
                             
                             res.status(201).json({ 
                                 message: 'Vui lòng kiểm tra email để lấy mã xác thực',
