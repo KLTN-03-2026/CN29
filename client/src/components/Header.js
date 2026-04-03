@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-const Header = ({ onLoginClick = () => {}, onRegisterClick = () => {}, onEmployerRegisterClick = () => {} }) => {
+const Header = () => {
     const [showJobManagement, setShowJobManagement] = useState(false);
     
     // Kiểm tra trạng thái đăng nhập
@@ -73,7 +73,12 @@ const Header = ({ onLoginClick = () => {}, onRegisterClick = () => {}, onEmploye
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link d-flex align-items-center gap-1 fw-semibold fs-6" to="/create-cv">
-                                Tạo CV
+                                Mẫu CV
+                            </Link>
+                        </li>
+                        <li className="nav-item">
+                            <Link className="nav-link d-flex align-items-center gap-1 fw-semibold fs-6" to="/cv-management">
+                                Quản lý CV
                             </Link>
                         </li>
                         <li className="nav-item">
@@ -85,15 +90,15 @@ const Header = ({ onLoginClick = () => {}, onRegisterClick = () => {}, onEmploye
                     <div className="d-flex align-items-center gap-3 ms-lg-auto me-lg-2">
                         {!user ? (
                             <>
-                                <button type="button" className="btn btn-outline-primary fw-semibold fs-6 px-4 py-1" onClick={onLoginClick}>
+                                <Link className="btn btn-outline-primary fw-semibold fs-6 px-4 py-1" to="/login">
                                     Đăng nhập
-                                </button>
-                                <button type="button" className="btn btn-primary fw-semibold fs-6 px-4 py-1" onClick={onRegisterClick}>
+                                </Link>
+                                <Link className="btn btn-primary fw-semibold fs-6 px-4 py-1" to="/register">
                                     Đăng ký
-                                </button>
-                                <button type="button" className="btn btn-warning fw-semibold fs-6 px-4 py-1 text-dark" onClick={onEmployerRegisterClick}>
+                                </Link>
+                                <Link className="btn btn-warning fw-semibold fs-6 px-4 py-1 text-dark" to="/register-employer">
                                     Dành cho nhà tuyển dụng
-                                </button>
+                                </Link>
                             </>
                         ) : (
                             <div className="dropdown">
@@ -123,7 +128,13 @@ const Header = ({ onLoginClick = () => {}, onRegisterClick = () => {}, onEmploye
                                     <li className="px-3 pb-2">
                                         <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/create-cv" style={{transition: 'background .2s'}}>
                                             <i className="bi bi-file-earmark-text fs-5 text-primary"></i>
-                                            <span>Tạo CV</span>
+                                            <span>Mẫu CV</span>
+                                        </Link>
+                                    </li>
+                                    <li className="px-3 pb-2">
+                                        <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/cv-management" style={{transition: 'background .2s'}}>
+                                            <i className="bi bi-files fs-5 text-primary"></i>
+                                            <span>Quản lý CV</span>
                                         </Link>
                                     </li>
                                     <li className="px-3 pb-2">

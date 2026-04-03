@@ -1,65 +1,49 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 const Footer = () => {
     return (
-        <footer className="jf-footer bg-dark text-white mt-auto">
+        <footer className="jf-footer mt-auto">
             <div className="container">
                 <div className="row g-3 align-items-start jf-footer-grid">
-                    {/* Về JobFinder */}
-                    <div className="col-12 col-md-2 d-flex flex-column">
-                        <div className="fw-semibold jf-footer-title">Về JobFinder</div>
+                    <div className="col-12 col-md-3 d-flex flex-column">
+                        <div className="fw-semibold jf-footer-title">JobFinder</div>
                         <ul className="list-unstyled mt-2 mb-0">
-                            <li>Về chúng tôi</li>
-                            <li>Quy chế hoạt động</li>
-                            <li>Quy định bảo mật</li>
-                            <li>Thỏa thuận sử dụng</li>
-                            <li>Liên hệ</li>
-                            <li>Sơ đồ trang web</li>
-                            <li>JobFinder.asia</li>
+                            <li><Link to="/">Trang chủ</Link></li>
+                            <li><Link to="/career-guide">Cẩm nang nghề nghiệp</Link></li>
+                            <li><Link to="/jobs">Tìm việc làm</Link></li>
+                            <li><a href="mailto:support@jobfinder.vn">support@jobfinder.vn</a></li>
                         </ul>
                     </div>
-                    {/* Dành cho ứng viên */}
-                    <div className="col-12 col-md-2 d-flex flex-column">
+                    <div className="col-12 col-md-3 d-flex flex-column">
                         <div className="fw-semibold mb-2 jf-footer-title">Dành cho ứng viên</div>
                         <ul className="list-unstyled mb-0">
-                            <li>Việc làm</li>
-                            <li>Tìm việc làm nhanh</li>
-                            <li>Công ty</li>
-                            <li>Cẩm Nang Việc Làm</li>
-                            <li>Mẫu CV Xin Việc</li>
-                            <li>Tư Vấn Du Học Nhật Bản</li>
+                            <li><Link to="/jobs">Khám phá việc làm</Link></li>
+                            <li><Link to="/create-cv">Mẫu CV chuyên nghiệp</Link></li>
+                            <li><Link to="/cv-management">Quản lý CV đã tạo</Link></li>
+                            <li><Link to="/profile">Hoàn thiện hồ sơ</Link></li>
                         </ul>
                     </div>
-                    {/* Dành cho nhà tuyển dụng */}
-                    <div className="col-12 col-md-2 d-flex flex-column">
+                    <div className="col-12 col-md-3 d-flex flex-column">
                         <div className="fw-semibold mb-2 jf-footer-title">Dành cho nhà tuyển dụng</div>
                         <ul className="list-unstyled mb-0">
-                            <li>Dịch vụ nhân sự cao cấp</li>
-                            <li>Cẩm nang tuyển dụng</li>
+                            <li><Link to="/register-employer">Đăng ký tài khoản doanh nghiệp</Link></li>
+                            <li><Link to="/employer">Quản lý tuyển dụng</Link></li>
+                            <li><Link to="/jobs">Xem thị trường việc làm</Link></li>
                         </ul>
                     </div>
-                    {/* Việc làm theo khu vực */}
-                    <div className="col-12 col-md-2">
-                        <div className="fw-semibold mb-2 jf-footer-title">Việc làm theo khu vực</div>
+                    <div className="col-12 col-md-3 d-flex flex-column">
+                        <div className="fw-semibold mb-2 jf-footer-title">Chính sách và hỗ trợ</div>
                         <ul className="list-unstyled mb-0">
-                            <li>Hồ Chí Minh</li>
-                            <li>Hà Nội</li>
-                            <li>Đà Nẵng</li>
-                            <li>Hải Phòng</li>
-                            <li>Cần Thơ</li>
+                            <li><Link to="/career-guide">Hướng dẫn tìm việc</Link></li>
+                            <li><a href="/#">Điều khoản sử dụng</a></li>
+                            <li><a href="/#">Chính sách bảo mật</a></li>
+                            <li><a href="/#">Liên hệ hỗ trợ</a></li>
                         </ul>
                     </div>
-                    {/* Việc làm theo ngành nghề */}
-                    <div className="col-12 col-md-2 d-flex flex-column">
-                        <div className="fw-semibold mb-2 jf-footer-title">Việc làm theo ngành nghề</div>
-                        <ul className="list-unstyled mb-0">
-                            <li>Kế toán</li>
-                            <li>Tiếng Nhật</li>
-                            <li>Ngân hàng</li>
-                            <li>IT - Phần mềm</li>
-                            <li>IT - Phần cứng / Mạng</li>
-                        </ul>
-                    </div>
+                </div>
+                <div className="jf-footer-bottom">
+                    © {new Date().getFullYear()} JobFinder. Kết nối ứng viên và nhà tuyển dụng hiệu quả hơn.
                 </div>
             </div>
         </footer>

@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import Header from './components/Header';
-import Hero from './components/Hero';
-import JobList from './features/public/JobList';
+import HomePage from './features/public/HomePage';
 import JobSearchPage from './features/public/JobSearchPage';
 import JobPublicDetail from './features/public/JobPublicDetail';
 import SavedJobsPage from './features/candidate/SavedJobsPage';
 import AppliedJobsPage from './features/candidate/AppliedJobsPage';
 import MatchingJobsPage from './features/candidate/MatchingJobsPage';
-import Login, { LoginForm } from './features/auth/Login';
-import Register, { RegisterForm } from './features/auth/Register';
-import ForgotPassword from './features/auth/ForgotPassword';
-import { EmployerRegisterForm } from './features/auth/EmployerRegister';
+import LoginPage from './features/auth/LoginPage';
+import RegisterPage from './features/auth/RegisterPage';
+import ForgotPasswordPage from './features/auth/ForgotPasswordPage';
+import EmployerRegister from './features/auth/EmployerRegister';
 import VerifyOTP from './features/auth/VerifyOTP';
 import WelcomeIntro from './features/auth/WelcomeIntro';
 import DesiredJobForm from './features/auth/DesiredJobForm';
@@ -27,11 +26,11 @@ import ApplicationManagement from './features/employer/dashboard/ApplicationMana
 import Statistics from './features/employer/dashboard/Statistics';
 import CompanyProfile from './features/employer/dashboard/CompanyProfile';
 import EmployerAccount from './features/employer/dashboard/EmployerAccount';
-import CandidateDashboard from './features/candidate/CandidateDashboard';
 import ProtectedRoute from './components/ProtectedRoute';
 import Footer from './components/Footer';
 import Profile from './features/candidate/Profile';
 import CreateCvHub from './features/cv/CreateCvHub';
+import CvManagementPage from './features/cv/CvManagementPage';
 import OnlineCvBuilder from './features/cv/OnlineCvBuilder';
 import OnlineCvEditor from './features/cv/OnlineCvEditor';
 import AIAssistantWidget from './components/AIAssistantWidget';
@@ -42,10 +41,6 @@ import { API_BASE } from './config/apiBase';
 import './App.css';
 
 function AppContent() {
-  const [showLoginModal, setShowLoginModal] = useState(false);
-  const [showRegisterModal, setShowRegisterModal] = useState(false);
-  const [showEmployerRegisterModal, setShowEmployerRegisterModal] = useState(false);
-  const [showForgotModal, setShowForgotModal] = useState(false);
   const location = useLocation();
 
   // Kiểm tra và xóa token không hợp lệ khi app khởi động
@@ -72,55 +67,35 @@ function AppContent() {
     checkToken();
   }, []);
 
-  const openLoginModal = () => setShowLoginModal(true);
-  const closeLoginModal = () => setShowLoginModal(false);
-  const openRegisterModal = () => setShowRegisterModal(true);
-  const closeRegisterModal = () => setShowRegisterModal(false);
-  const openEmployerRegisterModal = () => setShowEmployerRegisterModal(true);
-  const closeEmployerRegisterModal = () => setShowEmployerRegisterModal(false);
-
   // Ẩn Header và Footer khi ở các trang dashboard
   const isDashboardPage = location.pathname.startsWith('/admin') || 
                           location.pathname.startsWith('/employer') || 
                           location.pathname === '/candidate';
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/register-employer'].includes(location.pathname);
+  const showPublicChrome = !isDashboardPage && !isAuthPage;
 
   return (
     <div className="App">
-      {!isDashboardPage && (
-        <Header
-          onLoginClick={() => {
-            closeRegisterModal();
-            closeEmployerRegisterModal();
-            openLoginModal();
-          }}
-          onRegisterClick={() => {
-            closeLoginModal();
-            closeEmployerRegisterModal();
-            openRegisterModal();
-          }}
-          onEmployerRegisterClick={() => {
-            closeLoginModal();
-            closeRegisterModal();
-            openEmployerRegisterModal();
-          }}
-        />
-      )}
+      {showPublicChrome && <Header />}
 
       <main className="AppMain">
         <Routes>
-          <Route path="/" element={<><Hero /><JobList /></>} />
+          <Route path="/" element={<HomePage />} />
           <Route path="/jobs" element={<JobSearchPage />} />
           <Route path="/jobs/saved" element={<SavedJobsPage />} />
           <Route path="/jobs/applied" element={<AppliedJobsPage />} />
           <Route path="/jobs/matching" element={<MatchingJobsPage />} />
           <Route path="/jobs/:id" element={<JobPublicDetail />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="/register-employer" element={<EmployerRegister />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
           <Route path="/welcome" element={<WelcomeIntro />} />
           <Route path="/desired-job" element={<DesiredJobForm />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/create-cv" element={<CreateCvHub />} />
+          <Route path="/cv-management" element={<CvManagementPage />} />
           <Route path="/create-cv/templates" element={<OnlineCvBuilder />} />
           <Route path="/create-cv/online-editor" element={<OnlineCvEditor />} />
           <Route path="/career-guide" element={<CareerGuide />} />
@@ -163,77 +138,8 @@ function AppContent() {
         </Routes>
       </main>
 
-      {!isDashboardPage && <Footer />}
-      {!isDashboardPage && <AIAssistantWidget />}
-
-      {!isDashboardPage && showLoginModal && !showForgotModal && (
-        <>
-          <div className="modal-overlay" onClick={closeLoginModal}></div>
-          <div className="modal-dialog-custom">
-            <div className="text-center mb-1 modal-logo-wrapper">
-              <img src="/images/logo.png" alt="JobFinder" className="modal-logo" />
-            </div>
-            <button type="button" className="btn-close modal-close" aria-label="Đóng" onClick={closeLoginModal}></button>
-            <h5 className="modal-title text-center">Đăng nhập</h5>
-            <div className="modal-body pt-0">
-              <LoginForm
-                onSuccess={closeLoginModal}
-                onCreateAccount={() => {
-                  closeLoginModal();
-                  openRegisterModal();
-                }}
-                onForgotPassword={() => {
-                  closeLoginModal();
-                  setShowForgotModal(true);
-                }}
-              />
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Forgot password modal (xuất hiện thay cho login modal) */}
-      {!isDashboardPage && showForgotModal && (
-        <>
-          <div className="modal-overlay" onClick={() => setShowForgotModal(false)}></div>
-          <div className="modal-dialog-custom modal-dialog-large">
-            <button type="button" className="btn-close modal-close" aria-label="Đóng" onClick={() => setShowForgotModal(false)}></button>
-            <div className="modal-body pt-0">
-              <ForgotPassword onClose={() => setShowForgotModal(false)} inline={true} />
-            </div>
-          </div>
-        </>
-      )}
-      {!isDashboardPage && showRegisterModal && (
-        <>
-          <div className="modal-overlay" onClick={closeRegisterModal}></div>
-          <div className="modal-dialog-custom modal-dialog-register">
-            <button type="button" className="btn-close modal-close" aria-label="Đóng" onClick={closeRegisterModal}></button>
-            <RegisterForm
-              onSuccess={closeRegisterModal}
-              onSwitchToLogin={() => {
-                closeRegisterModal();
-                openLoginModal();
-              }}
-            />
-          </div>
-        </>
-      )}
-      {!isDashboardPage && showEmployerRegisterModal && (
-        <>
-          <div className="modal-overlay" onClick={closeEmployerRegisterModal}></div>
-          <div className="modal-dialog-custom modal-dialog-register">
-            <button type="button" className="btn-close modal-close" aria-label="Đóng" onClick={closeEmployerRegisterModal}></button>
-            <EmployerRegisterForm
-              onSuccess={closeEmployerRegisterModal}
-              onSwitchToLogin={() => {
-                closeEmployerRegisterModal();
-                openLoginModal();
-              }}
-            />
-          </div>
-        </>
-      )}
+      {showPublicChrome && <Footer />}
+      {showPublicChrome && <AIAssistantWidget />}
     </div>
   );
 }

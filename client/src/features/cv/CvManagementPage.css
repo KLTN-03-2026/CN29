@@ -1,0 +1,402 @@
+.cv-management-page {
+  min-height: 100vh;
+  padding: 112px 0 48px;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(55, 152, 229, 0.14), transparent 36%),
+    radial-gradient(circle at 92% 10%, rgba(26, 192, 175, 0.12), transparent 30%),
+    linear-gradient(180deg, #f1f8ff 0%, #f7fbff 52%, #ffffff 100%);
+}
+
+.cv-management-container {
+  width: min(1180px, 94vw);
+  max-width: 1180px;
+}
+
+.cv-management-hero {
+  border: 1px solid #d5e5f4;
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 86% 14%, rgba(255, 255, 255, 0.15), transparent 34%),
+    linear-gradient(126deg, #113354 0%, #16598d 58%, #1c88b8 100%);
+  color: #f4fbff;
+  padding: 20px;
+  box-shadow: 0 20px 36px rgba(24, 78, 125, 0.24);
+}
+
+.cv-management-hero-content {
+  text-align: left;
+}
+
+.cv-management-eyebrow {
+  margin: 0;
+  font-size: 0.76rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: rgba(201, 232, 255, 0.92);
+  font-weight: 800;
+}
+
+.cv-management-hero-content h1 {
+  margin: 8px 0 0;
+  font-size: clamp(1.55rem, 2.2vw, 2.05rem);
+  line-height: 1.2;
+  font-weight: 800;
+}
+
+.cv-management-hero-content p {
+  margin: 10px 0 0;
+  max-width: 760px;
+  color: rgba(220, 241, 255, 0.95);
+  font-size: 0.97rem;
+  line-height: 1.58;
+}
+
+.cv-management-hero-actions {
+  margin-top: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cv-management-primary-btn,
+.cv-management-secondary-btn {
+  border: 0;
+  text-decoration: none;
+  border-radius: 11px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.cv-management-primary-btn {
+  background: #ffffff;
+  color: #125084;
+}
+
+.cv-management-primary-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(8, 33, 57, 0.24);
+}
+
+.cv-management-secondary-btn {
+  background: rgba(255, 255, 255, 0.16);
+  color: #ffffff;
+  border: 1px solid rgba(223, 242, 255, 0.66);
+}
+
+.cv-management-secondary-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.24);
+}
+
+.cv-management-stats {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.cv-management-stat-card {
+  border: 1px solid rgba(210, 237, 255, 0.55);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.12);
+  padding: 10px 12px;
+  text-align: left;
+}
+
+.cv-management-stat-card strong {
+  display: block;
+  font-size: 1.2rem;
+  line-height: 1.1;
+  font-weight: 800;
+}
+
+.cv-management-stat-card span {
+  margin-top: 4px;
+  display: block;
+  font-size: 0.84rem;
+  color: rgba(220, 241, 255, 0.95);
+  font-weight: 600;
+}
+
+.cv-management-board {
+  margin-top: 18px;
+  border: 1px solid #d7e7f5;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 16px 30px rgba(22, 71, 113, 0.1);
+  padding: 16px;
+}
+
+.cv-management-board-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cv-management-board-head h2 {
+  margin: 0;
+  color: #113253;
+  font-size: 1.4rem;
+  font-weight: 800;
+  text-align: left;
+}
+
+.cv-management-board-head p {
+  margin: 8px 0 0;
+  color: #56718d;
+  font-size: 0.92rem;
+  text-align: left;
+}
+
+.cv-management-board-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cv-management-board-actions input {
+  width: min(280px, 42vw);
+  height: 40px;
+  border: 1px solid #d2e2f1;
+  border-radius: 11px;
+  background: #f8fbff;
+  color: #1b3a59;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0 11px;
+  outline: none;
+}
+
+.cv-management-board-actions input:focus {
+  border-color: #8ebce2;
+  box-shadow: 0 0 0 3px rgba(61, 143, 219, 0.14);
+}
+
+.cv-management-board-actions button {
+  height: 40px;
+  border: 0;
+  border-radius: 11px;
+  background: linear-gradient(132deg, #1f78c3 0%, #2194d6 100%);
+  color: #ffffff;
+  font-size: 0.88rem;
+  font-weight: 800;
+  padding: 0 14px;
+}
+
+.cv-management-filter-row {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cv-management-filter-row button {
+  border: 1px solid #d4e3f2;
+  background: #f7fbff;
+  color: #3d607f;
+  border-radius: 999px;
+  padding: 7px 12px;
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+
+.cv-management-filter-row button.active {
+  border-color: #1f80cc;
+  background: #1f80cc;
+  color: #ffffff;
+}
+
+.cv-management-empty {
+  min-height: 230px;
+  margin-top: 12px;
+  border: 1px dashed #d2e2f1;
+  border-radius: 14px;
+  background: #f8fbff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  padding: 20px;
+}
+
+.cv-management-empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(16, 58, 95, 0.08);
+  color: rgba(16, 58, 95, 0.6);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.55rem;
+}
+
+.cv-management-empty h3 {
+  margin: 0;
+  color: #143353;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+.cv-management-empty p {
+  margin: 0;
+  color: #57728d;
+  max-width: 500px;
+}
+
+.cv-management-list {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.cv-management-item {
+  border: 1px solid #d8e7f5;
+  border-radius: 14px;
+  background: #ffffff;
+  padding: 13px;
+  text-align: left;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cv-management-item:hover {
+  transform: translateY(-1px);
+  border-color: #9bc7ea;
+  box-shadow: 0 12px 24px rgba(22, 71, 113, 0.1);
+}
+
+.cv-management-item-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cv-management-item h3 {
+  margin: 0;
+  color: #123353;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.cv-management-meta {
+  margin-top: 6px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cv-management-meta span {
+  border: 1px solid #d9e7f5;
+  border-radius: 999px;
+  background: #f7fbff;
+  color: #446280;
+  font-size: 0.76rem;
+  font-weight: 700;
+  padding: 4px 8px;
+}
+
+.cv-management-type {
+  flex: 0 0 auto;
+  border: 1px solid #c8dcf0;
+  border-radius: 999px;
+  background: #eef7ff;
+  color: #1d6dae;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 9px;
+}
+
+.cv-management-type.online {
+  border-color: #b7e3cd;
+  background: #e9f9f0;
+  color: #188352;
+}
+
+.cv-management-item-actions {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cv-action-btn {
+  border: 1px solid #cfe0f1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #2f5d86;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-decoration: none;
+  padding: 8px 12px;
+}
+
+.cv-action-btn.view {
+  border-color: #98c8ea;
+  color: #186da8;
+  background: #eff8ff;
+}
+
+.cv-action-btn.edit {
+  border-color: #f2dba8;
+  color: #9a6a10;
+  background: #fff8e8;
+}
+
+.cv-action-btn.delete {
+  border-color: #f5c6d2;
+  color: #a42645;
+  background: #fff2f5;
+}
+
+.cv-action-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+@media (max-width: 991px) {
+  .cv-management-board-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .cv-management-board-actions {
+    width: 100%;
+  }
+
+  .cv-management-board-actions input {
+    width: 100%;
+  }
+}
+
+@media (max-width: 767px) {
+  .cv-management-page {
+    padding-top: 96px;
+  }
+
+  .cv-management-hero,
+  .cv-management-board {
+    border-radius: 16px;
+    padding: 14px;
+  }
+
+  .cv-management-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .cv-management-item-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .cv-management-item-actions {
+    width: 100%;
+  }
+}

@@ -1,0 +1,44 @@
+<svg width="1200" height="1600" viewBox="0 0 1200 1600" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="60" x2="1080" y2="1540" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1D78C9"/>
+      <stop offset="0.52" stop-color="#1E5EA5"/>
+      <stop offset="1" stop-color="#143E72"/>
+    </linearGradient>
+    <linearGradient id="flare" x1="320" y1="150" x2="900" y2="1100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7DD8FF" stop-opacity="0.75"/>
+      <stop offset="1" stop-color="#7DD8FF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="600" y1="980" x2="600" y2="1600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4EA3E6" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#4EA3E6" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="1600" rx="56" fill="url(#bg)"/>
+  <ellipse cx="900" cy="250" rx="380" ry="280" fill="url(#flare)"/>
+  <ellipse cx="260" cy="1320" rx="430" ry="360" fill="#52C2F4" fill-opacity="0.2"/>
+
+  <path d="M0 1020C190 940 370 920 560 980C760 1045 930 1045 1200 960V1600H0V1020Z" fill="url(#wave)"/>
+
+  <g opacity="0.92">
+    <rect x="122" y="520" width="150" height="540" rx="28" fill="#BFE7FF" fill-opacity="0.22"/>
+    <rect x="310" y="420" width="166" height="640" rx="28" fill="#BFE7FF" fill-opacity="0.3"/>
+    <rect x="516" y="332" width="170" height="730" rx="28" fill="#D1EDFF" fill-opacity="0.35"/>
+    <rect x="724" y="248" width="170" height="816" rx="28" fill="#DDF2FF" fill-opacity="0.4"/>
+    <rect x="934" y="174" width="144" height="890" rx="28" fill="#E9F7FF" fill-opacity="0.45"/>
+  </g>
+
+  <g opacity="0.96">
+    <path d="M225 1194L420 980L570 1064L792 802L958 922" stroke="#DFF5FF" stroke-width="20" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="225" cy="1194" r="22" fill="#EAF8FF"/>
+    <circle cx="420" cy="980" r="22" fill="#EAF8FF"/>
+    <circle cx="570" cy="1064" r="22" fill="#EAF8FF"/>
+    <circle cx="792" cy="802" r="22" fill="#EAF8FF"/>
+    <circle cx="958" cy="922" r="22" fill="#EAF8FF"/>
+  </g>
+
+  <rect x="140" y="120" width="170" height="18" rx="9" fill="#D5F2FF" fill-opacity="0.45"/>
+  <rect x="140" y="154" width="280" height="18" rx="9" fill="#D5F2FF" fill-opacity="0.38"/>
+  <rect x="140" y="188" width="220" height="18" rx="9" fill="#D5F2FF" fill-opacity="0.3"/>
+</svg>
