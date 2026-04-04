@@ -13,21 +13,22 @@ const Header = () => {
         }
     })();
 
+    const userRole = String(user?.role || user?.vaiTro || '').trim();
+    const isEmployer = userRole === 'Nhà tuyển dụng';
+    const isAdmin = (
+        userRole === 'Quản trị'
+        || userRole === 'Siêu quản trị viên'
+        || user?.isSuperAdmin === true
+        || user?.isSuperAdmin === 1
+        || user?.isSuperAdmin === '1'
+    );
+    const dashboardLink = isEmployer ? '/employer/jobs' : (isAdmin ? '/admin' : '');
+
     return (
-        <nav className="navbar navbar-expand-lg bg-white border-bottom shadow-sm"
-            style={{
-                paddingTop: 0,
-                paddingBottom: 0,
-                minHeight: '64px',
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                width: '100%',
-                zIndex: 1050
-            }}>
-            <div className="container-fluid px-4">
-                <Link className="navbar-brand d-flex align-items-center gap-3 text-decoration-none" to="/">
-                    <img src="/images/logo.png" alt="JobFinder Logo" style={{ height: '56px' }} />
+        <nav className="navbar navbar-expand-lg bg-white border-bottom shadow-sm jf-main-navbar">
+            <div className="container-fluid px-4 jf-main-navbar__container">
+                <Link className="navbar-brand d-flex align-items-center gap-3 text-decoration-none jf-main-navbar__brand" to="/">
+                    <img src="/images/logo.png" alt="JobFinder Logo" className="jf-main-navbar__logo" />
                 </Link>
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
                     <span className="navbar-toggler-icon"></span>
@@ -70,16 +71,6 @@ const Header = () => {
                                     </Link>
                                 </li>
                             </ul>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link d-flex align-items-center gap-1 fw-semibold fs-6" to="/create-cv">
-                                Mẫu CV
-                            </Link>
-                        </li>
-                        <li className="nav-item">
-                            <Link className="nav-link d-flex align-items-center gap-1 fw-semibold fs-6" to="/cv-management">
-                                Quản lý CV
-                            </Link>
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/career-guide">
@@ -125,18 +116,14 @@ const Header = () => {
                                             <span>Hồ sơ của tôi</span>
                                         </Link>
                                     </li>
-                                    <li className="px-3 pb-2">
-                                        <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/create-cv" style={{transition: 'background .2s'}}>
-                                            <i className="bi bi-file-earmark-text fs-5 text-primary"></i>
-                                            <span>Mẫu CV</span>
-                                        </Link>
-                                    </li>
-                                    <li className="px-3 pb-2">
-                                        <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/cv-management" style={{transition: 'background .2s'}}>
-                                            <i className="bi bi-files fs-5 text-primary"></i>
-                                            <span>Quản lý CV</span>
-                                        </Link>
-                                    </li>
+                                    {dashboardLink && (
+                                        <li className="px-3 pb-2">
+                                            <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to={dashboardLink} style={{transition: 'background .2s'}}>
+                                                <i className="bi bi-speedometer2 fs-5 text-primary"></i>
+                                                <span>Dashboard</span>
+                                            </Link>
+                                        </li>
+                                    )}
                                     <li className="px-3 pb-2">
                                         <div className="dropdown-item d-flex align-items-center justify-content-between rounded p-2" 
                                             style={{cursor: 'pointer', transition: 'background .2s'}}
@@ -168,12 +155,6 @@ const Header = () => {
                                         <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/support" style={{transition: 'background .2s'}}>
                                             <i className="bi bi-bell fs-5 text-primary"></i>
                                             <span>Hỗ trợ và thông báo</span>
-                                        </Link>
-                                    </li>
-                                    <li className="px-3 pb-2">
-                                        <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/account" style={{transition: 'background .2s'}}>
-                                            <i className="bi bi-person-circle fs-5 text-primary"></i>
-                                            <span>Quản lý tài khoản</span>
                                         </Link>
                                     </li>
                                     <li><hr className="dropdown-divider my-2" /></li>

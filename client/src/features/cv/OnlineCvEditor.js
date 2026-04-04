@@ -18,9 +18,85 @@ const escapeHtml = (s = '') => String(s)
 
 const stripScriptsFromHtml = (html = '') => String(html).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
+const DEFAULT_AVATAR_DATA_URI = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420" fill="none"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f766e"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs><rect width="420" height="420" rx="48" fill="url(#g)"/><circle cx="210" cy="156" r="72" fill="rgba(255,255,255,0.92)"/><path d="M86 338c24-58 76-86 124-86s100 28 124 86" fill="rgba(255,255,255,0.92)"/></svg>'
+)}`;
+
+const AVATAR_NODE_SELECTOR = '#avatarImage,[data-cv-avatar="1"],img[data-image-editable="avatarImage"]';
+const AVATAR_TRIGGER_SELECTOR = '#avatarButton,[data-cv-avatar-trigger="1"],.avatar-wrap,.avatarWrap,#avatarImage,[data-cv-avatar="1"],img[data-image-editable="avatarImage"]';
+
+const normalizeAvatarUrl = (value) => String(value || '').trim();
+
+const resolveAvatarFromProfile = (profileData, userData) => {
+  const p = profileData || {};
+  const u = userData || {};
+  const pick = (...vals) => vals.find((v) => String(v || '').trim()) || '';
+  return normalizeAvatarUrl(
+    pick(
+      p.avatarUrl,
+      p.AnhDaiDien,
+      p.anhDaiDien,
+      p.avatar,
+      u.avatarUrl,
+      u.AnhDaiDien,
+      u.anhDaiDien,
+      u.avatar,
+      u.photoURL,
+      u.photoUrl,
+    ),
+  );
+};
+
+const extractAvatarUrlFromHtml = (html) => {
+  const markup = String(html || '').trim();
+  if (!markup) return '';
+
+  const tags = markup.match(/<img\b[^>]*>/gi) || [];
+  for (const tag of tags) {
+    const isAvatarTag =
+      /\bid\s*=\s*["']avatarImage["']/i.test(tag) ||
+      /\bdata-cv-avatar\s*=\s*["']1["']/i.test(tag) ||
+      /\bdata-image-editable\s*=\s*["']avatarImage["']/i.test(tag);
+    if (!isAvatarTag) continue;
+
+    const srcMatch = tag.match(/\bsrc\s*=\s*["']([^"']+)["']/i);
+    if (srcMatch && srcMatch[1]) {
+      return normalizeAvatarUrl(srcMatch[1]);
+    }
+  }
+
+  return '';
+};
+
+const applyAvatarUrlToHtml = (html, avatarUrl) => {
+  const markup = String(html || '');
+  if (!markup.trim()) return markup;
+
+  const safeAvatar = escapeHtml(normalizeAvatarUrl(avatarUrl) || DEFAULT_AVATAR_DATA_URI);
+  let touched = false;
+
+  const updated = markup.replace(/<img\b[^>]*>/gi, (tag) => {
+    const isAvatarTag =
+      /\bid\s*=\s*["']avatarImage["']/i.test(tag) ||
+      /\bdata-cv-avatar\s*=\s*["']1["']/i.test(tag) ||
+      /\bdata-image-editable\s*=\s*["']avatarImage["']/i.test(tag);
+    if (!isAvatarTag) return tag;
+
+    touched = true;
+    if (/\bsrc\s*=\s*["'][^"']*["']/i.test(tag)) {
+      return tag.replace(/\bsrc\s*=\s*["'][^"']*["']/i, `src="${safeAvatar}"`);
+    }
+    return tag.replace(/<img/i, `<img src="${safeAvatar}"`);
+  });
+
+  return touched ? updated : markup;
+};
+
 const injectPreviewEditorScript = (html) => {
   if (!html || typeof html !== 'string') return html;
-  if (html.includes('__cv_live_editor_hook__')) return html;
+  const baseHtml = String(html)
+    .replace(/<style\b[^>]*id=["']__cv_live_editor_style__["'][\s\S]*?<\/style>/gi, '')
+    .replace(/<script\b[^>]*id=["']__cv_live_editor_hook__["'][\s\S]*?<\/script>/gi, '');
 
   const script = `
 <script id="__cv_live_editor_hook__">
@@ -58,6 +134,8 @@ const injectPreviewEditorScript = (html) => {
 
   var active = null;
   var customSectionCount = 0;
+  var avatarInputEl = null;
+  var DEFAULT_AVATAR = '${DEFAULT_AVATAR_DATA_URI}';
 
   function asElement(target) {
     if (!target) return null;
@@ -105,6 +183,8 @@ const injectPreviewEditorScript = (html) => {
     node.setAttribute('contenteditable', 'true');
     node.setAttribute('data-editable', 'true');
     node.setAttribute('spellcheck', 'false');
+    node.style.pointerEvents = 'auto';
+    node.style.cursor = 'text';
 
     if (field && !node.getAttribute('data-field') && !node.getAttribute('data-cv-field')) {
       node.setAttribute('data-field', field);
@@ -152,78 +232,251 @@ const injectPreviewEditorScript = (html) => {
   }
 
   function ensureContactEditable() {
-    var defs = [
-      {
-        selector: '.contact-value,[data-field="phone"],[data-cv-field="phone"]',
-        field: 'phone',
-        placeholder: 'Nhập số điện thoại',
-        labelTokens: ['so dien thoai', 'dien thoai', 'phone']
-      },
-      {
-        selector: '[data-field="email"],[data-cv-field="email"]',
-        field: 'email',
-        placeholder: 'Nhập email',
-        labelTokens: ['email', 'e-mail', 'mail']
-      },
-      {
-        selector: '[data-field="address"],[data-cv-field="address"]',
-        field: 'address',
-        placeholder: 'Nhập địa chỉ',
-        labelTokens: ['dia chi', 'address', 'noi o']
-      },
-      {
-        selector: '[data-field="linkedin"],[data-cv-field="linkedin"]',
-        field: 'linkedin',
-        placeholder: 'LinkedIn (nếu có)',
-        labelTokens: ['linkedin', 'linked in']
-      }
-    ];
+    try {
+      var defs = [
+        {
+          selector: '.contact-value,[data-field="phone"],[data-cv-field="phone"],[data-contact="phone"],[data-key="phone"],a[href^="tel:"]',
+          field: 'phone',
+          placeholder: 'Nhập số điện thoại',
+          labelTokens: ['so dien thoai', 'dien thoai', 'phone']
+        },
+        {
+          selector: '[data-field="email"],[data-cv-field="email"],[data-contact="email"],[data-key="email"],a[href^="mailto:"]',
+          field: 'email',
+          placeholder: 'Nhập email',
+          labelTokens: ['email', 'e-mail', 'mail']
+        },
+        {
+          selector: '[data-field="address"],[data-cv-field="address"],[data-contact="address"],[data-key="address"],[data-contact="diachi"]',
+          field: 'address',
+          placeholder: 'Nhập địa chỉ',
+          labelTokens: ['dia chi', 'address', 'noi o']
+        },
+        {
+          selector: '[data-field="linkedin"],[data-cv-field="linkedin"],[data-contact="linkedin"],[data-key="linkedin"],a[href*="linkedin.com" i],a[href*="linked.in" i]',
+          field: 'linkedin',
+          placeholder: 'LinkedIn (nếu có)',
+          labelTokens: ['linkedin', 'linked in']
+        }
+      ];
 
-    defs.forEach(function (def) {
-      document.querySelectorAll(def.selector).forEach(function (node) {
-        markEditable(node, def.field, def.placeholder, true);
+      defs.forEach(function (def) {
+        try {
+          document.querySelectorAll(def.selector).forEach(function (node) {
+            markEditable(node, def.field, def.placeholder, true);
+          });
+
+          var fallbackNode = findContactValueByLabel(def.labelTokens || []);
+          if (fallbackNode) {
+            markEditable(fallbackNode, def.field, def.placeholder, true);
+          }
+        } catch (e) {}
       });
 
-      var fallbackNode = findContactValueByLabel(def.labelTokens || []);
-      if (fallbackNode) {
-        markEditable(fallbackNode, def.field, def.placeholder, true);
-      }
-    });
-
-    document.querySelectorAll('a[data-field],a[data-cv-field],.contact-chip a').forEach(function (anchor) {
-      anchor.addEventListener('click', function (event) {
-        event.preventDefault();
+      document.querySelectorAll('a[data-field],a[data-cv-field],.contact-chip a').forEach(function (anchor) {
+        anchor.addEventListener('click', function (event) {
+          event.preventDefault();
+        });
       });
+
+      document.querySelectorAll('[data-field="phone"],[data-cv-field="phone"],[data-field="email"],[data-cv-field="email"],[data-field="address"],[data-cv-field="address"],[data-field="linkedin"],[data-cv-field="linkedin"],a[href^="tel:"],a[href^="mailto:"],a[href*="linkedin.com" i],a[href*="linked.in" i]').forEach(function (node) {
+        var field = node.getAttribute('data-field') || node.getAttribute('data-cv-field') || '';
+        if (!field) {
+          var href = String(node.getAttribute('href') || '').toLowerCase();
+          if (href.indexOf('tel:') === 0) field = 'phone';
+          else if (href.indexOf('mailto:') === 0) field = 'email';
+          else if (href.indexOf('linkedin') >= 0 || href.indexOf('linked.in') >= 0) field = 'linkedin';
+          else field = 'address';
+        }
+
+        var placeholderMap = {
+          phone: 'Nhập số điện thoại',
+          email: 'Nhập email',
+          address: 'Nhập địa chỉ',
+          linkedin: 'LinkedIn (nếu có)'
+        };
+
+        markEditable(node, field, placeholderMap[field] || 'Nhập thông tin liên hệ', true);
+        node.addEventListener('click', function (event) {
+          var tag = String(node.tagName || '').toLowerCase();
+          if (tag === 'a') {
+            event.preventDefault();
+          }
+        });
+      });
+    } catch (e) {}
+  }
+
+  function getAvatarImageNode() {
+    var node = document.querySelector('${AVATAR_NODE_SELECTOR}');
+    if (node) return node;
+
+    var candidates = Array.prototype.slice.call(document.querySelectorAll('img'));
+    for (var i = 0; i < candidates.length; i += 1) {
+      var img = candidates[i];
+      var cls = String(img.className || '').toLowerCase();
+      var id = String(img.id || '').toLowerCase();
+      var alt = String(img.getAttribute('alt') || '').toLowerCase();
+      if (cls.indexOf('avatar') >= 0 || id.indexOf('avatar') >= 0 || alt.indexOf('avatar') >= 0) {
+        return img;
+      }
+    }
+
+    return null;
+  }
+
+  function ensureAvatarFallback(img) {
+    if (!img) return;
+
+    var src = String(img.getAttribute('src') || '').trim();
+    if (!src || src === 'about:blank') {
+      img.setAttribute('src', DEFAULT_AVATAR);
+    }
+
+    img.addEventListener('error', function () {
+      img.setAttribute('src', DEFAULT_AVATAR);
     });
+  }
+
+  function ensureAvatarPicker() {
+    if (!avatarInputEl || !document.body.contains(avatarInputEl)) {
+      avatarInputEl = document.getElementById('__cv_live_avatar_picker__');
+    }
+
+    if (!avatarInputEl) {
+      avatarInputEl = document.createElement('input');
+      avatarInputEl.id = '__cv_live_avatar_picker__';
+      avatarInputEl.type = 'file';
+      avatarInputEl.accept = 'image/*';
+      avatarInputEl.style.display = 'none';
+      avatarInputEl.setAttribute('data-cv-runtime', '1');
+      document.body.appendChild(avatarInputEl);
+    }
+
+    if (!avatarInputEl.getAttribute('data-cv-bound')) {
+      avatarInputEl.setAttribute('data-cv-bound', '1');
+      avatarInputEl.addEventListener('change', function () {
+        var file = avatarInputEl.files && avatarInputEl.files[0];
+        if (!file) return;
+        if (!String(file.type || '').toLowerCase().startsWith('image/')) return;
+        if (file.size > 4 * 1024 * 1024) return;
+
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var img = getAvatarImageNode();
+          if (!img) return;
+          var src = ev && ev.target && typeof ev.target.result === 'string' ? ev.target.result : '';
+          if (!src) return;
+          img.setAttribute('src', src);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    return avatarInputEl;
+  }
+
+  function ensureAvatarEditable() {
+    try {
+      var imgNodes = document.querySelectorAll('${AVATAR_NODE_SELECTOR}');
+      imgNodes.forEach(function (img) {
+        img.setAttribute('data-cv-avatar', '1');
+        img.setAttribute('data-image-editable', 'avatarImage');
+        ensureAvatarFallback(img);
+      });
+
+      var triggers = document.querySelectorAll('${AVATAR_TRIGGER_SELECTOR}');
+      if (!triggers || triggers.length === 0) {
+        var defaultImg = getAvatarImageNode();
+        if (defaultImg) {
+          var defaultTrigger = defaultImg.closest('${AVATAR_TRIGGER_SELECTOR},button,label,div') || defaultImg;
+          triggers = [defaultTrigger];
+        }
+      }
+
+      triggers.forEach(function (trigger) {
+        if (!trigger) return;
+
+        trigger.setAttribute('data-cv-avatar-trigger', '1');
+        trigger.style.cursor = 'pointer';
+        
+        trigger.addEventListener('click', function (event) {
+          event.preventDefault();
+          event.stopPropagation();
+          
+          var relatedImg = trigger.tagName.toLowerCase() === 'img' ? trigger : trigger.querySelector('img');
+          relatedImg = relatedImg || getAvatarImageNode() || trigger;
+          var currentAvatar = String((relatedImg.getAttribute('src') || '')).trim();
+          
+          if (window.parent && window.parent !== window) {
+            post('CV_AVATAR_PICK_REQUEST', { currentAvatar: currentAvatar });
+            return;
+          }
+
+          var picker = ensureAvatarPicker();
+          if (!picker) return;
+          picker.value = '';
+          picker.click();
+        }, true);
+      });
+    } catch (e) {}
+  }
+
+  window.addEventListener('message', function (event) {
+    var data = event && event.data;
+    if (!data || data.__cv_editor_parent !== true) return;
+    if (data.type !== 'CV_AVATAR_SET') return;
+
+    var img = getAvatarImageNode();
+    if (!img) return;
+
+    var nextUrl = String(data.url || '').trim();
+    img.setAttribute('src', nextUrl || DEFAULT_AVATAR);
+    ensureAvatarFallback(img);
+  });
+
+  function stripTemplateToolbar() {
+    try {
+      document.querySelectorAll('#resetBtn').forEach(function (node) {
+        node.remove();
+      });
+      document.querySelectorAll('.toolbar, .toolbar.no-print').forEach(function (node) {
+        node.remove();
+      });
+    } catch (e) {}
   }
 
   function centerCvLayout() {
-    var root = document.querySelector('#cvPage')
-      || document.querySelector('.cv-page')
-      || document.querySelector('.resume-page')
-      || document.querySelector('.shell')
-      || document.querySelector('.stage');
+    try {
+      var root = document.querySelector('#cvPage')
+        || document.querySelector('.cv-page')
+        || document.querySelector('.resume-page')
+        || document.querySelector('.shell')
+        || document.querySelector('.stage');
 
-    if (!root) {
-      var candidates = Array.prototype.slice.call(document.body.children || []);
-      root = candidates.find(function (node) {
-        var tag = String(node.tagName || '').toLowerCase();
-        return tag && tag !== 'script' && tag !== 'style' && !node.classList.contains('cv-live-add-section-btn') && !node.classList.contains('cv-live-add-slot');
-      }) || null;
-    }
+      if (!root) {
+        var candidates = Array.prototype.slice.call(document.body.children || []);
+        root = candidates.find(function (node) {
+          var tag = String(node.tagName || '').toLowerCase();
+          return tag && tag !== 'script' && tag !== 'style' && !node.classList.contains('cv-live-add-section-btn') && !node.classList.contains('cv-live-add-slot');
+        }) || null;
+      }
 
-    if (!root) return;
-    root.style.marginLeft = 'auto';
-    root.style.marginRight = 'auto';
+      if (!root) return;
+      root.style.marginLeft = 'auto';
+      root.style.marginRight = 'auto';
+    } catch (e) {}
   }
 
   function emitFieldUpdate(node) {
-    var field = getFieldKey(node);
-    if (!field) return;
-    post('CV_FIELD_UPDATE', {
-      field: field,
-      value: normalizeValue(node.innerText || '')
-    });
+    try {
+      var field = getFieldKey(node);
+      if (!field) return;
+      post('CV_FIELD_UPDATE', {
+        field: field,
+        value: normalizeValue(node.innerText || '')
+      });
+    } catch (e) {}
   }
 
   function findInsertContainer() {
@@ -352,87 +605,103 @@ const injectPreviewEditorScript = (html) => {
     placeCaretAtEnd(node);
   }
 
-  ensureContactEditable();
-  centerCvLayout();
-  ensureAddButton();
+  try {
+    ensureContactEditable();
+    ensureAvatarEditable();
+    stripTemplateToolbar();
+    centerCvLayout();
+    ensureAddButton();
 
-  document.querySelectorAll('.note, .note-badge').forEach(function (node) {
-    node.remove();
-  });
+    document.querySelectorAll('.note, .note-badge').forEach(function (node) {
+      node.remove();
+    });
 
-  document.querySelectorAll('[data-cv-field], [data-editable="true"]').forEach(function (node) {
-    setEmptyState(node);
-    if (!node.getAttribute('contenteditable')) {
-      node.setAttribute('contenteditable', 'true');
-    }
-  });
-
-  document.addEventListener('click', function (event) {
-    var node = getFieldNode(event.target);
-
-    if (!node) {
-      if (active) {
-        deactivate(active, true);
-        active = null;
+    document.querySelectorAll('[data-cv-field], [data-editable="true"]').forEach(function (node) {
+      setEmptyState(node);
+      if (!node.getAttribute('contenteditable')) {
+        node.setAttribute('contenteditable', 'true');
       }
-      return;
-    }
+    });
 
-    if (active !== node) {
-      activate(node);
-    }
+    document.addEventListener('click', function (event) {
+      try {
+        var node = getFieldNode(event.target);
 
-    post('CV_FIELD_FOCUS', { field: getFieldKey(node) });
-  }, true);
+        if (!node) {
+          if (active) {
+            deactivate(active, true);
+            active = null;
+          }
+          return;
+        }
 
-  document.addEventListener('dblclick', function (event) {
-    var node = getFieldNode(event.target);
-    if (!node) return;
-    activate(node);
-  }, true);
+        if (active !== node) {
+          activate(node);
+        }
 
-  document.addEventListener('focusout', function (event) {
-    var node = getFieldNode(event.target);
-    if (!node || node !== active) return;
+        post('CV_FIELD_FOCUS', { field: getFieldKey(node) });
+      } catch(e) {}
+    }, true);
 
-    setTimeout(function () {
-      var stillInside = node.contains(document.activeElement);
-      if (!stillInside) {
-        deactivate(node, true);
-        active = null;
-      }
-    }, 0);
-  }, true);
+    document.addEventListener('dblclick', function (event) {
+      try {
+        var node = getFieldNode(event.target);
+        if (!node) return;
+        activate(node);
+      } catch(e) {}
+    }, true);
 
-  document.addEventListener('keydown', function (event) {
-    if (!active) return;
+    document.addEventListener('focusout', function (event) {
+      try {
+        var node = getFieldNode(event.target);
+        if (!node || node !== active) return;
 
-    if (event.key === 'Escape') {
-      event.preventDefault();
-      deactivate(active, false);
-      active = null;
-      return;
-    }
+        setTimeout(function () {
+          var stillInside = node.contains(document.activeElement);
+          if (!stillInside) {
+            deactivate(node, true);
+            active = null;
+          }
+        }, 0);
+      } catch(e) {}
+    }, true);
 
-    if (isSingleLine(active) && event.key === 'Enter') {
-      event.preventDefault();
-      deactivate(active, true);
-      active = null;
-    }
-  }, true);
+    document.addEventListener('keydown', function (event) {
+      try {
+        if (!active) return;
 
-  document.addEventListener('input', function (event) {
-    var node = getFieldNode(event.target);
-    if (!node) return;
-    setEmptyState(node);
-  }, true);
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          deactivate(active, false);
+          active = null;
+          return;
+        }
+
+        if (isSingleLine(active) && event.key === 'Enter') {
+          event.preventDefault();
+          deactivate(active, true);
+          active = null;
+        }
+      } catch(e) {}
+    }, true);
+
+    document.addEventListener('input', function (event) {
+      try {
+        var node = getFieldNode(event.target);
+        if (!node) return;
+        setEmptyState(node);
+      } catch(e) {}
+    }, true);
+  } catch (err) {
+    console.error('CV hook error:', err);
+  }
 })();
 </script>`;
 
-  if (html.includes('</body>')) {
-    return html.replace('</body>', `${script}</body>`);
+  if (baseHtml.includes('</body>')) {
+    return baseHtml.replace('</body>', `${script}</body>`);
   }
-  return `${html}${script}`;
+  return `${baseHtml}${script}`;
 };
 
 const SAMPLE_DATA = {
@@ -486,8 +755,16 @@ const OnlineCvEditor = () => {
   const [templateOptions, setTemplateOptions] = useState([]);
   const [selectedTemplateHtml, setSelectedTemplateHtml] = useState('');
   const [persistedEditedHtml, setPersistedEditedHtml] = useState('');
+  const [avatarImageUrl, setAvatarImageUrl] = useState(DEFAULT_AVATAR_DATA_URI);
 
   const [profile, setProfile] = useState(null);
+  const authToken = useMemo(() => String(localStorage.getItem('token') || '').trim(), []);
+  const avatarModalFileInputRef = useRef(null);
+  const [avatarModalOpen, setAvatarModalOpen] = useState(false);
+  const [avatarModalUrl, setAvatarModalUrl] = useState('');
+  const [avatarModalPreview, setAvatarModalPreview] = useState(DEFAULT_AVATAR_DATA_URI);
+  const [uploadingAvatarToCloudinary, setUploadingAvatarToCloudinary] = useState(false);
+  const [avatarModalInputKey, setAvatarModalInputKey] = useState(0);
 
   const updateFieldValue = useCallback((field, rawValue) => {
     const value = String(rawValue || '').replace(/\r/g, '');
@@ -503,10 +780,172 @@ const OnlineCvEditor = () => {
     }
   }, []);
 
+  const applyAvatarUrlToPreview = useCallback((url) => {
+    const nextUrl = normalizeAvatarUrl(url) || DEFAULT_AVATAR_DATA_URI;
+    setAvatarImageUrl(nextUrl);
+    setAvatarModalPreview(nextUrl);
+
+    const iframeWin = previewFrameRef.current?.contentWindow;
+    if (iframeWin) {
+      iframeWin.postMessage({
+        __cv_editor_parent: true,
+        type: 'CV_AVATAR_SET',
+        url: nextUrl
+      }, '*');
+    }
+
+    const iframeDoc = previewFrameRef.current?.contentDocument;
+    const avatarNode = iframeDoc?.querySelector(AVATAR_NODE_SELECTOR);
+    if (avatarNode) {
+      avatarNode.setAttribute('src', nextUrl);
+    }
+  }, []);
+
+  const openAvatarCloudinaryModal = useCallback((currentAvatar) => {
+    const incoming = normalizeAvatarUrl(currentAvatar) || normalizeAvatarUrl(avatarImageUrl);
+    const preview = incoming || DEFAULT_AVATAR_DATA_URI;
+
+    setAvatarModalUrl(incoming.startsWith('data:image') ? '' : incoming);
+    setAvatarModalPreview(preview);
+    setAvatarModalOpen(true);
+  }, [avatarImageUrl]);
+
+  const bindAvatarTriggerBridge = useCallback(() => {
+    const iframe = previewFrameRef.current;
+    const iframeDoc = iframe?.contentDocument;
+    if (!iframeDoc) return;
+
+    const imgNode = iframeDoc.querySelector(AVATAR_NODE_SELECTOR);
+    const triggerNodes = Array.from(iframeDoc.querySelectorAll(AVATAR_TRIGGER_SELECTOR));
+
+    if (imgNode && !triggerNodes.includes(imgNode)) {
+      triggerNodes.push(imgNode);
+    }
+
+    triggerNodes.forEach((node) => {
+      if (!node || node.getAttribute('data-cv-parent-avatar-bound') === '1') return;
+
+      node.setAttribute('data-cv-parent-avatar-bound', '1');
+      node.style.cursor = 'pointer';
+
+      node.addEventListener('click', (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        const relatedImg = node.tagName?.toLowerCase() === 'img'
+          ? node
+          : node.querySelector('img') || iframeDoc.querySelector(AVATAR_NODE_SELECTOR);
+        const currentAvatar = normalizeAvatarUrl(relatedImg?.getAttribute('src') || avatarImageUrl);
+        openAvatarCloudinaryModal(currentAvatar);
+      }, true);
+    });
+  }, [avatarImageUrl, openAvatarCloudinaryModal]);
+
+  const handlePreviewFrameLoad = useCallback(() => {
+    window.requestAnimationFrame(() => {
+      bindAvatarTriggerBridge();
+    });
+  }, [bindAvatarTriggerBridge]);
+
+  const closeAvatarCloudinaryModal = useCallback(() => {
+    if (uploadingAvatarToCloudinary) return;
+    setAvatarModalOpen(false);
+  }, [uploadingAvatarToCloudinary]);
+
+  const pickAvatarFileForCloudinary = useCallback(() => {
+    if (uploadingAvatarToCloudinary) return;
+    avatarModalFileInputRef.current?.click();
+  }, [uploadingAvatarToCloudinary]);
+
+  const handleAvatarFileSelected = useCallback(async (event) => {
+    const file = event.target.files && event.target.files[0];
+    if (!file) return;
+
+    if (!String(file.type || '').startsWith('image/')) {
+      notify({ type: 'error', message: 'Chỉ chấp nhận file ảnh để tải lên Cloudinary.' });
+      setAvatarModalInputKey((prev) => prev + 1);
+      return;
+    }
+
+    if (file.size > 2 * 1024 * 1024) {
+      notify({ type: 'error', message: 'Ảnh đại diện không được vượt quá 2MB.' });
+      setAvatarModalInputKey((prev) => prev + 1);
+      return;
+    }
+
+    if (!authToken) {
+      notify({ type: 'error', message: 'Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại.' });
+      setAvatarModalInputKey((prev) => prev + 1);
+      return;
+    }
+
+    setUploadingAvatarToCloudinary(true);
+
+    try {
+      const body = new FormData();
+      body.append('thumbnail', file);
+
+      const authHeader = authToken.startsWith('Bearer ') ? authToken : `Bearer ${authToken}`;
+      const res = await fetch(`${API_BASE}/api/admin/templates/upload-thumbnail`, {
+        method: 'POST',
+        headers: {
+          Authorization: authHeader
+        },
+        body
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.success) {
+        throw new Error(data?.error || 'Không thể tải ảnh lên Cloudinary.');
+      }
+
+      const nextUrl = String(data?.thumbnailUrl || data?.thumbnailAbsoluteUrl || '').trim();
+      if (!nextUrl) {
+        throw new Error('Cloudinary không trả về URL ảnh hợp lệ.');
+      }
+
+      setAvatarModalUrl(nextUrl);
+      setAvatarModalPreview(nextUrl);
+      applyAvatarUrlToPreview(nextUrl);
+      notify({ type: 'success', mode: 'toast', message: 'Đã tải ảnh lên Cloudinary.' });
+    } catch (err) {
+      notify({ type: 'error', message: err?.message || 'Không thể tải ảnh lên Cloudinary.' });
+    } finally {
+      setUploadingAvatarToCloudinary(false);
+      setAvatarModalInputKey((prev) => prev + 1);
+    }
+  }, [applyAvatarUrlToPreview, authToken, notify]);
+
+  const applyAvatarFromModalUrl = useCallback(() => {
+    const nextUrl = String(avatarModalUrl || '').trim();
+    if (!nextUrl) {
+      notify({ type: 'warning', message: 'Vui lòng nhập URL ảnh hoặc tải ảnh lên Cloudinary.' });
+      return;
+    }
+
+    setAvatarModalPreview(nextUrl);
+    applyAvatarUrlToPreview(nextUrl);
+    setAvatarModalOpen(false);
+    notify({ type: 'success', mode: 'toast', message: 'Đã cập nhật ảnh đại diện cho CV.' });
+  }, [applyAvatarUrlToPreview, avatarModalUrl, notify]);
+
+  const useDefaultAvatarFromModal = useCallback(() => {
+    setAvatarModalUrl('');
+    setAvatarModalPreview(DEFAULT_AVATAR_DATA_URI);
+    applyAvatarUrlToPreview(DEFAULT_AVATAR_DATA_URI);
+    setAvatarModalOpen(false);
+    notify({ type: 'info', mode: 'toast', message: 'Đã dùng ảnh đại diện mặc định.' });
+  }, [applyAvatarUrlToPreview, notify]);
+
   useEffect(() => {
     const handlePreviewBridge = (event) => {
       const data = event?.data;
       if (!data || data.__cv_editor !== true) return;
+
+      if (data.type === 'CV_AVATAR_PICK_REQUEST') {
+        openAvatarCloudinaryModal(data.currentAvatar);
+        return;
+      }
 
       if (data.type === 'CV_FIELD_UPDATE') {
         const field = String(data.field || '').trim();
@@ -517,7 +956,25 @@ const OnlineCvEditor = () => {
 
     window.addEventListener('message', handlePreviewBridge);
     return () => window.removeEventListener('message', handlePreviewBridge);
-  }, [updateFieldValue]);
+  }, [openAvatarCloudinaryModal, updateFieldValue]);
+
+  useEffect(() => {
+    const iframe = previewFrameRef.current;
+    if (!iframe) return undefined;
+
+    const bindOnLoad = () => {
+      window.requestAnimationFrame(() => {
+        bindAvatarTriggerBridge();
+      });
+    };
+
+    iframe.addEventListener('load', bindOnLoad);
+    bindOnLoad();
+
+    return () => {
+      iframe.removeEventListener('load', bindOnLoad);
+    };
+  }, [bindAvatarTriggerBridge]);
 
   useEffect(() => {
     let active = true;
@@ -648,6 +1105,14 @@ const OnlineCvEditor = () => {
 
         const p = data.profile || {};
         setProfile(p);
+        const profileAvatar = resolveAvatarFromProfile(p, user);
+        if (profileAvatar) {
+          setAvatarImageUrl((prev) => {
+            const current = normalizeAvatarUrl(prev);
+            if (current && current !== DEFAULT_AVATAR_DATA_URI) return prev;
+            return profileAvatar;
+          });
+        }
         if (!summary && p.introHtml) setSummary(stripHtml(p.introHtml));
         fillFromLists(p);
       } catch {
@@ -658,6 +1123,17 @@ const OnlineCvEditor = () => {
     fetchProfile();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  useEffect(() => {
+    const profileAvatar = resolveAvatarFromProfile(profile, user);
+    if (!profileAvatar) return;
+
+    setAvatarImageUrl((prev) => {
+      const current = normalizeAvatarUrl(prev);
+      if (current && current !== DEFAULT_AVATAR_DATA_URI) return prev;
+      return profileAvatar;
+    });
+  }, [profile, user]);
 
   useEffect(() => {
     const fetchExistingOnlineCv = async () => {
@@ -695,7 +1171,17 @@ const OnlineCvEditor = () => {
             const savedHtml = String(data.cv?.html || '').trim();
             if (savedHtml) {
               setPersistedEditedHtml(savedHtml);
+            } else {
+              setPersistedEditedHtml('');
             }
+
+            const avatarFromMeta = normalizeAvatarUrl(data.cv?.avatarUrl);
+            const avatarFromHtml = extractAvatarUrlFromHtml(savedHtml);
+            const avatarFromProfile = resolveAvatarFromProfile(profile, user);
+            const resolvedAvatar = avatarFromMeta || avatarFromHtml || avatarFromProfile || DEFAULT_AVATAR_DATA_URI;
+            setAvatarImageUrl(resolvedAvatar);
+            setAvatarModalPreview(resolvedAvatar);
+            setAvatarModalUrl(resolvedAvatar.startsWith('data:image') ? '' : resolvedAvatar);
 
             const savedTemplateKey = normalizeTemplateKey(data.cv?.templateKey || '', '');
             if (savedTemplateKey) {
@@ -740,7 +1226,7 @@ const OnlineCvEditor = () => {
     const address = escapeHtml(pick(p.address, p.DiaChi, p.diaChi, useSample ? '123 Đường ABC, Quận 1' : ''));
     const city = escapeHtml(pick(p.city, p.ThanhPho, p.thanhPho, useSample ? 'Hồ Chí Minh' : ''));
     const link = escapeHtml(pick(p.personalLink, p.LinkCaNhan, p.linkCaNhan, useSample ? 'linkedin.com/in/nguyenvana' : ''));
-    const avatarUrl = pick(p.avatarUrl, p.AnhDaiDien, p.anhDaiDien, p.avatar, '');
+    const avatarUrl = normalizeAvatarUrl(avatarImageUrl) || DEFAULT_AVATAR_DATA_URI;
 
     const managedTemplateHtml = stripScriptsFromHtml(String(persistedEditedHtml || selectedTemplateHtml || '').trim());
     if (managedTemplateHtml) {
@@ -770,7 +1256,7 @@ const OnlineCvEditor = () => {
         rendered = rendered.replace(regex, safe);
       });
 
-      return rendered;
+      return applyAvatarUrlToHtml(rendered, avatarUrl);
     }
 
     if (templateLoading) {
@@ -838,6 +1324,7 @@ const OnlineCvEditor = () => {
         title: t,
         summary: String(summary || ''),
         templateKey: normalizeTemplateKey(templateKey),
+        avatarUrl: normalizeAvatarUrl(avatarImageUrl) || DEFAULT_AVATAR_DATA_URI,
         content: {
           skills: String(skills || ''),
           experience: String(experience || ''),
@@ -926,12 +1413,39 @@ const OnlineCvEditor = () => {
     clone.querySelectorAll('.cv-live-add-slot, .cv-live-add-section-btn, .cv-live-remove-section-btn, [data-cv-runtime="1"]').forEach((node) => node.remove());
     clone.querySelectorAll('.note, .note-badge').forEach((node) => node.remove());
 
+    const avatarNode = clone.querySelector(AVATAR_NODE_SELECTOR);
+    const currentAvatar = normalizeAvatarUrl(avatarImageUrl) || DEFAULT_AVATAR_DATA_URI;
+    if (avatarNode) {
+      avatarNode.setAttribute('src', currentAvatar);
+    }
+
     if (stripToolbar) {
       clone.querySelectorAll('.toolbar, #resetBtn').forEach((node) => node.remove());
     }
 
+    const head = clone.querySelector('head');
+    if (head) {
+      const exportStyle = clone.ownerDocument.createElement('style');
+      exportStyle.id = '__cv_export_fix__';
+      exportStyle.textContent =
+        '.toolbar,.toolbar.no-print,#resetBtn{display:none!important;}' +
+        '.contact-value{overflow-wrap:anywhere;word-break:break-word;}' +
+        '@media print{' +
+        'body{background:#fff!important;}' +
+        '.shell{padding:0!important;}' +
+        '.stage{display:block!important;max-width:none!important;overflow:visible!important;padding:0!important;}' +
+        '.cv-page{width:210mm!important;min-height:297mm!important;margin:0 auto!important;border:none!important;box-shadow:none!important;}' +
+        '.cv-header{grid-template-columns:148px 1fr!important;}' +
+        '.avatar-wrap.no-print,.avatar-wrap{display:block!important;}' +
+        '.avatar-overlay{display:none!important;}' +
+        '.contact-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important;}' +
+        '.contact-chip{min-width:0!important;}' +
+        '}';
+      head.appendChild(exportStyle);
+    }
+
     return `<!doctype html>\n${clone.outerHTML}`;
-  }, []);
+  }, [avatarImageUrl]);
 
   const previewHtml = injectPreviewEditorScript(buildHtml());
 
@@ -986,11 +1500,104 @@ const OnlineCvEditor = () => {
                 title="CV Preview"
                 className="cv-editor-preview-iframe"
                 srcDoc={previewHtml}
+                onLoad={handlePreviewFrameLoad}
               />
             </div>
           </div>
         </div>
       </div>
+
+      {avatarModalOpen ? (
+        <div className="cv-editor-avatar-modal-backdrop" onClick={closeAvatarCloudinaryModal}>
+          <div className="cv-editor-avatar-modal" onClick={(event) => event.stopPropagation()}>
+            <div className="cv-editor-avatar-modal-header">
+              <h5 className="mb-0">Đổi ảnh đại diện CV</h5>
+              <button
+                type="button"
+                className="btn-close"
+                onClick={closeAvatarCloudinaryModal}
+                disabled={uploadingAvatarToCloudinary}
+                aria-label="Đóng"
+              ></button>
+            </div>
+
+            <div className="cv-editor-avatar-modal-body">
+              <label className="form-label">Avatar URL</label>
+              <input
+                type="url"
+                className="form-control"
+                placeholder="https://res.cloudinary.com/.../image.jpg"
+                value={avatarModalUrl}
+                onChange={(event) => {
+                  const nextUrl = event.target.value;
+                  setAvatarModalUrl(nextUrl);
+                  setAvatarModalPreview(String(nextUrl || '').trim() || DEFAULT_AVATAR_DATA_URI);
+                }}
+              />
+
+              <div className="cv-editor-avatar-modal-tools mt-2">
+                <input
+                  key={avatarModalInputKey}
+                  ref={avatarModalFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={handleAvatarFileSelected}
+                />
+
+                <button
+                  type="button"
+                  className="btn btn-outline-primary"
+                  onClick={pickAvatarFileForCloudinary}
+                  disabled={uploadingAvatarToCloudinary}
+                >
+                  <i className="bi bi-upload me-2"></i>
+                  {uploadingAvatarToCloudinary ? 'Đang tải ảnh...' : 'Tải ảnh lên Cloudinary'}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={useDefaultAvatarFromModal}
+                  disabled={uploadingAvatarToCloudinary}
+                >
+                  Dùng ảnh mặc định
+                </button>
+              </div>
+
+              <div className="cv-editor-avatar-modal-preview mt-3">
+                <img
+                  src={String(avatarModalPreview || '').trim() || DEFAULT_AVATAR_DATA_URI}
+                  alt="Avatar preview"
+                  onError={(event) => {
+                    event.currentTarget.onerror = null;
+                    event.currentTarget.src = DEFAULT_AVATAR_DATA_URI;
+                  }}
+                />
+              </div>
+            </div>
+
+            <div className="cv-editor-avatar-modal-footer">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={closeAvatarCloudinaryModal}
+                disabled={uploadingAvatarToCloudinary}
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                className="btn btn-success"
+                onClick={applyAvatarFromModalUrl}
+                disabled={uploadingAvatarToCloudinary}
+              >
+                Dùng ảnh này
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

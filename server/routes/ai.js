@@ -1,10 +1,13 @@
 const express = require('express');
 const https = require('https');
+const fs = require('fs');
+const path = require('path');
 const db = require('../config/db');
 const { jobs: mockJobs } = require('../data/mockJobs');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
+const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -18,6 +21,15 @@ const AI_PROVIDER = (process.env.AI_PROVIDER || (GEMINI_API_KEY ? 'gemini' : 'op
 
 const MAX_MESSAGE_CHARS = 6000;
 const MAX_MESSAGES = 20;
+const MAX_STORED_CV_CHARS = 14000;
+const CV_STORAGE_PATH = path.join(__dirname, '../public/cvs');
+const ONLINE_META_SUFFIX = '__online.json';
+
+const VI_STOP_WORDS = new Set([
+  'anh', 'chi', 'ban', 'toi', 'la', 'va', 'hoac', 'cua', 'cho', 'voi', 'nhung', 'mot', 'nhieu',
+  'duoc', 'trong', 'tren', 'tai', 'tu', 'den', 'khi', 'neu', 'de', 've', 'co', 'khong', 'da',
+  'se', 'minh', 'jobfinder', 'cv', 'kinh', 'nghiem', 'viec', 'lam', 'ung', 'vien', 'ho', 'so'
+]);
 
 // In-memory upload config for quick CV parsing (max 5MB, PDF/DOCX only)
 const uploadCv = multer({
@@ -51,6 +63,16 @@ const safeJsonParse = (text) => {
   }
 };
 
+const dbGet = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => (err ? reject(err) : resolve(row)));
+  });
+
+const dbAll = (sql, params = []) =>
+  new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => (err ? reject(err) : resolve(rows || [])));
+  });
+
 const normalizeChatMessages = (messages) => {
   const incomingMessages = Array.isArray(messages) ? messages : null;
   if (!incomingMessages || !incomingMessages.length) return [];
@@ -63,6 +85,186 @@ const normalizeChatMessages = (messages) => {
     .filter((m) => (m.role === 'system' || m.role === 'user' || m.role === 'assistant') && m.content.trim())
     .slice(-MAX_MESSAGES)
     .map((m) => ({ ...m, content: m.content.slice(0, MAX_MESSAGE_CHARS) }));
+};
+
+const normalizeForMatch = (value = '') =>
+  String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
+    .toLowerCase()
+    .trim();
+
+const stripHtmlTags = (html = '') =>
+  String(html || '')
+    .replace(/<style[\s\S]*?<\/style>/gi, ' ')
+    .replace(/<script[\s\S]*?<\/script>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const flattenObjectText = (input) => {
+  if (input == null) return '';
+  if (typeof input === 'string' || typeof input === 'number' || typeof input === 'boolean') {
+    return String(input);
+  }
+  if (Array.isArray(input)) {
+    return input.map(flattenObjectText).filter(Boolean).join(' ');
+  }
+  if (typeof input === 'object') {
+    return Object.values(input).map(flattenObjectText).filter(Boolean).join(' ');
+  }
+  return '';
+};
+
+const extractTextFromStoredCv = async ({ filePath, filename }) => {
+  if (!filePath || !fs.existsSync(filePath)) {
+    throw new Error('Không tìm thấy file CV đã chọn.');
+  }
+
+  const ext = String(path.extname(filename || filePath) || '').toLowerCase();
+  const buffer = fs.readFileSync(filePath);
+
+  if (ext === '.pdf') {
+    const parsed = await pdfParse(buffer);
+    return parsed.text || '';
+  }
+
+  if (ext === '.docx') {
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value || '';
+  }
+
+  if (ext === '.html' || ext === '.htm') {
+    const htmlText = stripHtmlTags(fs.readFileSync(filePath, 'utf8'));
+    const metaPath = path.join(CV_STORAGE_PATH, `${path.basename(filename)}${ONLINE_META_SUFFIX}`);
+    let metaText = '';
+
+    if (fs.existsSync(metaPath)) {
+      const parsedMeta = safeJsonParse(fs.readFileSync(metaPath, 'utf8'));
+      if (parsedMeta.ok && parsedMeta.value && typeof parsedMeta.value === 'object') {
+        const raw = parsedMeta.value;
+        const pieces = [
+          String(raw.title || ''),
+          String(raw.summary || ''),
+          flattenObjectText(raw.content)
+        ].filter(Boolean);
+        metaText = pieces.join(' ');
+      }
+    }
+
+    return [metaText, htmlText].filter(Boolean).join(' ');
+  }
+
+  if (ext === '.doc') {
+    throw new Error('CV định dạng .doc chưa được hỗ trợ để phân tích tự động. Vui lòng dùng PDF hoặc DOCX.');
+  }
+
+  return String(buffer.toString('utf8') || '');
+};
+
+const extractKeywordsFromText = (text = '', limit = 22) => {
+  const freq = new Map();
+  const tokens = normalizeForMatch(text)
+    .split(/[^a-z0-9]+/g)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 3 && !VI_STOP_WORDS.has(t));
+
+  tokens.forEach((token) => {
+    freq.set(token, (freq.get(token) || 0) + 1);
+  });
+
+  return [...freq.entries()]
+    .sort((a, b) => {
+      if (b[1] !== a[1]) return b[1] - a[1];
+      return b[0].length - a[0].length;
+    })
+    .slice(0, Math.max(1, limit))
+    .map(([token]) => token);
+};
+
+const loadPublishedJobs = async (limit = 120) => {
+  const boundedLimit = Math.max(20, Math.min(250, Number(limit) || 120));
+  return dbAll(
+    `SELECT
+        ttd.MaTin AS jobId,
+        ttd.TieuDe AS title,
+        ttd.MoTa AS description,
+        ttd.YeuCau AS requirements,
+        ttd.LinhVucCongViec AS field,
+        ttd.ThanhPho AS city,
+        ttd.KinhNghiem AS experience,
+        ttd.CapBac AS level,
+        ttd.LuongTu AS salaryFrom,
+        ttd.LuongDen AS salaryTo,
+        ttd.HanNopHoSo AS deadline,
+        ntd.TenCongTy AS company
+     FROM TinTuyenDung ttd
+     JOIN NhaTuyenDung ntd ON ntd.MaNhaTuyenDung = ttd.MaNhaTuyenDung
+     WHERE ttd.TrangThai = 'Đã đăng'
+     ORDER BY ttd.NgayDang DESC
+     LIMIT ?`,
+    [boundedLimit]
+  );
+};
+
+const recommendJobsByCv = ({ jobs = [], keywords = [], preferredCity = '' }) => {
+  const cityNorm = normalizeForMatch(preferredCity);
+  const keywordList = (keywords || []).map((kw) => normalizeForMatch(kw)).filter(Boolean);
+
+  const scored = (jobs || []).map((job) => {
+    const title = normalizeForMatch(job?.title || '');
+    const field = normalizeForMatch(job?.field || '');
+    const city = normalizeForMatch(job?.city || '');
+    const body = normalizeForMatch(`${job?.requirements || ''} ${job?.description || ''}`);
+
+    let score = 0;
+    if (cityNorm && city && cityNorm === city) score += 36;
+
+    keywordList.forEach((kw, idx) => {
+      if (!kw) return;
+      const depthBoost = idx < 6 ? 1.2 : 1;
+      if (title.includes(kw)) score += 11 * depthBoost;
+      else if (field.includes(kw)) score += 8 * depthBoost;
+      else if (body.includes(kw)) score += 3 * depthBoost;
+    });
+
+    if (!cityNorm && title) score += 0.5;
+
+    return {
+      ...job,
+      score
+    };
+  });
+
+  const ranked = scored
+    .sort((a, b) => b.score - a.score)
+    .filter((job) => job.score > 0)
+    .slice(0, 8);
+
+  if (ranked.length) return ranked;
+  return scored.slice(0, 8);
+};
+
+const toVndLabel = (value) => {
+  const num = Number(value);
+  if (!Number.isFinite(num) || num <= 0) return '';
+  try {
+    return `${num.toLocaleString('vi-VN')} VND`;
+  } catch {
+    return `${num} VND`;
+  }
+};
+
+const formatJobSuggestionLine = (job, index) => {
+  const salaryFrom = toVndLabel(job?.salaryFrom);
+  const salaryTo = toVndLabel(job?.salaryTo);
+  const salary = salaryFrom || salaryTo ? `, lương ${salaryFrom || '...'}${salaryTo ? ` - ${salaryTo}` : ''}` : '';
+  const city = job?.city ? `, ${job.city}` : '';
+  const company = job?.company ? ` - ${job.company}` : '';
+  return `${index + 1}. ${job?.title || 'Vị trí phù hợp'}${company}${city}${salary}`;
 };
 
 const pickTop = (arr, n) => arr.slice(0, Math.max(0, n));
@@ -449,6 +651,130 @@ router.post('/chat/cv-file', handleCvUpload, async (req, res) => {
   } catch (err) {
     console.error('AI cv-file error:', err);
     return res.status(500).json({ success: false, error: err.message || 'Lỗi phân tích CV.' });
+  }
+});
+
+router.post('/chat/cv-stored', authenticateToken, async (req, res) => {
+  try {
+    const cvId = parseInt(req.body?.cvId, 10);
+    const userId = parseInt(req.user?.id, 10);
+    const question = String(req.body?.question || '').trim();
+    const incomingMessages = normalizeChatMessages(req.body?.messages);
+
+    if (Number.isNaN(userId)) {
+      return res.status(401).json({ success: false, error: 'Phiên đăng nhập không hợp lệ.' });
+    }
+
+    if (Number.isNaN(cvId)) {
+      return res.status(400).json({ success: false, error: 'cvId không hợp lệ.' });
+    }
+
+    const cvRow = await dbGet(
+      `SELECT MaCV AS cvId, MaNguoiDung AS userId, TieuDe AS title, TomTat AS summary, TepCV AS filename
+       FROM HoSoCV
+       WHERE MaCV = ? AND MaNguoiDung = ?
+       LIMIT 1`,
+      [cvId, userId]
+    );
+
+    if (!cvRow) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy CV đã chọn.' });
+    }
+
+    const safeFilename = path.basename(String(cvRow.filename || ''));
+    if (!safeFilename) {
+      return res.status(400).json({ success: false, error: 'CV chưa có file hợp lệ để phân tích.' });
+    }
+
+    const absolutePath = path.join(CV_STORAGE_PATH, safeFilename);
+    const cvTextRaw = await extractTextFromStoredCv({ filePath: absolutePath, filename: safeFilename });
+    const cvText = String(cvTextRaw || '').replace(/\s+/g, ' ').trim().slice(0, MAX_STORED_CV_CHARS);
+
+    if (!cvText) {
+      return res.status(400).json({
+        success: false,
+        error:
+          'Không đọc được nội dung CV đã chọn. Với file PDF scan hoặc DOC cũ, vui lòng chuyển sang PDF văn bản hoặc DOCX.'
+      });
+    }
+
+    const lastUserText =
+      question || [...incomingMessages].reverse().find((m) => m.role === 'user')?.content || 'Đánh giá CV và gợi ý việc làm phù hợp.';
+
+    const profile = await getUserProfile(userId).catch(() => null);
+    const keywords = extractKeywordsFromText(`${cvText}\n${lastUserText}`, 24);
+    const publishedJobs = await loadPublishedJobs(120);
+    const rankedJobs = recommendJobsByCv({
+      jobs: publishedJobs,
+      keywords,
+      preferredCity: profile?.city || ''
+    });
+
+    const jobBrief = rankedJobs.slice(0, 6).map((job) => ({
+      jobId: job.jobId,
+      title: job.title,
+      company: job.company,
+      city: job.city,
+      field: job.field,
+      experience: job.experience,
+      level: job.level,
+      salaryFrom: job.salaryFrom,
+      salaryTo: job.salaryTo
+    }));
+
+    const hasAIKey = (AI_PROVIDER === 'gemini' && !!GEMINI_API_KEY) || (AI_PROVIDER !== 'gemini' && !!OPENAI_API_KEY);
+
+    if (hasAIKey) {
+      const system =
+        'Bạn là trợ lý nghề nghiệp của JobFinder. Nhiệm vụ: đọc nội dung CV, đánh giá nhanh, và gợi ý việc làm phù hợp từ danh sách job được cung cấp. ' +
+        'Chỉ trả lời tiếng Việt, không markdown, không dùng *, -, #. ' +
+        'Tối đa 10 câu, có thể xuống dòng. ' +
+        'Bắt buộc nêu: 1) nhận xét CV, 2) điểm cần cải thiện, 3) 3-5 việc làm phù hợp nhất kèm lý do ngắn.';
+
+      const ai = await callLLMChat({
+        messages: [
+          { role: 'system', content: system },
+          {
+            role: 'user',
+            content:
+              `Câu hỏi người dùng: ${lastUserText}\n\n` +
+              `Thông tin người dùng: ${JSON.stringify({ userId, city: profile?.city || '', position: profile?.position || '' })}\n\n` +
+              `CV (${cvRow.title || 'CV đã chọn'}):\n${cvText}\n\n` +
+              `Danh sách công việc đang tuyển (chỉ chọn trong danh sách này):\n${JSON.stringify(jobBrief)}`
+          }
+        ],
+        temperature: 0.35
+      });
+
+      if (ai.ok) {
+        return res.json({
+          success: true,
+          reply: ai.text,
+          matchedJobs: jobBrief.slice(0, 5)
+        });
+      }
+    }
+
+    const lines = [
+      `Mình đã đọc CV: ${cvRow.title || 'CV của bạn'}.`,
+      `CV hiện đã có dữ liệu để đánh giá, nhưng bạn nên bổ sung rõ hơn thành tích theo số liệu và công nghệ/kỹ năng cốt lõi.`,
+      `Các công việc phù hợp trên JobFinder:`
+    ];
+
+    jobBrief.slice(0, 5).forEach((job, index) => {
+      lines.push(formatJobSuggestionLine(job, index));
+    });
+
+    lines.push('Nếu bạn muốn, mình sẽ viết luôn phiên bản tóm tắt CV tối ưu cho 1 vị trí trong danh sách trên.');
+
+    return res.json({
+      success: true,
+      reply: lines.join('\n'),
+      matchedJobs: jobBrief.slice(0, 5)
+    });
+  } catch (err) {
+    console.error('AI cv-stored error:', err);
+    return res.status(500).json({ success: false, error: err.message || 'Lỗi phân tích CV đã lưu.' });
   }
 });
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
+import './JobTrackerPages.css';
 
 const fmtVnd = new Intl.NumberFormat('vi-VN');
 
@@ -60,44 +61,45 @@ const MatchingJobsPage = () => {
   }, [API_BASE]);
 
   return (
-    <div className="container" style={{ paddingTop: 92, paddingBottom: 32 }}>
-      <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-          <h3 className="fw-bold mb-1">Việc làm phù hợp</h3>
-          <div className="text-muted">Gợi ý dựa trên hồ sơ của bạn (ưu tiên cùng thành phố).</div>
-        </div>
-        <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
-          Quay lại
-        </button>
-      </div>
-
-      {loading && <div className="text-muted">Đang tải...</div>}
-      {error && !loading && <div className="alert alert-danger">{error}</div>}
-
-      {!loading && !error && items.length === 0 && (
-        <div className="card border-0 shadow-sm">
-          <div className="card-body p-4">
-            <div className="text-muted">Chưa có gợi ý phù hợp.</div>
-            <div className="mt-3">
-              <Link to="/jobs" className="btn btn-primary">
-                Xem tất cả việc làm
-              </Link>
+    <div className="job-tracker-page">
+      <div className="container">
+        <div className="job-tracker-shell">
+          <header className="job-tracker-header theme-matching">
+            <div>
+              <h1 className="job-tracker-title">Việc làm phù hợp</h1>
+              <p className="job-tracker-subtitle">Gợi ý thông minh theo hồ sơ ứng viên để bạn tập trung vào cơ hội có độ khớp cao.</p>
+              {!loading && !error ? (
+                <div className="job-tracker-count">
+                  <i className="bi bi-stars"></i>
+                  {items.length.toLocaleString('vi-VN')} gợi ý dành cho bạn
+                </div>
+              ) : null}
             </div>
-          </div>
-        </div>
-      )}
+            <button type="button" className="btn job-tracker-back" onClick={() => navigate(-1)}>
+              Quay lại
+            </button>
+          </header>
 
-      {!loading && !error && items.length > 0 && (
-        <div className="row g-3">
-          {items.map((j) => (
-            <div key={j.MaTin} className="col-12">
-              <div className="card border-0 shadow-sm">
-                <div className="card-body d-flex gap-3 align-items-center flex-wrap">
-                  <div className="flex-shrink-0" style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,.08)' }}>
+          {loading ? <div className="job-tracker-state">Đang phân tích và tải việc làm phù hợp...</div> : null}
+          {error && !loading ? <div className="alert alert-danger mb-0">{error}</div> : null}
+
+          {!loading && !error && items.length === 0 ? (
+            <div className="job-tracker-empty">
+              <i className="bi bi-search-heart"></i>
+              <h5>Chưa có gợi ý phù hợp</h5>
+              <p>Hãy cập nhật hồ sơ cá nhân hoặc mở rộng tiêu chí tìm việc để nhận thêm đề xuất.</p>
+              <Link to="/jobs" className="btn btn-primary">Xem tất cả việc làm</Link>
+            </div>
+          ) : null}
+
+          {!loading && !error && items.length > 0 ? (
+            <section className="job-tracker-list">
+              {items.map((j) => (
+                <article key={j.MaTin} className="job-tracker-card">
+                  <div className="job-tracker-logo">
                     <img
                       src={j.Logo || '/images/logo.png'}
                       alt={j.TenCongTy || 'Logo'}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       onError={(e) => {
                         e.currentTarget.onerror = null;
                         e.currentTarget.src = '/images/logo.png';
@@ -105,37 +107,29 @@ const MatchingJobsPage = () => {
                     />
                   </div>
 
-                  <div className="flex-grow-1" style={{ minWidth: 260 }}>
-                    <div className="fw-bold" style={{ fontSize: 18 }}>
-                      <Link to={`/jobs/${j.MaTin}`} className="text-decoration-none">
-                        {j.TieuDe}
-                      </Link>
-                    </div>
-                    <div className="text-muted fw-semibold">{j.TenCongTy || 'Nhà tuyển dụng'}</div>
-                    <div className="d-flex flex-wrap gap-2 mt-2">
-                      <span className="badge text-bg-light border">
-                        <i className="bi bi-geo-alt me-1"></i>{j.ThanhPho || '---'}
-                      </span>
-                      <span className="badge text-bg-light border">
-                        <i className="bi bi-briefcase me-1"></i>{j.HinhThuc || '---'}
-                      </span>
-                      <span className="badge text-bg-light border">
-                        <i className="bi bi-cash-coin me-1"></i>{formatSalary(j)}
-                      </span>
+                  <div className="job-tracker-body">
+                    <h4 className="job-tracker-job-title">
+                      <Link to={`/jobs/${j.MaTin}`}>{j.TieuDe}</Link>
+                    </h4>
+                    <div className="job-tracker-company">{j.TenCongTy || 'Nhà tuyển dụng'}</div>
+
+                    <div className="job-tracker-meta">
+                      <span className="job-chip"><i className="bi bi-geo-alt"></i>{j.ThanhPho || '---'}</span>
+                      <span className="job-chip"><i className="bi bi-briefcase"></i>{j.HinhThuc || '---'}</span>
+                      <span className="job-chip"><i className="bi bi-cash-coin"></i>{formatSalary(j)}</span>
+                      <span className="job-chip match"><i className="bi bi-stars"></i>Gợi ý phù hợp</span>
                     </div>
                   </div>
 
-                  <div className="ms-auto">
-                    <Link to={`/jobs/${j.MaTin}`} className="btn btn-primary">
-                      Xem chi tiết
-                    </Link>
+                  <div className="job-tracker-actions">
+                    <Link to={`/jobs/${j.MaTin}`} className="btn btn-primary">Xem chi tiết</Link>
                   </div>
-                </div>
-              </div>
-            </div>
-          ))}
+                </article>
+              ))}
+            </section>
+          ) : null}
         </div>
-      )}
+      </div>
     </div>
   );
 };

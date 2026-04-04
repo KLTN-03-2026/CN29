@@ -295,6 +295,7 @@ router.post('/online', async (req, res) => {
         const summary = String(req.body?.summary || '').trim();
         const content = safeJsonParse(req.body?.content) || {};
         const templateKey = normalizeTemplateKey(req.body?.templateKey);
+        const avatarUrl = String(req.body?.avatarUrl || '').trim();
         const html = String(req.body?.html || '').trim();
         if (!html) return res.status(400).json({ success: false, error: 'Thiếu nội dung CV' });
 
@@ -319,7 +320,7 @@ router.post('/online', async (req, res) => {
                     const htmlPath = path.join(cvStoragePath, filename);
                     const metaPath = path.join(cvStoragePath, buildOnlineMetaFilename(filename));
                     fs.writeFileSync(htmlPath, html, 'utf8');
-                    fs.writeFileSync(metaPath, JSON.stringify({ title, summary, templateKey, content }, null, 2), 'utf8');
+                    fs.writeFileSync(metaPath, JSON.stringify({ title, summary, templateKey, content, avatarUrl }, null, 2), 'utf8');
 
                     // Clean up old files (best effort)
                     if (oldFilename) {
@@ -363,7 +364,7 @@ router.post('/online', async (req, res) => {
         const metaPath = path.join(cvStoragePath, buildOnlineMetaFilename(filename));
 
         fs.writeFileSync(htmlPath, html, 'utf8');
-        fs.writeFileSync(metaPath, JSON.stringify({ title, summary, templateKey, content }, null, 2), 'utf8');
+        fs.writeFileSync(metaPath, JSON.stringify({ title, summary, templateKey, content, avatarUrl }, null, 2), 'utf8');
 
         const relative = buildCvRelativePath(filename);
         const absolute = buildAbsoluteUrl(req, relative);
@@ -422,6 +423,17 @@ router.get('/online/:cvId', (req, res) => {
             meta = safeJsonParse(fs.readFileSync(metaFile, 'utf8')) || {};
         }
 
+        const safeFilename = path.basename(filename);
+        const htmlFile = path.join(cvStoragePath, safeFilename);
+        let html = '';
+        if (fs.existsSync(htmlFile)) {
+            try {
+                html = String(fs.readFileSync(htmlFile, 'utf8') || '');
+            } catch {
+                html = '';
+            }
+        }
+
         return res.json({
             success: true,
             cv: {
@@ -429,7 +441,9 @@ router.get('/online/:cvId', (req, res) => {
                 title: row.TieuDe || meta.title || 'CV Online',
                 summary: row.TomTat || meta.summary || '',
                 templateKey: normalizeTemplateKey(meta.templateKey),
-                content: meta.content || {}
+                content: meta.content || {},
+                avatarUrl: String(meta.avatarUrl || '').trim(),
+                html
             }
         });
     });

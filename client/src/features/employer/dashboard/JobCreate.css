@@ -1,66 +1,227 @@
 /* Styling for job create page */
 .job-create-page {
-  background: linear-gradient(135deg, #e0f2fe 0%, #f8fafc 35%, #ecfdf3 100%);
-  padding: 24px 0 32px;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(14, 165, 233, 0.18), transparent 32%),
+    radial-gradient(circle at 92% 12%, rgba(20, 184, 166, 0.16), transparent 28%),
+    linear-gradient(180deg, #eef5ff 0%, #f7fbff 42%, #f5fffb 100%);
+  padding: 20px 0 34px;
 }
 
 .job-create-shell {
-  max-width: 1120px;
+  max-width: 1160px;
   margin: 0 auto;
-  background: #f8fafc;
-  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 24px;
   padding: 20px;
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.12);
-  border: 1px solid #e2e8f0;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.1);
+  border: 1px solid rgba(191, 219, 254, 0.65);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+
+.job-create-header {
+  border: 1px solid #dbe8f6;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f8fbff 0%, #f4faff 100%);
+  padding: 12px 14px;
 }
 
 .job-create-header h2 {
   font-weight: 800;
   letter-spacing: -0.3px;
+  color: #0f172a;
 }
 
 .job-create-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 16px;
+  border: 1px solid #d9e6f3;
+  border-radius: 20px;
+  overflow: hidden;
 }
 
 .job-create-card-body {
-  padding: 22px;
-  background: #fff;
-}
-
-.job-create-editor {
-  min-height: 140px;
-  border-color: #e2e8f0;
-  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
-}
-
-.job-create-editor:focus {
-  border-color: #0ea5e9;
-  box-shadow: 0 0 0 0.18rem rgba(14, 165, 233, 0.22);
+  padding: 24px;
+  background: #ffffff;
 }
 
 .job-create-card .form-label {
-  font-weight: 600;
+  font-weight: 700;
   color: #0f172a;
+  margin-bottom: 6px;
 }
 
 .job-create-card .form-control,
 .job-create-card .form-select {
-  border-color: #e2e8f0;
+  border: 1px solid #cfdbea;
+  border-radius: 12px;
+  min-height: 44px;
+  background: #ffffff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+
+.job-create-card .form-control:hover,
+.job-create-card .form-select:hover {
+  border-color: #a7c4e6;
+  background: #fcfeff;
 }
 
 .job-create-card .form-control:focus,
 .job-create-card .form-select:focus {
-  border-color: #22c55e;
-  box-shadow: 0 0 0 0.18rem rgba(34, 197, 94, 0.15);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.18rem rgba(59, 130, 246, 0.16);
+}
+
+.job-create-helptext {
+  color: #475569;
+  font-weight: 600;
+}
+
+.job-create-editor {
+  min-height: 140px;
+  border: 1px solid #cfdbeb;
+  border-radius: 14px;
+  box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  line-height: 1.65;
+}
+
+.job-create-editor ul,
+.job-create-editor ol {
+  margin: 0 0 8px;
+  padding-left: 22px;
+}
+
+.job-create-editor li {
+  margin-bottom: 4px;
+}
+
+.job-create-editor:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 0.18rem rgba(59, 130, 246, 0.2);
+}
+
+.job-create-rich-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.job-create-rich-btn {
+  width: 34px;
+  height: 34px;
+  border: 1px solid #cdd9e7;
+  border-radius: 11px;
+  background: #ffffff;
+  color: #334155;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.job-create-rich-btn:hover {
+  border-color: #8eb2df;
+  background: #f1f7ff;
+  color: #1e3a8a;
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.12);
+}
+
+.job-create-rich-btn.is-active {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, #eaf2ff 0%, #e0ecff 100%);
+  color: #1d4ed8;
+  box-shadow: inset 0 0 0 1px rgba(59, 130, 246, 0.22);
+}
+
+.job-create-rich-btn.is-active:hover {
+  border-color: #2563eb;
+  background: linear-gradient(135deg, #dbeafe 0%, #dbeafe 100%);
+  color: #1d4ed8;
+}
+
+.job-create-rich-btn:focus-visible {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+}
+
+.job-create-rich-hint {
+  margin-left: 6px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+.job-create-back-btn,
+.job-create-cancel-btn,
+.job-create-submit-btn {
+  border-radius: 12px;
+  font-weight: 700;
+  border-width: 1px;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.job-create-back-btn,
+.job-create-cancel-btn {
+  background: #ffffff;
+  color: #1e293b;
+  border-color: #c8d6e6;
+}
+
+.job-create-back-btn:hover,
+.job-create-cancel-btn:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.12);
+}
+
+.job-create-back-btn:focus-visible,
+.job-create-cancel-btn:focus-visible,
+.job-create-submit-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.22);
+}
+
+.job-create-submit-btn {
+  border: 0;
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb 0%, #4338ca 100%);
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.24);
+}
+
+.job-create-submit-btn:hover {
+  color: #ffffff;
+  background: linear-gradient(135deg, #1d4ed8 0%, #3730a3 100%);
+  box-shadow: 0 14px 26px rgba(37, 99, 235, 0.26);
+}
+
+.job-create-submit-btn:disabled,
+.job-create-cancel-btn:disabled,
+.job-create-back-btn:disabled {
+  opacity: 0.68;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
 }
 
 @media (max-width: 768px) {
   .job-create-shell {
-    padding: 14px;
+    padding: 12px;
+    border-radius: 16px;
   }
+
   .job-create-card-body {
     padding: 16px;
+  }
+
+  .job-create-header {
+    padding: 10px 12px;
+  }
+
+  .job-create-rich-hint {
+    margin-left: 0;
+    width: 100%;
   }
 }

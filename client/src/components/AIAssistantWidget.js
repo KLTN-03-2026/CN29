@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNotification } from './NotificationProvider';
 import './AIAssistantWidget.css';
 import { useNavigate } from 'react-router-dom';
@@ -41,15 +41,41 @@ const AIAssistantWidget = () => {
     {
       role: 'assistant',
       content:
-        'Mình là AI hỗ trợ JobFinder. Bạn có thể hỏi về cách dùng website (bấm ở đâu, tìm việc, tạo CV, tài khoản...) hoặc hỏi về CV, phỏng vấn, việc làm.'
+        'Mình là AI hỗ trợ JobFinder. Bạn có thể hỏi về cách dùng website, CV, phỏng vấn, việc làm. Bạn cũng có thể chọn CV đã lưu để mình đọc và gợi ý việc phù hợp hơn.'
     }
   ]);
+  const [cvOptions, setCvOptions] = useState([]);
+  const [cvLoading, setCvLoading] = useState(false);
+  const [selectedCvId, setSelectedCvId] = useState('');
+  const [pendingUploadFile, setPendingUploadFile] = useState(null);
+  const [cvModalOpen, setCvModalOpen] = useState(false);
 
   const listRef = useRef(null);
   const threadListRef = useRef(null);
   const fileInputRef = useRef(null);
 
   const title = useMemo(() => 'AI trợ lý', []);
+  const selectedCv = useMemo(
+    () => cvOptions.find((cv) => String(cv.id) === String(selectedCvId)) || null,
+    [cvOptions, selectedCvId]
+  );
+  const attachedCvPreview = useMemo(() => {
+    if (pendingUploadFile) {
+      return {
+        name: pendingUploadFile.name,
+        subLabel: 'CV tải lên từ máy',
+        source: 'upload'
+      };
+    }
+    if (selectedCv) {
+      return {
+        name: selectedCv.name,
+        subLabel: selectedCv.isOnline ? 'CV Online đã lưu' : 'CV tải lên đã lưu',
+        source: 'stored'
+      };
+    }
+    return null;
+  }, [pendingUploadFile, selectedCv]);
 
   const busy = loading || uploading;
 
@@ -87,6 +113,98 @@ const AIAssistantWidget = () => {
       throw new Error(msg);
     }
     return data;
+  };
+
+  const loadUserCvs = useCallback(async (showErrorToast = true) => {
+    const userId = getUserId();
+    const token = getToken();
+
+    if (!userId || !token) {
+      setCvOptions([]);
+      setSelectedCvId('');
+      return [];
+    }
+
+    setCvLoading(true);
+    try {
+      const response = await fetch(`/api/cvs?userId=${encodeURIComponent(userId)}`);
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.error || 'Không tải được danh sách CV');
+      }
+
+      const nextOptions = (Array.isArray(data?.cvs) ? data.cvs : [])
+        .map((cv, index) => {
+          const id = cv?.id || cv?.cvId || cv?.MaCV || `cv-${index}`;
+          const name = String(cv?.name || cv?.TenCV || cv?.title || 'CV chưa đặt tên').trim();
+          const refUrl = String(cv?.fileUrl || cv?.fileAbsoluteUrl || '').split('?')[0].toLowerCase();
+          const isOnline = refUrl.endsWith('.html');
+          return {
+            id: String(id),
+            name,
+            isOnline,
+            label: `${name} (${isOnline ? 'CV Online' : 'CV tải lên'})`
+          };
+        })
+        .filter((cv) => cv.id);
+
+      setCvOptions(nextOptions);
+      setSelectedCvId((prev) => (nextOptions.some((cv) => cv.id === String(prev)) ? String(prev) : ''));
+
+      return nextOptions;
+    } catch (err) {
+      setCvOptions([]);
+      setSelectedCvId('');
+      if (showErrorToast) {
+        notify({ type: 'error', message: err.message || 'Không tải được CV đã lưu.' });
+      }
+      return [];
+    } finally {
+      setCvLoading(false);
+    }
+  }, [notify]);
+
+  const openCvModal = async () => {
+    if (!requireLogin('Bạn cần đăng nhập để chọn CV.')) return;
+    setCvModalOpen(true);
+    await loadUserCvs(false);
+  };
+
+  const chooseStoredCv = (cv) => {
+    if (!cv?.id) return;
+    setSelectedCvId(String(cv.id));
+    setPendingUploadFile(null);
+    setCvModalOpen(false);
+    notify({ type: 'success', message: `Đã chọn CV: ${cv.name}` });
+  };
+
+  const clearSelectedCv = () => {
+    setSelectedCvId('');
+    setPendingUploadFile(null);
+    notify({ type: 'success', message: 'Đã bỏ đính kèm CV.' });
+  };
+
+  const attachUploadedCv = (file) => {
+    if (!file || busy) return;
+
+    const allowed = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    ];
+    if (!allowed.includes(file.type)) {
+      notify({ type: 'error', message: 'Chỉ nhận file PDF hoặc DOCX.' });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      notify({ type: 'error', message: 'File quá lớn (tối đa 5MB).' });
+      return;
+    }
+
+    setPendingUploadFile(file);
+    setSelectedCvId('');
+    setCvModalOpen(false);
+    notify({ type: 'success', message: `Đã đính kèm CV: ${file.name}` });
   };
 
   const refreshUnreadCount = async () => {
@@ -188,35 +306,80 @@ const AIAssistantWidget = () => {
 
   const send = async () => {
     const text = input.trim();
-    if (!text || busy) return;
+    const hasAttachment = Boolean(attachedCvPreview);
+    if ((!text && !hasAttachment) || busy) return;
+
+    const userPrompt = text || 'Đánh giá CV đã đính kèm và gợi ý công việc phù hợp giúp mình.';
+    const composedUserMessage = pendingUploadFile
+      ? `${userPrompt}\n(Đính kèm: ${pendingUploadFile.name})`
+      : userPrompt;
 
     // Optimistic append user message
-    const nextMessages = [...messages, { role: 'user', content: text }];
+    const nextMessages = [...messages, { role: 'user', content: composedUserMessage }];
     setMessages(nextMessages);
     setInput('');
     setLoading(true);
+    if (pendingUploadFile) {
+      setUploading(true);
+    }
 
     // Let the UI paint the new message then scroll.
     setTimeout(scrollToBottom, 0);
 
     try {
-      const userId = getUserId();
-      const res = await fetch('/api/ai/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        // Send conversation context so AI can answer follow-ups naturally
-        body: JSON.stringify({
-          mode: 'general',
-          userId,
-          messages: nextMessages.slice(-20)
-        })
-      });
+      let res;
+      if (pendingUploadFile) {
+        const userId = getUserId();
+        const form = new FormData();
+        form.append('cvFile', pendingUploadFile);
+        if (userId) form.append('userId', userId);
+        form.append('question', userPrompt);
+
+        res = await fetch('/api/ai/chat/cv-file', {
+          method: 'POST',
+          body: form
+        });
+      } else if (selectedCvId) {
+        const token = getToken();
+        if (!token) {
+          throw new Error('Bạn cần đăng nhập để phân tích CV đã lưu.');
+        }
+
+        res = await fetch('/api/ai/chat/cv-stored', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            cvId: Number(selectedCvId),
+            question: userPrompt,
+            messages: nextMessages.slice(-20)
+          })
+        });
+      } else {
+        const userId = getUserId();
+        res = await fetch('/api/ai/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // Send conversation context so AI can answer follow-ups naturally
+          body: JSON.stringify({
+            mode: 'general',
+            userId,
+            messages: nextMessages.slice(-20)
+          })
+        });
+      }
+
       const data = await res.json();
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'Không thể gọi AI.');
       }
 
       setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || 'OK' }]);
+      if (pendingUploadFile) {
+        setPendingUploadFile(null);
+      }
       setTimeout(scrollToBottom, 0);
     } catch (err) {
       notify({ type: 'error', message: err.message || 'Không thể gọi AI.' });
@@ -224,55 +387,6 @@ const AIAssistantWidget = () => {
       setTimeout(scrollToBottom, 0);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const uploadCv = async (file) => {
-    if (!file || busy) return;
-    const allowed = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    if (!allowed.includes(file.type)) {
-      notify({ type: 'error', message: 'Chỉ nhận file PDF hoặc DOCX.' });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      notify({ type: 'error', message: 'File quá lớn (tối đa 5MB).' });
-      return;
-    }
-
-    const userId = getUserId();
-
-    setMessages((prev) => [...prev, { role: 'user', content: `Đã gửi CV: ${file.name}` }]);
-    setUploading(true);
-    setTimeout(scrollToBottom, 0);
-
-    const form = new FormData();
-    form.append('cvFile', file);
-    if (userId) form.append('userId', userId);
-    if (input.trim()) form.append('question', input.trim());
-
-    try {
-      const res = await fetch('/api/ai/chat/cv-file', {
-        method: 'POST',
-        body: form
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Không thể phân tích CV.');
-      }
-
-      setMessages((prev) => [...prev, { role: 'assistant', content: data.reply || 'OK' }]);
-      setTimeout(scrollToBottom, 0);
-    } catch (err) {
-      notify({ type: 'error', message: err.message || 'Không thể phân tích CV.' });
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Mình chưa đọc được CV này. Bạn thử lại với file PDF/DOCX khác nhé.' }
-      ]);
-      setTimeout(scrollToBottom, 0);
-    } finally {
       setUploading(false);
     }
   };
@@ -297,7 +411,18 @@ const AIAssistantWidget = () => {
     refreshUnreadCount();
     const id = setInterval(refreshUnreadCount, 15000);
     return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    loadUserCvs(false);
+  }, [open, loadUserCvs]);
+
+  useEffect(() => {
+    if (open) return;
+    setCvModalOpen(false);
+  }, [open]);
 
   useEffect(() => {
     if (!chatOpen) return;
@@ -439,6 +564,21 @@ const AIAssistantWidget = () => {
             )}
           </div>
 
+          {attachedCvPreview && (
+            <div className="aiw-attachment-chip">
+              <div className="aiw-attachment-icon">
+                <i className="bi bi-file-earmark-text"></i>
+              </div>
+              <div className="aiw-attachment-content">
+                <div className="aiw-attachment-name">{attachedCvPreview.name}</div>
+                <div className="aiw-attachment-sub">{attachedCvPreview.subLabel}</div>
+              </div>
+              <button type="button" className="aiw-attachment-remove" onClick={clearSelectedCv} disabled={busy}>
+                <i className="bi bi-x"></i>
+              </button>
+            </div>
+          )}
+
           <div className="aiw-input">
             <input
               value={input}
@@ -446,7 +586,7 @@ const AIAssistantWidget = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') send();
               }}
-              placeholder={'Nhập câu hỏi của bạn...'}
+              placeholder={attachedCvPreview ? 'Nhập yêu cầu thêm (có thể bỏ trống)...' : 'Nhập câu hỏi của bạn...'}
               disabled={busy}
             />
             <input
@@ -456,17 +596,102 @@ const AIAssistantWidget = () => {
               style={{ display: 'none' }}
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (file) uploadCv(file);
+                if (file) attachUploadedCv(file);
                 e.target.value = '';
               }}
             />
-            <button type="button" className="aiw-upload-btn" onClick={() => fileInputRef.current?.click()} disabled={busy} title="Đính kèm CV">
+            <button
+              type="button"
+              className={`aiw-upload-btn ${attachedCvPreview ? 'is-attached' : ''}`}
+              onClick={openCvModal}
+              disabled={busy}
+              title={attachedCvPreview ? `Đang đính kèm: ${attachedCvPreview.name}` : 'Đính kèm CV'}
+            >
               <i className="bi bi-paperclip"></i>
             </button>
-            <button type="button" onClick={send} disabled={busy || !input.trim()}>
+            <button type="button" onClick={send} disabled={busy || (!input.trim() && !attachedCvPreview)}>
               <i className="bi bi-send"></i>
             </button>
           </div>
+
+          {cvModalOpen && (
+            <div
+              className="aiw-cv-modal-backdrop"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Đính kèm CV"
+              onClick={() => setCvModalOpen(false)}
+            >
+              <div className="aiw-cv-modal" onClick={(e) => e.stopPropagation()}>
+                <div className="aiw-cv-modal-head">
+                  <h6>Đính kèm CV</h6>
+                  <button type="button" className="aiw-cv-modal-close" onClick={() => setCvModalOpen(false)}>
+                    <i className="bi bi-x"></i>
+                  </button>
+                </div>
+
+                <div className="aiw-cv-modal-actions">
+                  <button
+                    type="button"
+                    className={`aiw-cv-modal-btn ${cvLoading ? 'loading' : ''}`}
+                    onClick={() => loadUserCvs(true)}
+                    disabled={busy || cvLoading}
+                  >
+                    <i className="bi bi-arrow-clockwise"></i>
+                    <span>Tải lại CV</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="aiw-cv-modal-btn primary"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={busy}
+                  >
+                    <i className="bi bi-upload"></i>
+                    <span>Upload CV từ máy</span>
+                  </button>
+                </div>
+
+                <div className="aiw-cv-modal-body">
+                  {cvLoading ? (
+                    <div className="aiw-cv-empty">Đang tải danh sách CV...</div>
+                  ) : cvOptions.length === 0 ? (
+                    <div className="aiw-cv-empty">Bạn chưa có CV nào đã lưu.</div>
+                  ) : (
+                    <div className="aiw-cv-list">
+                      {cvOptions.map((cv) => {
+                        const active = String(selectedCvId) === String(cv.id);
+                        return (
+                          <button
+                            key={cv.id}
+                            type="button"
+                            className={`aiw-cv-item ${active ? 'active' : ''}`}
+                            onClick={() => chooseStoredCv(cv)}
+                          >
+                            <div className="aiw-cv-item-title">{cv.name}</div>
+                            <div className="aiw-cv-item-meta">{cv.isOnline ? 'CV Online' : 'CV tải lên'}</div>
+                            <div className="aiw-cv-item-state">{active ? 'Đã chọn' : 'Chọn CV này'}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="aiw-cv-modal-foot">
+                  {attachedCvPreview ? (
+                    <div className="aiw-cv-selected-note">
+                      Đang dùng: {attachedCvPreview.name}
+                    </div>
+                  ) : (
+                    <div className="aiw-cv-selected-note">Chưa chọn CV (AI sẽ chat thường)</div>
+                  )}
+                  <button type="button" className="aiw-cv-clear-btn" onClick={clearSelectedCv} disabled={!attachedCvPreview || busy}>
+                    Bỏ chọn CV
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -496,14 +721,11 @@ const AIAssistantWidget = () => {
               >
                 <i className="bi bi-bookmark" />
               </button>
-              <button type="button" className="aiw-pill-btn" aria-label="Hồ sơ" title="Hồ sơ">
-                <i className="bi bi-person" />
-              </button>
               <button
                 type="button"
                 className="aiw-pill-btn"
                 aria-label="Hỏi đáp"
-                title="Chát"
+                title="Tin nhắn"
                 onClick={() => {
                   if (!requireLogin('Bạn cần đăng nhập để xem tin nhắn.')) return;
                   setChatOpen((v) => !v);

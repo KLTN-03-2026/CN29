@@ -19,8 +19,8 @@ const Footer = () => {
                         <div className="fw-semibold mb-2 jf-footer-title">Dành cho ứng viên</div>
                         <ul className="list-unstyled mb-0">
                             <li><Link to="/jobs">Khám phá việc làm</Link></li>
-                            <li><Link to="/create-cv">Mẫu CV chuyên nghiệp</Link></li>
-                            <li><Link to="/cv-management">Quản lý CV đã tạo</Link></li>
+                            <li><Link to="/jobs/saved">Việc làm đã lưu</Link></li>
+                            <li><Link to="/jobs/applied">Việc làm đã ứng tuyển</Link></li>
                             <li><Link to="/profile">Hoàn thiện hồ sơ</Link></li>
                         </ul>
                     </div>

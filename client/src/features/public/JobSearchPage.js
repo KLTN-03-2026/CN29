@@ -67,40 +67,6 @@ const formatSalary = (job) => {
   return 'Thỏa thuận';
 };
 
-const mapMockJob = (job) => {
-  const salary = Number.isFinite(Number(job.salaryValue)) ? Number(job.salaryValue) * 1000000 : null;
-  const employmentType = (() => {
-    if (job.type === 'fulltime') return 'Toàn thời gian';
-    if (job.type === 'parttime') return 'Bán thời gian';
-    if (job.type === 'intern') return 'Thực tập';
-    if (job.type === 'remote') return 'Remote';
-    return 'Khác';
-  })();
-
-  return {
-    MaTin: job.id,
-    TieuDe: job.title,
-    MoTa: null,
-    YeuCau: null,
-    QuyenLoi: null,
-    KinhNghiem: job.experience || '',
-    CapBac: '',
-    LinhVucCongViec: job.career || '',
-    LinhVucCongTy: job.career || '',
-    LuongTu: salary,
-    LuongDen: salary,
-    KieuLuong: salary ? 'Tháng' : 'Thỏa thuận',
-    DiaDiem: job.location || '',
-    ThanhPho: job.province || '',
-    HinhThuc: employmentType,
-    TrangThai: 'Đã đăng',
-    NgayDang: job.postedAt || new Date().toISOString(),
-    HanNopHoSo: '',
-    TenCongTy: job.company || 'Nhà tuyển dụng',
-    Logo: job.logo || '/images/logo.png'
-  };
-};
-
 const ADV_DEFAULTS = {
   exp: 'Tất cả',
   level: 'Tất cả',
@@ -269,16 +235,11 @@ const JobSearchPage = () => {
         const response = await fetch(`${API_BASE}/jobs`);
         const data = await response.json().catch(() => []);
 
-        if (response.ok && Array.isArray(data) && data.length > 0) {
-          if (!cancelled) setJobs(data);
-          return;
+        if (!response.ok) {
+          throw new Error('Không tải được danh sách việc làm');
         }
 
-        const mockResponse = await fetch(`${API_BASE}/api/mock-jobs`);
-        const mockData = await mockResponse.json().catch(() => []);
-        if (!cancelled) {
-          setJobs(Array.isArray(mockData) ? mockData.map(mapMockJob) : []);
-        }
+        if (!cancelled) setJobs(Array.isArray(data) ? data : []);
       } catch (loadError) {
         if (!cancelled) {
           setError(loadError.message || 'Không tải được danh sách việc làm');

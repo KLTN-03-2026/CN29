@@ -1,11 +1,130 @@
 import React, { useMemo, useState } from 'react';
-import { Eye, PencilLine, RotateCcw, Trash2, Users } from 'lucide-react';
+import { Building2, Eye, Mail, MapPin, PencilLine, RotateCcw, Trash2, Users } from 'lucide-react';
 
 const formatDateTime = (value) => {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
     return date.toLocaleString('vi-VN');
+};
+
+const formatDateOnly = (value) => {
+    if (!value) return '-';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '-';
+    return date.toLocaleDateString('vi-VN');
+};
+
+const toInputDate = (value) => {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return '';
+    const yyyy = date.getFullYear();
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+};
+
+const toSafeString = (value) => String(value ?? '').trim();
+
+const createEmptyCandidateForm = () => ({
+    birthday: '',
+    gender: '',
+    city: '',
+    district: '',
+    address: '',
+    title: '',
+    education: '',
+    experience: 0,
+    personalLink: '',
+    intro: ''
+});
+
+const createEmptyEmployerForm = () => ({
+    companyName: '',
+    taxCode: '',
+    website: '',
+    city: '',
+    address: '',
+    description: ''
+});
+
+const buildEditForm = (user, detail) => {
+    const detailUser = detail?.user || user || {};
+    const candidate = detail?.candidateProfile || null;
+    const employer = detail?.employerProfile || null;
+    const role = detailUser?.VaiTro || 'Ứng viên';
+
+    return {
+        fullName: toSafeString(detailUser?.HoTen),
+        email: toSafeString(detailUser?.Email),
+        phone: toSafeString(detailUser?.SoDienThoai),
+        address: toSafeString(detailUser?.DiaChi),
+        role,
+        status: Number(detailUser?.TrangThai ?? 1),
+        candidateEnabled: role === 'Ứng viên',
+        employerEnabled: role === 'Nhà tuyển dụng',
+        candidate: {
+            birthday: toInputDate(candidate?.NgaySinh),
+            gender: toSafeString(candidate?.GioiTinh),
+            city: toSafeString(candidate?.ThanhPho),
+            district: toSafeString(candidate?.QuanHuyen),
+            address: toSafeString(candidate?.DiaChi),
+            title: toSafeString(candidate?.ChucDanh),
+            education: toSafeString(candidate?.TrinhDoHocVan),
+            experience: Number(candidate?.SoNamKinhNghiem || 0),
+            personalLink: toSafeString(candidate?.LinkCaNhan),
+            intro: toSafeString(candidate?.GioiThieuBanThan)
+        },
+        employer: {
+            companyName: toSafeString(employer?.TenCongTy),
+            taxCode: toSafeString(employer?.MaSoThue),
+            website: toSafeString(employer?.Website),
+            city: toSafeString(employer?.ThanhPho),
+            address: toSafeString(employer?.DiaChi),
+            description: toSafeString(employer?.MoTa)
+        }
+    };
+};
+
+const buildUserUpdatePayload = (form) => {
+    const role = form?.role || 'Ứng viên';
+    const payload = {
+        fullName: toSafeString(form?.fullName),
+        email: toSafeString(form?.email),
+        phone: toSafeString(form?.phone),
+        address: toSafeString(form?.address),
+        role,
+        status: Number(form?.status ?? 1)
+    };
+
+    if (role === 'Ứng viên') {
+        payload.candidateProfile = {
+            birthday: toSafeString(form?.candidate?.birthday),
+            gender: toSafeString(form?.candidate?.gender),
+            city: toSafeString(form?.candidate?.city),
+            district: toSafeString(form?.candidate?.district),
+            address: toSafeString(form?.candidate?.address),
+            title: toSafeString(form?.candidate?.title),
+            education: toSafeString(form?.candidate?.education),
+            experience: Number(form?.candidate?.experience ?? 0),
+            personalLink: toSafeString(form?.candidate?.personalLink),
+            intro: toSafeString(form?.candidate?.intro)
+        };
+    }
+
+    if (role === 'Nhà tuyển dụng') {
+        payload.employerProfile = {
+            companyName: toSafeString(form?.employer?.companyName),
+            taxCode: toSafeString(form?.employer?.taxCode),
+            website: toSafeString(form?.employer?.website),
+            city: toSafeString(form?.employer?.city),
+            address: toSafeString(form?.employer?.address),
+            description: toSafeString(form?.employer?.description)
+        };
+    }
+
+    return payload;
 };
 
 const isUserSoftDeleted = (user) => !!user?.NgayXoa;
@@ -31,9 +150,9 @@ const getStatusBadge = (user) => {
     return <span className="badge bg-warning-subtle text-warning-emphasis">Đã chặn</span>;
 };
 
-const UserInfoField = ({ label, value }) => (
-    <div className="col-md-6 mb-2">
-        <small className="text-muted d-block">{label}</small>
+const UserInfoField = ({ label, value, className = '' }) => (
+    <div className={`admin-users-info-field ${className}`.trim()}>
+        <small>{label}</small>
         <div>{value || '-'}</div>
     </div>
 );
@@ -63,8 +182,20 @@ const AdminUsersPage = ({
     const [editModal, setEditModal] = useState({
         open: false,
         user: null,
-        role: 'Ứng viên',
-        status: 1,
+        loadingDetail: false,
+        form: {
+            fullName: '',
+            email: '',
+            phone: '',
+            address: '',
+            role: 'Ứng viên',
+            status: 1,
+            candidateEnabled: false,
+            employerEnabled: false,
+            candidate: createEmptyCandidateForm(),
+            employer: createEmptyEmployerForm()
+        },
+        initialSnapshot: '',
         saving: false,
         error: ''
     });
@@ -120,27 +251,112 @@ const AdminUsersPage = ({
         }
     };
 
-    const openEditModal = (user) => {
+    const openEditModal = async (user) => {
         clearRowError(user.MaNguoiDung);
+        const initialForm = buildEditForm(user, null);
         setEditModal({
             open: true,
             user,
-            role: user.VaiTro || 'Ứng viên',
-            status: Number(user.TrangThai ?? 1),
+            loadingDetail: true,
+            form: initialForm,
+            initialSnapshot: JSON.stringify(buildUserUpdatePayload(initialForm)),
             saving: false,
             error: ''
         });
+
+        if (typeof onViewUserDetail !== 'function') {
+            setEditModal((prev) => ({ ...prev, loadingDetail: false }));
+            return;
+        }
+
+        try {
+            const detail = await onViewUserDetail(user.MaNguoiDung);
+            const nextForm = buildEditForm(user, detail);
+            setEditModal((prev) => ({
+                ...prev,
+                loadingDetail: false,
+                form: nextForm,
+                initialSnapshot: JSON.stringify(buildUserUpdatePayload(nextForm)),
+                error: ''
+            }));
+        } catch (error) {
+            setEditModal((prev) => ({
+                ...prev,
+                loadingDetail: false,
+                error: error?.message || 'Không tải được chi tiết để chỉnh sửa.'
+            }));
+        }
     };
 
     const closeEditModal = () => {
         setEditModal({
             open: false,
             user: null,
-            role: 'Ứng viên',
-            status: 1,
+            loadingDetail: false,
+            form: {
+                fullName: '',
+                email: '',
+                phone: '',
+                address: '',
+                role: 'Ứng viên',
+                status: 1,
+                candidateEnabled: false,
+                employerEnabled: false,
+                candidate: createEmptyCandidateForm(),
+                employer: createEmptyEmployerForm()
+            },
+            initialSnapshot: '',
             saving: false,
             error: ''
         });
+    };
+
+    const updateEditField = (field, value) => {
+        setEditModal((prev) => ({
+            ...prev,
+            form: {
+                ...prev.form,
+                [field]: value
+            }
+        }));
+    };
+
+    const updateRole = (role) => {
+        setEditModal((prev) => ({
+            ...prev,
+            form: {
+                ...prev.form,
+                role,
+                candidateEnabled: role === 'Ứng viên',
+                employerEnabled: role === 'Nhà tuyển dụng'
+            }
+        }));
+    };
+
+    const updateCandidateField = (field, value) => {
+        setEditModal((prev) => ({
+            ...prev,
+            form: {
+                ...prev.form,
+                candidate: {
+                    ...prev.form.candidate,
+                    [field]: value
+                }
+            }
+        }));
+    };
+
+    const updateEmployerField = (field, value) => {
+        setEditModal((prev) => ({
+            ...prev,
+            form: {
+                ...prev.form,
+                employer: {
+                    ...prev.form.employer,
+                    [field]: value
+                }
+            }
+        }));
     };
 
     const submitEditModal = async () => {
@@ -150,10 +366,7 @@ const AdminUsersPage = ({
         setRowBusyId(userId);
         clearRowError(userId);
         try {
-            await onSaveUser(userId, {
-                role: editModal.role,
-                status: Number(editModal.status)
-            });
+            await onSaveUser(userId, buildUserUpdatePayload(editModal.form));
             closeEditModal();
         } catch (error) {
             const message = error?.message || 'Không cập nhật được người dùng';
@@ -198,10 +411,13 @@ const AdminUsersPage = ({
     const avatarUrl = viewModal.detail?.avatarAbsoluteUrl || viewModal.detail?.avatarUrl || '';
     const candidateProfile = viewModal.detail?.candidateProfile || null;
     const employerProfile = viewModal.detail?.employerProfile || null;
+    const editRole = editModal.form.role;
+    const showCandidateSection = editRole === 'Ứng viên';
+    const showEmployerSection = editRole === 'Nhà tuyển dụng';
 
+    const currentEditSnapshot = JSON.stringify(buildUserUpdatePayload(editModal.form));
     const editDirty = Boolean(editModal.user) && (
-        editModal.role !== (editModal.user?.VaiTro || 'Ứng viên')
-        || Number(editModal.status) !== Number(editModal.user?.TrangThai ?? 1)
+        currentEditSnapshot !== editModal.initialSnapshot
     );
 
     return (
@@ -301,11 +517,11 @@ const AdminUsersPage = ({
 
             {viewModal.open && (
                 <div className="admin-confirm-backdrop" role="dialog" aria-modal="true">
-                    <div className="admin-confirm-dialog card border-0 shadow-sm" style={{ maxWidth: 860 }}>
-                        <div className="card-header bg-white border-0 d-flex align-items-center justify-content-between">
+                    <div className="admin-confirm-dialog admin-users-view-dialog card border-0 shadow-sm">
+                        <div className="card-header bg-white border-0 d-flex align-items-center justify-content-between admin-users-view-header">
                             <h5 className="mb-0">Thông tin người dùng</h5>
-                            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setViewModal({ open: false, user: null, detail: null, loading: false, error: '' })}>
-                                Đóng
+                            <button type="button" className="admin-users-close-btn" onClick={() => setViewModal({ open: false, user: null, detail: null, loading: false, error: '' })}>
+                                <i className="bi bi-x-lg"></i>
                             </button>
                         </div>
                         <div className="card-body">
@@ -313,87 +529,120 @@ const AdminUsersPage = ({
                             {!viewModal.loading && viewModal.error && <div className="alert alert-danger mb-0">{viewModal.error}</div>}
 
                             {!viewModal.loading && !viewModal.error && detailUser && (
-                                <div>
-                                    <div className="d-flex flex-wrap align-items-center gap-3 mb-3">
+                                <div className="admin-users-view-shell">
+                                    <div className="admin-users-view-hero">
                                         {avatarUrl ? (
                                             <img
                                                 src={avatarUrl}
                                                 alt="avatar"
-                                                style={{ width: 72, height: 72, borderRadius: '50%', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                                                className="admin-users-avatar"
                                             />
                                         ) : (
-                                            <div
-                                                style={{
-                                                    width: 72,
-                                                    height: 72,
-                                                    borderRadius: '50%',
-                                                    border: '1px solid #e2e8f0',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    justifyContent: 'center',
-                                                    fontWeight: 700,
-                                                    color: '#334155',
-                                                    background: '#f8fafc'
-                                                }}
-                                            >
+                                            <div className="admin-users-avatar admin-users-avatar-fallback">
                                                 {(detailUser.HoTen || detailUser.Email || '?').charAt(0).toUpperCase()}
                                             </div>
                                         )}
-                                        <div>
+
+                                        <div className="admin-users-hero-content">
                                             <h6 className="mb-1">{detailUser.HoTen || '-'}</h6>
-                                            <div className="text-muted small">{detailUser.Email}</div>
-                                            <div className="text-muted small">Vai trò: {detailUser.VaiTro || '-'}</div>
+                                            <div className="admin-users-hero-sub">
+                                                <Mail size={14} />
+                                                <span>{detailUser.Email || '-'}</span>
+                                            </div>
+                                            <div className="admin-users-hero-tags">
+                                                <span className="badge rounded-pill text-bg-light border">{detailUser.VaiTro || 'Ứng viên'}</span>
+                                                {getStatusBadge(detailUser)}
+                                            </div>
                                         </div>
                                     </div>
 
-                                    <div className="row">
-                                        <UserInfoField label="Số điện thoại" value={detailUser.SoDienThoai} />
-                                        <UserInfoField label="Trạng thái" value={Number(detailUser.TrangThai) === 1 ? 'Hoạt động' : 'Đã chặn'} />
-                                        <UserInfoField label="Ngày tạo" value={formatDateTime(detailUser.NgayTao)} />
-                                        <UserInfoField label="Ngày cập nhật" value={formatDateTime(detailUser.NgayCapNhat)} />
-                                        <UserInfoField label="Ngày xóa" value={formatDateTime(detailUser.NgayXoa)} />
+                                    <div className="admin-users-view-grid">
+                                        <UserInfoField
+                                            label="Số điện thoại"
+                                            value={detailUser.SoDienThoai}
+                                            className="admin-users-info-card"
+                                        />
+                                        <UserInfoField
+                                            label="Địa chỉ"
+                                            value={detailUser.DiaChi}
+                                            className="admin-users-info-card"
+                                        />
+                                        <UserInfoField
+                                            label="Ngày tạo"
+                                            value={formatDateTime(detailUser.NgayTao)}
+                                            className="admin-users-info-card"
+                                        />
+                                        <UserInfoField
+                                            label="Ngày cập nhật"
+                                            value={formatDateTime(detailUser.NgayCapNhat)}
+                                            className="admin-users-info-card"
+                                        />
+                                        <UserInfoField
+                                            label="Ngày xóa"
+                                            value={formatDateTime(detailUser.NgayXoa)}
+                                            className="admin-users-info-card"
+                                        />
                                     </div>
 
                                     {candidateProfile && (
-                                        <div className="mt-3">
-                                            <h6 className="mb-2">Thông tin ứng viên</h6>
-                                            <div className="row">
-                                                <UserInfoField label="Chức danh" value={candidateProfile.ChucDanh} />
-                                                <UserInfoField label="Giới tính" value={candidateProfile.GioiTinh} />
-                                                <UserInfoField label="Ngày sinh" value={formatDateTime(candidateProfile.NgaySinh)} />
-                                                <UserInfoField label="Thành phố" value={candidateProfile.ThanhPho} />
-                                                <UserInfoField label="Quận/Huyện" value={candidateProfile.QuanHuyen} />
-                                                <UserInfoField label="Trình độ học vấn" value={candidateProfile.TrinhDoHocVan} />
-                                                <UserInfoField label="Số năm kinh nghiệm" value={candidateProfile.SoNamKinhNghiem} />
-                                                <UserInfoField label="Link cá nhân" value={candidateProfile.LinkCaNhan} />
+                                        <div className="admin-users-section mt-3">
+                                            <h6 className="mb-2 d-flex align-items-center gap-2">
+                                                <MapPin size={16} />
+                                                Thông tin ứng viên
+                                            </h6>
+                                            <div className="admin-users-view-grid">
+                                                <UserInfoField label="Chức danh" value={candidateProfile.ChucDanh} className="admin-users-info-card" />
+                                                <UserInfoField label="Giới tính" value={candidateProfile.GioiTinh} className="admin-users-info-card" />
+                                                <UserInfoField label="Ngày sinh" value={formatDateOnly(candidateProfile.NgaySinh)} className="admin-users-info-card" />
+                                                <UserInfoField label="Thành phố" value={candidateProfile.ThanhPho} className="admin-users-info-card" />
+                                                <UserInfoField label="Quận/Huyện" value={candidateProfile.QuanHuyen} className="admin-users-info-card" />
+                                                <UserInfoField label="Địa chỉ chi tiết" value={candidateProfile.DiaChi} className="admin-users-info-card" />
+                                                <UserInfoField label="Trình độ học vấn" value={candidateProfile.TrinhDoHocVan} className="admin-users-info-card" />
+                                                <UserInfoField label="Số năm kinh nghiệm" value={candidateProfile.SoNamKinhNghiem} className="admin-users-info-card" />
+                                                <UserInfoField label="Link cá nhân" value={candidateProfile.LinkCaNhan} className="admin-users-info-card" />
                                             </div>
                                             {candidateProfile.GioiThieuBanThan ? (
-                                                <div className="mt-2">
+                                                <div className="mt-2 admin-users-note-box">
                                                     <small className="text-muted d-block">Giới thiệu bản thân</small>
-                                                    <div className="border rounded p-2 bg-light-subtle">{candidateProfile.GioiThieuBanThan}</div>
+                                                    <div>{candidateProfile.GioiThieuBanThan}</div>
                                                 </div>
                                             ) : null}
                                         </div>
                                     )}
 
                                     {employerProfile && (
-                                        <div className="mt-3">
-                                            <h6 className="mb-2">Thông tin nhà tuyển dụng</h6>
-                                            <div className="row">
-                                                <UserInfoField label="Tên công ty" value={employerProfile.TenCongTy} />
-                                                <UserInfoField label="Mã số thuế" value={employerProfile.MaSoThue} />
-                                                <UserInfoField label="Website" value={employerProfile.Website} />
-                                                <UserInfoField label="Thành phố" value={employerProfile.ThanhPho} />
-                                                <UserInfoField label="Địa chỉ" value={employerProfile.DiaChi} />
+                                        <div className="admin-users-section mt-3">
+                                            <h6 className="mb-2 d-flex align-items-center gap-2">
+                                                <Building2 size={16} />
+                                                Thông tin nhà tuyển dụng
+                                            </h6>
+                                            <div className="admin-users-view-grid">
+                                                <UserInfoField label="Tên công ty" value={employerProfile.TenCongTy} className="admin-users-info-card" />
+                                                <UserInfoField label="Mã số thuế" value={employerProfile.MaSoThue} className="admin-users-info-card" />
+                                                <UserInfoField label="Website" value={employerProfile.Website} className="admin-users-info-card" />
+                                                <UserInfoField label="Thành phố" value={employerProfile.ThanhPho} className="admin-users-info-card" />
+                                                <UserInfoField label="Địa chỉ" value={employerProfile.DiaChi} className="admin-users-info-card" />
                                             </div>
                                             {employerProfile.MoTa ? (
-                                                <div className="mt-2">
+                                                <div className="mt-2 admin-users-note-box">
                                                     <small className="text-muted d-block">Mô tả công ty</small>
-                                                    <div className="border rounded p-2 bg-light-subtle">{employerProfile.MoTa}</div>
+                                                    <div>{employerProfile.MoTa}</div>
                                                 </div>
                                             ) : null}
                                         </div>
                                     )}
+                                </div>
+                            )}
+
+                            {!viewModal.loading && !viewModal.error && (
+                                <div className="admin-users-view-footer mt-3">
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-secondary"
+                                        onClick={() => setViewModal({ open: false, user: null, detail: null, loading: false, error: '' })}
+                                    >
+                                        Hủy
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -403,62 +652,306 @@ const AdminUsersPage = ({
 
             {editModal.open && (
                 <div className="admin-confirm-backdrop" role="dialog" aria-modal="true">
-                    <div className="admin-confirm-dialog card border-0 shadow-sm" style={{ maxWidth: 620 }}>
+                    <div className="admin-confirm-dialog admin-users-edit-dialog card border-0 shadow-sm">
                         <div className="card-body">
-                            <h5 className="mb-3">Sửa người dùng #{editModal.user?.MaNguoiDung}</h5>
-                            <div className="row g-3">
-                                <div className="col-md-6">
-                                    <label className="form-label">Vai trò</label>
-                                    <select
-                                        className="form-select"
-                                        value={editModal.role}
-                                        onChange={(e) => setEditModal((prev) => ({ ...prev, role: e.target.value }))}
-                                        disabled={editModal.saving}
-                                    >
-                                        <option value="Ứng viên">Ứng viên</option>
-                                        <option value="Nhà tuyển dụng">Nhà tuyển dụng</option>
-                                        <option value="Quản trị">Quản trị</option>
-                                    </select>
-                                </div>
-                                <div className="col-md-6">
-                                    <label className="form-label">Trạng thái</label>
-                                    <select
-                                        className="form-select"
-                                        value={editModal.status}
-                                        onChange={(e) => setEditModal((prev) => ({ ...prev, status: Number(e.target.value) }))}
-                                        disabled={editModal.saving}
-                                    >
-                                        <option value={1}>Hoạt động</option>
-                                        <option value={0}>Đã chặn</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            {editModal.user?.NgayXoa ? (
-                                <div className="alert alert-warning mt-3 mb-0">
-                                    Tài khoản đã bị xóa mềm vào {formatDateTime(editModal.user.NgayXoa)}. Chuyển trạng thái về hoạt động sẽ tự động bỏ ngày xóa.
-                                </div>
-                            ) : null}
-
-                            {editModal.error ? <div className="text-danger small mt-2">{editModal.error}</div> : null}
-
-                            <div className="d-flex justify-content-end gap-2 mt-4">
-                                <button type="button" className="btn btn-outline-secondary" onClick={closeEditModal} disabled={editModal.saving}>
-                                    Hủy
-                                </button>
+                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                <h5 className="mb-0">Sửa người dùng #{editModal.user?.MaNguoiDung}</h5>
                                 <button
                                     type="button"
-                                    className="btn btn-primary"
-                                    onClick={submitEditModal}
-                                    disabled={editModal.saving || !editDirty}
+                                    className="btn btn-sm btn-outline-secondary"
+                                    onClick={closeEditModal}
+                                    disabled={editModal.saving}
                                 >
-                                    {editModal.saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                    Đóng
                                 </button>
                             </div>
+
+                            {editModal.loadingDetail ? (
+                                <div className="alert alert-info mb-0">Đang tải đầy đủ thông tin người dùng...</div>
+                            ) : (
+                                <>
+                                    <div className="admin-users-edit-section">
+                                        <h6 className="mb-3">Thông tin cơ bản</h6>
+                                        <div className="row g-3">
+                                            <div className="col-md-6">
+                                                <label className="form-label">Họ tên</label>
+                                                <input
+                                                    className="form-control"
+                                                    value={editModal.form.fullName}
+                                                    onChange={(e) => updateEditField('fullName', e.target.value)}
+                                                    disabled={editModal.saving}
+                                                    placeholder="Nhập họ tên"
+                                                />
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label">Email</label>
+                                                <input
+                                                    type="email"
+                                                    className="form-control"
+                                                    value={editModal.form.email}
+                                                    onChange={(e) => updateEditField('email', e.target.value)}
+                                                    disabled={editModal.saving}
+                                                    placeholder="name@example.com"
+                                                />
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label">Số điện thoại</label>
+                                                <input
+                                                    className="form-control"
+                                                    value={editModal.form.phone}
+                                                    onChange={(e) => updateEditField('phone', e.target.value)}
+                                                    disabled={editModal.saving}
+                                                    placeholder="Nhập số điện thoại"
+                                                />
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label">Địa chỉ</label>
+                                                <input
+                                                    className="form-control"
+                                                    value={editModal.form.address}
+                                                    onChange={(e) => updateEditField('address', e.target.value)}
+                                                    disabled={editModal.saving}
+                                                    placeholder="Nhập địa chỉ"
+                                                />
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label">Vai trò</label>
+                                                <select
+                                                    className="form-select"
+                                                    value={editModal.form.role}
+                                                    onChange={(e) => updateRole(e.target.value)}
+                                                    disabled={editModal.saving}
+                                                >
+                                                    <option value="Ứng viên">Ứng viên</option>
+                                                    <option value="Nhà tuyển dụng">Nhà tuyển dụng</option>
+                                                    <option value="Quản trị">Quản trị</option>
+                                                </select>
+                                            </div>
+                                            <div className="col-md-6">
+                                                <label className="form-label">Trạng thái</label>
+                                                <select
+                                                    className="form-select"
+                                                    value={editModal.form.status}
+                                                    onChange={(e) => updateEditField('status', Number(e.target.value))}
+                                                    disabled={editModal.saving}
+                                                >
+                                                    <option value={1}>Hoạt động</option>
+                                                    <option value={0}>Đã chặn</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {showCandidateSection && (
+                                        <div className="admin-users-edit-section mt-3">
+                                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                                <h6 className="mb-0">Hồ sơ ứng viên</h6>
+                                            </div>
+
+                                            <div className="row g-3">
+                                                <div className="col-md-4">
+                                                    <label className="form-label">Ngày sinh</label>
+                                                    <input
+                                                        type="date"
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.birthday}
+                                                        onChange={(e) => updateCandidateField('birthday', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label">Giới tính</label>
+                                                    <select
+                                                        className="form-select"
+                                                        value={editModal.form.candidate.gender}
+                                                        onChange={(e) => updateCandidateField('gender', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    >
+                                                        <option value="">Chưa chọn</option>
+                                                        <option value="Nam">Nam</option>
+                                                        <option value="Nữ">Nữ</option>
+                                                        <option value="Khác">Khác</option>
+                                                    </select>
+                                                </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label">Số năm kinh nghiệm</label>
+                                                    <input
+                                                        type="number"
+                                                        min={0}
+                                                        max={60}
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.experience}
+                                                        onChange={(e) => updateCandidateField('experience', Number(e.target.value || 0))}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-4">
+                                                    <label className="form-label">Thành phố</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.city}
+                                                        onChange={(e) => updateCandidateField('city', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label">Quận/Huyện</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.district}
+                                                        onChange={(e) => updateCandidateField('district', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label">Chức danh</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.title}
+                                                        onChange={(e) => updateCandidateField('title', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Trình độ học vấn</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.education}
+                                                        onChange={(e) => updateCandidateField('education', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Link cá nhân</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.personalLink}
+                                                        onChange={(e) => updateCandidateField('personalLink', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+
+                                                <div className="col-12">
+                                                    <label className="form-label">Địa chỉ chi tiết</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.address}
+                                                        onChange={(e) => updateCandidateField('address', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label">Giới thiệu bản thân</label>
+                                                    <textarea
+                                                        rows={3}
+                                                        className="form-control"
+                                                        value={editModal.form.candidate.intro}
+                                                        onChange={(e) => updateCandidateField('intro', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {showEmployerSection && (
+                                        <div className="admin-users-edit-section mt-3">
+                                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                                <h6 className="mb-0">Hồ sơ nhà tuyển dụng</h6>
+                                            </div>
+
+                                            <div className="row g-3">
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Tên công ty</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.employer.companyName}
+                                                        onChange={(e) => updateEmployerField('companyName', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Mã số thuế</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.employer.taxCode}
+                                                        onChange={(e) => updateEmployerField('taxCode', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Website</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.employer.website}
+                                                        onChange={(e) => updateEmployerField('website', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label">Thành phố</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.employer.city}
+                                                        onChange={(e) => updateEmployerField('city', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label">Địa chỉ công ty</label>
+                                                    <input
+                                                        className="form-control"
+                                                        value={editModal.form.employer.address}
+                                                        onChange={(e) => updateEmployerField('address', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                                <div className="col-12">
+                                                    <label className="form-label">Mô tả công ty</label>
+                                                    <textarea
+                                                        rows={3}
+                                                        className="form-control"
+                                                        value={editModal.form.employer.description}
+                                                        onChange={(e) => updateEmployerField('description', e.target.value)}
+                                                        disabled={editModal.saving}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {editModal.user?.NgayXoa ? (
+                                        <div className="alert alert-warning mt-3 mb-0">
+                                            Tài khoản đã bị xóa mềm vào {formatDateTime(editModal.user.NgayXoa)}. Chuyển trạng thái về hoạt động sẽ tự động bỏ ngày xóa.
+                                        </div>
+                                    ) : null}
+
+                                    {editModal.error ? <div className="text-danger small mt-2">{editModal.error}</div> : null}
+
+                                    <div className="d-flex justify-content-end gap-2 mt-4">
+                                        <button type="button" className="btn btn-outline-secondary" onClick={closeEditModal} disabled={editModal.saving}>
+                                            Hủy
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-primary"
+                                            onClick={submitEditModal}
+                                            disabled={editModal.saving || !editDirty || editModal.loadingDetail}
+                                        >
+                                            {editModal.saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
+
         </>
     );
 };

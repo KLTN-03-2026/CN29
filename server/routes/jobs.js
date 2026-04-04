@@ -7,7 +7,6 @@ const path = require('path');
 const multer = require('multer');
 const db = require('../config/db');
 const { isCloudinaryConfigured, uploadImageFromPath } = require('../config/cloudinary');
-const { jobs: mockJobs } = require('../data/mockJobs');
 const router = express.Router();
 
 const JWT_SECRET = 'your_jwt_secret';
@@ -478,42 +477,6 @@ router.get('/', async (req, res) => {
              WHERE ttd.TrangThai = 'Đã đăng'
              ORDER BY datetime(ttd.NgayDang) DESC`
         );
-
-        // Fallback: if DB chưa có tin nào, trả về mock data để trang không rỗng
-        if (rows.length === 0 && Array.isArray(mockJobs) && mockJobs.length > 0) {
-            const mapped = mockJobs.map((j) => {
-                const salary = Number.isFinite(Number(j.salaryValue)) ? Number(j.salaryValue) * 1_000_000 : null;
-                const employmentType = (() => {
-                    if (j.type === 'fulltime') return 'Toàn thời gian';
-                    if (j.type === 'parttime') return 'Bán thời gian';
-                    if (j.type === 'intern') return 'Thực tập';
-                    return 'Khác';
-                })();
-
-                return normalizeLogoField(req, {
-                    MaTin: j.id,
-                    TieuDe: j.title,
-                    MoTa: null,
-                    YeuCau: null,
-                    QuyenLoi: null,
-                    KinhNghiem: j.experience || null,
-                    CapBac: null,
-                    LinhVucCongViec: j.career || null,
-                    LuongTu: salary,
-                    LuongDen: salary,
-                    KieuLuong: salary ? 'Tháng' : 'Thỏa thuận',
-                    DiaDiem: j.location || null,
-                    ThanhPho: j.province || null,
-                    HinhThuc: employmentType,
-                    TrangThai: 'Đã đăng',
-                    NgayDang: null,
-                    HanNopHoSo: null,
-                    TenCongTy: j.company,
-                    Logo: j.logo || '/images/logo.png'
-                });
-            });
-            return res.json(mapped);
-        }
 
         res.json(rows.map((r) => normalizeLogoField(req, r)));
     } catch (err) {

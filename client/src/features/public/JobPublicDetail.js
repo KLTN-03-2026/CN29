@@ -11,8 +11,7 @@ const formatCurrency = (value) => {
 
 const RichBlock = ({ html }) => (
     <div
-        className="p-3 rounded border bg-light"
-        style={{ minHeight: 80 }}
+        className="job-detail-rich-block"
         dangerouslySetInnerHTML={{ __html: html || '<em>Chưa cập nhật</em>' }}
     />
 );
@@ -437,12 +436,12 @@ const JobPublicDetail = () => {
                                 <span><i className="bi bi-geo-alt me-1"></i>{displayAddress}</span>
                             </div>
                             <div className="d-flex gap-2 flex-wrap mt-3">
-                                <span className="pill pill-strong"><i className="bi bi-cash-coin me-1"></i>{salaryText || 'Thỏa thuận'}</span>
-                                <span className="pill"><i className="bi bi-briefcase me-1"></i>{job?.HinhThuc || 'Chưa cập nhật'}</span>
-                                <span className="pill"><i className="bi bi-clock me-1"></i>Hạn nộp: {job?.HanNopHoSo || 'Chưa cập nhật'}</span>
+                                <span className="job-detail-pill job-detail-pill--strong"><i className="bi bi-cash-coin me-1"></i>{salaryText || 'Thỏa thuận'}</span>
+                                <span className="job-detail-pill"><i className="bi bi-briefcase me-1"></i>{job?.HinhThuc || 'Chưa cập nhật'}</span>
+                                <span className="job-detail-pill"><i className="bi bi-clock me-1"></i>Hạn nộp: {job?.HanNopHoSo || 'Chưa cập nhật'}</span>
                             </div>
                         </div>
-                        <div className="d-flex flex-column gap-2">
+                        <div className="job-detail-actions d-flex flex-column gap-2">
                             <button
                                 className={`btn px-4 ${isApplied ? 'btn-success' : 'btn-danger'}`}
                                 onClick={onClickApply}
@@ -463,7 +462,7 @@ const JobPublicDetail = () => {
                 {!loading && job && (
                     <div className="row g-4">
                         <div className="col-lg-8">
-                            <section className="card border-0 shadow-sm mb-4">
+                            <section className="card job-detail-main-card border-0 shadow-sm mb-4">
                                 <div className="card-body">
                                     <h5 className="fw-bold mb-3">Giới thiệu công việc</h5>
                                     <RichBlock html={job.MoTa} />
@@ -476,7 +475,7 @@ const JobPublicDetail = () => {
                                 </div>
                             </section>
 
-                            <section className="card border-0 shadow-sm mb-4">
+                            <section className="card job-detail-main-card border-0 shadow-sm mb-4">
                                 <div className="card-body">
                                     <h5 className="fw-bold mb-3">Địa điểm làm việc</h5>
                                     <div className="row g-3">
@@ -510,10 +509,10 @@ const JobPublicDetail = () => {
                         </div>
 
                         <div className="col-lg-4">
-                            <section className="card border-0 shadow-sm mb-3">
+                            <section className="card job-detail-side-card border-0 shadow-sm mb-3">
                                 <div className="card-body">
                                     <h5 className="fw-bold mb-3">Thông tin chung</h5>
-                                    <ul className="list-unstyled mb-0 small text-muted">
+                                    <ul className="list-unstyled mb-0 small text-muted job-detail-info-list">
                                         <li className="mb-2"><i className="bi bi-cash-coin me-2"></i>{salaryText}</li>
                                         <li className="mb-2"><i className="bi bi-geo-alt me-2"></i>{displayAddress}</li>
                                         <li className="mb-2"><i className="bi bi-briefcase me-2"></i>{job.HinhThuc || 'Chưa cập nhật'}</li>
@@ -523,12 +522,12 @@ const JobPublicDetail = () => {
                                 </div>
                             </section>
 
-                            <section className="card border-0 shadow-sm">
+                            <section className="card job-detail-side-card border-0 shadow-sm">
                                 <div className="card-body d-flex gap-3 align-items-center">
                                     <img
                                         src={(companyInfo?.Logo || job.Logo) || '/images/logo.png'}
                                         alt={(companyInfo?.TenCongTy || job.TenCongTy) || 'Logo'}
-                                        style={{ width: 86, height: 86, objectFit: 'cover', borderRadius: 18, border: '1px solid #e5e7eb' }}
+                                        className="job-detail-company-logo"
                                         onError={(e) => {
                                             e.currentTarget.onerror = null;
                                             e.currentTarget.src = '/images/logo.png';
@@ -538,7 +537,7 @@ const JobPublicDetail = () => {
                                         <div className="fw-semibold">{companyInfo?.TenCongTy || job.TenCongTy || 'Nhà tuyển dụng'}</div>
                                         <div className="text-muted small">{companyInfo?.ThanhPho || job.ThanhPho || 'Địa điểm đang cập nhật'}</div>
 
-                                        <div className="mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                        <div className="job-detail-company-rating mt-2 d-flex align-items-center gap-2 flex-wrap">
                                             {renderStars(companyRating.avgRating)}
                                             <span className="small text-muted">{companyRating.avgRating || 0}/5 ({companyRating.ratingCount || 0})</span>
                                         </div>
@@ -570,7 +569,7 @@ const JobPublicDetail = () => {
 
                                             {isCandidate && (
                                                 <div className="mt-3">
-                                                    <div className="d-flex justify-content-center gap-2 flex-wrap">
+                                                    <div className="job-detail-company-actions d-flex justify-content-center gap-2 flex-wrap">
                                                         <button
                                                             type="button"
                                                             className={`btn btn-sm ${candidateAction === 'review' ? 'btn-primary' : 'btn-outline-primary'}`}
@@ -614,9 +613,9 @@ const JobPublicDetail = () => {
                                                         )}
 
                                                         {!commentsLoading && companyComments.length > 0 && (
-                                                            <div className="mt-2 d-flex flex-column gap-2">
+                                                            <div className="job-detail-company-comments mt-2 d-flex flex-column gap-2">
                                                                 {companyComments.map((c) => (
-                                                                    <div key={c.id} className="border rounded p-2">
+                                                                    <div key={c.id} className="job-detail-comment-item border rounded p-2">
                                                                         <div className="d-flex align-items-center justify-content-between gap-2">
                                                                             <div className="fw-semibold small">
                                                                                 {c.userName || 'Người dùng'}
@@ -735,7 +734,7 @@ const JobPublicDetail = () => {
                             {!cvsLoading && cvs.length > 0 && (
                                 <div className="d-flex flex-column gap-2 mb-3">
                                     {cvs.map((cv) => (
-                                        <label key={cv.id} className="border rounded p-2 d-flex align-items-start gap-2" style={{ cursor: 'pointer' }}>
+                                        <label key={cv.id} className="job-detail-cv-option border rounded p-2 d-flex align-items-start gap-2" style={{ cursor: 'pointer' }}>
                                             <input
                                                 type="radio"
                                                 name="applyCv"

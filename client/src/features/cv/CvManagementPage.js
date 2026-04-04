@@ -20,10 +20,12 @@ const normalizeCv = (cv, index) => {
   const id = cv?.id || cv?.cvId || cv?.MaCV || cv?.MaHoSo || `cv-${index}`;
   const name = String(cv?.name || cv?.TenCV || cv?.tenCV || 'CV chưa đặt tên').trim();
   const fileUrl = String(cv?.fileUrl || cv?.FileUrl || cv?.url || '').trim();
+  const fileAbsoluteUrl = String(cv?.fileAbsoluteUrl || cv?.FileAbsoluteUrl || '').trim();
   const uploadDate = cv?.uploadDate || cv?.NgayTao || cv?.createdAt || null;
   const updatedAt = cv?.updatedAt || cv?.NgayCapNhat || uploadDate || null;
 
-  const safeUrl = fileUrl.split('?')[0].toLowerCase();
+  const previewUrl = fileAbsoluteUrl || fileUrl;
+  const safeUrl = previewUrl.split('?')[0].toLowerCase();
   const isOnlineCv = safeUrl.endsWith('.html');
   const extension = safeUrl.includes('.') ? safeUrl.split('.').pop() : '';
 
@@ -31,6 +33,8 @@ const normalizeCv = (cv, index) => {
     id,
     name,
     fileUrl,
+    fileAbsoluteUrl,
+    previewUrl,
     uploadDate,
     updatedAt,
     updatedMs: toDateMs(updatedAt),
@@ -307,9 +311,19 @@ const CvManagementPage = () => {
                     </div>
 
                     <div className="cv-management-item-actions icon-only">
-                      {cv.fileUrl ? (
+                      {cv.isOnlineCv ? (
+                        <button
+                          type="button"
+                          className="cv-action-icon view"
+                          onClick={() => navigate(`/create-cv/online-editor?cvId=${encodeURIComponent(cv.id)}`)}
+                          title="Xem CV Online"
+                          aria-label={`Xem CV ${cv.name}`}
+                        >
+                          <i className="bi bi-eye"></i>
+                        </button>
+                      ) : cv.previewUrl ? (
                         <a
-                          href={cv.fileUrl}
+                          href={cv.previewUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="cv-action-icon view"

@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV Creative Mosaic</title>
+  <style>
+    :root {
+      --ink: #1b1334;
+      --muted: #665c86;
+      --line: #dbcff5;
+      --primary: #7c3aed;
+      --secondary: #f97316;
+      --paper: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top right, #f3e8ff, #f8fafc 44%, #fff7ed 100%);
+      color: var(--ink);
+    }
+
+    .canvas {
+      max-width: 960px;
+      min-height: 1120px;
+      margin: 0 auto;
+      border-radius: 28px;
+      overflow: hidden;
+      border: 1px solid #e9d9ff;
+      background: #fff;
+      box-shadow: 0 18px 48px rgba(98, 30, 154, 0.12);
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 220px;
+      gap: 20px;
+      padding: 24px;
+      background: linear-gradient(135deg, #f3e8ff, #fff7ed);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .badge {
+      display: inline-flex;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(124, 58, 237, 0.14);
+      color: #5b21b6;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .hero h1 {
+      margin: 10px 0 0;
+      font-size: 44px;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      color: #3b0764;
+    }
+
+    .hero h2 {
+      margin: 8px 0 0;
+      font-size: 21px;
+      color: #7c2d12;
+    }
+
+    .avatar-wrap {
+      appearance: none;
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      background: #f3e8ff;
+      border-radius: 26px;
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+      width: 220px;
+      height: 220px;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 14px 30px rgba(124, 58, 237, 0.2);
+    }
+
+    .avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: auto 0 0 0;
+      padding: 10px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 12px;
+      color: #fff;
+      background: linear-gradient(180deg, transparent, rgba(35, 15, 60, 0.85));
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 16px;
+      padding: 18px;
+      align-items: start;
+    }
+
+    .left {
+      display: grid;
+      gap: 14px;
+    }
+
+    .card,
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      padding: 14px;
+    }
+
+    .card h3,
+    .panel h3 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #6d28d9;
+    }
+
+    .contact-item {
+      padding: 8px 0;
+      border-top: 1px dashed #e8dbff;
+    }
+
+    .contact-item:first-of-type { border-top: 0; }
+
+    .contact-label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #7c6ea3;
+      margin-bottom: 2px;
+      font-weight: 800;
+    }
+
+    .contact-value {
+      display: block;
+      font-size: 14px;
+      color: #26194b;
+      line-height: 1.45;
+    }
+
+    .text {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.7;
+      color: #30255b;
+      white-space: pre-wrap;
+    }
+
+    .main {
+      display: grid;
+      gap: 14px;
+    }
+
+    .timeline {
+      border-left: 4px solid #f59e0b;
+      padding-left: 12px;
+      margin-left: 4px;
+    }
+
+    .timeline .text {
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+  <article class="canvas">
+    <header class="hero">
+      <div>
+        <span class="badge" data-editable="true" data-cv-field="title">{{title}}</span>
+        <h1 data-editable="true" data-cv-field="name">{{name}}</h1>
+        <h2 data-editable="true" data-cv-field="position">{{position}}</h2>
+        <p class="text" style="margin-top:12px;max-width:600px;" data-editable="true" data-cv-field="summary">{{summary}}</p>
+      </div>
+
+      <button id="avatarButton" type="button" class="avatar-wrap no-print" data-cv-avatar-trigger="1" aria-label="Đổi ảnh đại diện">
+        <img id="avatarImage" src="{{avatarUrl}}" alt="Avatar" data-cv-avatar="1" data-image-editable="avatarImage" />
+        <span class="avatar-overlay">Click để đổi ảnh</span>
+      </button>
+    </header>
+
+    <div class="grid">
+      <aside class="left">
+        <section class="card">
+          <h3>Liên hệ</h3>
+          <div class="contact-item">
+            <span class="contact-label">Điện thoại</span>
+            <span class="contact-value" data-editable="true" data-cv-field="phone">{{phone}}</span>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">Email</span>
+            <span class="contact-value" data-editable="true" data-cv-field="email">{{email}}</span>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">Địa chỉ</span>
+            <span class="contact-value" data-editable="true" data-cv-field="address">{{address}}</span>
+          </div>
+          <div class="contact-item">
+            <span class="contact-label">Link</span>
+            <span class="contact-value" data-editable="true" data-cv-field="linkedin">{{link}}</span>
+          </div>
+        </section>
+
+        <section class="card">
+          <h3>Kỹ năng</h3>
+          <p class="text" data-editable="true" data-cv-field="skills">{{skills}}</p>
+        </section>
+
+        <section class="card">
+          <h3>Ngoại ngữ</h3>
+          <p class="text" data-editable="true" data-cv-field="languages">{{languages}}</p>
+        </section>
+      </aside>
+
+      <main class="main">
+        <section class="panel">
+          <h3>Hành trình kinh nghiệm</h3>
+          <div class="timeline">
+            <p class="text" data-editable="true" data-cv-field="experience">{{experience}}</p>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3>Học vấn</h3>
+          <p class="text" data-editable="true" data-cv-field="education">{{education}}</p>
+        </section>
+
+        <section class="panel">
+          <h3>Dự án nổi bật</h3>
+          <p class="text" data-editable="true" data-cv-field="projects">{{projects}}</p>
+        </section>
+      </main>
+    </div>
+  </article>
+</body>
+</html>
+

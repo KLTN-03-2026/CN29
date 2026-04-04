@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV Minimal Editorial</title>
+  <style>
+    :root {
+      --ink: #111827;
+      --muted: #6b7280;
+      --line: #d1d5db;
+      --paper: #ffffff;
+      --accent: #1f2937;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: #eef2f7;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      padding: 26px;
+    }
+
+    .page {
+      width: min(860px, 100%);
+      min-height: 1120px;
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid #cfd6df;
+      box-shadow: 0 18px 42px rgba(15, 23, 42, 0.09);
+      padding: 34px;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 20px;
+      align-items: center;
+      border-bottom: 2px solid #111827;
+      padding-bottom: 18px;
+      margin-bottom: 22px;
+    }
+
+    .avatar-wrap {
+      appearance: none;
+      border: none;
+      background: transparent;
+      width: 140px;
+      height: 140px;
+      border-radius: 999px;
+      overflow: hidden;
+      padding: 0;
+      margin: 0;
+      position: relative;
+      cursor: pointer;
+    }
+
+    .avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: auto 0 0 0;
+      padding: 8px;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(180deg, transparent, rgba(17, 24, 39, 0.85));
+    }
+
+    .eyebrow {
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .name {
+      margin: 6px 0 0;
+      font-size: 45px;
+      line-height: 0.96;
+      letter-spacing: -0.02em;
+      color: #0f172a;
+    }
+
+    .position {
+      margin-top: 8px;
+      font-size: 20px;
+      color: #374151;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      font-weight: 600;
+    }
+
+    .contacts {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      font-size: 13px;
+    }
+
+    .contacts span {
+      border-bottom: 1px solid transparent;
+      padding-bottom: 2px;
+      color: #1f2937;
+    }
+
+    .contacts span::before {
+      font-weight: 700;
+      color: #6b7280;
+      margin-right: 6px;
+    }
+
+    .phone::before { content: "ĐT:"; }
+    .email::before { content: "Email:"; }
+    .address::before { content: "ĐC:"; }
+    .linkedin::before { content: "Link:"; }
+
+    .section {
+      margin-top: 18px;
+      padding-top: 12px;
+      border-top: 1px solid var(--line);
+    }
+
+    .section h2 {
+      margin: 0 0 8px;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      color: #4b5563;
+    }
+
+    .section p {
+      margin: 0;
+      line-height: 1.8;
+      font-size: 16px;
+      color: #111827;
+      white-space: pre-wrap;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+  </style>
+</head>
+<body>
+  <article class="page">
+    <header class="top">
+      <button id="avatarButton" type="button" class="avatar-wrap no-print" data-cv-avatar-trigger="1" aria-label="Đổi ảnh đại diện">
+        <img id="avatarImage" src="{{avatarUrl}}" alt="Avatar" data-cv-avatar="1" data-image-editable="avatarImage" />
+        <span class="avatar-overlay">Đổi ảnh</span>
+      </button>
+
+      <div>
+        <div class="eyebrow" data-editable="true" data-cv-field="title">{{title}}</div>
+        <h1 class="name" data-editable="true" data-cv-field="name">{{name}}</h1>
+        <div class="position" data-editable="true" data-cv-field="position">{{position}}</div>
+        <div class="contacts">
+          <span class="phone" data-editable="true" data-cv-field="phone">{{phone}}</span>
+          <span class="email" data-editable="true" data-cv-field="email">{{email}}</span>
+          <span class="address" data-editable="true" data-cv-field="address">{{address}}</span>
+          <span class="linkedin" data-editable="true" data-cv-field="linkedin">{{link}}</span>
+        </div>
+      </div>
+    </header>
+
+    <section class="section">
+      <h2>Tóm tắt</h2>
+      <p data-editable="true" data-cv-field="summary">{{summary}}</p>
+    </section>
+
+    <section class="section two">
+      <div>
+        <h2>Kỹ năng</h2>
+        <p data-editable="true" data-cv-field="skills">{{skills}}</p>
+      </div>
+      <div>
+        <h2>Ngoại ngữ</h2>
+        <p data-editable="true" data-cv-field="languages">{{languages}}</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Kinh nghiệm</h2>
+      <p data-editable="true" data-cv-field="experience">{{experience}}</p>
+    </section>
+
+    <section class="section two">
+      <div>
+        <h2>Học vấn</h2>
+        <p data-editable="true" data-cv-field="education">{{education}}</p>
+      </div>
+      <div>
+        <h2>Dự án</h2>
+        <p data-editable="true" data-cv-field="projects">{{projects}}</p>
+      </div>
+    </section>
+  </article>
+</body>
+</html>
+

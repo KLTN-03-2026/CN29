@@ -7,6 +7,11 @@ const EmployerLayout = () => {
     const location = useLocation();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+    const displayName = user?.name || user?.hoTen || user?.fullName || user?.email || 'Nhà tuyển dụng';
+    const roleLabel = user?.role || user?.vaiTro || 'Nhà tuyển dụng';
+    const initial = String(displayName || 'N').trim().charAt(0).toUpperCase();
 
     const handleLogout = () => {
         localStorage.removeItem('token');
@@ -15,14 +20,14 @@ const EmployerLayout = () => {
     };
 
     const menuItems = [
-        { path: '/employer', icon: 'bi-speedometer2', label: 'Bảng tin', exact: true },
-        { path: '/employer/cv-search', icon: 'bi-search', label: 'Tìm kiếm CV' },
-        { path: '/employer/cv-manage', icon: 'bi-file-earmark-check', label: 'Quản lý CV' },
-        { path: '/employer/jobs', icon: 'bi-briefcase', label: 'Quản lý tin tuyển dụng' },
-        { path: '/employer/applications', icon: 'bi-file-earmark-text', label: 'Quản lý hồ sơ ứng tuyển' },
-        { path: '/employer/statistics', icon: 'bi-bar-chart', label: 'Thống kê & báo cáo' },
-        { path: '/employer/company', icon: 'bi-building', label: 'Thông tin công ty' },
-        { path: '/employer/account', icon: 'bi-person', label: 'Tài khoản' }
+        { path: '/employer', icon: 'bi-grid-1x2', label: 'Bảng tin', exact: true, subtitle: 'Tổng quan tuyển dụng' },
+        { path: '/employer/cv-search', icon: 'bi-search', label: 'Tìm kiếm CV', subtitle: 'Tìm ứng viên phù hợp' },
+        { path: '/employer/cv-manage', icon: 'bi-bookmark-check', label: 'Quản lý CV', subtitle: 'Danh sách CV đã lưu' },
+        { path: '/employer/jobs', icon: 'bi-briefcase', label: 'Quản lý tin tuyển dụng', subtitle: 'Đăng và theo dõi tin' },
+        { path: '/employer/applications', icon: 'bi-file-earmark-person', label: 'Quản lý hồ sơ ứng tuyển', subtitle: 'Duyệt hồ sơ ứng viên' },
+        { path: '/employer/statistics', icon: 'bi-bar-chart', label: 'Thống kê & báo cáo', subtitle: 'Hiệu quả tuyển dụng' },
+        { path: '/employer/company', icon: 'bi-building', label: 'Thông tin công ty', subtitle: 'Hồ sơ doanh nghiệp' },
+        { path: '/employer/account', icon: 'bi-person', label: 'Tài khoản', subtitle: 'Cập nhật hồ sơ cá nhân' }
     ];
 
     const isActive = (menuPath, exact = false) => {
@@ -32,78 +37,113 @@ const EmployerLayout = () => {
         return location.pathname.startsWith(menuPath);
     };
 
+    const currentMenu = menuItems
+        .filter((item) => isActive(item.path, item.exact))
+        .sort((a, b) => b.path.length - a.path.length)[0] || menuItems[0];
+
+    const handleToggleSidebar = () => {
+        if (window.matchMedia('(max-width: 991px)').matches) {
+            setMobileMenuOpen((prev) => !prev);
+            return;
+        }
+        setSidebarCollapsed((prev) => !prev);
+    };
+
+    const closeMobileMenu = () => setMobileMenuOpen(false);
+
     return (
         <div className="employer-layout">
-            {/* Sidebar */}
-            <div className={`employer-sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
-                <div className="sidebar-header">
-                    <img src="/images/logo.png" alt="JobFinder" className="sidebar-logo" />
-                    {!sidebarCollapsed && <h5 className="mb-0">JobFinder</h5>}
-                </div>
+            <button
+                type="button"
+                className={`employer-mobile-overlay ${mobileMenuOpen ? 'show' : ''}`}
+                onClick={closeMobileMenu}
+                aria-label="Đóng menu"
+            />
 
-                <div className="sidebar-user">
-                    <div className="user-avatar">
-                        <i className="bi bi-person-circle fs-1"></i>
-                    </div>
+            <aside className={`employer-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
+                <div className="employer-sidebar-header">
+                    <div className="employer-brand-mark">JF</div>
                     {!sidebarCollapsed && (
-                        <div className="user-info">
-                            <h6 className="mb-0">{user.name}</h6>
-                            <small className="text-muted">{user.role}</small>
+                        <div className="employer-brand-copy">
+                            <h5 className="mb-0">JobFinder</h5>
+                            <small>Employer Console</small>
                         </div>
                     )}
                 </div>
 
-                <nav className="sidebar-menu">
-                    {menuItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            className={`menu-item ${isActive(item.path, item.exact) ? 'active' : ''}`}
-                            title={item.label}
-                        >
-                            <i className={`bi ${item.icon}`}></i>
-                            {!sidebarCollapsed && (
-                                <>
-                                    <span>{item.label}</span>
-                                    {item.badge && <span className="badge bg-primary ms-auto">{item.badge}</span>}
-                                </>
-                            )}
-                        </Link>
-                    ))}
+                <div className="employer-sidebar-user">
+                    <div className="employer-user-avatar">{initial}</div>
+                    {!sidebarCollapsed && (
+                        <div className="employer-user-info">
+                            <h6>{displayName}</h6>
+                            <small>{roleLabel}</small>
+                        </div>
+                    )}
+                </div>
+
+                <nav className="employer-menu">
+                    {menuItems.map((item) => {
+                        const active = isActive(item.path, item.exact);
+                        return (
+                            <Link
+                                key={item.path}
+                                to={item.path}
+                                className={`employer-menu-item ${active ? 'active' : ''}`}
+                                title={item.label}
+                                onClick={closeMobileMenu}
+                            >
+                                <i className={`bi ${item.icon}`}></i>
+                                {!sidebarCollapsed && <span>{item.label}</span>}
+                            </Link>
+                        );
+                    })}
                 </nav>
 
-                <div className="sidebar-footer">
-                    <button 
-                        className="btn btn-link text-decoration-none w-100" 
+                <div className="employer-sidebar-footer">
+                    <button
+                        type="button"
+                        className="employer-logout-btn"
                         onClick={handleLogout}
                     >
                         <i className="bi bi-box-arrow-right"></i>
                         {!sidebarCollapsed && <span>Đăng xuất</span>}
                     </button>
                 </div>
-            </div>
+            </aside>
 
-            {/* Main Content */}
-            <div className="employer-main">
-                <div className="main-header">
-                    <button 
-                        className="btn btn-link sidebar-toggle" 
-                        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                    >
-                        <i className="bi bi-list fs-4"></i>
-                    </button>
-                    <div className="ms-auto d-flex align-items-center gap-3">
-                        <Link to="/employer/applications" className="btn btn-link position-relative" title="Tin nhắn">
-                            <i className="bi bi-chat-dots fs-5"></i>
-                        </Link>
-                        <button className="btn btn-link position-relative">
-                            <i className="bi bi-bell fs-5"></i>
-                            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                                3
-                            </span>
+            <div className={`employer-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
+                <header className="employer-header">
+                    <div className="employer-header-left">
+                        <button
+                            type="button"
+                            className="employer-sidebar-toggle"
+                            onClick={handleToggleSidebar}
+                            aria-label="Thu gọn menu"
+                        >
+                            <i className="bi bi-list"></i>
                         </button>
+                        <div>
+                            <h1 className="employer-header-title">{currentMenu?.label || 'Nhà tuyển dụng'}</h1>
+                            <p className="employer-header-subtitle">{currentMenu?.subtitle || 'Quản lý tuyển dụng'}</p>
+                        </div>
                     </div>
-                </div>
+
+                    <div className="employer-header-right">
+                        <Link to="/" className="employer-home-btn" title="Về trang chủ">
+                            <i className="bi bi-house-door"></i>
+                            <span>Trang chủ</span>
+                        </Link>
+                        <div className="employer-header-user">
+                            <div className="employer-user-pill-icon">
+                                <i className="bi bi-shield-check"></i>
+                            </div>
+                            <div className="employer-user-pill-copy">
+                                <strong>{displayName}</strong>
+                                <small>{roleLabel}</small>
+                            </div>
+                        </div>
+                    </div>
+                </header>
 
                 <div className="main-content">
                     <Outlet />

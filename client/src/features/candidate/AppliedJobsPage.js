@@ -1,8 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
+import './JobTrackerPages.css';
 
 const fmtVnd = new Intl.NumberFormat('vi-VN');
+const fmtDate = new Intl.DateTimeFormat('vi-VN');
+
+const formatDate = (value) => {
+  if (!value) return '';
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return '';
+  return fmtDate.format(d);
+};
 
 const formatSalary = (job) => {
   const type = job.KieuLuong || 'Thỏa thuận';
@@ -60,85 +69,79 @@ const AppliedJobsPage = () => {
   }, [API_BASE]);
 
   return (
-    <div className="container" style={{ paddingTop: 92, paddingBottom: 32 }}>
-      <div className="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-        <div>
-          <h3 className="fw-bold mb-1">Việc làm đã ứng tuyển</h3>
-          <div className="text-muted">Danh sách công việc bạn đã nộp hồ sơ.</div>
-        </div>
-        <button type="button" className="btn btn-outline-secondary" onClick={() => navigate(-1)}>
-          Quay lại
-        </button>
-      </div>
-
-      {loading && <div className="text-muted">Đang tải...</div>}
-      {error && !loading && <div className="alert alert-danger">{error}</div>}
-
-      {!loading && !error && items.length === 0 && (
-        <div className="card border-0 shadow-sm">
-          <div className="card-body p-4">
-            <div className="text-muted">Bạn chưa ứng tuyển công việc nào.</div>
-            <div className="mt-3">
-              <Link to="/jobs" className="btn btn-primary">
-                Tìm việc ngay
-              </Link>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!loading && !error && items.length > 0 && (
-        <div className="row g-3">
-          {items.map((j) => (
-            <div key={j.MaUngTuyen} className="col-12">
-              <div className="card border-0 shadow-sm">
-                <div className="card-body d-flex gap-3 align-items-center flex-wrap">
-                  <div className="flex-shrink-0" style={{ width: 56, height: 56, borderRadius: 12, overflow: 'hidden', border: '1px solid rgba(0,0,0,.08)' }}>
-                    <img
-                      src={j.Logo || '/images/logo.png'}
-                      alt={j.TenCongTy || 'Logo'}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                      onError={(e) => {
-                        e.currentTarget.onerror = null;
-                        e.currentTarget.src = '/images/logo.png';
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex-grow-1" style={{ minWidth: 260 }}>
-                    <div className="fw-bold" style={{ fontSize: 18 }}>
-                      <Link to={`/jobs/${j.MaTin}`} className="text-decoration-none">
-                        {j.TieuDe}
-                      </Link>
-                    </div>
-                    <div className="text-muted fw-semibold">{j.TenCongTy || 'Nhà tuyển dụng'}</div>
-                    <div className="d-flex flex-wrap gap-2 mt-2">
-                      <span className="badge text-bg-light border">
-                        <i className="bi bi-geo-alt me-1"></i>{j.ThanhPho || '---'}
-                      </span>
-                      <span className="badge text-bg-light border">
-                        <i className="bi bi-briefcase me-1"></i>{j.HinhThuc || '---'}
-                      </span>
-                      <span className="badge text-bg-light border">
-                        <i className="bi bi-cash-coin me-1"></i>{formatSalary(j)}
-                      </span>
-                      <span className="badge text-bg-primary bg-opacity-10 text-primary border">
-                        <i className="bi bi-file-earmark-check me-1"></i>{j.TrangThai || 'Đã nộp'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="ms-auto">
-                    <Link to={`/jobs/${j.MaTin}`} className="btn btn-primary">
-                      Xem lại tin
-                    </Link>
-                  </div>
+    <div className="job-tracker-page">
+      <div className="container">
+        <div className="job-tracker-shell">
+          <header className="job-tracker-header theme-applied">
+            <div>
+              <h1 className="job-tracker-title">Việc làm đã ứng tuyển</h1>
+              <p className="job-tracker-subtitle">Theo dõi tiến trình ứng tuyển và xem lại các cơ hội bạn đã nộp hồ sơ.</p>
+              {!loading && !error ? (
+                <div className="job-tracker-count">
+                  <i className="bi bi-send-check"></i>
+                  {items.length.toLocaleString('vi-VN')} hồ sơ đã nộp
                 </div>
-              </div>
+              ) : null}
             </div>
-          ))}
+            <button type="button" className="btn job-tracker-back" onClick={() => navigate(-1)}>
+              Quay lại
+            </button>
+          </header>
+
+          {loading ? <div className="job-tracker-state">Đang tải danh sách việc làm đã ứng tuyển...</div> : null}
+          {error && !loading ? <div className="alert alert-danger mb-0">{error}</div> : null}
+
+          {!loading && !error && items.length === 0 ? (
+            <div className="job-tracker-empty">
+              <i className="bi bi-send-x"></i>
+              <h5>Bạn chưa ứng tuyển công việc nào</h5>
+              <p>Khám phá thêm cơ hội và gửi hồ sơ để tăng khả năng được nhà tuyển dụng phản hồi.</p>
+              <Link to="/jobs" className="btn btn-primary">Tìm việc ngay</Link>
+            </div>
+          ) : null}
+
+          {!loading && !error && items.length > 0 ? (
+            <section className="job-tracker-list">
+              {items.map((j) => {
+                const appliedAt = formatDate(j.NgayNop);
+                return (
+                  <article key={j.MaUngTuyen} className="job-tracker-card">
+                    <div className="job-tracker-logo">
+                      <img
+                        src={j.Logo || '/images/logo.png'}
+                        alt={j.TenCongTy || 'Logo'}
+                        onError={(e) => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/images/logo.png';
+                        }}
+                      />
+                    </div>
+
+                    <div className="job-tracker-body">
+                      <h4 className="job-tracker-job-title">
+                        <Link to={`/jobs/${j.MaTin}`}>{j.TieuDe}</Link>
+                      </h4>
+                      <div className="job-tracker-company">{j.TenCongTy || 'Nhà tuyển dụng'}</div>
+
+                      <div className="job-tracker-meta">
+                        <span className="job-chip"><i className="bi bi-geo-alt"></i>{j.ThanhPho || '---'}</span>
+                        <span className="job-chip"><i className="bi bi-briefcase"></i>{j.HinhThuc || '---'}</span>
+                        <span className="job-chip"><i className="bi bi-cash-coin"></i>{formatSalary(j)}</span>
+                        {appliedAt ? <span className="job-chip"><i className="bi bi-calendar-check"></i>Nộp ngày {appliedAt}</span> : null}
+                        <span className="job-chip status"><i className="bi bi-file-earmark-check"></i>{j.TrangThai || 'Đã nộp'}</span>
+                      </div>
+                    </div>
+
+                    <div className="job-tracker-actions">
+                      <Link to={`/jobs/${j.MaTin}`} className="btn btn-primary">Xem lại tin</Link>
+                    </div>
+                  </article>
+                );
+              })}
+            </section>
+          ) : null}
         </div>
-      )}
+      </div>
     </div>
   );
 };

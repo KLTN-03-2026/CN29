@@ -18,16 +18,43 @@ const levelOptions = [
 ];
 const jobFieldOptions = ['CNTT', 'Marketing', 'Bán hàng', 'Hành chính', 'Kỹ thuật', 'Tài chính', 'Sản xuất', 'Dịch vụ', 'Khác'];
 
-const RichTextField = ({ label, onChange, rows = 4, placeholder, value = '' }) => {
+const RichTextField = ({ label, onChange, rows = 4, placeholder, initialValue = '' }) => {
     const editorRef = useRef(null);
     const selectionRef = useRef(null);
+    const composingRef = useRef(false);
+    const [activeFormats, setActiveFormats] = useState({
+        bold: false,
+        italic: false,
+        insertUnorderedList: false
+    });
 
-    // Keep editor content in sync when value changes (e.g., when loading existing job)
+    // Sync from server-loaded value only.
     useEffect(() => {
-        if (editorRef.current && typeof value === 'string') {
-            editorRef.current.innerHTML = value;
+        if (editorRef.current && typeof initialValue === 'string') {
+            editorRef.current.innerHTML = initialValue;
         }
-    }, [value]);
+    }, [initialValue]);
+
+    const emitChange = () => {
+        const editor = editorRef.current;
+        if (!editor) return;
+        onChange(editor.innerHTML || '');
+    };
+
+    const placeCaretAtEnd = () => {
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        const selection = window.getSelection?.();
+        if (!selection) return;
+
+        const range = document.createRange();
+        range.selectNodeContents(editor);
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+        selectionRef.current = range.cloneRange();
+    };
 
     const saveSelection = () => {
         const editor = editorRef.current;
@@ -41,7 +68,7 @@ const RichTextField = ({ label, onChange, rows = 4, placeholder, value = '' }) =
 
         // Only save if selection/caret is inside this editor
         if (anchorNode && editor.contains(anchorNode)) {
-            selectionRef.current = range;
+            selectionRef.current = range.cloneRange();
         }
     };
 
@@ -49,23 +76,67 @@ const RichTextField = ({ label, onChange, rows = 4, placeholder, value = '' }) =
         const editor = editorRef.current;
         if (!editor) return;
         const range = selectionRef.current;
-        if (!range) return;
+        if (!range) {
+            placeCaretAtEnd();
+            return;
+        }
+
+        if (!editor.contains(range.startContainer) || !editor.contains(range.endContainer)) {
+            return;
+        }
 
         const selection = window.getSelection?.();
         if (!selection) return;
-        selection.removeAllRanges();
-        selection.addRange(range);
+        try {
+            selection.removeAllRanges();
+            selection.addRange(range);
+        } catch {
+            // noop
+        }
+    };
+
+    const updateActiveFormats = () => {
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        const selection = window.getSelection?.();
+        const anchorNode = selection?.anchorNode || null;
+        const isInsideEditor = Boolean(anchorNode && editor.contains(anchorNode));
+
+        if (!isInsideEditor) {
+            setActiveFormats({ bold: false, italic: false, insertUnorderedList: false });
+            return;
+        }
+
+        const queryState = (command) => {
+            try {
+                return Boolean(document.queryCommandState(command));
+            } catch {
+                return false;
+            }
+        };
+
+        setActiveFormats({
+            bold: queryState('bold'),
+            italic: queryState('italic'),
+            insertUnorderedList: queryState('insertUnorderedList')
+        });
     };
 
     const applyCommand = (command) => {
-        // Selection-first: user highlights text, then clicks toolbar.
-        // Restore selection because toolbar click can steal focus.
-        editorRef.current?.focus();
+        // Toggle formatting at caret (or selection) so user can click once to turn on, click again to turn off.
+        const editor = editorRef.current;
+        if (!editor) return;
+
+        editor.focus();
         restoreSelection();
+
         // execCommand is deprecated but widely supported and sufficient for this simple use.
         document.execCommand(command, false, null);
-        onChange(editorRef.current?.innerHTML || '');
+
+        emitChange();
         saveSelection();
+        updateActiveFormats();
     };
 
     const minHeight = Math.max(96, rows * 24);
@@ -73,51 +144,78 @@ const RichTextField = ({ label, onChange, rows = 4, placeholder, value = '' }) =
     return (
         <div className="col-12">
             <label className="form-label">{label}</label>
-            <div className="d-flex align-items-center gap-2 mb-2">
+            <div className="job-create-rich-toolbar">
                 <button
                     type="button"
-                    className="btn btn-outline-secondary btn-sm"
+                    className={`job-create-rich-btn ${activeFormats.bold ? 'is-active' : ''}`}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => applyCommand('bold')}
                     title="In đậm"
+                    aria-label="In đậm"
+                    aria-pressed={activeFormats.bold}
                 >
                     <strong>B</strong>
                 </button>
                 <button
                     type="button"
-                    className="btn btn-outline-secondary btn-sm"
+                    className={`job-create-rich-btn ${activeFormats.italic ? 'is-active' : ''}`}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => applyCommand('italic')}
                     title="In nghiêng"
+                    aria-label="In nghiêng"
+                    aria-pressed={activeFormats.italic}
                 >
                     <em>I</em>
                 </button>
                 <button
                     type="button"
-                    className="btn btn-outline-secondary btn-sm"
+                    className={`job-create-rich-btn ${activeFormats.insertUnorderedList ? 'is-active' : ''}`}
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => applyCommand('insertUnorderedList')}
                     title="Gạch đầu dòng"
+                    aria-label="Gạch đầu dòng"
+                    aria-pressed={activeFormats.insertUnorderedList}
                 >
                     •
                 </button>
-                <small className="text-muted ms-2">Bôi đen đoạn cần định dạng rồi bấm nút</small>
+                <small className="job-create-rich-hint">Bấm để bật/tắt định dạng tại vị trí đang gõ</small>
             </div>
             <div
                 ref={editorRef}
                 className="form-control job-create-editor"
                 contentEditable
                 suppressContentEditableWarning
-                onFocus={saveSelection}
-                onKeyUp={saveSelection}
-                onMouseUp={saveSelection}
-                onInput={(e) => {
-                    onChange(e.currentTarget.innerHTML);
+                onFocus={() => {
                     saveSelection();
+                    updateActiveFormats();
                 }}
-                onBlur={(e) => {
-                    onChange(e.currentTarget.innerHTML);
+                onKeyUp={() => {
                     saveSelection();
+                    updateActiveFormats();
+                }}
+                onMouseUp={() => {
+                    saveSelection();
+                    updateActiveFormats();
+                }}
+                onInput={() => {
+                    if (composingRef.current) return;
+                    emitChange();
+                    saveSelection();
+                    updateActiveFormats();
+                }}
+                onBlur={() => {
+                    emitChange();
+                    saveSelection();
+                    updateActiveFormats();
+                }}
+                onCompositionStart={() => {
+                    composingRef.current = true;
+                }}
+                onCompositionEnd={() => {
+                    composingRef.current = false;
+                    emitChange();
+                    saveSelection();
+                    updateActiveFormats();
                 }}
                 data-placeholder={placeholder || ''}
                 style={{ minHeight, whiteSpace: 'pre-wrap', overflowY: 'auto', textAlign: 'left' }}
@@ -134,6 +232,7 @@ const RichTextField = ({ label, onChange, rows = 4, placeholder, value = '' }) =
 };
 
 const USD_TO_VND_RATE = 25000;
+const MAX_VND_SALARY = 999999999;
 
 const digitsOnly = (value) => String(value || '').replace(/[^0-9]/g, '');
 
@@ -169,12 +268,13 @@ const inputDigitsToVndDigits = (inputDigits, currency) => {
     const value = Number(normalized);
     if (!Number.isFinite(value)) return '';
 
+    let vndValue = Math.round(value);
     if (currency === 'USD') {
-        const vnd = Math.round(value * USD_TO_VND_RATE);
-        return String(Math.max(0, vnd));
+        vndValue = Math.round(value * USD_TO_VND_RATE);
     }
 
-    return String(Math.max(0, Math.round(value)));
+    const clamped = Math.min(MAX_VND_SALARY, Math.max(0, vndValue));
+    return String(clamped);
 };
 
 const JobCreate = () => {
@@ -202,7 +302,7 @@ const JobCreate = () => {
     const [loadingProvinces, setLoadingProvinces] = useState(false);
     const [salaryCurrency, setSalaryCurrency] = useState('VND');
     const [loadingJob, setLoadingJob] = useState(isEdit);
-    const [richValues, setRichValues] = useState({ description: '', requirements: '', benefits: '' });
+    const [richInitialValues, setRichInitialValues] = useState({ description: '', requirements: '', benefits: '' });
 
     // Store rich text HTML without re-rendering the editor on every keystroke
     const richRef = useRef({
@@ -239,7 +339,6 @@ const JobCreate = () => {
 
     const setRichField = (key) => (html) => {
         richRef.current[key] = html;
-        setRichValues((prev) => ({ ...prev, [key]: html }));
     };
 
     const setSalaryField = (key) => (e) => {
@@ -289,7 +388,7 @@ const JobCreate = () => {
                     benefits: data.QuyenLoi || ''
                 };
                 richRef.current = nextRich;
-                setRichValues(nextRich);
+                setRichInitialValues(nextRich);
             } catch (err) {
                 if (!cancelled) setError(err.message || 'Có lỗi khi tải tin.');
             } finally {
@@ -327,8 +426,8 @@ const JobCreate = () => {
                     description: richRef.current.description,
                     requirements: richRef.current.requirements,
                     benefits: richRef.current.benefits,
-                    salaryFrom: form.salaryFrom === '' ? null : Number(digitsOnly(form.salaryFrom)),
-                    salaryTo: form.salaryTo === '' ? null : Number(digitsOnly(form.salaryTo))
+                    salaryFrom: form.salaryFrom === '' ? null : Math.min(MAX_VND_SALARY, Number(digitsOnly(form.salaryFrom))),
+                    salaryTo: form.salaryTo === '' ? null : Math.min(MAX_VND_SALARY, Number(digitsOnly(form.salaryTo)))
                 })
             });
 
@@ -358,7 +457,7 @@ const JobCreate = () => {
                     </div>
                     <button
                         type="button"
-                        className="btn btn-outline-secondary"
+                        className="btn job-create-back-btn"
                         onClick={() => navigate('/employer/jobs')}
                     >
                         Quay lại
@@ -392,7 +491,7 @@ const JobCreate = () => {
                             <RichTextField
                                 label="Mô tả công việc"
                                 onChange={setRichField('description')}
-                                value={richValues.description}
+                                initialValue={richInitialValues.description}
                                 rows={6}
                                 placeholder="Nhập mô tả công việc..."
                             />
@@ -400,7 +499,7 @@ const JobCreate = () => {
                             <RichTextField
                                 label="Yêu cầu"
                                 onChange={setRichField('requirements')}
-                                value={richValues.requirements}
+                                initialValue={richInitialValues.requirements}
                                 rows={6}
                                 placeholder="Nhập yêu cầu ứng viên..."
                             />
@@ -408,7 +507,7 @@ const JobCreate = () => {
                             <RichTextField
                                 label="Quyền lợi"
                                 onChange={setRichField('benefits')}
-                                value={richValues.benefits}
+                                initialValue={richInitialValues.benefits}
                                 rows={5}
                                 placeholder="Nhập quyền lợi..."
                             />
@@ -492,6 +591,7 @@ const JobCreate = () => {
                                             ))}
                                         </select>
                                     </div>
+
                                 </div>
                             </div>
 
@@ -581,7 +681,7 @@ const JobCreate = () => {
                             <div className="col-12 d-flex gap-2 justify-content-end pt-2">
                                 <button
                                     type="button"
-                                    className="btn btn-outline-secondary"
+                                    className="btn job-create-cancel-btn"
                                     onClick={() => navigate('/employer/jobs')}
                                     disabled={submitting}
                                 >
@@ -589,7 +689,7 @@ const JobCreate = () => {
                                 </button>
                                 <button
                                     type="submit"
-                                    className="btn btn-primary"
+                                    className="btn job-create-submit-btn"
                                     disabled={submitting || loadingJob}
                                 >
                                     {submitting ? (isEdit ? 'Đang lưu...' : 'Đang đăng...') : (isEdit ? 'Lưu thay đổi' : 'Đăng tin')}

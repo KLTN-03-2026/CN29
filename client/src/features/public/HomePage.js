@@ -103,37 +103,6 @@ const getPostedLabel = (job) => {
   return 'Đã đăng lâu';
 };
 
-const mapMockJob = (job) => {
-  const salaryBase = Number.isFinite(Number(job.salaryValue))
-    ? Number(job.salaryValue) * 1000000
-    : null;
-
-  const employmentType = (() => {
-    if (job.type === 'parttime') return 'Bán thời gian';
-    if (job.type === 'intern') return 'Thực tập';
-    if (job.type === 'remote') return 'Remote';
-    return 'Toàn thời gian';
-  })();
-
-  return {
-    MaTin: job.id,
-    TieuDe: job.title,
-    TenCongTy: job.company || 'Nhà tuyển dụng',
-    Logo: job.logo || '/images/logo.png',
-    LuongTu: salaryBase,
-    LuongDen: salaryBase,
-    KieuLuong: salaryBase ? 'Tháng' : 'Thỏa thuận',
-    DiaDiem: job.location || '',
-    ThanhPho: job.province || '',
-    HinhThuc: employmentType,
-    KinhNghiem: job.experience || 'Không yêu cầu',
-    LinhVucCongViec: job.career || '',
-    LinhVucCongTy: job.career || '',
-    TrangThai: job.featured ? 'Đã đăng' : '',
-    NgayDang: job.postedAt || new Date().toISOString()
-  };
-};
-
 const isRemoteJob = (job) => {
   const content = normalizeText([
     job?.HinhThuc,
@@ -255,16 +224,11 @@ const HomePage = () => {
         const response = await fetch(`${CLIENT_API_BASE}/jobs`);
         const data = await response.json().catch(() => []);
 
-        if (response.ok && Array.isArray(data) && data.length > 0) {
-          if (!cancelled) setJobs(data);
-          return;
+        if (!response.ok) {
+          throw new Error('Không thể tải danh sách việc làm');
         }
 
-        const mockResponse = await fetch(`${CLIENT_API_BASE}/api/mock-jobs`);
-        const mockData = await mockResponse.json().catch(() => []);
-        if (!cancelled) {
-          setJobs(Array.isArray(mockData) ? mockData.map(mapMockJob) : []);
-        }
+        if (!cancelled) setJobs(Array.isArray(data) ? data : []);
       } catch (error) {
         if (!cancelled) {
           setJobError(error.message || 'Không thể tải danh sách việc làm.');
