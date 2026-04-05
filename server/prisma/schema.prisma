@@ -272,25 +272,25 @@ model BinhLuanCongTy {
 }
 
 model CareerGuide {
-  id         Int      @id @default(autoincrement()) @map("id")
-  title      String   @db.VarChar(255) @map("title")
-  content    String   @db.LongText @map("content")
-  authorId   Int      @map("authorId")
-  authorType String   @db.VarChar(50) @map("authorType")
-  createdAt  DateTime @default(now()) @map("createdAt")
-  updatedAt  DateTime @default(now()) @map("updatedAt")
-  views      Int      @default(0) @map("views")
+  id         Int      @id @default(autoincrement()) @map("MaBaiViet")
+  title      String   @db.VarChar(255) @map("TieuDe")
+  content    String   @db.LongText @map("NoiDung")
+  authorId   Int      @map("MaTacGia")
+  authorType String   @db.VarChar(50) @map("LoaiTacGia")
+  createdAt  DateTime @default(now()) @map("NgayTao")
+  updatedAt  DateTime @default(now()) @map("NgayCapNhat")
+  views      Int      @default(0) @map("LuotXem")
 
-  @@map("CareerGuide")
+  @@map("CamNangNgheNghiep")
 }
 
 model CareerGuideComment {
-  id        Int      @id @default(autoincrement()) @map("id")
-  postId    Int      @map("postId")
-  userId    Int      @map("userId")
-  userType  String   @db.VarChar(50) @map("userType")
-  content   String   @db.LongText @map("content")
-  createdAt DateTime @default(now()) @map("createdAt")
+  id        Int      @id @default(autoincrement()) @map("MaBinhLuan")
+  postId    Int      @map("MaBaiViet")
+  userId    Int      @map("MaNguoiDung")
+  userType  String   @db.VarChar(50) @map("LoaiNguoiDung")
+  content   String   @db.LongText @map("NoiDung")
+  createdAt DateTime @default(now()) @map("NgayTao")
 
-  @@map("CareerGuideComment")
+  @@map("BinhLuanCamNangNgheNghiep")
 }

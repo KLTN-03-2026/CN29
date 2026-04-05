@@ -3,6 +3,16 @@ import { Link } from 'react-router-dom';
 
 const Header = () => {
     const [showJobManagement, setShowJobManagement] = useState(false);
+
+    const normalize = (value) => String(value || '').trim().toLowerCase();
+
+    const resolveRoleLabel = (rawRole, isSuperAdmin) => {
+        const role = normalize(rawRole);
+        if (isSuperAdmin || role.includes('siêu') || role.includes('sieu')) return 'Siêu quản trị viên';
+        if (role.includes('quản trị') || role.includes('quan tri')) return 'Quản trị';
+        if (role.includes('nhà tuyển dụng') || role.includes('nha tuyen dung')) return 'Nhà tuyển dụng';
+        return 'Ứng viên';
+    };
     
     // Kiểm tra trạng thái đăng nhập
     const user = (() => {
@@ -13,15 +23,26 @@ const Header = () => {
         }
     })();
 
-    const userRole = String(user?.role || user?.vaiTro || '').trim();
-    const isEmployer = userRole === 'Nhà tuyển dụng';
-    const isAdmin = (
-        userRole === 'Quản trị'
-        || userRole === 'Siêu quản trị viên'
-        || user?.isSuperAdmin === true
+    const userRole = String(user?.role || user?.vaiTro || user?.VaiTro || '').trim();
+    const isSuperAdmin = (
+        user?.isSuperAdmin === true
         || user?.isSuperAdmin === 1
         || user?.isSuperAdmin === '1'
+        || user?.IsSuperAdmin === true
+        || user?.IsSuperAdmin === 1
+        || user?.IsSuperAdmin === '1'
     );
+    const roleLabel = resolveRoleLabel(userRole, isSuperAdmin);
+    const isEmployer = roleLabel === 'Nhà tuyển dụng';
+    const isAdmin = (
+        roleLabel === 'Quản trị'
+        || roleLabel === 'Siêu quản trị viên'
+        || isSuperAdmin
+    );
+    const profileTitle = String(user?.HoTen || user?.name || user?.fullName || user?.username || user?.email || '').trim() || 'Tài khoản của tôi';
+    const profileIcon = isAdmin
+        ? 'bi-shield-check'
+        : (isEmployer ? 'bi-building-check' : 'bi-person-check');
     const dashboardLink = isEmployer ? '/employer/jobs' : (isAdmin ? '/admin' : '');
 
     return (
@@ -77,6 +98,11 @@ const Header = () => {
                                 Cẩm nang nghề nghiệp
                             </Link>
                         </li>
+                        <li className="nav-item">
+                            <Link className="nav-link fw-semibold fs-6" to="/create-cv/templates">
+                                Mẫu CV
+                            </Link>
+                        </li>
                     </ul>
                     <div className="d-flex align-items-center gap-3 ms-lg-auto me-lg-2">
                         {!user ? (
@@ -93,57 +119,57 @@ const Header = () => {
                             </>
                         ) : (
                             <div className="dropdown">
-                                <button className="btn btn-light border-0 p-0 d-flex align-items-center gap-2" type="button" id="dropdownUser" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <img
-                                        src={user.avatar || user.AnhDaiDien || "https://cdn-icons-png.flaticon.com/512/149/149071.png"}
-                                        alt="avatar"
-                                        className="rounded-circle"
-                                        style={{ width: 36, height: 36, objectFit: 'cover' }}
-                                        onError={e => {
-                                            console.warn('Avatar load error:', user.avatar, user.AnhDaiDien);
-                                            e.target.onerror = null;
-                                            e.target.src = "https://cdn-icons-png.flaticon.com/512/149/149071.png";
-                                        }}
-                                    />
-                                    <span className="fw-semibold text-dark">{user.username || user.email || 'Người dùng'}</span>
-                                    <i className="bi bi-chevron-down small text-secondary"></i>
+                                <button
+                                    className="jf-user-chip"
+                                    type="button"
+                                    id="dropdownUser"
+                                    data-bs-toggle="dropdown"
+                                    aria-expanded="false"
+                                >
+                                    <span className="jf-user-chip-icon" aria-hidden="true">
+                                        <i className={`bi ${profileIcon}`}></i>
+                                    </span>
+                                    <span className="jf-user-chip-info">
+                                        <strong>{profileTitle}</strong>
+                                        <small>{roleLabel}</small>
+                                    </span>
+                                    <i className="bi bi-chevron-down jf-user-chip-chevron" aria-hidden="true"></i>
                                 </button>
-                                <ul className="dropdown-menu dropdown-menu-end p-0" aria-labelledby="dropdownUser" style={{ minWidth: 280, borderRadius: 12 }}>
+                                <ul className="dropdown-menu dropdown-menu-end jf-user-dropdown-menu" aria-labelledby="dropdownUser">
                                     {/* Menu items */}
-                                    <li className="px-3 pt-3 pb-2">
-                                        <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/profile" style={{transition: 'background .2s'}}>
-                                            <i className="bi bi-file-earmark-person fs-5 text-primary"></i>
+                                    <li className="jf-user-dropdown-row">
+                                        <Link className="dropdown-item jf-user-dropdown-item" to="/profile">
+                                            <i className="bi bi-file-earmark-person text-primary"></i>
                                             <span>Hồ sơ của tôi</span>
                                         </Link>
                                     </li>
                                     {dashboardLink && (
-                                        <li className="px-3 pb-2">
-                                            <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to={dashboardLink} style={{transition: 'background .2s'}}>
-                                                <i className="bi bi-speedometer2 fs-5 text-primary"></i>
+                                        <li className="jf-user-dropdown-row">
+                                            <Link className="dropdown-item jf-user-dropdown-item" to={dashboardLink}>
+                                                <i className="bi bi-speedometer2 text-primary"></i>
                                                 <span>Dashboard</span>
                                             </Link>
                                         </li>
                                     )}
-                                    <li className="px-3 pb-2">
-                                        <div className="dropdown-item d-flex align-items-center justify-content-between rounded p-2" 
-                                            style={{cursor: 'pointer', transition: 'background .2s'}}
+                                    <li className="jf-user-dropdown-row">
+                                        <div className="dropdown-item jf-user-dropdown-item jf-user-dropdown-toggle"
                                             onClick={e => { e.stopPropagation(); setShowJobManagement(!showJobManagement); }}>
                                             <div className="d-flex align-items-center gap-2">
-                                                <i className="bi bi-briefcase fs-5 text-primary"></i>
+                                                <i className="bi bi-briefcase text-primary"></i>
                                                 <span>Quản lý việc làm</span>
                                             </div>
                                             <i className={`bi bi-chevron-${showJobManagement ? 'up' : 'down'}`}></i>
                                         </div>
                                         {showJobManagement && (
-                                            <ul className="list-unstyled ms-4 mt-2">
-                                                <li className="mb-2">
-                                                    <Link className="text-decoration-none text-dark d-flex align-items-center gap-2 py-1" to="/jobs/applied">
+                                            <ul className="list-unstyled jf-user-submenu-list">
+                                                <li>
+                                                    <Link className="jf-user-submenu-link" to="/jobs/applied">
                                                         <i className="bi bi-file-earmark-check text-primary"></i>
                                                         <span>Việc làm đã ứng tuyển</span>
                                                     </Link>
                                                 </li>
-                                                <li className="mb-2">
-                                                    <Link className="text-decoration-none text-dark d-flex align-items-center gap-2 py-1" to="/jobs/saved">
+                                                <li>
+                                                    <Link className="jf-user-submenu-link" to="/jobs/saved">
                                                         <i className="bi bi-bookmark text-primary"></i>
                                                         <span>Việc làm đã lưu</span>
                                                     </Link>
@@ -151,15 +177,15 @@ const Header = () => {
                                             </ul>
                                         )}
                                     </li>
-                                    <li className="px-3 pb-2">
-                                        <Link className="dropdown-item d-flex align-items-center gap-2 rounded p-2" to="/support" style={{transition: 'background .2s'}}>
-                                            <i className="bi bi-bell fs-5 text-primary"></i>
+                                    <li className="jf-user-dropdown-row">
+                                        <Link className="dropdown-item jf-user-dropdown-item" to="/support">
+                                            <i className="bi bi-bell text-primary"></i>
                                             <span>Hỗ trợ và thông báo</span>
                                         </Link>
                                     </li>
-                                    <li><hr className="dropdown-divider my-2" /></li>
-                                    <li className="px-3 pb-3">
-                                        <button className="btn btn-link text-decoration-none text-primary w-100 text-center p-2" 
+                                    <li><hr className="dropdown-divider" /></li>
+                                    <li className="jf-user-dropdown-row jf-user-dropdown-row-last">
+                                        <button className="btn btn-link text-decoration-none jf-user-logout-btn"
                                                 onClick={() => { localStorage.removeItem('user'); localStorage.removeItem('token'); window.location.reload(); }}>
                                             Đăng xuất
                                         </button>

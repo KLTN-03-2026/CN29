@@ -898,7 +898,14 @@
 
 .admin-users-view-dialog {
     max-width: 760px;
+    max-height: calc(100vh - 28px);
     border-radius: 14px !important;
+}
+
+.admin-users-view-dialog .card-body {
+    max-height: calc(100vh - 132px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
 .admin-users-view-header {
@@ -926,6 +933,7 @@
 .admin-users-view-shell {
     display: flex;
     gap: 1.25rem;
+    align-items: flex-start;
 }
 
 .admin-users-view-hero {
@@ -990,7 +998,7 @@
 
 .admin-users-info-field {
     display: grid;
-    grid-template-columns: 145px 1fr;
+    grid-template-columns: minmax(128px, 160px) minmax(0, 1fr);
     gap: 0.5rem;
     align-items: start;
     padding: 0.7rem 0;
@@ -1005,10 +1013,28 @@
     font-size: 0.9rem;
 }
 
-.admin-users-info-field > div {
+.admin-users-info-value {
+    min-width: 0;
+}
+
+.admin-users-info-value span {
+    display: block;
     color: #111827;
     font-weight: 500;
-    word-break: break-word;
+    white-space: normal;
+    overflow-wrap: break-word;
+    word-break: normal;
+    line-height: 1.45;
+}
+
+.admin-users-info-value.is-link a {
+    color: #2563eb;
+    text-decoration: none;
+    word-break: break-all;
+}
+
+.admin-users-info-value.is-link a:hover {
+    text-decoration: underline;
 }
 
 .admin-users-section h6 {
@@ -1024,6 +1050,11 @@
     background: #f8fafc;
     color: #334155;
     font-size: 0.9rem;
+}
+
+.admin-users-note-box div {
+    white-space: normal;
+    overflow-wrap: break-word;
 }
 
 .admin-users-view-footer {
@@ -1082,6 +1113,10 @@
 
     .admin-users-edit-dialog {
         max-width: 100%;
+    }
+
+    .admin-users-view-dialog .card-body {
+        max-height: calc(100vh - 172px);
     }
 }
 

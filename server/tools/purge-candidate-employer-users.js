@@ -164,20 +164,20 @@ async function main() {
 
     report.push(
       await runDelete(
-        'CareerGuideComment (comments)',
+        'BinhLuanCamNangNgheNghiep (comments)',
         `DELETE cgc
-         FROM CareerGuideComment cgc
-         JOIN NguoiDung u ON u.MaNguoiDung = cgc.userId
+         FROM BinhLuanCamNangNgheNghiep cgc
+         JOIN NguoiDung u ON u.MaNguoiDung = cgc.MaNguoiDung
          WHERE u.VaiTro IN (?, ?)`
       )
     );
 
     report.push(
       await runDelete(
-        'CareerGuide (posts)',
+        'CamNangNgheNghiep (posts)',
         `DELETE cg
-         FROM CareerGuide cg
-         JOIN NguoiDung u ON u.MaNguoiDung = cg.authorId
+         FROM CamNangNgheNghiep cg
+         JOIN NguoiDung u ON u.MaNguoiDung = cg.MaTacGia
          WHERE u.VaiTro IN (?, ?)`
       )
     );

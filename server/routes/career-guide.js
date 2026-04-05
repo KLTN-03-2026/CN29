@@ -2,6 +2,32 @@ const express = require('express');
 const router = express.Router();
 const db = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
+const articleSamples = require('../mocks/articleSamples');
+
+const getSortedSamples = () => [...articleSamples]
+  .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+
+const mapSamplePost = (sample) => ({
+  id: sample.id,
+  slug: sample.slug,
+  title: sample.title,
+  excerpt: sample.excerpt,
+  category: sample.category,
+  tags: sample.tags,
+  coverImage: sample.coverImage,
+  content: sample.content,
+  authorId: 0,
+  authorType: 'admin',
+  createdAt: sample.publishedAt,
+  updatedAt: sample.publishedAt,
+  views: Number(sample.views || 0),
+  authorName: sample.author || 'Ban biên tập JobFinder',
+  isSample: true
+});
+
+const findSamplePost = (idOrSlug) => articleSamples.find((sample) => (
+  String(sample.id) === String(idOrSlug) || sample.slug === idOrSlug
+));
 
 // Get all career guide posts with pagination
 router.get('/', async (req, res) => {
@@ -11,26 +37,53 @@ router.get('/', async (req, res) => {
 
   try {
     // Get total count
-    db.get('SELECT COUNT(*) as total FROM CareerGuide', [], (err, countRow) => {
+    db.get('SELECT COUNT(*) as total FROM CamNangNgheNghiep', [], (err, countRow) => {
       if (err) {
-        db.close();
         return res.status(500).json({ success: false, error: 'Lỗi database' });
+      }
+
+      if (!countRow?.total) {
+        const samples = getSortedSamples();
+        const pagedSamples = samples.slice(offset, offset + limit).map(mapSamplePost);
+
+        return res.json({
+          success: true,
+          posts: pagedSamples,
+          pagination: {
+            page,
+            limit,
+            total: samples.length,
+            totalPages: Math.max(1, Math.ceil(samples.length / limit))
+          }
+        });
       }
 
       // Get posts with author info
       const sql = `
         SELECT 
-          cg.id, cg.title, cg.content, cg.authorId, cg.authorType, 
-          cg.createdAt, cg.updatedAt, cg.views,
+          cg.MaBaiViet as id,
+          cg.TieuDe as title,
+          cg.NoiDung as content,
+          cg.MaTacGia as authorId,
+          cg.LoaiTacGia as authorType,
+          cg.NgayTao as createdAt,
+          cg.NgayCapNhat as updatedAt,
+          cg.LuotXem as views,
+          NULL as slug,
+          NULL as excerpt,
+          NULL as category,
+          NULL as tags,
+          NULL as coverImage,
+          0 as isSample,
           CASE 
-            WHEN cg.authorType = 'candidate' THEN u.HoTen
-            WHEN cg.authorType = 'employer' THEN c.TenCongTy
+            WHEN cg.LoaiTacGia = 'candidate' THEN COALESCE(u.HoTen, 'Ẩn danh')
+            WHEN cg.LoaiTacGia = 'employer' THEN COALESCE(ntd.TenCongTy, u.HoTen, 'Nhà tuyển dụng')
             ELSE 'Admin'
           END as authorName
-        FROM CareerGuide cg
-        LEFT JOIN NguoiDung u ON cg.authorId = u.MaNguoiDung AND cg.authorType = 'candidate'
-        LEFT JOIN CongTy c ON cg.authorId = c.MaCongTy AND cg.authorType = 'employer'
-        ORDER BY cg.createdAt DESC
+        FROM CamNangNgheNghiep cg
+        LEFT JOIN NguoiDung u ON cg.MaTacGia = u.MaNguoiDung
+        LEFT JOIN NhaTuyenDung ntd ON ntd.MaNguoiDung = u.MaNguoiDung
+        ORDER BY cg.NgayTao DESC
         LIMIT ? OFFSET ?
       `;
 
@@ -62,17 +115,29 @@ router.get('/:id', (req, res) => {
 
   const sql = `
     SELECT 
-      cg.id, cg.title, cg.content, cg.authorId, cg.authorType, 
-      cg.createdAt, cg.updatedAt, cg.views,
+      cg.MaBaiViet as id,
+      cg.TieuDe as title,
+      cg.NoiDung as content,
+      cg.MaTacGia as authorId,
+      cg.LoaiTacGia as authorType,
+      cg.NgayTao as createdAt,
+      cg.NgayCapNhat as updatedAt,
+      cg.LuotXem as views,
+      NULL as slug,
+      NULL as excerpt,
+      NULL as category,
+      NULL as tags,
+      NULL as coverImage,
+      0 as isSample,
       CASE 
-        WHEN cg.authorType = 'candidate' THEN u.HoTen
-        WHEN cg.authorType = 'employer' THEN c.TenCongTy
+        WHEN cg.LoaiTacGia = 'candidate' THEN COALESCE(u.HoTen, 'Ẩn danh')
+        WHEN cg.LoaiTacGia = 'employer' THEN COALESCE(ntd.TenCongTy, u.HoTen, 'Nhà tuyển dụng')
         ELSE 'Admin'
       END as authorName
-    FROM CareerGuide cg
-    LEFT JOIN NguoiDung u ON cg.authorId = u.MaNguoiDung AND cg.authorType = 'candidate'
-    LEFT JOIN CongTy c ON cg.authorId = c.MaCongTy AND cg.authorType = 'employer'
-    WHERE cg.id = ?
+    FROM CamNangNgheNghiep cg
+    LEFT JOIN NguoiDung u ON cg.MaTacGia = u.MaNguoiDung
+    LEFT JOIN NhaTuyenDung ntd ON ntd.MaNguoiDung = u.MaNguoiDung
+    WHERE cg.MaBaiViet = ?
   `;
 
   db.get(sql, [id], (err, post) => {
@@ -81,26 +146,39 @@ router.get('/:id', (req, res) => {
     }
 
     if (!post) {
-      return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết' });
+      const samplePost = findSamplePost(id);
+      if (!samplePost) {
+        return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết' });
+      }
+
+      return res.json({
+        success: true,
+        post: mapSamplePost(samplePost),
+        comments: []
+      });
     }
 
     // Update view count
-    db.run('UPDATE CareerGuide SET views = views + 1 WHERE id = ?', [id]);
+    db.run('UPDATE CamNangNgheNghiep SET LuotXem = LuotXem + 1 WHERE MaBaiViet = ?', [id]);
 
     // Get comments
     const commentSql = `
       SELECT 
-        cgc.id, cgc.content, cgc.userId, cgc.userType, cgc.createdAt,
+        cgc.MaBinhLuan as id,
+        cgc.NoiDung as content,
+        cgc.MaNguoiDung as userId,
+        cgc.LoaiNguoiDung as userType,
+        cgc.NgayTao as createdAt,
         CASE 
-          WHEN cgc.userType = 'candidate' THEN u.HoTen
-          WHEN cgc.userType = 'employer' THEN c.TenCongTy
+          WHEN cgc.LoaiNguoiDung = 'candidate' THEN COALESCE(u.HoTen, 'Ẩn danh')
+          WHEN cgc.LoaiNguoiDung = 'employer' THEN COALESCE(ntd.TenCongTy, u.HoTen, 'Nhà tuyển dụng')
           ELSE 'Admin'
         END as userName
-      FROM CareerGuideComment cgc
-      LEFT JOIN NguoiDung u ON cgc.userId = u.MaNguoiDung AND cgc.userType = 'candidate'
-      LEFT JOIN CongTy c ON cgc.userId = c.MaCongTy AND cgc.userType = 'employer'
-      WHERE cgc.postId = ?
-      ORDER BY cgc.createdAt DESC
+      FROM BinhLuanCamNangNgheNghiep cgc
+      LEFT JOIN NguoiDung u ON cgc.MaNguoiDung = u.MaNguoiDung
+      LEFT JOIN NhaTuyenDung ntd ON ntd.MaNguoiDung = u.MaNguoiDung
+      WHERE cgc.MaBaiViet = ?
+      ORDER BY cgc.NgayTao DESC
     `;
 
     db.all(commentSql, [id], (err, comments) => {
@@ -138,8 +216,8 @@ router.post('/', authenticateToken, (req, res) => {
   }
 
   const sql = `
-    INSERT INTO CareerGuide (title, content, authorId, authorType, createdAt, views)
-    VALUES (?, ?, ?, ?, datetime('now'), 0)
+    INSERT INTO CamNangNgheNghiep (TieuDe, NoiDung, MaTacGia, LoaiTacGia, NgayTao, NgayCapNhat, LuotXem)
+    VALUES (?, ?, ?, ?, datetime('now'), datetime('now'), 0)
   `;
 
   db.run(sql, [title, content, userId, userType], function(err) {
@@ -173,7 +251,7 @@ router.post('/:id/comments', authenticateToken, (req, res) => {
   }
 
   const sql = `
-    INSERT INTO CareerGuideComment (postId, userId, userType, content, createdAt)
+    INSERT INTO BinhLuanCamNangNgheNghiep (MaBaiViet, MaNguoiDung, LoaiNguoiDung, NoiDung, NgayTao)
     VALUES (?, ?, ?, ?, datetime('now'))
   `;
 
@@ -204,7 +282,7 @@ router.delete('/:id', authenticateToken, (req, res) => {
   }
 
   // Check if user is author or admin
-  const checkSql = 'SELECT authorId, authorType FROM CareerGuide WHERE id = ?';
+  const checkSql = 'SELECT MaTacGia as authorId, LoaiTacGia as authorType FROM CamNangNgheNghiep WHERE MaBaiViet = ?';
   
   db.get(checkSql, [id], (err, post) => {
     if (err) {
@@ -222,13 +300,13 @@ router.delete('/:id', authenticateToken, (req, res) => {
     }
 
     // Delete comments first
-    db.run('DELETE FROM CareerGuideComment WHERE postId = ?', [id], (err) => {
+    db.run('DELETE FROM BinhLuanCamNangNgheNghiep WHERE MaBaiViet = ?', [id], (err) => {
       if (err) {
         return res.status(500).json({ success: false, error: 'Lỗi khi xóa bình luận' });
       }
 
       // Delete post
-      db.run('DELETE FROM CareerGuide WHERE id = ?', [id], function(err) {
+      db.run('DELETE FROM CamNangNgheNghiep WHERE MaBaiViet = ?', [id], function(err) {
         if (err) {
           return res.status(500).json({ success: false, error: 'Lỗi khi xóa bài viết' });
         }
@@ -252,7 +330,7 @@ router.delete('/:postId/comments/:commentId', authenticateToken, (req, res) => {
     userType = 'admin';
   }
 
-  const checkSql = 'SELECT userId, userType FROM CareerGuideComment WHERE id = ?';
+  const checkSql = 'SELECT MaNguoiDung as userId, LoaiNguoiDung as userType FROM BinhLuanCamNangNgheNghiep WHERE MaBinhLuan = ?';
   
   db.get(checkSql, [commentId], (err, comment) => {
     if (err) {
@@ -269,7 +347,7 @@ router.delete('/:postId/comments/:commentId', authenticateToken, (req, res) => {
       return res.status(403).json({ success: false, error: 'Bạn không có quyền xóa bình luận này' });
     }
 
-    db.run('DELETE FROM CareerGuideComment WHERE id = ?', [commentId], function(err) {
+    db.run('DELETE FROM BinhLuanCamNangNgheNghiep WHERE MaBinhLuan = ?', [commentId], function(err) {
       if (err) {
         return res.status(500).json({ success: false, error: 'Lỗi khi xóa bình luận' });
       }

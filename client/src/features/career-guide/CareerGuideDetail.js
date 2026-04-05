@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { sanitizeCareerHtml } from './richTextUtils';
 import './CareerGuideDetail.css';
 
 function CareerGuideDetail() {
@@ -12,6 +13,21 @@ function CareerGuideDetail() {
   const [commentContent, setCommentContent] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [user, setUser] = useState(null);
+
+  const parseTags = (value) => {
+    if (Array.isArray(value)) return value.filter(Boolean);
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      if (!trimmed) return [];
+      try {
+        const parsed = JSON.parse(trimmed);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+      } catch {
+        return trimmed.split(',').map((tag) => tag.trim()).filter(Boolean);
+      }
+    }
+    return [];
+  };
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -150,6 +166,7 @@ function CareerGuideDetail() {
 
   const canDeletePost = () => {
     if (!user || !post) return false;
+    if (post.isSample) return false;
     return user.LoaiNguoiDung === 'Quản trị' || 
            user.LoaiNguoiDung === 'Siêu quản trị viên' ||
            (post.authorId === user.MaNguoiDung && post.authorType === 'candidate') ||
@@ -206,8 +223,25 @@ function CareerGuideDetail() {
 
         {/* Post Content */}
         <article className="post-detail-card">
+          {post.coverImage && (
+            <div className="post-detail-cover-wrap">
+              <img src={post.coverImage} alt={post.title} className="post-detail-cover" loading="lazy" />
+            </div>
+          )}
+
           <header className="post-header">
             <h1 className="post-detail-title">{post.title}</h1>
+
+            {(post.category || parseTags(post.tags).length > 0) && (
+              <div className="post-detail-taxonomy">
+                {post.category && <span className="post-detail-category">{post.category}</span>}
+                {parseTags(post.tags).map((tag) => (
+                  <span className="post-detail-tag" key={tag}>{tag}</span>
+                ))}
+              </div>
+            )}
+
+            {post.excerpt && <p className="post-detail-excerpt">{post.excerpt}</p>}
             
             <div className="post-detail-meta">
               <div className="meta-left">
@@ -238,7 +272,7 @@ function CareerGuideDetail() {
 
           <div 
             className="post-detail-content"
-            dangerouslySetInnerHTML={{ __html: post.content }}
+            dangerouslySetInnerHTML={{ __html: sanitizeCareerHtml(post.content) }}
           />
         </article>
 

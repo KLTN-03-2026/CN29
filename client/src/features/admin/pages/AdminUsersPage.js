@@ -5,7 +5,12 @@ const formatDateTime = (value) => {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleString('vi-VN');
+    const dateText = date.toLocaleDateString('vi-VN');
+    const timeText = date.toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+    return `${dateText} ${timeText}`;
 };
 
 const formatDateOnly = (value) => {
@@ -150,12 +155,24 @@ const getStatusBadge = (user) => {
     return <span className="badge bg-warning-subtle text-warning-emphasis">Đã chặn</span>;
 };
 
-const UserInfoField = ({ label, value, className = '' }) => (
-    <div className={`admin-users-info-field ${className}`.trim()}>
-        <small>{label}</small>
-        <div>{value || '-'}</div>
-    </div>
-);
+const UserInfoField = ({ label, value, className = '' }) => {
+    const rawValue = value === 0 ? '0' : String(value ?? '').trim();
+    const displayValue = rawValue || '-';
+    const isLink = /^https?:\/\//i.test(displayValue);
+
+    return (
+        <div className={`admin-users-info-field ${className}`.trim()}>
+            <small>{label}</small>
+            <div className={`admin-users-info-value ${isLink ? 'is-link' : ''}`.trim()}>
+                {isLink ? (
+                    <a href={displayValue} target="_blank" rel="noreferrer">{displayValue}</a>
+                ) : (
+                    <span>{displayValue}</span>
+                )}
+            </div>
+        </div>
+    );
+};
 
 const AdminUsersPage = ({
     users,

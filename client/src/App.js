@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './features/public/HomePage';
 import JobSearchPage from './features/public/JobSearchPage';
@@ -44,6 +44,12 @@ import './App.css';
 
 function AppContent() {
   const location = useLocation();
+  const userStr = localStorage.getItem('user');
+  const token = String(localStorage.getItem('token') || '').trim();
+  const isAuthenticated = Boolean(userStr && token);
+
+  const guestAllowedPaths = ['/', '/login', '/register', '/forgot-password', '/register-employer', '/verify-otp'];
+  const isGuestBlockedPath = !isAuthenticated && !guestAllowedPaths.includes(location.pathname);
 
   // Kiểm tra và xóa token không hợp lệ khi app khởi động
   useEffect(() => {
@@ -75,6 +81,10 @@ function AppContent() {
                           location.pathname === '/candidate';
   const isAuthPage = ['/login', '/register', '/forgot-password', '/register-employer'].includes(location.pathname);
   const showPublicChrome = !isDashboardPage && !isAuthPage;
+
+  if (isGuestBlockedPath) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
 
   return (
     <div className="App">

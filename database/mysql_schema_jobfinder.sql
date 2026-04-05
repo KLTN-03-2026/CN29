@@ -1,0 +1,396 @@
+-- MySQL DDL generated from server/prisma/schema.prisma
+-- Compatible with MySQL 8+
+-- If needed, rename database before running.
+
+CREATE DATABASE IF NOT EXISTS `do_an_jobfinder`
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE `do_an_jobfinder`;
+
+CREATE TABLE IF NOT EXISTS `NguoiDung` (
+  `MaNguoiDung` INT NOT NULL AUTO_INCREMENT,
+  `Email` VARCHAR(191) NOT NULL,
+  `MatKhau` VARCHAR(255) NOT NULL,
+  `HoTen` VARCHAR(255) NULL,
+  `SoDienThoai` VARCHAR(50) NULL,
+  `VaiTro` VARCHAR(50) NOT NULL DEFAULT 'Ứng viên',
+  `TrangThai` INT NOT NULL DEFAULT 1,
+  `DiaChi` TEXT NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `LanDangNhapCuoi` DATETIME NULL,
+  `SoLanDangNhapSai` INT NOT NULL DEFAULT 0,
+  `ThoiGianKhoaDangNhap` DATETIME NULL,
+  `MaXacThuc` VARCHAR(20) NULL,
+  `ThoiGianMaXacThuc` DATETIME NULL,
+  `IsSuperAdmin` TINYINT(1) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`MaNguoiDung`),
+  UNIQUE KEY `UQ_NguoiDung_Email` (`Email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `DanhMucCongViec` (
+  `MaDanhMuc` INT NOT NULL AUTO_INCREMENT,
+  `TenDanhMuc` VARCHAR(255) NOT NULL,
+  `MaCha` INT NULL,
+  PRIMARY KEY (`MaDanhMuc`),
+  UNIQUE KEY `UQ_DanhMucCongViec_TenDanhMuc` (`TenDanhMuc`),
+  KEY `IDX_DanhMucCongViec_MaCha` (`MaCha`),
+  CONSTRAINT `FK_DanhMucCongViec_MaCha`
+    FOREIGN KEY (`MaCha`) REFERENCES `DanhMucCongViec` (`MaDanhMuc`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `KyNang` (
+  `MaKyNang` INT NOT NULL AUTO_INCREMENT,
+  `TenKyNang` VARCHAR(255) NOT NULL,
+  PRIMARY KEY (`MaKyNang`),
+  UNIQUE KEY `UQ_KyNang_TenKyNang` (`TenKyNang`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `CongTy` (
+  `MaCongTy` INT NOT NULL AUTO_INCREMENT,
+  `TenCongTy` VARCHAR(255) NOT NULL,
+  `MaSoThue` VARCHAR(100) NULL,
+  `DiaChi` TEXT NULL,
+  `ThanhPho` VARCHAR(191) NULL,
+  `Website` VARCHAR(255) NULL,
+  `LinhVuc` VARCHAR(255) NULL,
+  `MoTa` LONGTEXT NULL,
+  `Logo` VARCHAR(500) NULL,
+  `NguoiDaiDien` INT NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaCongTy`),
+  KEY `IDX_CongTy_NguoiDaiDien` (`NguoiDaiDien`),
+  CONSTRAINT `FK_CongTy_NguoiDaiDien`
+    FOREIGN KEY (`NguoiDaiDien`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `HoSoUngVien` (
+  `MaHoSo` INT NOT NULL AUTO_INCREMENT,
+  `MaNguoiDung` INT NOT NULL,
+  `NgaySinh` DATETIME NULL,
+  `GioiTinh` VARCHAR(20) NULL,
+  `DiaChi` TEXT NULL,
+  `ThanhPho` VARCHAR(191) NULL,
+  `QuanHuyen` VARCHAR(191) NULL,
+  `GioiThieuBanThan` LONGTEXT NULL,
+  `SoNamKinhNghiem` INT NOT NULL DEFAULT 0,
+  `TrinhDoHocVan` VARCHAR(255) NULL,
+  `AnhDaiDien` VARCHAR(500) NULL,
+  `ChucDanh` VARCHAR(255) NULL,
+  `LinkCaNhan` VARCHAR(500) NULL,
+  `EducationListJson` LONGTEXT NULL,
+  `WorkListJson` LONGTEXT NULL,
+  `LanguageListJson` LONGTEXT NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaHoSo`),
+  UNIQUE KEY `UQ_HoSoUngVien_MaNguoiDung` (`MaNguoiDung`),
+  CONSTRAINT `FK_HoSoUngVien_NguoiDung`
+    FOREIGN KEY (`MaNguoiDung`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `NhaTuyenDung` (
+  `MaNhaTuyenDung` INT NOT NULL AUTO_INCREMENT,
+  `MaNguoiDung` INT NOT NULL,
+  `TenCongTy` VARCHAR(255) NOT NULL,
+  `MaSoThue` VARCHAR(100) NULL,
+  `Website` VARCHAR(255) NULL,
+  `DiaChi` TEXT NULL,
+  `ThanhPho` VARCHAR(191) NULL,
+  `MoTa` LONGTEXT NULL,
+  `Logo` VARCHAR(500) NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaNhaTuyenDung`),
+  UNIQUE KEY `UQ_NhaTuyenDung_MaNguoiDung` (`MaNguoiDung`),
+  CONSTRAINT `FK_NhaTuyenDung_NguoiDung`
+    FOREIGN KEY (`MaNguoiDung`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `HoSoCV` (
+  `MaCV` INT NOT NULL AUTO_INCREMENT,
+  `MaNguoiDung` INT NOT NULL,
+  `TieuDe` VARCHAR(255) NULL,
+  `TomTat` LONGTEXT NULL,
+  `TepCV` VARCHAR(500) NULL,
+  `MacDinh` INT NOT NULL DEFAULT 0,
+  `LinhVuc` VARCHAR(255) NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaCV`),
+  KEY `IDX_HoSoCV_MaNguoiDung` (`MaNguoiDung`),
+  CONSTRAINT `FK_HoSoCV_NguoiDung`
+    FOREIGN KEY (`MaNguoiDung`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `TinTuyenDung` (
+  `MaTin` INT NOT NULL AUTO_INCREMENT,
+  `MaNhaTuyenDung` INT NOT NULL,
+  `TieuDe` VARCHAR(255) NOT NULL,
+  `MoTa` LONGTEXT NULL,
+  `YeuCau` LONGTEXT NULL,
+  `QuyenLoi` LONGTEXT NULL,
+  `KinhNghiem` VARCHAR(255) NULL,
+  `CapBac` VARCHAR(255) NULL,
+  `LuongTu` INT NULL,
+  `LuongDen` INT NULL,
+  `KieuLuong` VARCHAR(50) NOT NULL DEFAULT 'Thỏa thuận',
+  `DiaDiem` TEXT NULL,
+  `ThanhPho` VARCHAR(191) NULL,
+  `LinhVucCongViec` VARCHAR(255) NULL,
+  `MaDanhMuc` INT NULL,
+  `HinhThuc` VARCHAR(50) NOT NULL DEFAULT 'Toàn thời gian',
+  `TrangThai` VARCHAR(50) NOT NULL DEFAULT 'Nháp',
+  `NgayDang` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `HanNopHoSo` DATETIME NULL,
+  `LuotXem` INT NOT NULL DEFAULT 0,
+  `SoLuongUngTuyen` INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`MaTin`),
+  KEY `IDX_TinTuyenDung_MaNhaTuyenDung` (`MaNhaTuyenDung`),
+  KEY `IDX_TinTuyenDung_MaDanhMuc` (`MaDanhMuc`),
+  CONSTRAINT `FK_TinTuyenDung_NhaTuyenDung`
+    FOREIGN KEY (`MaNhaTuyenDung`) REFERENCES `NhaTuyenDung` (`MaNhaTuyenDung`)
+    ON DELETE RESTRICT ON UPDATE CASCADE,
+  CONSTRAINT `FK_TinTuyenDung_DanhMuc`
+    FOREIGN KEY (`MaDanhMuc`) REFERENCES `DanhMucCongViec` (`MaDanhMuc`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ThongKeCongViec` (
+  `MaTin` INT NOT NULL,
+  `LuotXem` INT NOT NULL DEFAULT 0,
+  `SoLuongUngTuyen` INT NOT NULL DEFAULT 0,
+  `LanXemCuoi` DATETIME NULL,
+  PRIMARY KEY (`MaTin`),
+  CONSTRAINT `FK_ThongKeCongViec_TinTuyenDung`
+    FOREIGN KEY (`MaTin`) REFERENCES `TinTuyenDung` (`MaTin`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ChiTietTin_KyNang` (
+  `MaTin` INT NOT NULL,
+  `MaKyNang` INT NOT NULL,
+  `DoQuanTrong` INT NOT NULL DEFAULT 1,
+  PRIMARY KEY (`MaTin`, `MaKyNang`),
+  KEY `IDX_ChiTietTin_KyNang_MaKyNang` (`MaKyNang`),
+  CONSTRAINT `FK_ChiTietTinKyNang_Tin`
+    FOREIGN KEY (`MaTin`) REFERENCES `TinTuyenDung` (`MaTin`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_ChiTietTinKyNang_KyNang`
+    FOREIGN KEY (`MaKyNang`) REFERENCES `KyNang` (`MaKyNang`)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ChiTietCV_KyNang` (
+  `MaCV` INT NOT NULL,
+  `MaKyNang` INT NOT NULL,
+  `MucDo` VARCHAR(50) NOT NULL DEFAULT 'Trung bình',
+  PRIMARY KEY (`MaCV`, `MaKyNang`),
+  KEY `IDX_ChiTietCV_KyNang_MaKyNang` (`MaKyNang`),
+  CONSTRAINT `FK_ChiTietCVKyNang_CV`
+    FOREIGN KEY (`MaCV`) REFERENCES `HoSoCV` (`MaCV`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_ChiTietCVKyNang_KyNang`
+    FOREIGN KEY (`MaKyNang`) REFERENCES `KyNang` (`MaKyNang`)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `LuuCV` (
+  `MaLuuCV` INT NOT NULL AUTO_INCREMENT,
+  `MaNhaTuyenDung` INT NOT NULL,
+  `MaCV` INT NOT NULL,
+  `TrangThai` VARCHAR(50) NOT NULL DEFAULT 'Đã lưu',
+  `NgayLuu` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaLuuCV`),
+  UNIQUE KEY `UQ_LuuCV_MaNhaTuyenDung_MaCV` (`MaNhaTuyenDung`, `MaCV`),
+  KEY `IDX_LuuCV_MaCV` (`MaCV`),
+  CONSTRAINT `FK_LuuCV_NhaTuyenDung`
+    FOREIGN KEY (`MaNhaTuyenDung`) REFERENCES `NhaTuyenDung` (`MaNhaTuyenDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_LuuCV_HoSoCV`
+    FOREIGN KEY (`MaCV`) REFERENCES `HoSoCV` (`MaCV`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `UngTuyen` (
+  `MaUngTuyen` INT NOT NULL AUTO_INCREMENT,
+  `MaTin` INT NOT NULL,
+  `MaCV` INT NULL,
+  `MaUngVien` INT NOT NULL,
+  `ThuGioiThieu` LONGTEXT NULL,
+  `TrangThai` VARCHAR(50) NOT NULL DEFAULT 'Đã nộp',
+  `NgayNop` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `GhiChu` LONGTEXT NULL,
+  PRIMARY KEY (`MaUngTuyen`),
+  KEY `IDX_UngTuyen_MaTin` (`MaTin`),
+  KEY `IDX_UngTuyen_MaCV` (`MaCV`),
+  KEY `IDX_UngTuyen_MaUngVien` (`MaUngVien`),
+  CONSTRAINT `FK_UngTuyen_Tin`
+    FOREIGN KEY (`MaTin`) REFERENCES `TinTuyenDung` (`MaTin`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_UngTuyen_CV`
+    FOREIGN KEY (`MaCV`) REFERENCES `HoSoCV` (`MaCV`)
+    ON DELETE SET NULL ON UPDATE CASCADE,
+  CONSTRAINT `FK_UngTuyen_UngVien`
+    FOREIGN KEY (`MaUngVien`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `LuuTin` (
+  `MaNguoiDung` INT NOT NULL,
+  `MaTin` INT NOT NULL,
+  `NgayLuu` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaNguoiDung`, `MaTin`),
+  KEY `IDX_LuuTin_MaTin` (`MaTin`),
+  CONSTRAINT `FK_LuuTin_NguoiDung`
+    FOREIGN KEY (`MaNguoiDung`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_LuuTin_Tin`
+    FOREIGN KEY (`MaTin`) REFERENCES `TinTuyenDung` (`MaTin`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `ThongBao` (
+  `MaThongBao` INT NOT NULL AUTO_INCREMENT,
+  `MaNguoiDung` INT NOT NULL,
+  `TieuDe` VARCHAR(255) NULL,
+  `NoiDung` LONGTEXT NULL,
+  `DaDoc` INT NOT NULL DEFAULT 0,
+  `Loai` VARCHAR(100) NULL,
+  `MaLienQuan` INT NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaThongBao`),
+  KEY `IDX_ThongBao_MaNguoiDung` (`MaNguoiDung`),
+  CONSTRAINT `FK_ThongBao_NguoiDung`
+    FOREIGN KEY (`MaNguoiDung`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `BaoCao` (
+  `MaBaoCao` INT NOT NULL AUTO_INCREMENT,
+  `MaNguoiBaoCao` INT NULL,
+  `LoaiDoiTuong` VARCHAR(100) NOT NULL,
+  `MaDoiTuong` INT NOT NULL,
+  `LyDo` VARCHAR(255) NULL,
+  `ChiTiet` LONGTEXT NULL,
+  `TrangThai` VARCHAR(50) NOT NULL DEFAULT 'Chưa xử lý',
+  `NgayBaoCao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaBaoCao`),
+  KEY `IDX_BaoCao_MaNguoiBaoCao` (`MaNguoiBaoCao`),
+  CONSTRAINT `FK_BaoCao_NguoiBaoCao`
+    FOREIGN KEY (`MaNguoiBaoCao`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `NhatKyQuanTri` (
+  `MaNhatKy` INT NOT NULL AUTO_INCREMENT,
+  `MaQuanTri` INT NULL,
+  `HanhDong` VARCHAR(255) NULL,
+  `DoiTuong` VARCHAR(255) NULL,
+  `MaDoiTuong` INT NULL,
+  `GhiChu` LONGTEXT NULL,
+  `NgayThucHien` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaNhatKy`),
+  KEY `IDX_NhatKyQuanTri_MaQuanTri` (`MaQuanTri`),
+  CONSTRAINT `FK_NhatKyQuanTri_NguoiDung`
+    FOREIGN KEY (`MaQuanTri`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `TinNhan` (
+  `MaTinNhan` INT NOT NULL AUTO_INCREMENT,
+  `MaNguoiGui` INT NOT NULL,
+  `MaNguoiNhan` INT NOT NULL,
+  `MaTin` INT NULL,
+  `NoiDung` LONGTEXT NOT NULL,
+  `DaDoc` INT NOT NULL DEFAULT 0,
+  `NgayGui` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaTinNhan`),
+  KEY `IDX_TinNhan_MaNguoiGui` (`MaNguoiGui`),
+  KEY `IDX_TinNhan_MaNguoiNhan` (`MaNguoiNhan`),
+  KEY `IDX_TinNhan_MaTin` (`MaTin`),
+  CONSTRAINT `FK_TinNhan_NguoiGui`
+    FOREIGN KEY (`MaNguoiGui`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_TinNhan_NguoiNhan`
+    FOREIGN KEY (`MaNguoiNhan`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_TinNhan_Tin`
+    FOREIGN KEY (`MaTin`) REFERENCES `TinTuyenDung` (`MaTin`)
+    ON DELETE SET NULL ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `DanhGiaCongTy` (
+  `MaDanhGia` INT NOT NULL AUTO_INCREMENT,
+  `MaNhaTuyenDung` INT NOT NULL,
+  `MaUngVien` INT NOT NULL,
+  `SoSao` INT NOT NULL,
+  `NgayDanhGia` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaDanhGia`),
+  UNIQUE KEY `UQ_DanhGiaCongTy_NTD_UV` (`MaNhaTuyenDung`, `MaUngVien`),
+  KEY `IDX_DanhGiaCongTy_MaUngVien` (`MaUngVien`),
+  CONSTRAINT `FK_DanhGiaCongTy_NhaTuyenDung`
+    FOREIGN KEY (`MaNhaTuyenDung`) REFERENCES `NhaTuyenDung` (`MaNhaTuyenDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_DanhGiaCongTy_UngVien`
+    FOREIGN KEY (`MaUngVien`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `BinhLuanCongTy` (
+  `MaBinhLuan` INT NOT NULL AUTO_INCREMENT,
+  `MaNhaTuyenDung` INT NOT NULL,
+  `MaNguoiDung` INT NOT NULL,
+  `NoiDung` LONGTEXT NOT NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaBinhLuan`),
+  KEY `IDX_BinhLuanCongTy_MaNhaTuyenDung` (`MaNhaTuyenDung`),
+  KEY `IDX_BinhLuanCongTy_MaNguoiDung` (`MaNguoiDung`),
+  CONSTRAINT `FK_BinhLuanCongTy_NhaTuyenDung`
+    FOREIGN KEY (`MaNhaTuyenDung`) REFERENCES `NhaTuyenDung` (`MaNhaTuyenDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_BinhLuanCongTy_NguoiDung`
+    FOREIGN KEY (`MaNguoiDung`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `CamNangNgheNghiep` (
+  `MaBaiViet` INT NOT NULL AUTO_INCREMENT,
+  `TieuDe` VARCHAR(255) NOT NULL,
+  `NoiDung` LONGTEXT NOT NULL,
+  `MaTacGia` INT NOT NULL,
+  `LoaiTacGia` VARCHAR(50) NOT NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `NgayCapNhat` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `LuotXem` INT NOT NULL DEFAULT 0,
+  PRIMARY KEY (`MaBaiViet`),
+  KEY `IDX_CamNangNgheNghiep_MaTacGia` (`MaTacGia`),
+  CONSTRAINT `FK_CamNangNgheNghiep_TacGia`
+    FOREIGN KEY (`MaTacGia`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE RESTRICT ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `BinhLuanCamNangNgheNghiep` (
+  `MaBinhLuan` INT NOT NULL AUTO_INCREMENT,
+  `MaBaiViet` INT NOT NULL,
+  `MaNguoiDung` INT NOT NULL,
+  `LoaiNguoiDung` VARCHAR(50) NOT NULL,
+  `NoiDung` LONGTEXT NOT NULL,
+  `NgayTao` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`MaBinhLuan`),
+  KEY `IDX_BinhLuanCamNang_MaBaiViet` (`MaBaiViet`),
+  KEY `IDX_BinhLuanCamNang_MaNguoiDung` (`MaNguoiDung`),
+  CONSTRAINT `FK_BinhLuanCamNang_BaiViet`
+    FOREIGN KEY (`MaBaiViet`) REFERENCES `CamNangNgheNghiep` (`MaBaiViet`)
+    ON DELETE CASCADE ON UPDATE CASCADE,
+  CONSTRAINT `FK_BinhLuanCamNang_NguoiDung`
+    FOREIGN KEY (`MaNguoiDung`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+    ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
