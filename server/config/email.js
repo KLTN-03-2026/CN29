@@ -10,16 +10,27 @@ const toPositiveMs = (value, fallback) => {
     return Math.floor(parsed);
 };
 
+const asTrimmed = (value) => String(value || '').trim();
+const normalizeAppPassword = (value) => asTrimmed(value).replace(/\s+/g, '');
+
+const EMAIL_USER = asTrimmed(process.env.EMAIL_USER);
+const EMAIL_PASSWORD = normalizeAppPassword(process.env.EMAIL_PASSWORD);
+const EMAIL_FROM = asTrimmed(process.env.EMAIL_FROM) || EMAIL_USER;
+
+const EMAIL_OAUTH_CLIENT_ID = asTrimmed(process.env.EMAIL_OAUTH_CLIENT_ID);
+const EMAIL_OAUTH_CLIENT_SECRET = asTrimmed(process.env.EMAIL_OAUTH_CLIENT_SECRET);
+const EMAIL_OAUTH_REFRESH_TOKEN = asTrimmed(process.env.EMAIL_OAUTH_REFRESH_TOKEN);
+
 const DEFAULT_MAIL_TIMEOUT_MS = process.env.NODE_ENV === 'production' ? 45000 : 15000;
 const MAIL_TIMEOUT_MS = toPositiveMs(process.env.EMAIL_TIMEOUT_MS, DEFAULT_MAIL_TIMEOUT_MS);
 
-let useOAuth2 = Boolean(
-    process.env.EMAIL_OAUTH_CLIENT_ID &&
-    process.env.EMAIL_OAUTH_CLIENT_SECRET &&
-    process.env.EMAIL_OAUTH_REFRESH_TOKEN &&
-    process.env.EMAIL_USER
+const useOAuth2 = Boolean(
+    EMAIL_OAUTH_CLIENT_ID &&
+    EMAIL_OAUTH_CLIENT_SECRET &&
+    EMAIL_OAUTH_REFRESH_TOKEN &&
+    EMAIL_USER
 );
-const hasAppPassword = Boolean(process.env.EMAIL_USER && process.env.EMAIL_PASSWORD);
+const hasAppPassword = Boolean(EMAIL_USER && EMAIL_PASSWORD);
 
 let transporter;
 let fetchOAuthAccessToken = null;
@@ -58,18 +69,18 @@ if (useOAuth2) {
     if (googleapis) {
         const { google } = googleapis;
         const oAuth2Client = new google.auth.OAuth2(
-            process.env.EMAIL_OAUTH_CLIENT_ID,
-            process.env.EMAIL_OAUTH_CLIENT_SECRET
+            EMAIL_OAUTH_CLIENT_ID,
+            EMAIL_OAUTH_CLIENT_SECRET
         );
-        oAuth2Client.setCredentials({ refresh_token: process.env.EMAIL_OAUTH_REFRESH_TOKEN });
+        oAuth2Client.setCredentials({ refresh_token: EMAIL_OAUTH_REFRESH_TOKEN });
 
         // Tạo transporter động để luôn có accessToken mới
         transporter = createTransport({
             type: 'OAuth2',
-            user: process.env.EMAIL_USER,
-            clientId: process.env.EMAIL_OAUTH_CLIENT_ID,
-            clientSecret: process.env.EMAIL_OAUTH_CLIENT_SECRET,
-            refreshToken: process.env.EMAIL_OAUTH_REFRESH_TOKEN,
+            user: EMAIL_USER,
+            clientId: EMAIL_OAUTH_CLIENT_ID,
+            clientSecret: EMAIL_OAUTH_CLIENT_SECRET,
+            refreshToken: EMAIL_OAUTH_REFRESH_TOKEN,
         });
 
         // Thêm hàm helper để lấy access token trước khi gửi (đảm bảo token mới)
@@ -83,8 +94,8 @@ if (useOAuth2) {
 if (!transporter && hasAppPassword) {
     // Fallback: App Password
     transporter = createTransport({
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,
+        user: EMAIL_USER,
+        pass: EMAIL_PASSWORD,
     });
 }
 
@@ -104,7 +115,7 @@ async function sendVerificationEmail(email, otp, userName) {
     }
 
     const mailOptions = {
-        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        from: EMAIL_FROM,
         to: email,
         subject: 'Xác thực tài khoản JobFinder',
         html: `
@@ -133,7 +144,7 @@ async function sendVerificationEmail(email, otp, userName) {
             if (accessToken) {
                 mailOptions.auth = {
                     type: 'OAuth2',
-                    user: process.env.EMAIL_USER,
+                    user: EMAIL_USER,
                     accessToken,
                 };
             }
