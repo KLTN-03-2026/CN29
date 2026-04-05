@@ -12,6 +12,13 @@ const toPositiveMs = (value, fallback) => {
 
 const asTrimmed = (value) => String(value || '').trim();
 const normalizeAppPassword = (value) => asTrimmed(value).replace(/\s+/g, '');
+const toBoolean = (value, fallback) => {
+    const normalized = asTrimmed(value).toLowerCase();
+    if (!normalized) return fallback;
+    if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+    if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+    return fallback;
+};
 
 const EMAIL_USER = asTrimmed(process.env.EMAIL_USER);
 const EMAIL_PASSWORD = normalizeAppPassword(process.env.EMAIL_PASSWORD);
@@ -20,6 +27,11 @@ const EMAIL_FROM = asTrimmed(process.env.EMAIL_FROM) || EMAIL_USER;
 const EMAIL_OAUTH_CLIENT_ID = asTrimmed(process.env.EMAIL_OAUTH_CLIENT_ID);
 const EMAIL_OAUTH_CLIENT_SECRET = asTrimmed(process.env.EMAIL_OAUTH_CLIENT_SECRET);
 const EMAIL_OAUTH_REFRESH_TOKEN = asTrimmed(process.env.EMAIL_OAUTH_REFRESH_TOKEN);
+
+const EMAIL_SMTP_HOST = asTrimmed(process.env.EMAIL_SMTP_HOST) || 'smtp.gmail.com';
+const EMAIL_SMTP_PORT = toPositiveMs(process.env.EMAIL_SMTP_PORT, 587);
+const EMAIL_SMTP_SECURE = toBoolean(process.env.EMAIL_SMTP_SECURE, EMAIL_SMTP_PORT === 465);
+const EMAIL_SMTP_REQUIRE_TLS = toBoolean(process.env.EMAIL_SMTP_REQUIRE_TLS, !EMAIL_SMTP_SECURE);
 
 const DEFAULT_MAIL_TIMEOUT_MS = process.env.NODE_ENV === 'production' ? 45000 : 15000;
 const MAIL_TIMEOUT_MS = toPositiveMs(process.env.EMAIL_TIMEOUT_MS, DEFAULT_MAIL_TIMEOUT_MS);
@@ -36,11 +48,18 @@ let transporter;
 let fetchOAuthAccessToken = null;
 
 const createTransport = (auth) => nodemailer.createTransport({
-    service: 'gmail',
+    host: EMAIL_SMTP_HOST,
+    port: EMAIL_SMTP_PORT,
+    secure: EMAIL_SMTP_SECURE,
+    requireTLS: EMAIL_SMTP_REQUIRE_TLS,
     auth,
     connectionTimeout: MAIL_TIMEOUT_MS,
     greetingTimeout: MAIL_TIMEOUT_MS,
     socketTimeout: MAIL_TIMEOUT_MS,
+    dnsTimeout: Math.min(MAIL_TIMEOUT_MS, 15000),
+    tls: {
+        servername: EMAIL_SMTP_HOST,
+    },
 });
 
 const withTimeout = (promiseFactory, label) => new Promise((resolve, reject) => {
@@ -101,6 +120,8 @@ if (!transporter && hasAppPassword) {
 
 if (!transporter) {
     console.warn('[email] EMAIL_USER/EMAIL_PASSWORD (hoặc OAuth2) chưa cấu hình. OTP email sẽ không gửi được.');
+} else {
+    console.info(`[email] SMTP ready host=${EMAIL_SMTP_HOST} port=${EMAIL_SMTP_PORT} secure=${EMAIL_SMTP_SECURE} requireTLS=${EMAIL_SMTP_REQUIRE_TLS}`);
 }
 
 // Hàm tạo mã OTP 6 số
