@@ -1,0 +1,38 @@
+@startuml
+skinparam shadowing false
+title UC02 - Đăng nhập
+|Người dùng|
+start
+:Nhập tài khoản và mật khẩu;
+:Nhấn Đăng nhập;
+|Hệ thống|
+:Kiểm tra thông tin đăng nhập;
+if (Thông tin hợp lệ?) then (Có)
+  if (Bật 2FA?) then (Có)
+    |Người dùng|
+    :Nhập mã 2FA;
+    |Hệ thống|
+    :Xác minh mã 2FA;
+    if (Mã đúng?) then (Có)
+      :Tạo phiên và cấp token;
+      |Người dùng|
+      :Vào hệ thống;
+      stop
+    else (Không)
+      |Người dùng|
+      :Nhận thông báo sai mã 2FA;
+      stop
+    endif
+  else (Không)
+    :Tạo phiên và cấp token;
+    |Người dùng|
+    :Vào hệ thống;
+    stop
+  endif
+else (Không)
+  :Có thể yêu cầu CAPTCHA hoặc thông báo tài khoản bị khóa;
+  |Người dùng|
+  :Nhận thông báo lỗi;
+  stop
+endif
+@enduml

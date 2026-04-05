@@ -1,0 +1,15 @@
+sequenceDiagram
+    actor Employer as Nhà tuyển dụng
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant CandidateSvc as Dịch vụ ứng viên
+    participant DB as CSDL
+    Employer->>UI: Xem CV ứng viên
+    UI->>Auth: Kiểm tra đăng nhập
+    Auth-->>UI: Phiên hợp lệ
+    Employer->>UI: Chọn Lưu CV ứng viên
+    UI->>CandidateSvc: Gửi yêu cầu lưu CV vào danh sách quan tâm
+    CandidateSvc->>DB: Tạo bản ghi lưu CV ứng viên
+    DB-->>CandidateSvc: Lưu thành công
+    CandidateSvc-->>UI: Trả trạng thái đã lưu
+    UI-->>Employer: Hiển thị thông báo thành công

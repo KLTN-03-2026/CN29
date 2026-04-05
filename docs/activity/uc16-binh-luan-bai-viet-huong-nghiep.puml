@@ -1,0 +1,27 @@
+@startuml
+skinparam shadowing false
+title UC16 - Bình luận bài viết hướng nghiệp
+|Người dùng|
+start
+:Nhập bình luận bài viết;
+:Nhận Gửi;
+|Hệ thống|
+:Kiểm tra đăng nhập;
+if (Đã đăng nhập?) then (Có)
+  :Kiểm tra nội dung bình luận;
+  if (Hợp lệ?) then (Có)
+    :Lưu bình luận;
+    |Người dùng|
+    :Nhận thông báo thành công;
+    stop
+  else (Không)
+    |Người dùng|
+    :Nhận thông báo nội dung không hợp lệ;
+    stop
+  endif
+else (Không)
+  |Người dùng|
+  :Đăng nhập để tiếp tục;
+  stop
+endif
+@enduml

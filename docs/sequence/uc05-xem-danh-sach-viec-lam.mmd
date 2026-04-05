@@ -1,0 +1,11 @@
+sequenceDiagram
+    actor Guest as Khách vãng lai
+    participant UI as Hệ thống(UI)
+    participant Job as Dịch vụ việc làm
+    participant DB as CSDL
+    Guest->>UI: Mở trang danh sách việc làm
+    UI->>Job: Yêu cầu danh sách việc làm
+    Job->>DB: Lấy danh sách, sắp xếp, phân trang
+    DB-->>Job: Dữ liệu việc làm
+    Job-->>UI: Trả về danh sách việc làm
+    UI-->>Guest: Hiển thị danh sách việc làm

@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor User as Người dùng đã đăng nhập
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Article as Dịch vụ bài viết
+    participant DB as CSDL
+    participant Moderation as Dịch vụ kiểm duyệt
+    User->>UI: Nhập bình luận bài viết
+    UI->>Auth: Kiểm tra đăng nhập
+    alt Chưa đăng nhập
+        Auth-->>UI: Phiên không hợp lệ
+        UI-->>User: Yêu cầu đăng nhập
+    else Đã đăng nhập
+        UI->>Article: Gửi nội dung bình luận
+        Article->>Moderation: Kiểm tra nội dung
+        Moderation-->>Article: Hợp lệ
+        Article->>DB: Lưu bình luận
+        DB-->>Article: Lưu thành công
+        Article-->>UI: Trả kết quả
+        UI-->>User: Hiển thị bình luận vừa gửi
+    end

@@ -1,0 +1,16 @@
+@startuml
+skinparam shadowing false
+title UC18 - Nhắn tin
+|Người gửi|
+start
+:Mở hội thoại;
+:Nhập nội dung tin nhắn;
+:Nhận Gửi;
+|Hệ thống|
+:Kiểm tra đăng nhập;
+:Lưu tin nhắn;
+:Đồng bộ realtime cho người nhận;
+|Người gửi|
+:Thấy tin nhắn xuất hiện trong hội thoại;
+stop
+@enduml

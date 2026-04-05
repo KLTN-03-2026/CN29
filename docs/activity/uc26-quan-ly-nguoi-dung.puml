@@ -1,0 +1,24 @@
+@startuml
+skinparam shadowing false
+title UC26 - Quản lý người dùng
+|Quản trị viên|
+start
+:Mở màn hình quản lý người dùng;
+|Hệ thống|
+:Kiểm tra đăng nhập và quyền;
+:Tải danh sách người dùng;
+|Quản trị viên|
+:Chọn tạo mới/chỉnh sửa/khóa/mở khóa/gán vai trò;
+|Hệ thống|
+:Kiểm tra dữ liệu;
+if (Hợp lệ?) then (Có)
+  :Cập nhật người dùng và vai trò;
+  |Quản trị viên|
+  :Nhận kết quả cập nhật;
+  stop
+else (Không)
+  |Quản trị viên|
+  :Nhận lỗi và sửa lại;
+  stop
+endif
+@enduml

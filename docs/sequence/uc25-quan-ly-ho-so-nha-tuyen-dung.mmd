@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Employer as Nhà tuyển dụng
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Profile as Dịch vụ hồ sơ công ty
+    participant Storage as Lưu trữ tệp
+    participant DB as CSDL
+    Employer->>UI: Mở trang hồ sơ nhà tuyển dụng
+    UI->>Auth: Kiểm tra đăng nhập
+    Auth-->>UI: Phiên hợp lệ
+    UI->>Profile: Lấy thông tin hồ sơ hiện tại
+    Profile->>DB: Truy vấn hồ sơ công ty
+    DB-->>Profile: Dữ liệu hồ sơ công ty
+    Profile-->>UI: Trả dữ liệu hồ sơ
+    Employer->>UI: Sửa logo, mô tả, địa chỉ, thông tin liên hệ
+    opt Cập nhật logo/tệp
+        UI->>Storage: Tải tệp lên
+        Storage-->>UI: Trả đường dẫn tệp
+    end
+    UI->>Profile: Lưu thông tin đã sửa
+    Profile->>DB: Cập nhật hồ sơ công ty
+    DB-->>Profile: Cập nhật thành công
+    Profile-->>UI: Trả kết quả
+    UI-->>Employer: Hiển thị hồ sơ đã cập nhật

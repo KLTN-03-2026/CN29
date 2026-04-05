@@ -93,6 +93,40 @@ db.serialize(() => {
         )
     `);
 
+    // CamNangNgheNghiep table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS CamNangNgheNghiep (
+            MaBaiViet INTEGER PRIMARY KEY AUTOINCREMENT,
+            TieuDe TEXT NOT NULL,
+            NoiDung TEXT NOT NULL,
+            MaTacGia INTEGER NOT NULL,
+            LoaiTacGia TEXT NOT NULL,
+            NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
+            NgayCapNhat TEXT DEFAULT (datetime('now', 'localtime')),
+            LuotXem INTEGER DEFAULT 0,
+            FOREIGN KEY (MaTacGia) REFERENCES NguoiDung(MaNguoiDung) ON DELETE RESTRICT
+        )
+    `);
+
+    db.run('CREATE INDEX IF NOT EXISTS IDX_CamNangNgheNghiep_MaTacGia ON CamNangNgheNghiep(MaTacGia)');
+
+    // BinhLuanCamNangNgheNghiep table
+    db.run(`
+        CREATE TABLE IF NOT EXISTS BinhLuanCamNangNgheNghiep (
+            MaBinhLuan INTEGER PRIMARY KEY AUTOINCREMENT,
+            MaBaiViet INTEGER NOT NULL,
+            MaNguoiDung INTEGER NOT NULL,
+            LoaiNguoiDung TEXT NOT NULL,
+            NoiDung TEXT NOT NULL,
+            NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
+            FOREIGN KEY (MaBaiViet) REFERENCES CamNangNgheNghiep(MaBaiViet) ON DELETE CASCADE,
+            FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaNguoiDung) ON DELETE CASCADE
+        )
+    `);
+
+    db.run('CREATE INDEX IF NOT EXISTS IDX_BinhLuanCamNang_MaBaiViet ON BinhLuanCamNangNgheNghiep(MaBaiViet)');
+    db.run('CREATE INDEX IF NOT EXISTS IDX_BinhLuanCamNang_MaNguoiDung ON BinhLuanCamNangNgheNghiep(MaNguoiDung)');
+
     // DanhMucCongViec table
     db.run(`
         CREATE TABLE IF NOT EXISTS DanhMucCongViec (

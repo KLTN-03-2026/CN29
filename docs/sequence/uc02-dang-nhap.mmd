@@ -1,0 +1,23 @@
+sequenceDiagram
+    actor User as Người dùng
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant DB as CSDL
+    participant Session as Dịch vụ phiên
+    User->>UI: Nhập tài khoản và mật khẩu
+    UI->>Auth: Gửi yêu cầu đăng nhập
+    Auth->>DB: Kiểm tra thông tin đăng nhập
+    alt Tài khoản hợp lệ
+        opt Tài khoản bật 2FA
+            Auth-->>UI: Yêu cầu mã 2FA
+            User->>UI: Nhập mã 2FA
+            UI->>Auth: Xác minh mã 2FA
+        end
+        Auth->>Session: Tạo phiên, cấp token
+        Session-->>Auth: Token/Session hợp lệ
+        Auth-->>UI: Đăng nhập thành công
+        UI-->>User: Lưu token và chuyển đến trang chủ
+    else Sai thông tin hoặc bị khóa
+        Auth-->>UI: Trả thông báo lỗi/CAPTCHA
+        UI-->>User: Hiển thị lỗi đăng nhập
+    end

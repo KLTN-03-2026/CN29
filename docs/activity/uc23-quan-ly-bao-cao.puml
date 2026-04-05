@@ -1,0 +1,19 @@
+@startuml
+skinparam shadowing false
+title UC23 - Quản lý báo cáo
+|Quản trị viên|
+start
+:Mở màn hình quản lý báo cáo;
+|Hệ thống|
+:Kiểm tra đăng nhập và quyền;
+:Tải danh sách báo cáo cho xử lý;
+|Quản trị viên|
+:Xem chi tiết báo cáo;
+:Chọn phê duyệt/ẩn nội dung/khóa đối tượng/bỏ qua;
+|Hệ thống|
+:Cập nhật kết quả xử lý;
+:Gửi thông báo liên quan;
+|Quản trị viên|
+:Theo dõi trạng thái đã xử lý;
+stop
+@enduml

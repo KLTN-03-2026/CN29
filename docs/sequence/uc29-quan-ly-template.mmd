@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Admin as Quản trị viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Template as Dịch vụ template
+    participant Storage as Lưu trữ tệp
+    participant DB as CSDL
+    Admin->>UI: Mở màn hình quản lý template
+    UI->>Auth: Kiểm tra đăng nhập và quyền
+    Auth-->>UI: Hợp lệ
+    UI->>Template: Lấy danh sách template
+    Template->>DB: Truy vấn template hiện có
+    DB-->>Template: Danh sách template
+    Template-->>UI: Trả danh sách template
+    Admin->>UI: Tạo/chỉnh sửa/xóa/xuất bản template
+    opt Có tệp giao diện/template
+        UI->>Storage: Tải tệp lên
+        Storage-->>UI: Trả đường dẫn tệp
+    end
+    UI->>Template: Lưu thay đổi template
+    Template->>DB: Cập nhật template
+    DB-->>Template: Cập nhật thành công
+    Template-->>UI: Trả kết quả
+    UI-->>Admin: Hiển thị trạng thái template mới

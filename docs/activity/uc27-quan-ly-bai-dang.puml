@@ -1,0 +1,17 @@
+@startuml
+skinparam shadowing false
+title UC27 - Quản lý bài đăng
+|Quản trị viên|
+start
+:Mở màn hình quản lý bài đăng;
+|Hệ thống|
+:Kiểm tra đăng nhập và quyền;
+:Tải danh sách bài đăng;
+|Quản trị viên|
+:Chọn duyệt/ẩn/xóa/khôi phục;
+|Hệ thống|
+:Cập nhật trạng thái bài đăng;
+|Quản trị viên|
+:Xem kết quả kiểm duyệt;
+stop
+@enduml

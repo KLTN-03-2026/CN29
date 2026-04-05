@@ -1,0 +1,29 @@
+@startuml
+skinparam shadowing false
+title UC14 - Bình luận/Đánh giá công ty
+|Ứng viên|
+start
+:Mở trang công ty;
+:Nhập điểm đánh giá và bình luận;
+:Nhận Gửi;
+|Hệ thống|
+:Kiểm tra đăng nhập;
+if (Đã đăng nhập?) then (Có)
+  :Kiểm tra điều kiện gửi đánh giá;
+  if (Hợp lệ?) then (Có)
+    :Kiểm duyệt nội dung cơ bản;
+    :Lưu đánh giá/bình luận;
+    |Ứng viên|
+    :Nhận thông báo gửi thành công;
+    stop
+  else (Không)
+    |Ứng viên|
+    :Nhận thông báo lỗi/trùng lặp;
+    stop
+  endif
+else (Không)
+  |Ứng viên|
+  :Đăng nhập để tiếp tục;
+  stop
+endif
+@enduml

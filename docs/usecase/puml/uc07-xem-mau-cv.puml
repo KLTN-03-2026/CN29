@@ -1,0 +1,8 @@
+@startuml
+skinparam shadowing false
+left to right direction
+title UC07 - Xem mẫu CV
+actor "Khách vãng lai" as ACTOR_1
+usecase "Xem mẫu CV" as UC_MAIN
+ACTOR_1 --> UC_MAIN
+@enduml

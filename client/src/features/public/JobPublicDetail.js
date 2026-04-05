@@ -9,6 +9,45 @@ const formatCurrency = (value) => {
     return new Intl.NumberFormat('vi-VN').format(num);
 };
 
+const normalizeText = (value) => String(value || '').trim();
+
+const formatDateVi = (value) => {
+    const raw = normalizeText(value);
+    if (!raw) return 'Chưa cập nhật';
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return raw;
+    return date.toLocaleDateString('vi-VN');
+};
+
+const normalizeLocationKey = (value) => normalizeText(value)
+    .toLocaleLowerCase('vi-VN')
+    .replace(/[.,]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const joinLocationParts = (...parts) => {
+    const merged = [];
+    parts.forEach((part) => {
+        const text = normalizeText(part);
+        if (!text) return;
+
+        const key = normalizeLocationKey(text);
+        const isDuplicate = merged.some((item) => item.key === key || item.key.includes(key) || key.includes(item.key));
+        if (!isDuplicate) {
+            merged.push({ key, text });
+        }
+    });
+    return merged.map((item) => item.text).join(', ');
+};
+
+const normalizeWebsiteUrl = (value) => {
+    const raw = normalizeText(value);
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return `https://${raw}`;
+};
+
 const RichBlock = ({ html }) => (
     <div
         className="job-detail-rich-block"
@@ -405,8 +444,24 @@ const JobPublicDetail = () => {
         return 'Thỏa thuận';
     })();
 
-    const fallbackAddress = '285 Cách Mạng Tháng Tám, Quận 10, TP Hồ Chí Minh';
-    const displayAddress = [job?.DiaDiem, job?.ThanhPho].filter(Boolean).join(', ') || fallbackAddress;
+    const deadlineText = formatDateVi(job?.HanNopHoSo);
+    const companyName = normalizeText(companyInfo?.TenCongTy) || normalizeText(job?.TenCongTy) || 'Nhà tuyển dụng';
+    const companyWebsiteText = normalizeText(companyInfo?.Website);
+    const companyWebsiteHref = normalizeWebsiteUrl(companyWebsiteText);
+    const companyLocation = joinLocationParts(companyInfo?.DiaChi, companyInfo?.ThanhPho);
+    const jobLocation = joinLocationParts(job?.DiaDiem, job?.ThanhPho);
+    const displayAddress = jobLocation || companyLocation || 'Đang cập nhật';
+    const mapAddress = jobLocation || companyLocation;
+    const companyDescription = normalizeText(companyInfo?.MoTa);
+
+    const generalInfoItems = [
+        { icon: 'bi bi-cash-coin', label: 'Mức lương', value: salaryText || 'Thỏa thuận' },
+        { icon: 'bi bi-geo-alt', label: 'Địa điểm', value: displayAddress },
+        { icon: 'bi bi-briefcase', label: 'Hình thức làm việc', value: normalizeText(job?.HinhThuc) || 'Chưa cập nhật' },
+        { icon: 'bi bi-bar-chart', label: 'Kinh nghiệm', value: normalizeText(job?.KinhNghiem) || 'Chưa cập nhật' },
+        { icon: 'bi bi-person-badge', label: 'Cấp bậc', value: normalizeText(job?.CapBac) || 'Chưa cập nhật' },
+        { icon: 'bi bi-clock-history', label: 'Hạn nộp hồ sơ', value: deadlineText }
+    ];
 
     return (
         <div className="job-detail-page">
@@ -432,13 +487,13 @@ const JobPublicDetail = () => {
                             </div>
                             <h2 className="fw-bold mt-2 mb-1 job-detail-title">{job?.TieuDe || 'Chi tiết việc làm'}</h2>
                             <div className="text-muted fw-semibold d-flex gap-3 flex-wrap">
-                                <span><i className="bi bi-building me-1"></i>{job?.TenCongTy || 'Nhà tuyển dụng'}</span>
+                                <span><i className="bi bi-building me-1"></i>{companyName}</span>
                                 <span><i className="bi bi-geo-alt me-1"></i>{displayAddress}</span>
                             </div>
                             <div className="d-flex gap-2 flex-wrap mt-3">
                                 <span className="job-detail-pill job-detail-pill--strong"><i className="bi bi-cash-coin me-1"></i>{salaryText || 'Thỏa thuận'}</span>
                                 <span className="job-detail-pill"><i className="bi bi-briefcase me-1"></i>{job?.HinhThuc || 'Chưa cập nhật'}</span>
-                                <span className="job-detail-pill"><i className="bi bi-clock me-1"></i>Hạn nộp: {job?.HanNopHoSo || 'Chưa cập nhật'}</span>
+                                <span className="job-detail-pill"><i className="bi bi-clock me-1"></i>Hạn nộp: {deadlineText}</span>
                             </div>
                         </div>
                         <div className="job-detail-actions d-flex flex-column gap-2">
@@ -485,7 +540,7 @@ const JobPublicDetail = () => {
                                         </div>
                                         <div className="col-12 col-md-8">
                                             {(() => {
-                                                const mapSrc = buildMapUrl(displayAddress);
+                                                const mapSrc = buildMapUrl(mapAddress);
                                                 if (!mapSrc) return <div className="text-muted small">Địa chỉ trống.</div>;
                                                 return (
                                                     <div className="map-embed-wrapper">
@@ -512,60 +567,71 @@ const JobPublicDetail = () => {
                             <section className="card job-detail-side-card border-0 shadow-sm mb-3">
                                 <div className="card-body">
                                     <h5 className="fw-bold mb-3">Thông tin chung</h5>
-                                    <ul className="list-unstyled mb-0 small text-muted job-detail-info-list">
-                                        <li className="mb-2"><i className="bi bi-cash-coin me-2"></i>{salaryText}</li>
-                                        <li className="mb-2"><i className="bi bi-geo-alt me-2"></i>{displayAddress}</li>
-                                        <li className="mb-2"><i className="bi bi-briefcase me-2"></i>{job.HinhThuc || 'Chưa cập nhật'}</li>
-                                        <li className="mb-2"><i className="bi bi-clock me-2"></i>Hạn nộp: {job.HanNopHoSo || 'Chưa cập nhật'}</li>
-                                        <li className="mb-2"><i className="bi bi-building me-2"></i>{job.TenCongTy || 'Nhà tuyển dụng'}</li>
+                                    <ul className="list-unstyled mb-0 job-detail-info-list">
+                                        {generalInfoItems.map((item) => (
+                                            <li key={item.label}>
+                                                <div className="job-detail-info-list__icon">
+                                                    <i className={item.icon}></i>
+                                                </div>
+                                                <div className="job-detail-info-list__content">
+                                                    <div className="job-detail-info-list__label">{item.label}</div>
+                                                    <div className="job-detail-info-list__value">{item.value}</div>
+                                                </div>
+                                            </li>
+                                        ))}
                                     </ul>
                                 </div>
                             </section>
 
                             <section className="card job-detail-side-card border-0 shadow-sm">
-                                <div className="card-body d-flex gap-3 align-items-center">
-                                    <img
-                                        src={(companyInfo?.Logo || job.Logo) || '/images/logo.png'}
-                                        alt={(companyInfo?.TenCongTy || job.TenCongTy) || 'Logo'}
-                                        className="job-detail-company-logo"
-                                        onError={(e) => {
-                                            e.currentTarget.onerror = null;
-                                            e.currentTarget.src = '/images/logo.png';
-                                        }}
-                                    />
-                                    <div>
-                                        <div className="fw-semibold">{companyInfo?.TenCongTy || job.TenCongTy || 'Nhà tuyển dụng'}</div>
-                                        <div className="text-muted small">{companyInfo?.ThanhPho || job.ThanhPho || 'Địa điểm đang cập nhật'}</div>
+                                <div className="card-body">
+                                    <div className="job-detail-company-head">
+                                        <img
+                                            src={(companyInfo?.Logo || job.Logo) || '/images/logo.png'}
+                                            alt={companyName || 'Logo'}
+                                            className="job-detail-company-logo"
+                                            onError={(e) => {
+                                                e.currentTarget.onerror = null;
+                                                e.currentTarget.src = '/images/logo.png';
+                                            }}
+                                        />
+                                        <div className="job-detail-company-main">
+                                            <div className="job-detail-company-name">{companyName}</div>
+                                            <div className="job-detail-company-location">
+                                                <i className="bi bi-geo-alt me-1"></i>
+                                                {normalizeText(companyInfo?.ThanhPho) || normalizeText(job?.ThanhPho) || 'Địa điểm đang cập nhật'}
+                                            </div>
 
-                                        <div className="job-detail-company-rating mt-2 d-flex align-items-center gap-2 flex-wrap">
-                                            {renderStars(companyRating.avgRating)}
-                                            <span className="small text-muted">{companyRating.avgRating || 0}/5 ({companyRating.ratingCount || 0})</span>
+                                            <div className="job-detail-company-rating mt-2 d-flex align-items-center gap-2 flex-wrap">
+                                                {renderStars(companyRating.avgRating)}
+                                                <span className="small text-muted">{companyRating.avgRating || 0}/5 ({companyRating.ratingCount || 0})</span>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
 
-                                <div className="card-body pt-0">
-                                    <div className="small text-muted">Thông tin công ty</div>
+                                    <div className="job-detail-company-section-title">Thông tin công ty</div>
                                     {companyLoading && <div className="small text-muted mt-1">Đang tải thông tin công ty...</div>}
                                     {!companyLoading && (
                                         <>
-                                            {(companyInfo?.Website || '').trim() && (
-                                                <div className="small mt-2">
-                                                    <i className="bi bi-globe2 me-2" />
-                                                    <a href={companyInfo.Website} target="_blank" rel="noreferrer">{companyInfo.Website}</a>
+                                            <div className="job-detail-company-facts">
+                                                {companyWebsiteText && (
+                                                    <div className="job-detail-company-fact">
+                                                        <i className="bi bi-globe2"></i>
+                                                        <a href={companyWebsiteHref} target="_blank" rel="noreferrer">
+                                                            {companyWebsiteText}
+                                                        </a>
+                                                    </div>
+                                                )}
+
+                                                <div className="job-detail-company-fact">
+                                                    <i className="bi bi-geo-alt"></i>
+                                                    <span>{companyLocation || displayAddress}</span>
                                                 </div>
-                                            )}
-                                            {((companyInfo?.DiaChi || companyInfo?.ThanhPho) ? (
-                                                <div className="small mt-2">
-                                                    <i className="bi bi-geo-alt me-2" />
-                                                    {[companyInfo?.DiaChi, companyInfo?.ThanhPho].filter(Boolean).join(', ')}
-                                                </div>
-                                            ) : null)}
-                                            {(companyInfo?.MoTa || '').trim() && (
-                                                <div className="small mt-2 text-muted" style={{ lineHeight: 1.5 }}>
-                                                    {companyInfo.MoTa}
-                                                </div>
-                                            )}
+                                            </div>
+
+                                            <div className="job-detail-company-description small text-muted">
+                                                {companyDescription || 'Công ty chưa cập nhật mô tả chi tiết.'}
+                                            </div>
 
                                             {isCandidate && (
                                                 <div className="mt-3">

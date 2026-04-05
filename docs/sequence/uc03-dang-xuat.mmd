@@ -1,0 +1,11 @@
+sequenceDiagram
+    actor User as Người dùng
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Session as Dịch vụ phiên
+    User->>UI: Chọn Đăng xuất
+    UI->>Auth: Gửi yêu cầu đăng xuất
+    Auth->>Session: Hủy token/phiên hiện tại
+    Session-->>Auth: Hủy thành công
+    Auth-->>UI: Trả kết quả đăng xuất
+    UI-->>User: Xóa token local, chuyển về trang đăng nhập

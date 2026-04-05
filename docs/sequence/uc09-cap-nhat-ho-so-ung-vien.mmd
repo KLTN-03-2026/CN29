@@ -1,0 +1,19 @@
+sequenceDiagram
+    actor Candidate as Ứng viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Profile as Dịch vụ hồ sơ
+    participant DB as CSDL
+    Candidate->>UI: Mở trang hồ sơ ứng viên
+    UI->>Auth: Kiểm tra đăng nhập
+    Auth-->>UI: Phiên hợp lệ
+    UI->>Profile: Lấy dữ liệu hồ sơ hiện tại
+    Profile->>DB: Đọc hồ sơ ứng viên
+    DB-->>Profile: Dữ liệu hồ sơ
+    Profile-->>UI: Trả dữ liệu hồ sơ
+    Candidate->>UI: Cập nhật thông tin cá nhân, kỹ năng, kinh nghiệm
+    UI->>Profile: Lưu thông tin đã sửa
+    Profile->>DB: Cập nhật hồ sơ
+    DB-->>Profile: Cập nhật thành công
+    Profile-->>UI: Trả kết quả
+    UI-->>Candidate: Thông báo cập nhật thành công

@@ -1,0 +1,31 @@
+@startuml
+skinparam shadowing false
+title UC09 - Cập nhật hồ sơ ứng viên
+|Ứng viên|
+start
+:Mở trang hồ sơ;
+|Hệ thống|
+:Kiểm tra đăng nhập;
+if (Đã đăng nhập?) then (Có)
+  :Tải hồ sơ hiện tại;
+  |Ứng viên|
+  :Sửa thông tin cá nhân, kỹ năng, kinh nghiệm;
+  :Nhận Lưu;
+  |Hệ thống|
+  :Kiểm tra dữ liệu;
+  if (Hợp lệ?) then (Có)
+    :Cập nhật hồ sơ;
+    |Ứng viên|
+    :Nhận thông báo thành công;
+    stop
+  else (Không)
+    |Ứng viên|
+    :Nhận lỗi và sửa lại;
+    stop
+  endif
+else (Không)
+  |Ứng viên|
+  :Đăng nhập;
+  stop
+endif
+@enduml

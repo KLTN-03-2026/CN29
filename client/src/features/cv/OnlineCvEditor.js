@@ -862,7 +862,7 @@ const OnlineCvEditor = () => {
     if (!file) return;
 
     if (!String(file.type || '').startsWith('image/')) {
-      notify({ type: 'error', message: 'Chỉ chấp nhận file ảnh để tải lên Cloudinary.' });
+      notify({ type: 'error', message: 'Chỉ chấp nhận file ảnh để tải lên hệ thống.' });
       setAvatarModalInputKey((prev) => prev + 1);
       return;
     }
@@ -896,20 +896,20 @@ const OnlineCvEditor = () => {
 
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.success) {
-        throw new Error(data?.error || 'Không thể tải ảnh lên Cloudinary.');
+        throw new Error(data?.error || 'Không thể tải ảnh lên hệ thống.');
       }
 
       const nextUrl = String(data?.thumbnailUrl || data?.thumbnailAbsoluteUrl || '').trim();
       if (!nextUrl) {
-        throw new Error('Cloudinary không trả về URL ảnh hợp lệ.');
+        throw new Error(' hệ thống không trả về URL ảnh hợp lệ.');
       }
 
       setAvatarModalUrl(nextUrl);
       setAvatarModalPreview(nextUrl);
       applyAvatarUrlToPreview(nextUrl);
-      notify({ type: 'success', mode: 'toast', message: 'Đã tải ảnh lên Cloudinary.' });
+      notify({ type: 'success', mode: 'toast', message: 'Đã tải ảnh lên.' });
     } catch (err) {
-      notify({ type: 'error', message: err?.message || 'Không thể tải ảnh lên Cloudinary.' });
+      notify({ type: 'error', message: err?.message || 'Không thể tải ảnh lên hệ thống.' });
     } finally {
       setUploadingAvatarToCloudinary(false);
       setAvatarModalInputKey((prev) => prev + 1);
@@ -919,7 +919,7 @@ const OnlineCvEditor = () => {
   const applyAvatarFromModalUrl = useCallback(() => {
     const nextUrl = String(avatarModalUrl || '').trim();
     if (!nextUrl) {
-      notify({ type: 'warning', message: 'Vui lòng nhập URL ảnh hoặc tải ảnh lên Cloudinary.' });
+      notify({ type: 'warning', message: 'Vui lòng nhập URL ảnh hoặc tải ảnh lên hệ thống.' });
       return;
     }
 
@@ -1470,7 +1470,7 @@ const OnlineCvEditor = () => {
               <i className="bi bi-arrow-left-circle me-2"></i>Về Tạo CV
             </button>
             <button type="button" className="btn btn-outline-primary" onClick={onPrint}>
-              <i className="bi bi-download me-2"></i>Tải PDF (In)
+              <i className="bi bi-download me-2"></i>Tải PDF
             </button>
             <button type="button" className="btn btn-success" onClick={onSave} disabled={saving || loading}>
               <i className="bi bi-check-circle me-2"></i>{saving ? 'Đang lưu...' : 'Lưu CV Online'}
@@ -1526,7 +1526,6 @@ const OnlineCvEditor = () => {
               <input
                 type="url"
                 className="form-control"
-                placeholder="https://res.cloudinary.com/.../image.jpg"
                 value={avatarModalUrl}
                 onChange={(event) => {
                   const nextUrl = event.target.value;
@@ -1552,7 +1551,7 @@ const OnlineCvEditor = () => {
                   disabled={uploadingAvatarToCloudinary}
                 >
                   <i className="bi bi-upload me-2"></i>
-                  {uploadingAvatarToCloudinary ? 'Đang tải ảnh...' : 'Tải ảnh lên Cloudinary'}
+                  {uploadingAvatarToCloudinary ? 'Đang tải ảnh...' : 'Tải ảnh lên hệ thống'}
                 </button>
 
                 <button

@@ -1,0 +1,23 @@
+@startuml
+skinparam shadowing false
+title UC01 - Đăng ký
+|Khách vãng lai|
+start
+:Mở trang đăng ký;
+:Nhập email và mật khẩu;
+:Nhấn Đăng ký;
+|Hệ thống|
+:Kiểm tra tính hợp lệ dữ liệu;
+:Kiểm tra email đã tồn tại;
+if (Hợp lệ?) then (Có)
+  :Tạo tài khoản mới;
+  :Gửi email xác minh/hướng dẫn;
+  |Khách vãng lai|
+  :Nhận thông báo đăng ký thành công;
+  stop
+else (Không)
+  |Khách vãng lai|
+  :Nhận thông báo lỗi và nhập lại;
+  stop
+endif
+@enduml

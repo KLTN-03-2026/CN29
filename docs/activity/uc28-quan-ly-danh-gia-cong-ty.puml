@@ -1,0 +1,17 @@
+@startuml
+skinparam shadowing false
+title UC28 - Quản lý đánh giá công ty
+|Quản trị viên|
+start
+:Mở màn hình quản lý đánh giá công ty;
+|Hệ thống|
+:Kiểm tra đăng nhập và quyền;
+:Tải danh sách đánh giá;
+|Quản trị viên|
+:Chọn duyệt/ẩn/xóa đánh giá;
+|Hệ thống|
+:Cập nhật trạng thái đánh giá;
+|Quản trị viên|
+:Xem kết quả xử lý;
+stop
+@enduml

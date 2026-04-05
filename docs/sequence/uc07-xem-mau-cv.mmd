@@ -1,0 +1,11 @@
+sequenceDiagram
+    actor Guest as Khách vãng lai
+    participant UI as Hệ thống(UI)
+    participant Template as Dịch vụ mẫu CV
+    participant DB as CSDL
+    Guest->>UI: Mở thư viện mẫu CV
+    UI->>Template: Yêu cầu danh sách template
+    Template->>DB: Lấy danh sách mẫu CV
+    DB-->>Template: Danh sách template
+    Template-->>UI: Trả về danh sách và preview
+    UI-->>Guest: Hiển thị mẫu CV

@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor User as Người dùng đã đăng nhập
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Report as Dịch vụ báo cáo
+    participant DB as CSDL
+    participant Notify as OTP Service
+    User->>UI: Chọn Báo cáo đối tượng
+    UI->>Auth: Kiểm tra đăng nhập
+    alt Chưa đăng nhập
+        Auth-->>UI: Phiên không hợp lệ
+        UI-->>User: Yêu cầu đăng nhập
+    else Đã đăng nhập
+        User->>UI: Chọn loại báo cáo và lý do
+        UI->>Report: Gửi thông tin báo cáo
+        Report->>DB: Lưu báo cáo
+        Report->>Notify: Đưa vào hàng chờ xử lý
+        DB-->>Report: Lưu thành công
+        Report-->>UI: Trả kết quả thành công
+        UI-->>User: Hiển thị báo cáo đã được ghi nhận
+    end

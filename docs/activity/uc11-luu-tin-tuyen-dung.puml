@@ -1,0 +1,19 @@
+@startuml
+skinparam shadowing false
+title UC11 - Lưu tin tuyển dụng
+|Ứng viên|
+start
+:Nhận Lưu tin;
+|Hệ thống|
+:Kiểm tra đăng nhập;
+if (Đã đăng nhập?) then (Có)
+  :Lưu tin vào danh sách yêu thích;
+  |Ứng viên|
+  :Nhận thông báo đã lưu;
+  stop
+else (Không)
+  |Ứng viên|
+  :Đăng nhập để tiếp tục;
+  stop
+endif
+@enduml

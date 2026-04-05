@@ -1,0 +1,24 @@
+sequenceDiagram
+    actor Candidate as Ứng viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant CV as Dịch vụ CV
+    participant Storage as Lưu trữ tệp
+    participant DB as CSDL
+    Candidate->>UI: Mở trang quản lý CV
+    UI->>Auth: Kiểm tra đăng nhập
+    Auth-->>UI: Phiên hợp lệ
+    UI->>CV: Lấy danh sách CV
+    CV->>DB: Truy vấn danh sách CV
+    DB-->>CV: Danh sách CV
+    CV-->>UI: Trả danh sách CV
+    Candidate->>UI: Tạo mới/chỉnh sửa/tải lên/xóa CV
+    alt Tải lên tệp CV
+        UI->>Storage: Tải tệp lên
+        Storage-->>UI: Trả đường dẫn tệp
+    end
+    UI->>CV: Lưu thay đổi CV
+    CV->>DB: Cập nhật metadata CV
+    DB-->>CV: Lưu thành công
+    CV-->>UI: Trả kết quả
+    UI-->>Candidate: Hiển thị danh sách CV đã cập nhật

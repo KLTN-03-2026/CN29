@@ -1,0 +1,13 @@
+@startuml
+skinparam shadowing false
+title UC22 - Xem đánh giá/bình luận công ty
+|Nhà tuyển dụng|
+start
+:Mở khu vực đánh giá công ty;
+|Hệ thống|
+:Kiểm tra đăng nhập;
+:Tải đánh giá và bình luận công ty;
+|Nhà tuyển dụng|
+:Xem và lọc đánh giá/bình luận;
+stop
+@enduml

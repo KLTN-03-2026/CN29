@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import './AdminTemplateManager.css';
 
@@ -74,6 +74,11 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
     const [error, setError] = useState('');
     const [message, setMessage] = useState('');
+    const [successToast, setSuccessToast] = useState({
+        open: false,
+        text: ''
+    });
+    const successToastTimerRef = useRef(null);
 
     const [modalPreview, setModalPreview] = useState({
         open: false,
@@ -83,6 +88,32 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
     const endpoint = useMemo(() => `${API_BASE}/api/admin/templates`, [API_BASE]);
     const authAuthorization = useMemo(() => String(authHeaders?.Authorization || ''), [authHeaders]);
+
+    const showSuccessToast = (text) => {
+        if (successToastTimerRef.current) {
+            clearTimeout(successToastTimerRef.current);
+        }
+
+        setSuccessToast({
+            open: true,
+            text: String(text || '').trim()
+        });
+
+        successToastTimerRef.current = window.setTimeout(() => {
+            setSuccessToast((prev) => ({
+                ...prev,
+                open: false
+            }));
+            successToastTimerRef.current = null;
+        }, 2600);
+    };
+
+    useEffect(() => () => {
+        if (successToastTimerRef.current) {
+            clearTimeout(successToastTimerRef.current);
+            successToastTimerRef.current = null;
+        }
+    }, []);
 
     const forceReLogin = () => {
         localStorage.removeItem('token');
@@ -321,21 +352,21 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
             const data = await res.json().catch(() => null);
             if (!res.ok || !data?.success) {
-                throw new Error(data?.error || 'Không thể tải thumbnail lên Cloudinary.');
+                throw new Error(data?.error || 'Không thể tải thumbnail lên .');
             }
 
             const nextUrl = String(data?.thumbnailUrl || data?.thumbnailAbsoluteUrl || '').trim();
             if (!nextUrl) {
-                throw new Error('Cloudinary không trả về URL thumbnail hợp lệ.');
+                throw new Error(' không trả về URL thumbnail hợp lệ.');
             }
 
             setForm((prev) => ({
                 ...prev,
                 ThumbnailUrl: nextUrl
             }));
-            setMessage('Đã tải thumbnail lên Cloudinary thành công.');
+            setMessage('Đã tải thumbnail lên  thành công.');
         } catch (err) {
-            setError(err?.message || 'Không thể tải thumbnail lên Cloudinary.');
+            setError(err?.message || 'Không thể tải thumbnail lên .');
         } finally {
             setUploadingThumbnail(false);
             setThumbnailInputKey((prev) => prev + 1);
@@ -382,13 +413,16 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             });
 
             const savedTemplate = normalizeTemplate(data.template || {});
-            setForm(savedTemplate);
-            setMessage(isEditing ? 'Đã cập nhật template thành công.' : 'Đã tạo template mới thành công.');
             setEditorTab('basic');
             setQuickPreview(false);
 
-            if (!isEditing && isCreateMode && !templateIdFromQuery && savedTemplate?.MaTemplateCV) {
-                navigate(`/admin/templates/create?templateId=${savedTemplate.MaTemplateCV}`, { replace: true });
+            if (isEditing) {
+                setForm(savedTemplate);
+                showSuccessToast('Cập nhật template thành công.');
+            } else {
+                setForm(EMPTY_TEMPLATE_FORM);
+                setThumbnailInputKey((prev) => prev + 1);
+                showSuccessToast('Tạo template thành công.');
             }
 
             if (isListMode) {
@@ -503,18 +537,23 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
             {isCreateMode && (
                 <div className="col-12 admin-template-pane">
-                    <div className="card border-0 shadow-sm h-100">
-                        <div className="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <h5 className="mb-0">
-                                <i className="bi bi-code-square me-2"></i>
-                                {form.MaTemplateCV ? `Chỉnh sửa template #${form.MaTemplateCV}` : 'Tạo template CV mới'}
-                            </h5>
+                    <div className="card border-0 shadow-sm h-100 admin-template-create-card">
+                        <div className="card-header border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3 admin-template-create-header">
+                            <div>
+                                <h5 className="mb-1">
+                                    <i className="bi bi-code-square me-2"></i>
+                                    {form.MaTemplateCV ? `Chỉnh sửa template #${form.MaTemplateCV}` : 'Tạo template CV mới'}
+                                </h5>
+                                <p className="admin-template-create-subtitle mb-0">
+                                    Thiết kế mẫu CV rõ ràng, đẹp mắt và sẵn sàng cho ứng viên sử dụng ngay.
+                                </p>
+                            </div>
                             <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => navigate('/admin/templates')}>
                                 Tất cả template
                             </button>
                         </div>
 
-                        <div className="card-body">
+                        <div className="card-body admin-template-create-body">
                             {!!templateIdFromQuery && workingTemplateId === templateIdFromQuery && (
                                 <div className="alert alert-info">Đang tải chi tiết template...</div>
                             )}
@@ -581,7 +620,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                             </select>
                                         </div>
 
-                                        <div>
+                                        <div className="admin-template-basic-grid-full">
                                             <label className="form-label">Mô tả</label>
                                             <textarea
                                                 className="form-control"
@@ -592,14 +631,13 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                             />
                                         </div>
 
-                                        <div className="admin-template-thumbnail-field">
+                                        <div className="admin-template-thumbnail-field admin-template-basic-grid-full">
                                             <label className="form-label">Thumbnail URL</label>
                                             <input
                                                 type="url"
                                                 className="form-control"
                                                 value={form.ThumbnailUrl}
                                                 onChange={(e) => handleFormChange('ThumbnailUrl', e.target.value)}
-                                                placeholder="https://res.cloudinary.com/.../thumbnail.jpg"
                                             />
 
                                             <div className="admin-template-thumbnail-actions mt-2">
@@ -619,7 +657,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                     disabled={saving || uploadingThumbnail}
                                                 >
                                                     <i className="bi bi-upload me-2"></i>
-                                                    {uploadingThumbnail ? 'Đang tải ảnh...' : 'Tải ảnh lên Cloudinary'}
+                                                    {uploadingThumbnail ? 'Đang tải ảnh...' : 'Tải ảnh lên '}
                                                 </button>
 
                                                 {form.ThumbnailUrl && (
@@ -634,7 +672,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                 )}
                                             </div>
 
-                                            <small className="text-muted d-block mt-2">Bạn có thể nhập URL thủ công hoặc tải ảnh trực tiếp lên Cloudinary.</small>
+                                            <small className="text-muted d-block mt-2">Chọn ảnh thumbnail trực tiếp từ máy của bạn.</small>
 
                                             {form.ThumbnailUrl ? (
                                                 <div className="admin-template-thumbnail-preview mt-3">
@@ -698,16 +736,24 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                     </div>
                                 )}
 
-                                <div className="d-flex justify-content-end gap-2 mt-4">
-                                    <button type="button" className="btn btn-outline-secondary" onClick={resetEditor} disabled={saving}>
-                                        {form.MaTemplateCV ? 'Tạo mới' : 'Làm mới form'}
-                                    </button>
-                                    <button type="submit" className="btn btn-primary" disabled={saving}>
-                                        {saving ? 'Đang lưu...' : (form.MaTemplateCV ? 'Cập nhật template' : 'Lưu template')}
+                                <div className="admin-template-form-actions mt-4">
+                                    <button type="submit" className="btn btn-primary admin-template-submit-btn" disabled={saving}>
+                                        {saving
+                                            ? (form.MaTemplateCV ? 'Đang cập nhật...' : 'Đang tạo...')
+                                            : (form.MaTemplateCV ? 'Cập nhật template' : 'Tạo template')}
                                     </button>
                                 </div>
                             </form>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {successToast.open && (
+                <div className="admin-template-success-toast" role="status" aria-live="polite">
+                    <div className="admin-template-success-toast-inner">
+                        <i className="bi bi-check-circle-fill" aria-hidden="true"></i>
+                        <span>{successToast.text}</span>
                     </div>
                 </div>
             )}

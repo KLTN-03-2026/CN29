@@ -1,0 +1,21 @@
+sequenceDiagram
+    actor Admin as Quản trị viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Report as Dịch vụ báo cáo
+    participant DB as CSDL
+    participant Notify as OTP Service
+    Admin->>UI: Mở màn hình quản lý báo cáo
+    UI->>Auth: Kiểm tra đăng nhập và quyền
+    Auth-->>UI: Hợp lệ
+    UI->>Report: Lấy danh sách báo cáo cho xử lý
+    Report->>DB: Truy vấn báo cáo
+    DB-->>Report: Danh sách báo cáo
+    Report-->>UI: Trả danh sách báo cáo
+    Admin->>UI: Chọn phê duyệt/ẩn nội dung/khóa đối tượng/bỏ qua
+    UI->>Report: Gửi quyết định xử lý
+    Report->>DB: Cập nhật trạng thái báo cáo và đối tượng bị báo cáo
+    Report->>Notify: Gửi thông báo kết quả xử lý
+    DB-->>Report: Cập nhật thành công
+    Report-->>UI: Trả kết quả mới
+    UI-->>Admin: Hiển thị trạng thái báo cáo đã cập nhật

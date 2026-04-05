@@ -1,0 +1,10 @@
+@startuml
+skinparam shadowing false
+left to right direction
+title UC24 - Quản lý bài viết hướng nghiệp
+actor "Nhà tuyển dụng" as ACTOR_1
+usecase "Quản lý bài viết hướng nghiệp" as UC_MAIN
+ACTOR_1 --> UC_MAIN
+usecase "Đăng nhập" as UC_LOGIN
+UC_MAIN ..> UC_LOGIN : <<include>>
+@enduml

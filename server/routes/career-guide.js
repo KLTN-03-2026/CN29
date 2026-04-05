@@ -29,6 +29,35 @@ const findSamplePost = (idOrSlug) => articleSamples.find((sample) => (
   String(sample.id) === String(idOrSlug) || sample.slug === idOrSlug
 ));
 
+const isMissingCareerGuideTableError = (error) => {
+  const message = String(error?.message || '').toLowerCase();
+  if (!message) return false;
+
+  const mentionsCareerGuideTable =
+    message.includes('camnangnghenghiep')
+    || message.includes('binhluancamnangnghenghiep')
+    || message.includes('careerguide');
+
+  return mentionsCareerGuideTable
+    && (message.includes('no such table') || message.includes("doesn't exist"));
+};
+
+const sendSampleList = (res, { page, limit, offset }) => {
+  const samples = getSortedSamples();
+  const pagedSamples = samples.slice(offset, offset + limit).map(mapSamplePost);
+
+  return res.json({
+    success: true,
+    posts: pagedSamples,
+    pagination: {
+      page,
+      limit,
+      total: samples.length,
+      totalPages: Math.max(1, Math.ceil(samples.length / limit))
+    }
+  });
+};
+
 // Get all career guide posts with pagination
 router.get('/', async (req, res) => {
   const page = parseInt(req.query.page) || 1;
@@ -39,23 +68,14 @@ router.get('/', async (req, res) => {
     // Get total count
     db.get('SELECT COUNT(*) as total FROM CamNangNgheNghiep', [], (err, countRow) => {
       if (err) {
+        if (isMissingCareerGuideTableError(err)) {
+          return sendSampleList(res, { page, limit, offset });
+        }
         return res.status(500).json({ success: false, error: 'Lỗi database' });
       }
 
       if (!countRow?.total) {
-        const samples = getSortedSamples();
-        const pagedSamples = samples.slice(offset, offset + limit).map(mapSamplePost);
-
-        return res.json({
-          success: true,
-          posts: pagedSamples,
-          pagination: {
-            page,
-            limit,
-            total: samples.length,
-            totalPages: Math.max(1, Math.ceil(samples.length / limit))
-          }
-        });
+        return sendSampleList(res, { page, limit, offset });
       }
 
       // Get posts with author info
@@ -89,6 +109,9 @@ router.get('/', async (req, res) => {
 
       db.all(sql, [limit, offset], (err, rows) => {
         if (err) {
+          if (isMissingCareerGuideTableError(err)) {
+            return sendSampleList(res, { page, limit, offset });
+          }
           return res.status(500).json({ success: false, error: 'Lỗi database' });
         }
 
@@ -142,6 +165,18 @@ router.get('/:id', (req, res) => {
 
   db.get(sql, [id], (err, post) => {
     if (err) {
+      if (isMissingCareerGuideTableError(err)) {
+        const samplePost = findSamplePost(id);
+        if (!samplePost) {
+          return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết' });
+        }
+
+        return res.json({
+          success: true,
+          post: mapSamplePost(samplePost),
+          comments: []
+        });
+      }
       return res.status(500).json({ success: false, error: 'Lỗi database' });
     }
 

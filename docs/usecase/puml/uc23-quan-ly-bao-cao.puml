@@ -1,0 +1,12 @@
+@startuml
+skinparam shadowing false
+left to right direction
+title UC23 - Quản lý báo cáo
+actor "Quản trị viên" as ACTOR_1
+usecase "Quản lý báo cáo" as UC_MAIN
+ACTOR_1 --> UC_MAIN
+usecase "Đăng nhập" as UC_LOGIN
+UC_MAIN ..> UC_LOGIN : <<include>>
+usecase "Phân quyền" as UC_PERMISSION
+UC_MAIN ..> UC_PERMISSION : <<include>>
+@enduml

@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CV Terminal Mono</title>
+  <style>
+    :root {
+      --bg: #070b0f;
+      --panel: #0e151c;
+      --line: #1f2b35;
+      --ink: #d9fce8;
+      --muted: #8bc7a9;
+      --accent: #34d399;
+      --warn: #facc15;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: "Consolas", "Courier New", monospace;
+      background:
+        radial-gradient(circle at 12% 10%, rgba(52, 211, 153, 0.14), transparent 34%),
+        radial-gradient(circle at 90% 14%, rgba(250, 204, 21, 0.12), transparent 30%),
+        #05080c;
+      color: var(--ink);
+    }
+
+    .terminal {
+      max-width: 980px;
+      min-height: 1120px;
+      margin: 0 auto;
+      border: 1px solid #24323d;
+      border-radius: 16px;
+      overflow: hidden;
+      background: var(--bg);
+      box-shadow: 0 18px 46px rgba(0, 0, 0, 0.58);
+    }
+
+    .topbar {
+      background: #0b1219;
+      border-bottom: 1px solid #22303b;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .dots {
+      display: inline-flex;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      display: inline-block;
+    }
+
+    .dot-red { background: #f87171; }
+    .dot-yellow { background: #facc15; }
+    .dot-green { background: #34d399; }
+
+    .top-title {
+      font-size: 11px;
+      color: #9bb4a3;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .hero {
+      padding: 18px;
+      border-bottom: 1px solid #1e2a33;
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 16px;
+    }
+
+    .avatar-wrap {
+      appearance: none;
+      border: 1px solid #2a3c49;
+      border-radius: 12px;
+      background: #0a1118;
+      overflow: hidden;
+      width: 160px;
+      height: 160px;
+      position: relative;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+    }
+
+    .avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: auto 0 0 0;
+      padding: 7px;
+      text-align: center;
+      font-size: 11px;
+      color: #e9fef4;
+      background: linear-gradient(180deg, transparent, rgba(3, 8, 12, 0.92));
+      font-weight: 700;
+    }
+
+    .line {
+      display: block;
+      color: var(--accent);
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+
+    .name {
+      margin: 0;
+      font-size: 42px;
+      line-height: 0.98;
+      color: #e8fff4;
+      font-weight: 700;
+    }
+
+    .role {
+      margin-top: 8px;
+      color: var(--warn);
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .summary {
+      margin-top: 12px;
+      color: #bde7ce;
+      font-size: 14px;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      max-width: 680px;
+    }
+
+    .body {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 14px;
+      padding: 16px;
+    }
+
+    .col {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .panel h3 {
+      margin: 0 0 10px;
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 700;
+    }
+
+    .row {
+      border-top: 1px dashed #2d3c45;
+      padding: 8px 0;
+    }
+
+    .row:first-of-type { border-top: 0; padding-top: 0; }
+
+    .label {
+      display: block;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #79b992;
+      font-weight: 700;
+    }
+
+    .value {
+      display: block;
+      margin-top: 2px;
+      color: #d8fce7;
+      font-size: 14px;
+      line-height: 1.42;
+    }
+
+    .text {
+      margin: 0;
+      color: #c9f5dd;
+      font-size: 13px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+    }
+
+    .entry {
+      border: 1px solid #273742;
+      border-radius: 10px;
+      background: #0b131a;
+      padding: 10px;
+    }
+
+    .entry + .entry {
+      margin-top: 10px;
+    }
+
+    .entry-title {
+      margin: 0;
+      font-size: 14px;
+      color: #e7fff3;
+      font-weight: 700;
+    }
+
+    .entry-body {
+      margin-top: 6px;
+      font-size: 13px;
+      line-height: 1.62;
+      color: #c2ebd2;
+      white-space: pre-wrap;
+    }
+
+    [data-editable="true"][contenteditable="true"] {
+      outline: none;
+      border-radius: 7px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      transition: background .15s ease, box-shadow .15s ease;
+    }
+
+    [data-editable="true"][contenteditable="true"]:hover {
+      background: rgba(52, 211, 153, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(52, 211, 153, 0.24);
+    }
+
+    [data-editable="true"][contenteditable="true"]:focus {
+      background: rgba(250, 204, 21, 0.1);
+      box-shadow: 0 0 0 2px rgba(250, 204, 21, 0.28);
+    }
+
+    [data-editable="true"][contenteditable="true"]:empty::before {
+      content: attr(data-placeholder);
+      color: #94a3b8;
+    }
+  </style>
+</head>
+<body>
+  <article class="terminal">
+    <header class="topbar">
+      <div class="dots" aria-hidden="true">
+        <span class="dot dot-red"></span>
+        <span class="dot dot-yellow"></span>
+        <span class="dot dot-green"></span>
+      </div>
+      <div class="top-title" contenteditable="true" data-editable="true" data-field="terminalTitle" data-placeholder="Tiêu đề terminal" data-single-line="true">cv-shell.profile</div>
+    </header>
+
+    <section class="hero">
+      <button id="avatarButton" type="button" class="avatar-wrap no-print" data-cv-avatar-trigger="1" aria-label="Đổi ảnh đại diện">
+        <img id="avatarImage" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%230f766e'/%3E%3Cstop offset='100%25' stop-color='%2338bdf8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='300' rx='42' fill='url(%23g)'/%3E%3Ccircle cx='150' cy='114' r='54' fill='rgba(255,255,255,0.92)'/%3E%3Cpath d='M63 246c18-45 58-66 87-66s69 21 87 66' fill='rgba(255,255,255,0.92)'/%3E%3C/svg%3E" alt="Avatar" data-cv-avatar="1" data-image-editable="avatarImage" />
+        <span class="avatar-overlay" contenteditable="true" data-editable="true" data-field="avatarOverlay" data-placeholder="Nhãn ảnh" data-single-line="true">Click để đổi ảnh</span>
+      </button>
+
+      <div>
+        <span class="line" contenteditable="true" data-editable="true" data-field="title" data-placeholder="Tiêu đề CV" data-single-line="true">$ whoami --cv</span>
+        <h1 class="name" contenteditable="true" data-editable="true" data-field="name" data-placeholder="Họ và tên" data-single-line="true">Nguyen Quoc Bao</h1>
+        <div class="role" contenteditable="true" data-editable="true" data-field="position" data-placeholder="Vị trí ứng tuyển" data-single-line="true">Product Designer / UI Developer</div>
+        <p class="summary" contenteditable="true" data-editable="true" data-field="summary" data-placeholder="Giới thiệu ngắn...">Ung vien co kinh nghiem xay dung giao dien web va toi uu trai nghiem nguoi dung. Luon chu dong trong giao tiep, lam viec nhom va nang cao chat luong san pham.</p>
+      </div>
+    </section>
+
+    <div class="body">
+      <aside class="col">
+        <section class="panel">
+          <h3 contenteditable="true" data-editable="true" data-field="contactTitle" data-placeholder="Tiêu đề liên hệ" data-single-line="true">Liên hệ</h3>
+
+          <div class="row">
+            <span class="label" contenteditable="true" data-editable="true" data-field="phoneLabel" data-placeholder="Nhãn điện thoại" data-single-line="true">Số điện thoại</span>
+            <span class="value" contenteditable="true" data-editable="true" data-field="phone" data-placeholder="Số điện thoại" data-single-line="true">0902 345 678</span>
+          </div>
+
+          <div class="row">
+            <span class="label" contenteditable="true" data-editable="true" data-field="emailLabel" data-placeholder="Nhãn email" data-single-line="true">Email</span>
+            <span class="value" contenteditable="true" data-editable="true" data-field="email" data-placeholder="Email" data-single-line="true">bao.nguyen.cv@example.com</span>
+          </div>
+
+          <div class="row">
+            <span class="label" contenteditable="true" data-editable="true" data-field="addressLabel" data-placeholder="Nhãn địa chỉ" data-single-line="true">Địa chỉ</span>
+            <span class="value" contenteditable="true" data-editable="true" data-field="address" data-placeholder="Địa chỉ" data-single-line="true">Quan 3, Thanh pho Ho Chi Minh</span>
+          </div>
+
+          <div class="row">
+            <span class="label" contenteditable="true" data-editable="true" data-field="linkedinLabel" data-placeholder="Nhãn link" data-single-line="true">LinkedIn</span>
+            <span class="value" contenteditable="true" data-editable="true" data-field="linkedin" data-placeholder="LinkedIn" data-single-line="true">linkedin.com/in/bao-nguyen-ui</span>
+          </div>
+        </section>
+
+        <section class="panel">
+          <h3 contenteditable="true" data-editable="true" data-field="skillsTitle" data-placeholder="Tiêu đề kỹ năng" data-single-line="true">Kỹ năng</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="skills" data-placeholder="Danh sách kỹ năng">• UI Design System
+• HTML/CSS/JavaScript
+• React va Vite
+• Giao tiep va thuyet trinh</p>
+        </section>
+
+        <section class="panel">
+          <h3 contenteditable="true" data-editable="true" data-field="languagesTitle" data-placeholder="Tiêu đề ngoại ngữ" data-single-line="true">Ngoại ngữ</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="languages" data-placeholder="Danh sách ngoại ngữ">• Tieng Viet: Ban ngu
+• Tieng Anh: IELTS 6.5</p>
+        </section>
+      </aside>
+
+      <main class="col">
+        <section class="panel">
+          <h3 contenteditable="true" data-editable="true" data-field="experienceTitle" data-placeholder="Tiêu đề kinh nghiệm" data-single-line="true">Hành trình kinh nghiệm</h3>
+
+          <article class="entry">
+            <h4 class="entry-title" contenteditable="true" data-editable="true" data-field="exp1Title" data-placeholder="Tiêu đề kinh nghiệm" data-single-line="true">01/2023 - Hien tai | UI Developer - Nova Digital</h4>
+            <div class="entry-body" contenteditable="true" data-editable="true" data-field="exp1Body" data-placeholder="Mô tả kinh nghiệm">• Phat trien giao dien dashboard quan tri.
+• Toi uu hieu nang va luong thao tac cua nguoi dung.</div>
+          </article>
+
+          <article class="entry">
+            <h4 class="entry-title" contenteditable="true" data-editable="true" data-field="exp2Title" data-placeholder="Tiêu đề kinh nghiệm" data-single-line="true">06/2021 - 12/2022 | Frontend Developer - Pixel Studio</h4>
+            <div class="entry-body" contenteditable="true" data-editable="true" data-field="exp2Body" data-placeholder="Mô tả kinh nghiệm">• Xay dung landing page va bo component tai su dung.
+• Toi uu luong su dung tren mobile va tablet.</div>
+          </article>
+        </section>
+
+        <section class="panel">
+          <h3 contenteditable="true" data-editable="true" data-field="educationTitle" data-placeholder="Tiêu đề học vấn" data-single-line="true">Học vấn</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="education" data-placeholder="Thông tin học vấn">Dai hoc Cong nghe TP.HCM
+Chuyen nganh Cong nghe thong tin (2017 - 2021)</p>
+        </section>
+
+        <section class="panel">
+          <h3 contenteditable="true" data-editable="true" data-field="projectsTitle" data-placeholder="Tiêu đề dự án" data-single-line="true">Dự án nổi bật</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="projects" data-placeholder="Các dự án nổi bật">He thong quan ly ung vien ATS
+• Thiet ke bo giao dien va to chuc thong tin ung vien.
+
+Nen tang booking su kien
+• Xay dung trang quan ly lich va bao cao doanh thu.</p>
+        </section>
+      </main>
+    </div>
+  </article>
+</body>
+</html>

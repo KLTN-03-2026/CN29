@@ -1,0 +1,16 @@
+sequenceDiagram
+    actor Guest as Khách vãng lai
+    participant UI as Hệ thống(UI)
+    participant Article as Dịch vụ bài viết
+    participant DB as CSDL
+    Guest->>UI: Mở mục bài viết hướng nghiệp
+    UI->>Article: Yêu cầu danh sách bài viết
+    Article->>DB: Lấy bài viết đã xuất bản
+    DB-->>Article: Danh sách bài viết
+    Article-->>UI: Trả danh sách bài viết
+    Guest->>UI: Chọn một bài viết
+    UI->>Article: Lấy chi tiết bài viết
+    Article->>DB: Truy vấn nội dung bài viết
+    DB-->>Article: Nội dung chi tiết
+    Article-->>UI: Trả chi tiết bài viết
+    UI-->>Guest: Hiển thị bài viết

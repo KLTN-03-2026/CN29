@@ -1,0 +1,14 @@
+sequenceDiagram
+    actor Candidate as Ứng viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant ApplySvc as Dịch vụ ứng tuyển
+    participant DB as CSDL
+    Candidate->>UI: Mở trang Đã ứng tuyển
+    UI->>Auth: Kiểm tra đăng nhập
+    Auth-->>UI: Phiên hợp lệ
+    UI->>ApplySvc: Yêu cầu danh sách hồ sơ ứng tuyển
+    ApplySvc->>DB: Truy vấn danh sách hồ sơ của ứng viên
+    DB-->>ApplySvc: Danh sách hồ sơ và trạng thái
+    ApplySvc-->>UI: Trả danh sách đã ứng tuyển
+    UI-->>Candidate: Hiển thị danh sách và trạng thái xử lý

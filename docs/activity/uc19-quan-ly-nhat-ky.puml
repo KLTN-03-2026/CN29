@@ -1,0 +1,20 @@
+@startuml
+skinparam shadowing false
+title UC19 - Quản lý nhật ký
+|Quản trị viên|
+start
+:Mở màn hình quản lý nhật ký;
+:Nhập bộ lọc thời gian, đối tượng, hành động;
+|Hệ thống|
+:Kiểm tra đăng nhập và quyền;
+:Truy vấn nhật ký hệ thống;
+|Quản trị viên|
+:Xem danh sách nhật ký;
+if (Cần xuất file?) then (Có)
+  |Hệ thống|
+  :Tạo file xuất nhật ký;
+  |Quản trị viên|
+  :Tải file về;
+endif
+stop
+@enduml

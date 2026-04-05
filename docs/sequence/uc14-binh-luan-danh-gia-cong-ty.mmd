@@ -1,0 +1,27 @@
+sequenceDiagram
+    actor Candidate as Ứng viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Review as Dịch vụ đánh giá
+    participant DB as CSDL
+    participant Moderation as Dịch vụ kiểm duyệt
+    Candidate->>UI: Mở trang công ty và nhập đánh giá
+    UI->>Auth: Kiểm tra đăng nhập
+    alt Chưa đăng nhập
+        Auth-->>UI: Phiên không hợp lệ
+        UI-->>Candidate: Yêu cầu đăng nhập
+    else Đã đăng nhập
+        UI->>Review: Gửi điểm đánh giá và bình luận
+        Review->>DB: Kiểm tra lịch sử đánh giá
+        alt Được phép gửi
+            Review->>Moderation: Kiểm tra nội dung
+            Moderation-->>Review: Kết quả hợp lệ
+            Review->>DB: Lưu đánh giá/bình luận
+            DB-->>Review: Lưu thành công
+            Review-->>UI: Trả kết quả thành công
+            UI-->>Candidate: Hiển thị đánh giá đã được gửi
+        else Không đủ điều kiện
+            Review-->>UI: Trả thông báo lỗi/trùng lặp
+            UI-->>Candidate: Hiển thị lỗi
+        end
+    end

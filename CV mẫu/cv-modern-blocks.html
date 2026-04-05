@@ -190,77 +190,117 @@
       font-size: 12px;
       font-weight: 700;
     }
+[data-editable="true"][contenteditable="true"] {
+      outline: none;
+      border-radius: 10px;
+      padding: 2px 4px;
+      margin: -2px -4px;
+      transition: background .15s ease, box-shadow .15s ease;
+    }
+
+    [data-editable="true"][contenteditable="true"]:hover {
+      background: rgba(15, 118, 110, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.2);
+    }
+
+    [data-editable="true"][contenteditable="true"]:focus {
+      background: rgba(15, 118, 110, 0.12);
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.24);
+    }
+
+    [data-editable="true"][contenteditable="true"]:empty::before {
+      content: attr(data-placeholder);
+      color: #94a3b8;
+    }
   </style>
 </head>
 <body>
   <article class="cv">
     <header class="hero">
       <button id="avatarButton" type="button" class="avatar-wrap no-print" data-cv-avatar-trigger="1" aria-label="Đổi ảnh đại diện">
-        <img id="avatarImage" src="{{avatarUrl}}" alt="Avatar" data-cv-avatar="1" data-image-editable="avatarImage" />
-        <span class="avatar-overlay">Click để đổi ảnh</span>
+        <img id="avatarImage" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%230f766e'/%3E%3Cstop offset='100%25' stop-color='%2338bdf8'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='300' height='300' rx='42' fill='url(%23g)'/%3E%3Ccircle cx='150' cy='114' r='54' fill='rgba(255,255,255,0.92)'/%3E%3Cpath d='M63 246c18-45 58-66 87-66s69 21 87 66' fill='rgba(255,255,255,0.92)'/%3E%3C/svg%3E" alt="Avatar" data-cv-avatar="1" data-image-editable="avatarImage" />
+        <span class="avatar-overlay" contenteditable="true" data-editable="true" data-field="avatarOverlay" data-placeholder="Nhãn ảnh" data-single-line="true">Click để đổi ảnh</span>
       </button>
 
       <div>
-        <small data-editable="true" data-cv-field="title">{{title}}</small>
-        <h1 data-editable="true" data-cv-field="name">{{name}}</h1>
-        <h2 data-editable="true" data-cv-field="position">{{position}}</h2>
-        <p data-editable="true" data-cv-field="summary">{{summary}}</p>
+        <small contenteditable="true" data-editable="true" data-field="title" data-placeholder="Tiêu đề CV" data-single-line="true">CV Chuyen Nghiep</small>
+        <h1 contenteditable="true" data-editable="true" data-field="name" data-placeholder="Họ và tên" data-single-line="true">Nguyen Quoc Bao</h1>
+        <h2 contenteditable="true" data-editable="true" data-field="position" data-placeholder="Vị trí ứng tuyển" data-single-line="true">Product Designer / UI Developer</h2>
+        <p contenteditable="true" data-editable="true" data-field="summary" data-placeholder="Giới thiệu ngắn...">Ung vien co kinh nghiem xay dung giao dien web va toi uu trai nghiem nguoi dung. Luon chu dong trong giao tiep, lam viec nhom va nang cao chat luong san pham.</p>
       </div>
     </header>
 
     <div class="content">
       <aside class="col">
         <section class="block">
-          <h3>Liên hệ</h3>
+          <h3 contenteditable="true" data-editable="true" data-field="contactTitle" data-placeholder="Tiêu đề liên hệ" data-single-line="true">Liên hệ</h3>
           <div class="contact-grid">
             <div class="contact-item">
-              <span class="contact-label">Số điện thoại</span>
-              <span class="contact-value" data-editable="true" data-cv-field="phone">{{phone}}</span>
+              <span class="contact-label" contenteditable="true" data-editable="true" data-field="phoneLabel" data-placeholder="Nhãn điện thoại" data-single-line="true">Số điện thoại</span>
+              <span class="contact-value" contenteditable="true" data-editable="true" data-field="phone" data-placeholder="Số điện thoại" data-single-line="true">0902 345 678</span>
             </div>
             <div class="contact-item">
-              <span class="contact-label">Email</span>
-              <span class="contact-value" data-editable="true" data-cv-field="email">{{email}}</span>
+              <span class="contact-label" contenteditable="true" data-editable="true" data-field="emailLabel" data-placeholder="Nhãn email" data-single-line="true">Email</span>
+              <span class="contact-value" contenteditable="true" data-editable="true" data-field="email" data-placeholder="Email" data-single-line="true">bao.nguyen.cv@example.com</span>
             </div>
             <div class="contact-item">
-              <span class="contact-label">Địa chỉ</span>
-              <span class="contact-value" data-editable="true" data-cv-field="address">{{address}}</span>
+              <span class="contact-label" contenteditable="true" data-editable="true" data-field="addressLabel" data-placeholder="Nhãn địa chỉ" data-single-line="true">Địa chỉ</span>
+              <span class="contact-value" contenteditable="true" data-editable="true" data-field="address" data-placeholder="Địa chỉ" data-single-line="true">Quan 3, Thanh pho Ho Chi Minh</span>
             </div>
             <div class="contact-item">
-              <span class="contact-label">LinkedIn</span>
-              <span class="contact-value" data-editable="true" data-cv-field="linkedin">{{link}}</span>
+              <span class="contact-label" contenteditable="true" data-editable="true" data-field="linkedinLabel" data-placeholder="Nhãn LinkedIn" data-single-line="true">LinkedIn</span>
+              <span class="contact-value" contenteditable="true" data-editable="true" data-field="linkedin" data-placeholder="LinkedIn" data-single-line="true">linkedin.com/in/bao-nguyen-ui</span>
             </div>
           </div>
         </section>
 
         <section class="block">
-          <h3>Kỹ năng</h3>
-          <p class="text" data-editable="true" data-cv-field="skills">{{skills}}</p>
+          <h3 contenteditable="true" data-editable="true" data-field="skillsTitle" data-placeholder="Tiêu đề kỹ năng" data-single-line="true">Kỹ năng</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="skills" data-placeholder="Danh sách kỹ năng">• UI Design System
+• HTML/CSS/JavaScript
+• React va Vite
+• Giao tiep va thuyet trinh</p>
         </section>
 
         <section class="block">
-          <h3>Ngoại ngữ</h3>
-          <p class="text" data-editable="true" data-cv-field="languages">{{languages}}</p>
+          <h3 contenteditable="true" data-editable="true" data-field="languagesTitle" data-placeholder="Tiêu đề ngoại ngữ" data-single-line="true">Ngoại ngữ</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="languages" data-placeholder="Danh sách ngoại ngữ">• Tieng Viet: Ban ngu
+• Tieng Anh: IELTS 6.5</p>
         </section>
       </aside>
 
       <main class="col">
         <section class="block">
-          <h3>Kinh nghiệm</h3>
-          <p class="text" data-editable="true" data-cv-field="experience">{{experience}}</p>
+          <h3 contenteditable="true" data-editable="true" data-field="experienceTitle" data-placeholder="Tiêu đề kinh nghiệm" data-single-line="true">Kinh nghiệm</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="experience" data-placeholder="Kinh nghiệm làm việc">01/2023 - Hien tai | UI Developer - Nova Digital
+• Phat trien giao dien dashboard quan tri.
+• Toi uu hieu nang va luong thao tac cua nguoi dung.
+
+06/2021 - 12/2022 | Frontend Developer - Pixel Studio
+• Xay dung landing page va bo component tai su dung.</p>
         </section>
 
         <section class="block">
-          <h3>Học vấn</h3>
-          <p class="text" data-editable="true" data-cv-field="education">{{education}}</p>
+          <h3 contenteditable="true" data-editable="true" data-field="educationTitle" data-placeholder="Tiêu đề học vấn" data-single-line="true">Học vấn</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="education" data-placeholder="Thông tin học vấn">Dai hoc Cong nghe TP.HCM
+Chuyen nganh Cong nghe thong tin (2017 - 2021)</p>
         </section>
 
         <section class="block">
-          <h3>Dự án</h3>
-          <p class="text" data-editable="true" data-cv-field="projects">{{projects}}</p>
+          <h3 contenteditable="true" data-editable="true" data-field="projectsTitle" data-placeholder="Tiêu đề dự án" data-single-line="true">Dự án</h3>
+          <p class="text" contenteditable="true" data-editable="true" data-field="projects" data-placeholder="Các dự án nổi bật">He thong quan ly ung vien ATS
+• Thiet ke bo giao dien va to chuc thong tin ung vien.
+
+Nen tang booking su kien
+• Xay dung trang quan ly lich va bao cao doanh thu.</p>
         </section>
       </main>
     </div>
   </article>
 </body>
 </html>
+
+
+
+
 

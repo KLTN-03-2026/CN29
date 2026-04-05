@@ -1,0 +1,17 @@
+@startuml
+skinparam shadowing false
+title UC30 - Quản lý cẩm nang nghề nghiệp
+|Quản trị viên|
+start
+:Mở màn hình quản lý cẩm nang nghề nghiệp;
+|Hệ thống|
+:Kiểm tra đăng nhập và quyền;
+:Tải danh mục và nội dung cẩm nang;
+|Quản trị viên|
+:Chọn tạo danh mục/thêm bài/chỉnh sửa/ẩn hiện;
+|Hệ thống|
+:Cập nhật cẩm nang nghề nghiệp;
+|Quản trị viên|
+:Nhận kết quả cập nhật;
+stop
+@enduml

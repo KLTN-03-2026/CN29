@@ -1,0 +1,16 @@
+@startuml
+skinparam shadowing false
+left to right direction
+title UC17 - Báo cáo (tin/người dùng/công ty)
+actor "Người dùng đã đăng nhập" as ACTOR_1
+usecase "Báo cáo" as UC_MAIN
+ACTOR_1 --> UC_MAIN
+usecase "Đăng nhập" as UC_LOGIN
+UC_MAIN ..> UC_LOGIN : <<include>>
+usecase "Báo cáo - tin" as UC_EXT_1
+UC_EXT_1 ..> UC_MAIN : <<extend>>
+usecase "Báo cáo - người dùng" as UC_EXT_2
+UC_EXT_2 ..> UC_MAIN : <<extend>>
+usecase "Báo cáo - công ty" as UC_EXT_3
+UC_EXT_3 ..> UC_MAIN : <<extend>>
+@enduml

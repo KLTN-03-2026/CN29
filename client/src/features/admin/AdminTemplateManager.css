@@ -1,5 +1,5 @@
 .admin-template-section .card {
-    border-radius: 16px;
+    border-radius: 18px;
 }
 
 .admin-template-pane {
@@ -31,13 +31,69 @@
     background: #ffffff;
 }
 
+.admin-template-create-card {
+    border: 1px solid #e4ebf7;
+    overflow: hidden;
+    background:
+        radial-gradient(1200px 320px at -8% -24%, rgba(59, 130, 246, 0.12), transparent 52%),
+        radial-gradient(900px 280px at 108% -22%, rgba(16, 185, 129, 0.10), transparent 48%),
+        #ffffff;
+}
+
+.admin-template-create-header {
+    background: linear-gradient(110deg, #f8fbff 0%, #f4f8ff 56%, #fff9ef 100%);
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.admin-template-create-subtitle {
+    color: #475569;
+    font-size: 13px;
+}
+
+.admin-template-create-body {
+    padding: 20px 24px 24px;
+}
+
+.admin-template-editor-form {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e9eef9;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.04);
+}
+
 .admin-template-editor-form .form-label {
     font-weight: 600;
+    color: #1e293b;
+}
+
+.admin-template-editor-form .form-control,
+.admin-template-editor-form .form-select,
+.admin-template-editor-form textarea {
+    border-radius: 12px;
+    border-color: #d6dfef;
+    background: #fcfdff;
+}
+
+.admin-template-editor-form .form-control:focus,
+.admin-template-editor-form .form-select:focus,
+.admin-template-editor-form textarea:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.16);
 }
 
 .admin-template-basic-grid {
     display: grid;
-    gap: 16px;
+    gap: 18px;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+.admin-template-basic-grid > div {
+    grid-column: span 6;
+}
+
+.admin-template-basic-grid-full {
+    grid-column: 1 / -1;
 }
 
 .admin-template-thumbnail-field {
@@ -50,6 +106,10 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+}
+
+.admin-template-thumbnail-actions .btn {
+    border-radius: 10px;
 }
 
 .admin-template-thumbnail-preview {
@@ -70,10 +130,27 @@
 .admin-template-tabs .nav-link {
     color: #475569;
     font-weight: 600;
+    border: 0;
+    border-radius: 10px;
+    padding: 8px 14px;
+}
+
+.admin-template-tabs {
+    border: 0;
+    padding: 6px;
+    border-radius: 14px;
+    background: #f1f5ff;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
 }
 
 .admin-template-tabs .nav-link.active {
     color: #2563eb;
+    background: #ffffff;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
 }
 
 .admin-template-code-input {
@@ -90,6 +167,7 @@
     border-radius: 12px;
     overflow: hidden;
     background: #ffffff;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 .admin-template-preview-frame {
@@ -136,12 +214,92 @@
     height: min(84vh, 860px);
 }
 
+.admin-template-form-actions {
+    display: flex;
+    justify-content: flex-end;
+    border-top: 1px dashed #d6dfef;
+    padding-top: 16px;
+}
+
+.admin-template-submit-btn {
+    min-width: 190px;
+    border-radius: 12px;
+    font-weight: 700;
+    padding: 10px 18px;
+    box-shadow: 0 10px 24px rgba(37, 99, 235, 0.24);
+}
+
+.admin-template-submit-btn:disabled {
+    box-shadow: none;
+}
+
+.admin-template-success-toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 3400;
+    pointer-events: none;
+}
+
+.admin-template-success-toast-inner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 260px;
+    max-width: min(88vw, 420px);
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #0f766e;
+    color: #ffffff;
+    box-shadow: 0 14px 30px rgba(15, 118, 110, 0.34);
+    font-weight: 600;
+    animation: admin-template-toast-in 0.22s ease-out;
+}
+
+.admin-template-success-toast-inner i {
+    font-size: 16px;
+}
+
+@keyframes admin-template-toast-in {
+    from {
+        transform: translateY(-8px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
 @media (max-width: 992px) {
+    .admin-template-create-body {
+        padding: 16px;
+    }
+
+    .admin-template-editor-form {
+        padding: 14px;
+    }
+
+    .admin-template-basic-grid > div {
+        grid-column: 1 / -1;
+    }
+
     .admin-template-preview-frame {
         height: 420px;
     }
 
     .admin-template-preview-frame.preview-tab {
         height: 500px;
+    }
+
+    .admin-template-success-toast {
+        top: 14px;
+        right: 14px;
+    }
+
+    .admin-template-success-toast-inner {
+        min-width: 0;
+        width: min(92vw, 360px);
     }
 }

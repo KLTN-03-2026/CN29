@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor Admin as Quản trị viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant PostSvc as Dịch vụ bài đăng
+    participant Moderation as Dịch vụ kiểm duyệt
+    participant DB as CSDL
+    Admin->>UI: Mở màn hình quản lý bài đăng
+    UI->>Auth: Kiểm tra đăng nhập và quyền
+    Auth-->>UI: Hợp lệ
+    UI->>PostSvc: Lấy danh sách bài đăng
+    PostSvc->>DB: Truy vấn bài đăng
+    DB-->>PostSvc: Danh sách bài đăng
+    PostSvc-->>UI: Trả danh sách bài đăng
+    Admin->>UI: Chọn duyệt/ẩn/xóa/khôi phục bài đăng
+    UI->>Moderation: Gửi quyết định kiểm duyệt
+    Moderation->>DB: Cập nhật trạng thái bài đăng
+    DB-->>Moderation: Cập nhật thành công
+    Moderation-->>UI: Trả kết quả
+    UI-->>Admin: Hiển thị trạng thái bài đăng mới

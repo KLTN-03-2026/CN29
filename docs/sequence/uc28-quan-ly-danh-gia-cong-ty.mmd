@@ -1,0 +1,20 @@
+sequenceDiagram
+    actor Admin as Quản trị viên
+    participant UI as Hệ thống(UI)
+    participant Auth as Controller
+    participant Review as Dịch vụ đánh giá
+    participant Moderation as Dịch vụ kiểm duyệt
+    participant DB as CSDL
+    Admin->>UI: Mở màn hình quản lý đánh giá công ty
+    UI->>Auth: Kiểm tra đăng nhập và quyền
+    Auth-->>UI: Hợp lệ
+    UI->>Review: Lấy danh sách đánh giá/bình luận
+    Review->>DB: Truy vấn đánh giá
+    DB-->>Review: Danh sách đánh giá
+    Review-->>UI: Trả danh sách
+    Admin->>UI: Chọn duyệt/ẩn/xóa đánh giá
+    UI->>Moderation: Gửi quyết định xử lý đánh giá
+    Moderation->>DB: Cập nhật trạng thái đánh giá
+    DB-->>Moderation: Cập nhật thành công
+    Moderation-->>UI: Trả kết quả
+    UI-->>Admin: Hiển thị trạng thái mới

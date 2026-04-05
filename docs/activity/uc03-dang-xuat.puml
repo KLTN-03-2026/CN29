@@ -1,0 +1,14 @@
+@startuml
+skinparam shadowing false
+title UC03 - Đăng xuất
+|Người dùng|
+start
+:Chọn Đăng xuất;
+|Hệ thống|
+:Gửi yêu cầu hủy phiên;
+:Xóa token/phiên đăng nhập;
+:Trả kết quả đăng xuất;
+|Người dùng|
+:Bị chuyển về trang đăng nhập;
+stop
+@enduml

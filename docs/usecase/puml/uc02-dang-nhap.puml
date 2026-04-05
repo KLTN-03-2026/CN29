@@ -1,0 +1,8 @@
+@startuml
+skinparam shadowing false
+left to right direction
+title UC02 - Đăng nhập
+actor "Người dùng" as ACTOR_1
+usecase "Đăng nhập" as UC_MAIN
+ACTOR_1 --> UC_MAIN
+@enduml
