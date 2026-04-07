@@ -33,6 +33,43 @@ const parseJsonArray = (text) => {
   }
 };
 
+const isSchemaDriftError = (err) => {
+  const message = String(err?.message || '').toLowerCase();
+  return (
+    message.includes('no such table')
+    || message.includes('no such column')
+    || message.includes('unknown column')
+    || message.includes("doesn't exist")
+  );
+};
+
+const getWithFallback = (queries, params, done) => {
+  const queue = Array.isArray(queries) ? [...queries] : [];
+  if (queue.length === 0) return done(null, null);
+
+  const runNext = () => {
+    const sql = queue.shift();
+    if (!sql) return done(null, null);
+
+    db.get(sql, params, (err, row) => {
+      if (!err) return done(null, row || null);
+
+      if (isSchemaDriftError(err)) {
+        if (queue.length > 0) {
+          console.warn('Schema drift detected, trying fallback query:', err.message);
+          return runNext();
+        }
+        console.warn('Schema drift detected, skipping optional query:', err.message);
+        return done(null, null);
+      }
+
+      return done(err);
+    });
+  };
+
+  runNext();
+};
+
 // Multer config
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -132,7 +169,25 @@ router.post('/upload-avatar', upload.single('avatar'), async (req, res) => {
 
 // API update user profile
 router.post('/update-profile', (req, res) => {
-  const { userId, fullName, position, phone, birthday, gender, city, address, personalLink, introHtml, educationList, workList, languageList } = req.body;
+  const {
+    userId,
+    fullName,
+    position,
+    phone,
+    birthday,
+    gender,
+    city,
+    district,
+    address,
+    personalLink,
+    introHtml,
+    experienceYears,
+    education,
+    avatar,
+    educationList,
+    workList,
+    languageList
+  } = req.body;
   
   if (!userId) {
     return res.status(400).json({ error: 'Thiếu userId' });
@@ -146,9 +201,89 @@ router.post('/update-profile', (req, res) => {
 
   console.log('Updating profile for userId:', numUserId, { fullName, phone, birthday, gender, city, address });
   const introContent = introHtml || '';
+  const safeExperienceYears = Number.isNaN(Number.parseInt(experienceYears, 10)) ? 0 : Number.parseInt(experienceYears, 10);
   const educationJson = safeJsonArray(educationList);
   const workJson = safeJsonArray(workList);
   const languageJson = safeJsonArray(languageList);
+
+  const continueUpdateCandidateProfile = () => {
+    // Check if HoSoUngVien exists
+    db.get('SELECT MaHoSo FROM HoSoUngVien WHERE MaNguoiDung = ?', [numUserId], (err, row) => {
+      if (err) {
+        if (isSchemaDriftError(err)) {
+          console.warn('HoSoUngVien table/column is missing, skip candidate profile update:', err.message);
+          return res.json({ success: true, message: 'Cập nhật thông tin thành công (chỉ cơ bản)' });
+        }
+        console.error('Error checking HoSoUngVien:', err);
+        return res.status(500).json({ error: 'Lỗi kiểm tra HoSoUngVien', details: err.message });
+      }
+
+      if (row) {
+        // HoSoUngVien exists, update it
+        db.run(
+          `UPDATE HoSoUngVien 
+           SET NgaySinh = ?, GioiTinh = ?, DiaChi = ?, ThanhPho = ?, QuanHuyen = ?, ChucDanh = ?, LinkCaNhan = ?, GioiThieuBanThan = ?, SoNamKinhNghiem = ?, TrinhDoHocVan = ?, AnhDaiDien = ?, DanhSachHocVanJson = ?, DanhSachKinhNghiemJson = ?, DanhSachNgoaiNguJson = ?, NgayCapNhat = datetime("now", "localtime") 
+           WHERE MaNguoiDung = ?`,
+          [
+            birthday || '',
+            gender || '',
+            address || '',
+            city || '',
+            district || '',
+            position || '',
+            personalLink || '',
+            introContent,
+            safeExperienceYears,
+            education || '',
+            avatar || '',
+            educationJson,
+            workJson,
+            languageJson,
+            numUserId
+          ],
+          function (updateErr) {
+            if (updateErr) {
+              console.error('Error updating HoSoUngVien:', updateErr);
+              return res.json({ success: true, message: 'Cập nhật thông tin thành công (chỉ cơ bản)' });
+            }
+            console.log('HoSoUngVien updated, rows changed:', this.changes);
+            return res.json({ success: true, message: 'Cập nhật thông tin thành công' });
+          }
+        );
+      } else {
+        // HoSoUngVien doesn't exist, create it
+        db.run(
+          `INSERT INTO HoSoUngVien (MaNguoiDung, NgaySinh, GioiTinh, DiaChi, ThanhPho, QuanHuyen, ChucDanh, LinkCaNhan, GioiThieuBanThan, SoNamKinhNghiem, TrinhDoHocVan, AnhDaiDien, DanhSachHocVanJson, DanhSachKinhNghiemJson, DanhSachNgoaiNguJson, NgayTao, NgayCapNhat)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "localtime"), datetime("now", "localtime"))`,
+          [
+            numUserId,
+            birthday || '',
+            gender || '',
+            address || '',
+            city || '',
+            district || '',
+            position || '',
+            personalLink || '',
+            introContent,
+            safeExperienceYears,
+            education || '',
+            avatar || '',
+            educationJson,
+            workJson,
+            languageJson
+          ],
+          function (insertErr) {
+            if (insertErr) {
+              console.error('Error inserting HoSoUngVien:', insertErr);
+              return res.json({ success: true, message: 'Cập nhật thông tin thành công (chỉ cơ bản)' });
+            }
+            console.log('HoSoUngVien created');
+            return res.json({ success: true, message: 'Cập nhật thông tin thành công' });
+          }
+        );
+      }
+    });
+  };
 
   // Update NguoiDung table (HoTen, SoDienThoai, DiaChi)
   db.run(
@@ -157,53 +292,32 @@ router.post('/update-profile', (req, res) => {
      WHERE MaNguoiDung = ?`,
     [fullName || '', phone || '', address || '', numUserId],
     function (err) {
+      if (err && isSchemaDriftError(err)) {
+        console.warn('NguoiDung.DiaChi is missing, fallback to basic update:', err.message);
+        return db.run(
+          `UPDATE NguoiDung 
+           SET HoTen = ?, SoDienThoai = ?, NgayCapNhat = datetime("now", "localtime") 
+           WHERE MaNguoiDung = ?`,
+          [fullName || '', phone || '', numUserId],
+          function (fallbackErr) {
+            if (fallbackErr) {
+              console.error('Error updating NguoiDung with fallback query:', fallbackErr);
+              return res.status(500).json({ error: 'Lỗi cập nhật bảng NguoiDung', details: fallbackErr.message });
+            }
+
+            console.log('NguoiDung updated by fallback query, rows changed:', this.changes);
+            return continueUpdateCandidateProfile();
+          }
+        );
+      }
+
       if (err) {
         console.error('Error updating NguoiDung:', err);
         return res.status(500).json({ error: 'Lỗi cập nhật bảng NguoiDung', details: err.message });
       }
 
       console.log('NguoiDung updated, rows changed:', this.changes);
-
-      // Check if HoSoUngVien exists
-      db.get('SELECT MaHoSo FROM HoSoUngVien WHERE MaNguoiDung = ?', [numUserId], (err, row) => {
-        if (err) {
-          console.error('Error checking HoSoUngVien:', err);
-          return res.status(500).json({ error: 'Lỗi kiểm tra HoSoUngVien', details: err.message });
-        }
-
-        if (row) {
-          // HoSoUngVien exists, update it
-          db.run(
-            `UPDATE HoSoUngVien 
-             SET NgaySinh = ?, GioiTinh = ?, ThanhPho = ?, ChucDanh = ?, LinkCaNhan = ?, GioiThieuBanThan = ?, EducationListJson = ?, WorkListJson = ?, LanguageListJson = ?, NgayCapNhat = datetime("now", "localtime") 
-             WHERE MaNguoiDung = ?`,
-            [birthday || '', gender || '', city || '', position || '', introContent, educationJson, workJson, languageJson, numUserId],
-            function (err) {
-              if (err) {
-                console.error('Error updating HoSoUngVien:', err);
-                return res.json({ success: true, message: 'Cập nhật thông tin thành công (chỉ cơ bản)' });
-              }
-              console.log('HoSoUngVien updated, rows changed:', this.changes);
-              return res.json({ success: true, message: 'Cập nhật thông tin thành công' });
-            }
-          );
-        } else {
-          // HoSoUngVien doesn't exist, create it
-          db.run(
-            `INSERT INTO HoSoUngVien (MaNguoiDung, NgaySinh, GioiTinh, ThanhPho, ChucDanh, LinkCaNhan, GioiThieuBanThan, EducationListJson, WorkListJson, LanguageListJson, NgayTao, NgayCapNhat)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "localtime"), datetime("now", "localtime"))`,
-            [numUserId, birthday || '', gender || '', city || '', position || '', personalLink || '', introContent, educationJson, workJson, languageJson],
-            function (err) {
-              if (err) {
-                console.error('Error inserting HoSoUngVien:', err);
-                return res.json({ success: true, message: 'Cập nhật thông tin thành công (chỉ cơ bản)' });
-              }
-              console.log('HoSoUngVien created');
-              return res.json({ success: true, message: 'Cập nhật thông tin thành công' });
-            }
-          );
-        }
-      });
+      return continueUpdateCandidateProfile();
     }
   );
 });
@@ -215,22 +329,42 @@ router.get('/profile/:userId', (req, res) => {
     return res.status(400).json({ error: 'userId không hợp lệ' });
   }
 
-  db.get(
-    `SELECT nd.MaNguoiDung AS userId, nd.Email, nd.HoTen, nd.SoDienThoai, nd.DiaChi,
-            hsv.NgaySinh, hsv.GioiTinh, hsv.ThanhPho, hsv.AnhDaiDien, hsv.ChucDanh, hsv.LinkCaNhan,
-            hsv.GioiThieuBanThan, hsv.EducationListJson, hsv.WorkListJson, hsv.LanguageListJson
-     FROM NguoiDung nd
-     LEFT JOIN HoSoUngVien hsv ON hsv.MaNguoiDung = nd.MaNguoiDung
-     WHERE nd.MaNguoiDung = ?`,
-    [userId],
-    (err, row) => {
-      if (err) {
-        console.error('Error fetching profile:', err);
-        return res.status(500).json({ error: 'Lỗi truy vấn hồ sơ', details: err.message });
+  const userQueries = [
+    `SELECT MaNguoiDung AS userId, Email, HoTen, SoDienThoai, DiaChi
+     FROM NguoiDung
+     WHERE MaNguoiDung = ?`,
+    `SELECT MaNguoiDung AS userId, Email, HoTen, SoDienThoai
+     FROM NguoiDung
+     WHERE MaNguoiDung = ?`
+  ];
+
+  const candidateQueries = [
+    `SELECT NgaySinh, GioiTinh, DiaChi AS DiaChiHoSo, ThanhPho, QuanHuyen, AnhDaiDien, ChucDanh, LinkCaNhan,
+            GioiThieuBanThan, SoNamKinhNghiem, TrinhDoHocVan,
+            DanhSachHocVanJson, DanhSachKinhNghiemJson, DanhSachNgoaiNguJson
+     FROM HoSoUngVien
+     WHERE MaNguoiDung = ?`,
+    `SELECT NgaySinh, GioiTinh, DiaChi AS DiaChiHoSo, ThanhPho, QuanHuyen, AnhDaiDien
+     FROM HoSoUngVien
+     WHERE MaNguoiDung = ?`
+  ];
+
+  getWithFallback(userQueries, [userId], (userErr, userRow) => {
+    if (userErr) {
+      console.error('Error fetching profile base user:', userErr);
+      return res.status(500).json({ error: 'Lỗi truy vấn hồ sơ', details: userErr.message });
+    }
+    if (!userRow) {
+      return res.status(404).json({ error: 'Không tìm thấy người dùng' });
+    }
+
+    getWithFallback(candidateQueries, [userId], (candidateErr, candidateRow) => {
+      if (candidateErr) {
+        console.error('Error fetching profile candidate data:', candidateErr);
+        return res.status(500).json({ error: 'Lỗi truy vấn hồ sơ', details: candidateErr.message });
       }
-      if (!row) {
-        return res.status(404).json({ error: 'Không tìm thấy người dùng' });
-      }
+
+      const row = { ...userRow, ...(candidateRow || {}) };
 
       return res.json({
         success: true,
@@ -239,22 +373,25 @@ router.get('/profile/:userId', (req, res) => {
           email: row.Email,
           fullName: row.HoTen || '',
           phone: row.SoDienThoai || '',
-          address: row.DiaChi || '',
+          address: row.DiaChi || row.DiaChiHoSo || '',
           birthday: row.NgaySinh || '',
           gender: row.GioiTinh || 'Nam',
           city: row.ThanhPho || '',
+          district: row.QuanHuyen || '',
           avatarUrl: row.AnhDaiDien || '',
           avatarAbsoluteUrl: buildAbsoluteUrl(req, row.AnhDaiDien || ''),
           position: row.ChucDanh || '',
           personalLink: row.LinkCaNhan || '',
           introHtml: row.GioiThieuBanThan || '',
-          educationList: parseJsonArray(row.EducationListJson),
-          workList: parseJsonArray(row.WorkListJson),
-          languageList: parseJsonArray(row.LanguageListJson)
+          experienceYears: Number(row.SoNamKinhNghiem || 0),
+          education: row.TrinhDoHocVan || '',
+          educationList: parseJsonArray(row.DanhSachHocVanJson),
+          workList: parseJsonArray(row.DanhSachKinhNghiemJson),
+          languageList: parseJsonArray(row.DanhSachNgoaiNguJson)
         }
       });
-    }
-  );
+    });
+  });
 });
 
 module.exports = router;

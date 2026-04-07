@@ -10,10 +10,9 @@ import MatchingJobsPage from './features/candidate/MatchingJobsPage';
 import LoginPage from './features/auth/LoginPage';
 import RegisterPage from './features/auth/RegisterPage';
 import ForgotPasswordPage from './features/auth/ForgotPasswordPage';
-import EmployerRegister from './features/auth/EmployerRegister';
 import VerifyOTP from './features/auth/VerifyOTP';
-import WelcomeIntro from './features/auth/WelcomeIntro';
-import DesiredJobForm from './features/auth/DesiredJobForm';
+import RoleSelectionPage from './features/auth/RoleSelectionPage';
+import CompleteProfilePage from './features/auth/CompleteProfilePage';
 import AdminDashboard from './features/admin/AdminDashboard';
 import EmployerLayout from './features/employer/EmployerLayout';
 import EmployerOverview from './features/employer/dashboard/EmployerOverview';
@@ -48,7 +47,7 @@ function AppContent() {
   const token = String(localStorage.getItem('token') || '').trim();
   const isAuthenticated = Boolean(userStr && token);
 
-  const guestAllowedPaths = ['/', '/login', '/register', '/forgot-password', '/register-employer', '/verify-otp'];
+  const guestAllowedPaths = ['/', '/login', '/register', '/forgot-password', '/verify-otp'];
   const isGuestBlockedPath = !isAuthenticated && !guestAllowedPaths.includes(location.pathname);
 
   // Kiểm tra và xóa token không hợp lệ khi app khởi động
@@ -77,9 +76,8 @@ function AppContent() {
 
   // Ẩn Header và Footer khi ở các trang dashboard
   const isDashboardPage = location.pathname.startsWith('/admin') || 
-                          location.pathname.startsWith('/employer') || 
-                          location.pathname === '/candidate';
-  const isAuthPage = ['/login', '/register', '/forgot-password', '/register-employer'].includes(location.pathname);
+                          location.pathname.startsWith('/employer');
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/verify-otp', '/onboarding/role', '/onboarding/profile'].includes(location.pathname);
   const showPublicChrome = !isDashboardPage && !isAuthPage;
 
   if (isGuestBlockedPath) {
@@ -101,10 +99,9 @@ function AppContent() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-          <Route path="/register-employer" element={<EmployerRegister />} />
           <Route path="/verify-otp" element={<VerifyOTP />} />
-          <Route path="/welcome" element={<WelcomeIntro />} />
-          <Route path="/desired-job" element={<DesiredJobForm />} />
+          <Route path="/onboarding/role" element={<RoleSelectionPage />} />
+          <Route path="/onboarding/profile" element={<CompleteProfilePage />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/create-cv" element={<CreateCvHub />} />
           <Route path="/cv-management" element={<CvManagementPage />} />
@@ -146,7 +143,6 @@ function AppContent() {
             <Route path="account" element={<EmployerAccount />} />
           </Route>
 
-          {/* Đã xóa route /candidate */}
         </Routes>
       </main>
 

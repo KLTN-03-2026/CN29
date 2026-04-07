@@ -22,9 +22,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
                 return <Navigate to="/admin/dashboard" replace />;
             case 'Nhà tuyển dụng':
                 return <Navigate to="/employer" replace />;
+            case 'Chưa chọn vai trò':
+                return <Navigate to="/onboarding/role" replace />;
             case 'Ứng viên':
             default:
-                return <Navigate to="/candidate" replace />;
+                return <Navigate to="/profile" replace />;
         }
     }
 

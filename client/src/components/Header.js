@@ -152,9 +152,6 @@ const Header = () => {
                                 <Link className="btn btn-primary fw-semibold fs-6 px-4 py-1" to="/register" onClick={collapseMobileNavbar}>
                                     Đăng ký
                                 </Link>
-                                <Link className="btn btn-warning fw-semibold fs-6 px-4 py-1 text-dark" to="/register-employer" onClick={collapseMobileNavbar}>
-                                    Dành cho nhà tuyển dụng
-                                </Link>
                             </>
                         ) : (
                             <div className="dropdown">

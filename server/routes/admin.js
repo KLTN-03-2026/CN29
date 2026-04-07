@@ -351,9 +351,9 @@ router.get('/users/:id/detail', async (req, res) => {
           hsv.LinkCaNhan,
           hsv.GioiThieuBanThan,
           hsv.AnhDaiDien,
-          hsv.EducationListJson,
-          hsv.WorkListJson,
-          hsv.LanguageListJson,
+          hsv.DanhSachHocVanJson,
+          hsv.DanhSachKinhNghiemJson,
+          hsv.DanhSachNgoaiNguJson,
           ntd.MaNhaTuyenDung,
           COALESCE(ntd.TenCongTy, c.TenCongTy) AS TenCongTy,
           COALESCE(ntd.MaSoThue, c.MaSoThue) AS MaSoThue,
@@ -389,9 +389,9 @@ router.get('/users/:id/detail', async (req, res) => {
         SoNamKinhNghiem: Number(row.SoNamKinhNghiem || 0),
         LinkCaNhan: row.LinkCaNhan || '',
         GioiThieuBanThan: row.GioiThieuBanThan || '',
-        EducationList: parseJsonArray(row.EducationListJson),
-        WorkList: parseJsonArray(row.WorkListJson),
-        LanguageList: parseJsonArray(row.LanguageListJson)
+        EducationList: parseJsonArray(row.DanhSachHocVanJson),
+        WorkList: parseJsonArray(row.DanhSachKinhNghiemJson),
+        LanguageList: parseJsonArray(row.DanhSachNgoaiNguJson)
       }
       : null;
 

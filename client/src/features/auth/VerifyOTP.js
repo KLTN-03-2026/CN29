@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
@@ -17,6 +17,12 @@ const VerifyOTP = () => {
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
     const [resending, setResending] = useState(false);
+
+    useEffect(() => {
+        if (!email) {
+            navigate('/register', { replace: true });
+        }
+    }, [email, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -45,10 +51,39 @@ const VerifyOTP = () => {
                 throw new Error(data.error || 'Xác thực thất bại');
             }
 
+            const prefill = {
+                ...(location.state?.prefill || {}),
+                ...(data.prefill || {})
+            };
+
+            if (data.token && data.user) {
+                localStorage.setItem('token', data.token);
+                localStorage.setItem('user', JSON.stringify(data.user));
+            }
+
+            if (Object.keys(prefill).length > 0) {
+                localStorage.setItem('pending_onboarding_prefill', JSON.stringify(prefill));
+            }
+
+            const nextStep = String(data.nextStep || '').trim();
+            if (nextStep) {
+                setSuccess('Xác thực thành công! Đang chuyển sang bước tiếp theo...');
+                setTimeout(() => {
+                    navigate(nextStep, {
+                        state: {
+                            email,
+                            prefill
+                        },
+                        replace: true
+                    });
+                }, 600);
+                return;
+            }
+
             setSuccess('Xác thực thành công! Đang chuyển đến trang đăng nhập...');
             setTimeout(() => {
                 navigate('/login');
-            }, 2000);
+            }, 1200);
         } catch (err) {
             setError(err.message);
         } finally {

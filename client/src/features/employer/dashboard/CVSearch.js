@@ -1,23 +1,143 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
+
+const EXPERIENCE_ENTRIES = [
+    { value: '', label: 'Tất cả' },
+    { value: '0-1', label: 'Dưới 1 năm' },
+    { value: '1-3', label: '1-3 năm' },
+    { value: '3-5', label: '3-5 năm' },
+    { value: '5+', label: 'Trên 5 năm' }
+];
+
+const getProvinceLabel = (item) => {
+    if (typeof item === 'string') return item;
+    return item?.TenTinh || item?.name || '';
+};
 
 const CVSearch = () => {
     const API_BASE = CLIENT_API_BASE;
+
     const [searchParams, setSearchParams] = useState({
         keyword: '',
         city: '',
         experience: ''
     });
+
     const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [searched, setSearched] = useState(false);
+
+    const [provinces, setProvinces] = useState([]);
+    const [loadingProvinces, setLoadingProvinces] = useState(false);
+
+    const [isCityOpen, setIsCityOpen] = useState(false);
+    const [isExperienceOpen, setIsExperienceOpen] = useState(false);
+    const [cityQuery, setCityQuery] = useState('');
+
+    const cityRef = useRef(null);
+    const citySearchInputRef = useRef(null);
+    const experienceRef = useRef(null);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadProvinces = async () => {
+            setLoadingProvinces(true);
+            try {
+                const response = await fetch(`${API_BASE}/api/provinces`);
+                const data = await response.json().catch(() => []);
+                if (!response.ok || !Array.isArray(data)) return;
+
+                const mapped = data
+                    .map(getProvinceLabel)
+                    .map((value) => String(value || '').trim())
+                    .filter(Boolean);
+
+                if (!cancelled) setProvinces(mapped);
+            } catch {
+                if (!cancelled) setProvinces([]);
+            } finally {
+                if (!cancelled) setLoadingProvinces(false);
+            }
+        };
+
+        loadProvinces();
+        return () => {
+            cancelled = true;
+        };
+    }, [API_BASE]);
+
+    useEffect(() => {
+        const handlePointerDown = (event) => {
+            if (cityRef.current && !cityRef.current.contains(event.target)) {
+                setIsCityOpen(false);
+            }
+
+            if (experienceRef.current && !experienceRef.current.contains(event.target)) {
+                setIsExperienceOpen(false);
+            }
+        };
+
+        const handleKeyDown = (event) => {
+            if (event.key === 'Escape') {
+                setIsCityOpen(false);
+                setIsExperienceOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handlePointerDown);
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.removeEventListener('mousedown', handlePointerDown);
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (!isCityOpen) return;
+        requestAnimationFrame(() => {
+            citySearchInputRef.current?.focus();
+        });
+    }, [isCityOpen]);
+
+    const cityEntries = useMemo(() => {
+        const fromResults = searchResults
+            .map((cv) => String(cv?.city || '').trim())
+            .filter(Boolean);
+
+        const unique = [...new Set([...provinces, ...fromResults])];
+        return [
+            { value: '', label: 'Tất cả' },
+            ...unique.map((item) => ({ value: item, label: item }))
+        ];
+    }, [provinces, searchResults]);
+
+    const visibleCityEntries = useMemo(() => {
+        const query = String(cityQuery || '').trim().toLowerCase();
+        if (!query) return cityEntries;
+
+        return cityEntries.filter((entry) => entry.value === '' || String(entry.label).toLowerCase().includes(query));
+    }, [cityEntries, cityQuery]);
+
+    const selectedCityLabel = searchParams.city || (loadingProvinces ? 'Đang tải...' : 'Tất cả');
+    const selectedExperienceLabel = EXPERIENCE_ENTRIES.find((entry) => entry.value === searchParams.experience)?.label || 'Tất cả';
+
+    const updateSearchParam = (name, value) => {
+        setSearchParams((prev) => ({
+            ...prev,
+            [name]: value
+        }));
+    };
 
     const handleSearch = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         setSearched(true);
+        setIsCityOpen(false);
+        setIsExperienceOpen(false);
 
         try {
             const params = new URLSearchParams();
@@ -90,36 +210,101 @@ const CVSearch = () => {
                                 />
                             </div>
                             <div className="col-md-3">
-                                <label className="form-label">Địa điểm</label>
-                                <select
-                                    className="form-select"
-                                    name="city"
-                                    value={searchParams.city}
-                                    onChange={handleChange}
-                                >
-                                    <option value="">Tất cả</option>
-                                    <option value="Hà Nội">Hà Nội</option>
-                                    <option value="Hồ Chí Minh">Hồ Chí Minh</option>
-                                    <option value="Đà Nẵng">Đà Nẵng</option>
-                                </select>
+                                <div className="jf-jobs-search-field" ref={cityRef}>
+                                    <label>Địa điểm</label>
+                                    <div className={`jf-jobs-select ${isCityOpen ? 'is-open' : ''}`}>
+                                        <button
+                                            type="button"
+                                            className="jf-jobs-select-trigger"
+                                            onClick={() => {
+                                                setIsCityOpen((prev) => !prev);
+                                                setIsExperienceOpen(false);
+                                                setCityQuery('');
+                                            }}
+                                            aria-haspopup="listbox"
+                                            aria-expanded={isCityOpen}
+                                        >
+                                            <span className="jf-jobs-select-text">{selectedCityLabel}</span>
+                                            <i className="bi bi-chevron-down"></i>
+                                        </button>
+
+                                        {isCityOpen ? (
+                                            <div className="jf-jobs-select-menu jf-jobs-select-menu--location" role="listbox" aria-label="Chọn địa điểm">
+                                                <div className="jf-jobs-select-search-wrap">
+                                                    <i className="bi bi-search"></i>
+                                                    <input
+                                                        ref={citySearchInputRef}
+                                                        type="text"
+                                                        placeholder="Nhập để tìm tỉnh/thành"
+                                                        value={cityQuery}
+                                                        onChange={(event) => setCityQuery(event.target.value)}
+                                                    />
+                                                </div>
+
+                                                <div className="jf-jobs-select-scroll">
+                                                    {visibleCityEntries.length === 0 ? (
+                                                        <div className="jf-jobs-select-empty">Không tìm thấy tỉnh/thành phù hợp</div>
+                                                    ) : (
+                                                        visibleCityEntries.map((entry) => (
+                                                            <button
+                                                                key={`${entry.value || 'all'}-${entry.label}`}
+                                                                type="button"
+                                                                className={`jf-jobs-select-option ${searchParams.city === entry.value ? 'is-active' : ''}`}
+                                                                onClick={() => {
+                                                                    updateSearchParam('city', entry.value);
+                                                                    setIsCityOpen(false);
+                                                                }}
+                                                            >
+                                                                {entry.label}
+                                                            </button>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                </div>
                             </div>
                             <div className="col-md-3">
-                                <label className="form-label">Kinh nghiệm</label>
-                                <select
-                                    className="form-select"
-                                    name="experience"
-                                    value={searchParams.experience}
-                                    onChange={handleChange}
-                                >
-                                    <option value="">Tất cả</option>
-                                    <option value="0-1">Dưới 1 năm</option>
-                                    <option value="1-3">1-3 năm</option>
-                                    <option value="3-5">3-5 năm</option>
-                                    <option value="5+">Trên 5 năm</option>
-                                </select>
+                                <div className="jf-jobs-search-field" ref={experienceRef}>
+                                    <label>Kinh nghiệm</label>
+                                    <div className={`jf-jobs-select ${isExperienceOpen ? 'is-open' : ''}`}>
+                                        <button
+                                            type="button"
+                                            className="jf-jobs-select-trigger"
+                                            onClick={() => {
+                                                setIsExperienceOpen((prev) => !prev);
+                                                setIsCityOpen(false);
+                                            }}
+                                            aria-haspopup="listbox"
+                                            aria-expanded={isExperienceOpen}
+                                        >
+                                            <span className="jf-jobs-select-text">{selectedExperienceLabel}</span>
+                                            <i className="bi bi-chevron-down"></i>
+                                        </button>
+
+                                        {isExperienceOpen ? (
+                                            <div className="jf-jobs-select-menu" role="listbox" aria-label="Chọn kinh nghiệm">
+                                                {EXPERIENCE_ENTRIES.map((entry) => (
+                                                    <button
+                                                        key={entry.value || 'all'}
+                                                        type="button"
+                                                        className={`jf-jobs-select-option ${searchParams.experience === entry.value ? 'is-active' : ''}`}
+                                                        onClick={() => {
+                                                            updateSearchParam('experience', entry.value);
+                                                            setIsExperienceOpen(false);
+                                                        }}
+                                                    >
+                                                        {entry.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="col-md-12">
-                                <button type="submit" className="btn btn-primary">
+                            <div className="col-md-12 d-flex justify-content-end">
+                                <button type="submit" className="jf-jobs-search-submit px-4">
                                     <i className="bi bi-search me-2"></i>
                                     Tìm kiếm
                                 </button>

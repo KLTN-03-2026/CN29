@@ -27,7 +27,7 @@ const Footer = () => {
                     <div className="col-12 col-md-3 d-flex flex-column">
                         <div className="fw-semibold mb-2 jf-footer-title">Dành cho nhà tuyển dụng</div>
                         <ul className="list-unstyled mb-0">
-                            <li><Link to="/register-employer">Đăng ký tài khoản doanh nghiệp</Link></li>
+                            <li><Link to="/register">Đăng ký tài khoản</Link></li>
                             <li><Link to="/employer">Quản lý tuyển dụng</Link></li>
                             <li><Link to="/jobs">Xem thị trường việc làm</Link></li>
                         </ul>

@@ -1,5 +1,18 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNotification } from '../../../components/NotificationProvider';
+
+const normalizeProvinceEntry = (entry) => {
+    if (!entry) return '';
+    if (typeof entry === 'string') return entry.trim();
+    return String(
+        entry.TenTinh
+        || entry.name
+        || entry.ten
+        || entry.province
+        || entry.label
+        || ''
+    ).trim();
+};
 
 const CompanyProfile = () => {
     const { notify } = useNotification();
@@ -18,10 +31,71 @@ const CompanyProfile = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
     const [logoInputKey, setLogoInputKey] = useState(0);
+    const [provinces, setProvinces] = useState([]);
+    const [loadingProvinces, setLoadingProvinces] = useState(false);
+    const [isCityOpen, setIsCityOpen] = useState(false);
+    const [cityQuery, setCityQuery] = useState('');
+
+    const cityDropdownRef = useRef(null);
+    const citySearchInputRef = useRef(null);
 
     useEffect(() => {
         fetchCompanyInfo();
+        fetchProvinces();
     }, []);
+
+    useEffect(() => {
+        if (!isCityOpen) return undefined;
+
+        const closeIfOutside = (event) => {
+            if (cityDropdownRef.current && !cityDropdownRef.current.contains(event.target)) {
+                setIsCityOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', closeIfOutside);
+        return () => document.removeEventListener('mousedown', closeIfOutside);
+    }, [isCityOpen]);
+
+    useEffect(() => {
+        if (!isCityOpen) return;
+        const id = window.setTimeout(() => {
+            citySearchInputRef.current?.focus();
+        }, 0);
+        return () => window.clearTimeout(id);
+    }, [isCityOpen]);
+
+    useEffect(() => {
+        if (!editing) {
+            setIsCityOpen(false);
+            setCityQuery('');
+        }
+    }, [editing]);
+
+    const fetchProvinces = async () => {
+        setLoadingProvinces(true);
+        try {
+            const res = await fetch('/api/provinces');
+            const payload = await res.json().catch(() => []);
+            if (!res.ok) return;
+
+            const source = Array.isArray(payload)
+                ? payload
+                : Array.isArray(payload?.data)
+                    ? payload.data
+                    : [];
+
+            const normalized = Array.from(
+                new Set(source.map(normalizeProvinceEntry).filter(Boolean))
+            ).sort((a, b) => a.localeCompare(b, 'vi'));
+
+            setProvinces(normalized);
+        } catch (err) {
+            // silent fail
+        } finally {
+            setLoadingProvinces(false);
+        }
+    };
 
     const fetchCompanyInfo = async () => {
         if (!token) return;
@@ -94,6 +168,22 @@ const CompanyProfile = () => {
         });
     };
 
+    const handleCitySelect = (value) => {
+        setCompany((prev) => ({
+            ...prev,
+            city: value
+        }));
+        setIsCityOpen(false);
+    };
+
+    const visibleProvinces = useMemo(() => {
+        const keyword = String(cityQuery || '').trim().toLowerCase();
+        if (!keyword) return provinces;
+        return provinces.filter((item) => item.toLowerCase().includes(keyword));
+    }, [provinces, cityQuery]);
+
+    const selectedCityLabel = company.city || (loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh/thành');
+
     const handlePickLogo = () => {
         const input = document.getElementById('company-logo-input');
         if (input) input.click();
@@ -144,11 +234,14 @@ const CompanyProfile = () => {
     };
 
     return (
-        <div>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="mb-0">Thông tin công ty</h2>
+        <div className="employer-profile-page">
+            <div className="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+                <div>
+                    <h2 className="mb-1">Thông tin công ty</h2>
+                    <p className="employer-profile-subtitle mb-0">Cập nhật hồ sơ doanh nghiệp theo phong cách thống nhất với trang tìm kiếm việc làm.</p>
+                </div>
                 {!editing && (
-                    <button 
+                    <button
                         className="btn btn-primary"
                         onClick={() => setEditing(true)}
                     >
@@ -158,10 +251,10 @@ const CompanyProfile = () => {
                 )}
             </div>
 
-            <div className="card border-0 shadow-sm">
-                <div className="card-body">
+            <div className="card border-0 shadow-sm employer-profile-card">
+                <div className="card-body p-4 p-lg-4">
                     <form onSubmit={handleSubmit}>
-                        <div className="row g-4">
+                        <div className="row g-4 employer-profile-grid">
                             <div className="col-md-12">
                                 <div className="text-center mb-4">
                                     <div className="mb-3">
@@ -242,20 +335,57 @@ const CompanyProfile = () => {
                                 />
                             </div>
 
-                            <div className="col-md-6">
-                                <label className="form-label">Thành phố</label>
-                                <select
-                                    className="form-select"
-                                    name="city"
-                                    value={company.city}
-                                    onChange={handleChange}
-                                    disabled={!editing}
-                                >
-                                    <option value="">Chọn thành phố</option>
-                                    <option value="Hà Nội">Hà Nội</option>
-                                    <option value="Hồ Chí Minh">Hồ Chí Minh</option>
-                                    <option value="Đà Nẵng">Đà Nẵng</option>
-                                </select>
+                            <div className="col-md-6 employer-profile-city">
+                                <label className="form-label">Tỉnh / Thành phố</label>
+                                <div className={`jf-jobs-select ${isCityOpen ? 'is-open' : ''}`} ref={cityDropdownRef}>
+                                    <button
+                                        type="button"
+                                        className="jf-jobs-select-trigger"
+                                        onClick={() => {
+                                            if (!editing) return;
+                                            setIsCityOpen((prev) => !prev);
+                                            setCityQuery('');
+                                        }}
+                                        aria-haspopup="listbox"
+                                        aria-expanded={isCityOpen}
+                                        disabled={!editing}
+                                    >
+                                        <span className="jf-jobs-select-text">{selectedCityLabel}</span>
+                                        <i className="bi bi-chevron-down"></i>
+                                    </button>
+
+                                    {isCityOpen ? (
+                                        <div className="jf-jobs-select-menu jf-jobs-select-menu--location" role="listbox" aria-label="Chọn tỉnh/thành">
+                                            <div className="jf-jobs-select-search-wrap">
+                                                <i className="bi bi-search"></i>
+                                                <input
+                                                    ref={citySearchInputRef}
+                                                    type="text"
+                                                    value={cityQuery}
+                                                    onChange={(event) => setCityQuery(event.target.value)}
+                                                    placeholder="Nhập để tìm tỉnh/thành"
+                                                />
+                                            </div>
+
+                                            <div className="jf-jobs-select-scroll">
+                                                {visibleProvinces.length === 0 ? (
+                                                    <div className="jf-jobs-select-empty">Không tìm thấy tỉnh/thành phù hợp</div>
+                                                ) : (
+                                                    visibleProvinces.map((entry) => (
+                                                        <button
+                                                            key={entry}
+                                                            type="button"
+                                                            className={`jf-jobs-select-option ${company.city === entry ? 'is-active' : ''}`}
+                                                            onClick={() => handleCitySelect(entry)}
+                                                        >
+                                                            {entry}
+                                                        </button>
+                                                    ))
+                                                )}
+                                            </div>
+                                        </div>
+                                    ) : null}
+                                </div>
                             </div>
 
                             <div className="col-md-6">
@@ -298,7 +428,7 @@ const CompanyProfile = () => {
                             </div>
 
                             {editing && (
-                                <div className="col-md-12">
+                                <div className="col-md-12 d-flex justify-content-end gap-2 employer-profile-actions">
                                     <button type="submit" className="btn btn-primary me-2" disabled={isSaving || isUploadingLogo}>
                                         <i className="bi bi-check-lg me-2"></i>
                                         {isSaving ? 'Đang lưu...' : 'Lưu thay đổi'}

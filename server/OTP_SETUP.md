@@ -9,7 +9,6 @@
 4. ✅ Tạo file `server/config/email.js` với hàm gửi email
 5. ✅ Cập nhật routes:
    - `/auth/register` - Gửi OTP qua email thay vì đăng ký trực tiếp
-   - `/auth/register-employer` - Gửi OTP cho nhà tuyển dụng
    - `/auth/verify-otp` - Xác thực mã OTP
    - `/auth/resend-otp` - Gửi lại mã OTP
    - `/auth/login` - Kiểm tra tài khoản đã xác thực chưa
@@ -17,7 +16,7 @@
 ### Frontend:
 1. ✅ Tạo component `VerifyOTP.js` - Trang nhập mã xác thực
 2. ✅ Thêm route `/verify-otp` vào App.js
-3. ✅ Cập nhật Register và EmployerRegister để chuyển đến trang OTP
+3. ✅ Cập nhật luồng `/register` chung chuyển đến trang OTP và onboarding theo vai trò
 
 ## Cần làm để hoàn thiện:
 

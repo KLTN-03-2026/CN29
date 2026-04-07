@@ -1,8 +1,11 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const db = require('../config/db');
 const { generateOTP, sendVerificationEmail } = require('../config/email');
+const { authenticateToken } = require('../middleware/auth');
 const router = express.Router();
 
 // Build absolute URL for stored relative paths (e.g., /images/avatars/xxx.png)
@@ -17,15 +20,35 @@ const PUBLIC_PREFIX = BASE_PATH === '/' ? '' : BASE_PATH;
 const buildAbsoluteUrl = (req, relativePath) => (relativePath ? `${req.protocol}://${req.get('host')}${relativePath}` : '');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret_key_here';
+const ROLE_CANDIDATE = 'Ứng viên';
+const ROLE_EMPLOYER = 'Nhà tuyển dụng';
+const ROLE_ADMIN = 'Quản trị';
+const ROLE_SUPER_ADMIN = 'Siêu quản trị viên';
+const ROLE_PENDING = 'Chưa chọn vai trò';
+const GOOGLE_AUDIENCES = Array.from(
+    new Set(
+        [
+            process.env.GOOGLE_CLIENT_ID,
+            process.env.GOOGLE_OAUTH_CLIENT_ID,
+            process.env.REACT_APP_GOOGLE_CLIENT_ID
+        ]
+            .flatMap((value) => String(value || '').split(','))
+            .map((value) => value.trim())
+            .filter(Boolean)
+    )
+);
+const googleOAuthClient = new OAuth2Client();
 
 const PENDING_REGISTRATION_TABLE_SQL = `
 CREATE TABLE IF NOT EXISTS DangKyTam (
     Email VARCHAR(191) PRIMARY KEY,
     MatKhau VARCHAR(255) NOT NULL,
-    VaiTro VARCHAR(50) NOT NULL DEFAULT 'Ứng viên',
+    VaiTro VARCHAR(50) NOT NULL DEFAULT 'Chưa chọn vai trò',
     HoTen VARCHAR(255) NULL,
     SoDienThoai VARCHAR(50) NULL,
     DiaChi TEXT NULL,
+    NgaySinh DATE NULL,
+    GioiTinh VARCHAR(20) NULL,
     TenCongTy VARCHAR(255) NULL,
     MaSoThue VARCHAR(100) NULL,
     MaXacThuc VARCHAR(20) NOT NULL,
@@ -50,6 +73,115 @@ const dbRunAsync = (sql, params = []) => new Promise((resolve, reject) => {
     });
 });
 
+const getUserWithAvatarByEmail = async (email) => {
+    return dbGetAsync(
+        `SELECT nd.*, COALESCE(hsv.AnhDaiDien, ntd.Logo, ct.Logo) AS avatar
+         FROM NguoiDung nd
+         LEFT JOIN HoSoUngVien hsv ON hsv.MaNguoiDung = nd.MaNguoiDung
+         LEFT JOIN NhaTuyenDung ntd ON ntd.MaNguoiDung = nd.MaNguoiDung
+         LEFT JOIN CongTy ct ON ct.NguoiDaiDien = nd.MaNguoiDung
+         WHERE lower(nd.Email) = lower(?)`,
+        [normalizeEmail(email)]
+    );
+};
+
+const getUserWithAvatarById = async (userId) => {
+    return dbGetAsync(
+        `SELECT nd.*, COALESCE(hsv.AnhDaiDien, ntd.Logo, ct.Logo) AS avatar
+         FROM NguoiDung nd
+         LEFT JOIN HoSoUngVien hsv ON hsv.MaNguoiDung = nd.MaNguoiDung
+         LEFT JOIN NhaTuyenDung ntd ON ntd.MaNguoiDung = nd.MaNguoiDung
+         LEFT JOIN CongTy ct ON ct.NguoiDaiDien = nd.MaNguoiDung
+         WHERE nd.MaNguoiDung = ?`,
+        [userId]
+    );
+};
+
+const normalizeRoleInput = (value, fallback = ROLE_PENDING) => {
+    const raw = String(value || '').trim();
+    const normalized = raw
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+
+    if (!normalized) return fallback;
+    if (normalized === 'ung vien' || normalized === 'ungvien') return ROLE_CANDIDATE;
+    if (normalized === 'nha tuyen dung' || normalized === 'nhatuyendung') return ROLE_EMPLOYER;
+    if (normalized === 'quan tri' || normalized === 'quantri') return ROLE_ADMIN;
+    if (normalized === 'sieu quan tri vien' || normalized === 'sieuquantrivien') return ROLE_SUPER_ADMIN;
+    if (
+        normalized === 'chua chon vai tro'
+        || normalized === 'chuachonvaitro'
+        || normalized === 'pending'
+        || normalized === 'none'
+    ) {
+        return ROLE_PENDING;
+    }
+
+    return raw || fallback;
+};
+
+const isPendingRole = (role) => normalizeRoleInput(role, ROLE_PENDING) === ROLE_PENDING;
+
+const buildLoginResponse = (req, user) => {
+    const avatarRelative = user.avatar || '';
+    const normalizedAvatar = avatarRelative
+        ? `${PUBLIC_PREFIX}${avatarRelative.startsWith('/') ? '' : '/'}${avatarRelative.replace(/^\/+/, '')}`
+        : '';
+    const avatarAbsolute = buildAbsoluteUrl(req, normalizedAvatar);
+
+    const isSuperAdmin = !!(user.IsSuperAdmin || user.isSuperAdmin);
+    const normalizedRole = normalizeRoleInput(user.VaiTro, ROLE_PENDING);
+    const roleLabel = isSuperAdmin ? ROLE_SUPER_ADMIN : normalizedRole;
+    const needsOnboarding = !isSuperAdmin && normalizedRole === ROLE_PENDING;
+    const token = jwt.sign({ id: user.MaNguoiDung, role: roleLabel, isSuperAdmin }, JWT_SECRET, { expiresIn: '1h' });
+
+    return {
+        token,
+        needsOnboarding,
+        nextStep: needsOnboarding ? '/onboarding/role' : null,
+        user: {
+            id: user.MaNguoiDung,
+            email: user.Email,
+            role: roleLabel,
+            name: user.HoTen,
+            isSuperAdmin,
+            needsOnboarding,
+            avatar: avatarAbsolute || normalizedAvatar || '',
+            avatarUrl: normalizedAvatar,
+            avatarAbsoluteUrl: avatarAbsolute,
+            AnhDaiDien: normalizedAvatar
+        }
+    };
+};
+
+const verifyGoogleCredential = async (credential) => {
+    if (!GOOGLE_AUDIENCES.length) {
+        throw new Error('Google login chưa được cấu hình trên máy chủ.');
+    }
+
+    if (!credential || typeof credential !== 'string') {
+        throw new Error('Thiếu credential từ Google.');
+    }
+
+    const ticket = await googleOAuthClient.verifyIdToken({
+        idToken: credential,
+        audience: GOOGLE_AUDIENCES
+    });
+
+    const payload = ticket.getPayload() || {};
+
+    if (!payload.email) {
+        throw new Error('Không lấy được email từ tài khoản Google.');
+    }
+
+    if (payload.email_verified === false) {
+        throw new Error('Email Google chưa được xác thực.');
+    }
+
+    return payload;
+};
+
 const normalizeEmail = (value) => String(value || '').trim().toLowerCase();
 
 const isUniqueConstraintError = (err) => {
@@ -57,6 +189,11 @@ const isUniqueConstraintError = (err) => {
     return msg.includes('unique constraint failed')
         || msg.includes('duplicate entry')
         || msg.includes('er_dup_entry');
+};
+
+const isUnknownColumnError = (err) => {
+    const msg = String(err?.message || '').toLowerCase();
+    return msg.includes('unknown column') || msg.includes('no such column');
 };
 
 const passwordStrengthError = (password) => {
@@ -83,13 +220,43 @@ const shouldExposeOtpInResponse = process.env.NODE_ENV !== 'production'
     || parseBooleanEnv(process.env.EXPOSE_OTP_IN_RESPONSE);
 
 let ensurePendingRegistrationTablePromise = null;
+let ensurePendingRegistrationColumnsPromise = null;
+const ensurePendingRegistrationColumns = async () => {
+    if (!ensurePendingRegistrationColumnsPromise) {
+        const alterQueries = [
+            'ALTER TABLE DangKyTam ADD COLUMN NgaySinh DATE NULL',
+            'ALTER TABLE DangKyTam ADD COLUMN GioiTinh VARCHAR(20) NULL'
+        ];
+
+        ensurePendingRegistrationColumnsPromise = (async () => {
+            for (const query of alterQueries) {
+                try {
+                    await dbRunAsync(query);
+                } catch (err) {
+                    const message = String(err?.message || '').toLowerCase();
+                    if (!message.includes('duplicate column')) {
+                        throw err;
+                    }
+                }
+            }
+        })().catch((err) => {
+            ensurePendingRegistrationColumnsPromise = null;
+            throw err;
+        });
+    }
+
+    return ensurePendingRegistrationColumnsPromise;
+};
+
 const ensurePendingRegistrationTable = async () => {
     if (!ensurePendingRegistrationTablePromise) {
-        ensurePendingRegistrationTablePromise = dbRunAsync(PENDING_REGISTRATION_TABLE_SQL)
-            .catch((err) => {
-                ensurePendingRegistrationTablePromise = null;
-                throw err;
-            });
+        ensurePendingRegistrationTablePromise = (async () => {
+            await dbRunAsync(PENDING_REGISTRATION_TABLE_SQL);
+            await ensurePendingRegistrationColumns();
+        })().catch((err) => {
+            ensurePendingRegistrationTablePromise = null;
+            throw err;
+        });
     }
 
     return ensurePendingRegistrationTablePromise;
@@ -125,6 +292,8 @@ const savePendingRegistration = async ({
     name,
     phone,
     address,
+    birthday,
+    gender,
     companyName,
     taxCode,
     otp,
@@ -134,8 +303,8 @@ const savePendingRegistration = async ({
 
     await dbRunAsync(
         `INSERT OR REPLACE INTO DangKyTam
-        (Email, MatKhau, VaiTro, HoTen, SoDienThoai, DiaChi, TenCongTy, MaSoThue, MaXacThuc, ThoiGianMaXacThuc)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        (Email, MatKhau, VaiTro, HoTen, SoDienThoai, DiaChi, NgaySinh, GioiTinh, TenCongTy, MaSoThue, MaXacThuc, ThoiGianMaXacThuc)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
             email,
             passwordHash,
@@ -143,10 +312,283 @@ const savePendingRegistration = async ({
             name || null,
             phone || null,
             address || null,
+            birthday || null,
+            gender || null,
             companyName || null,
             taxCode || null,
             otp,
             otpExpiry
+        ]
+    );
+};
+
+const toNullableString = (value) => {
+    const normalized = String(value || '').trim();
+    return normalized ? normalized : null;
+};
+
+const toNullableDate = (value) => {
+    const normalized = String(value || '').trim();
+    return normalized ? normalized : null;
+};
+
+const toNullableInteger = (value, fallback = 0) => {
+    if (value === null || typeof value === 'undefined' || value === '') return fallback;
+    const parsed = Number.parseInt(value, 10);
+    if (Number.isNaN(parsed)) return fallback;
+    return parsed;
+};
+
+const toJsonArrayString = (value) => {
+    if (Array.isArray(value)) {
+        return JSON.stringify(value);
+    }
+
+    if (typeof value === 'string') {
+        try {
+            const parsed = JSON.parse(value);
+            return Array.isArray(parsed) ? JSON.stringify(parsed) : '[]';
+        } catch {
+            return '[]';
+        }
+    }
+
+    return '[]';
+};
+
+const updateBasicUserInfo = async ({ userId, fullName, phone, address, role }) => {
+    const updates = [];
+    const params = [];
+
+    if (typeof fullName !== 'undefined') {
+        updates.push('HoTen = ?');
+        params.push(toNullableString(fullName));
+    }
+
+    if (typeof phone !== 'undefined') {
+        updates.push('SoDienThoai = ?');
+        params.push(toNullableString(phone));
+    }
+
+    if (typeof address !== 'undefined') {
+        updates.push('DiaChi = ?');
+        params.push(toNullableString(address));
+    }
+
+    if (typeof role !== 'undefined') {
+        updates.push('VaiTro = ?');
+        params.push(normalizeRoleInput(role, ROLE_PENDING));
+    }
+
+    if (!updates.length) {
+        return;
+    }
+
+    updates.push('NgayCapNhat = CURRENT_TIMESTAMP');
+
+    await dbRunAsync(
+        `UPDATE NguoiDung SET ${updates.join(', ')} WHERE MaNguoiDung = ?`,
+        [...params, userId]
+    );
+};
+
+const ensureCandidateProfileWithJsonColumns = async ({
+    userId,
+    birthday,
+    gender,
+    address,
+    city,
+    district,
+    intro,
+    experienceYears,
+    education,
+    avatar,
+    title,
+    personalLink,
+    educationList,
+    workList,
+    languageList
+}, jsonColumns) => {
+    const existing = await dbGetAsync('SELECT MaHoSo FROM HoSoUngVien WHERE MaNguoiDung = ?', [userId]);
+
+    const profileParams = [
+        toNullableDate(birthday),
+        toNullableString(gender),
+        toNullableString(address),
+        toNullableString(city),
+        toNullableString(district),
+        toNullableString(intro),
+        toNullableInteger(experienceYears, 0),
+        toNullableString(education),
+        toNullableString(avatar),
+        toNullableString(title),
+        toNullableString(personalLink),
+        toJsonArrayString(educationList),
+        toJsonArrayString(workList),
+        toJsonArrayString(languageList)
+    ];
+
+    if (existing?.MaHoSo) {
+        await dbRunAsync(
+            `UPDATE HoSoUngVien
+             SET NgaySinh = ?,
+                 GioiTinh = ?,
+                 DiaChi = ?,
+                 ThanhPho = ?,
+                 QuanHuyen = ?,
+                 GioiThieuBanThan = ?,
+                 SoNamKinhNghiem = ?,
+                 TrinhDoHocVan = ?,
+                 AnhDaiDien = ?,
+                 ChucDanh = ?,
+                 LinkCaNhan = ?,
+                 ${jsonColumns.education} = ?,
+                 ${jsonColumns.work} = ?,
+                 ${jsonColumns.language} = ?,
+                 NgayCapNhat = CURRENT_TIMESTAMP
+             WHERE MaNguoiDung = ?`,
+            [...profileParams, userId]
+        );
+        return;
+    }
+
+    await dbRunAsync(
+        `INSERT INTO HoSoUngVien
+        (MaNguoiDung, NgaySinh, GioiTinh, DiaChi, ThanhPho, QuanHuyen, GioiThieuBanThan, SoNamKinhNghiem, TrinhDoHocVan, AnhDaiDien, ChucDanh, LinkCaNhan, ${jsonColumns.education}, ${jsonColumns.work}, ${jsonColumns.language}, NgayTao, NgayCapNhat)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [userId, ...profileParams]
+    );
+};
+
+const ensureCandidateProfile = async (payload) => {
+    const vietnameseColumns = {
+        education: 'DanhSachHocVanJson',
+        work: 'DanhSachKinhNghiemJson',
+        language: 'DanhSachNgoaiNguJson'
+    };
+
+    try {
+        await ensureCandidateProfileWithJsonColumns(payload, vietnameseColumns);
+        return;
+    } catch (err) {
+        if (!isUnknownColumnError(err)) {
+            throw err;
+        }
+    }
+
+    const legacyColumns = {
+        education: 'EducationListJson',
+        work: 'WorkListJson',
+        language: 'LanguageListJson'
+    };
+
+    await ensureCandidateProfileWithJsonColumns(payload, legacyColumns);
+};
+
+const ensureEmployerAndCompanyProfile = async ({
+    userId,
+    companyName,
+    taxCode,
+    website,
+    address,
+    city,
+    description,
+    logo,
+    industry
+}) => {
+    const user = await dbGetAsync('SELECT HoTen, DiaChi FROM NguoiDung WHERE MaNguoiDung = ?', [userId]);
+    const resolvedCompanyName = toNullableString(companyName) || toNullableString(user?.HoTen) || 'Doanh nghiệp';
+    const resolvedAddress = toNullableString(address) || toNullableString(user?.DiaChi);
+
+    const employer = await dbGetAsync('SELECT MaNhaTuyenDung FROM NhaTuyenDung WHERE MaNguoiDung = ?', [userId]);
+    if (employer?.MaNhaTuyenDung) {
+        await dbRunAsync(
+            `UPDATE NhaTuyenDung
+             SET TenCongTy = ?,
+                 MaSoThue = ?,
+                 Website = ?,
+                 DiaChi = ?,
+                 ThanhPho = ?,
+                 MoTa = ?,
+                 Logo = ?,
+                 NgayCapNhat = CURRENT_TIMESTAMP
+             WHERE MaNguoiDung = ?`,
+            [
+                resolvedCompanyName,
+                toNullableString(taxCode),
+                toNullableString(website),
+                resolvedAddress,
+                toNullableString(city),
+                toNullableString(description),
+                toNullableString(logo),
+                userId
+            ]
+        );
+    } else {
+        await dbRunAsync(
+            `INSERT INTO NhaTuyenDung
+            (MaNguoiDung, TenCongTy, MaSoThue, Website, DiaChi, ThanhPho, MoTa, Logo, NgayTao, NgayCapNhat)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+            [
+                userId,
+                resolvedCompanyName,
+                toNullableString(taxCode),
+                toNullableString(website),
+                resolvedAddress,
+                toNullableString(city),
+                toNullableString(description),
+                toNullableString(logo)
+            ]
+        );
+    }
+
+    const company = await dbGetAsync(
+        'SELECT MaCongTy FROM CongTy WHERE NguoiDaiDien = ? ORDER BY MaCongTy DESC LIMIT 1',
+        [userId]
+    );
+
+    if (company?.MaCongTy) {
+        await dbRunAsync(
+            `UPDATE CongTy
+             SET TenCongTy = ?,
+                 MaSoThue = ?,
+                 DiaChi = ?,
+                 ThanhPho = ?,
+                 Website = ?,
+                 LinhVuc = ?,
+                 MoTa = ?,
+                 Logo = ?,
+                 NgayCapNhat = CURRENT_TIMESTAMP
+             WHERE MaCongTy = ?`,
+            [
+                resolvedCompanyName,
+                toNullableString(taxCode),
+                resolvedAddress,
+                toNullableString(city),
+                toNullableString(website),
+                toNullableString(industry),
+                toNullableString(description),
+                toNullableString(logo),
+                company.MaCongTy
+            ]
+        );
+        return;
+    }
+
+    await dbRunAsync(
+        `INSERT INTO CongTy
+        (TenCongTy, MaSoThue, DiaChi, ThanhPho, Website, LinhVuc, MoTa, Logo, NguoiDaiDien, NgayTao, NgayCapNhat)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)`,
+        [
+            resolvedCompanyName,
+            toNullableString(taxCode),
+            resolvedAddress,
+            toNullableString(city),
+            toNullableString(website),
+            toNullableString(industry),
+            toNullableString(description),
+            toNullableString(logo),
+            userId
         ]
     );
 };
@@ -240,7 +682,7 @@ const resendLegacyUnverifiedUserOtp = async ({ email }) => {
 };
 
 router.post('/register', async (req, res) => {
-    const { email, password, confirmPassword, role, name, phone, address } = req.body;
+    const { email, password, confirmPassword, name, phone, address, birthday, gender, acceptedTerms } = req.body;
 
     try {
         const normalizedEmail = normalizeEmail(email);
@@ -248,6 +690,10 @@ router.post('/register', async (req, res) => {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(normalizedEmail)) {
             return res.status(400).json({ error: 'Vui lòng nhập địa chỉ email hợp lệ' });
+        }
+
+        if (!acceptedTerms) {
+            return res.status(400).json({ error: 'Bạn cần đồng ý điều khoản sử dụng để tiếp tục.' });
         }
 
         if (typeof confirmPassword !== 'undefined' && password !== confirmPassword) {
@@ -275,10 +721,12 @@ router.post('/register', async (req, res) => {
         await savePendingRegistration({
             email: normalizedEmail,
             passwordHash: hashedPassword,
-            role: role || 'Ứng viên',
+            role: ROLE_PENDING,
             name,
             phone,
             address,
+            birthday,
+            gender,
             otp,
             otpExpiry
         });
@@ -310,163 +758,257 @@ router.post('/register', async (req, res) => {
 
 // Login
 router.post('/login', async (req, res) => {
-    const { email, password } = req.body;
+    const normalizedEmail = normalizeEmail(req.body?.email || '');
+    const password = String(req.body?.password || '');
 
-    db.get(
-        `SELECT nd.*, hsv.AnhDaiDien AS avatar
-         FROM NguoiDung nd
-         LEFT JOIN HoSoUngVien hsv ON hsv.MaNguoiDung = nd.MaNguoiDung
-         WHERE lower(nd.Email) = lower(?)`,
-        [normalizeEmail(email)],
-        async (err, user) => {
-            if (err) {
-                return res.status(500).json({ error: err.message });
-            }
-            if (!user) {
-                return res.status(401).json({ error: 'Tài khoản không tồn tại' });
-            }
-
-            if (Number(user.TrangThai) === 0) {
-                return res.status(403).json({ error: 'Tài khoản chưa được xác thực. Vui lòng kiểm tra email.' });
-            }
-
-            if (user.ThoiGianKhoaDangNhap) {
-                const now = new Date();
-                const lockTime = new Date(user.ThoiGianKhoaDangNhap);
-                if (now < lockTime) {
-                    const minutes = Math.ceil((lockTime - now) / 60000);
-                    return res.status(403).json({ error: `Tài khoản bị khóa do nhập sai quá nhiều lần. Vui lòng thử lại sau ${minutes} phút.` });
-                }
-            }
-
-            try {
-                const isValid = await bcrypt.compare(password, user.MatKhau);
-                if (!isValid) {
-                    const newFailCount = (user.SoLanDangNhapSai || 0) + 1;
-                    let updateQuery = 'UPDATE NguoiDung SET SoLanDangNhapSai = ?';
-                    const params = [newFailCount];
-                    let lockMsg = '';
-
-                    if (newFailCount >= 5) {
-                        const lockUntil = new Date(Date.now() + 5 * 60 * 1000).toISOString();
-                        updateQuery += ', ThoiGianKhoaDangNhap = ?';
-                        params.push(lockUntil);
-                        lockMsg = ' Tài khoản bị khóa 5 phút.';
-                    }
-
-                    updateQuery += ' WHERE MaNguoiDung = ?';
-                    params.push(user.MaNguoiDung);
-                    db.run(updateQuery, params, () => {});
-
-                    return res.status(401).json({ error: 'Bạn đã nhập sai mật khẩu.' + lockMsg });
-                }
-
-                db.run('UPDATE NguoiDung SET SoLanDangNhapSai = 0, ThoiGianKhoaDangNhap = NULL WHERE MaNguoiDung = ?', [user.MaNguoiDung]);
-
-                const avatarRelative = user.avatar || '';
-                const normalizedAvatar = avatarRelative
-                    ? `${PUBLIC_PREFIX}${avatarRelative.startsWith('/') ? '' : '/'}${avatarRelative.replace(/^\/+/, '')}`
-                    : '';
-                const avatarAbsolute = buildAbsoluteUrl(req, normalizedAvatar);
-
-                const isSuperAdmin = !!(user.IsSuperAdmin || user.isSuperAdmin);
-                const roleLabel = isSuperAdmin ? 'Siêu quản trị viên' : user.VaiTro;
-                const token = jwt.sign({ id: user.MaNguoiDung, role: roleLabel, isSuperAdmin }, JWT_SECRET, { expiresIn: '1h' });
-
-                return res.json({
-                    token,
-                    user: {
-                        id: user.MaNguoiDung,
-                        email: user.Email,
-                        role: roleLabel,
-                        name: user.HoTen,
-                        isSuperAdmin,
-                        avatar: avatarAbsolute || normalizedAvatar || '',
-                        avatarUrl: normalizedAvatar,
-                        avatarAbsoluteUrl: avatarAbsolute,
-                        AnhDaiDien: normalizedAvatar
-                    }
-                });
-            } catch (compareError) {
-                return res.status(500).json({ error: compareError.message });
-            }
-        }
-    );
-});
-
-// Register Employer (with company info)
-router.post('/register-employer', async (req, res) => {
-    const { email, password, confirmPassword, name, phone, companyName, taxCode, address } = req.body;
+    if (!normalizedEmail || !password) {
+        return res.status(400).json({ error: 'Vui lòng nhập email và mật khẩu.' });
+    }
 
     try {
-        const normalizedEmail = normalizeEmail(email);
-
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(normalizedEmail)) {
-            return res.status(400).json({ error: 'Vui lòng nhập địa chỉ email hợp lệ' });
+        const user = await getUserWithAvatarByEmail(normalizedEmail);
+        if (!user) {
+            return res.status(401).json({ error: 'Tài khoản không tồn tại' });
         }
 
-        if (!companyName || !String(companyName).trim()) {
-            return res.status(400).json({ error: 'Vui lòng nhập tên công ty' });
+        if (Number(user.TrangThai) !== 1) {
+            return res.status(403).json({ error: 'Tài khoản chưa được xác thực. Vui lòng kiểm tra email.' });
         }
 
-        if (typeof confirmPassword !== 'undefined' && password !== confirmPassword) {
-            return res.status(400).json({ error: 'Mật khẩu xác nhận không khớp' });
+        const isValid = await bcrypt.compare(password, user.MatKhau || '');
+        if (!isValid) {
+            return res.status(401).json({ error: 'Bạn đã nhập sai mật khẩu.' });
         }
 
-        const passwordError = passwordStrengthError(password);
-        if (passwordError) {
-            return res.status(400).json({ error: passwordError });
+        return res.json(buildLoginResponse(req, user));
+    } catch (err) {
+        return res.status(500).json({ error: err.message || 'Đăng nhập thất bại' });
+    }
+});
+
+router.post('/google-login', async (req, res) => {
+    const credential = String(req.body?.credential || '').trim();
+
+    try {
+        const googlePayload = await verifyGoogleCredential(credential);
+        const normalizedEmail = normalizeEmail(googlePayload.email);
+        const displayName = String(googlePayload.name || '').trim();
+
+        if (!normalizedEmail) {
+            return res.status(400).json({ error: 'Email Google không hợp lệ.' });
         }
 
-        const existingUser = await dbGetAsync('SELECT MaNguoiDung, TrangThai FROM NguoiDung WHERE lower(Email) = lower(?)', [normalizedEmail]);
-        if (existingUser && Number(existingUser.TrangThai) === 1) {
-            return res.status(400).json({ error: 'Email này đã được sử dụng. Vui lòng sử dụng email khác.' });
+        let user = await getUserWithAvatarByEmail(normalizedEmail);
+
+        if (!user) {
+            // Tạo mật khẩu ngẫu nhiên để đáp ứng schema hiện tại (MatKhau NOT NULL).
+            const randomPassword = `google_${crypto.randomBytes(24).toString('hex')}`;
+            const hashedPassword = await bcrypt.hash(randomPassword, 10);
+
+            await dbRunAsync(
+                `INSERT INTO NguoiDung
+                (Email, MatKhau, VaiTro, HoTen, TrangThai, MaXacThuc, ThoiGianMaXacThuc)
+                VALUES (?, ?, ?, ?, 1, NULL, NULL)`,
+                [
+                    normalizedEmail,
+                    hashedPassword,
+                    ROLE_PENDING,
+                    displayName || null
+                ]
+            );
+        } else {
+            const updates = [];
+            const params = [];
+
+            if (Number(user.TrangThai) !== 1) {
+                updates.push('TrangThai = 1');
+            }
+            if (user.MaXacThuc) {
+                updates.push('MaXacThuc = NULL');
+            }
+            if (user.ThoiGianMaXacThuc) {
+                updates.push('ThoiGianMaXacThuc = NULL');
+            }
+            if ((!user.HoTen || !String(user.HoTen).trim()) && displayName) {
+                updates.push('HoTen = ?');
+                params.push(displayName);
+            }
+
+            if (updates.length) {
+                await dbRunAsync(
+                    `UPDATE NguoiDung SET ${updates.join(', ')} WHERE MaNguoiDung = ?`,
+                    [...params, user.MaNguoiDung]
+                );
+            }
         }
 
-        if (existingUser && Number(existingUser.TrangThai) !== 1) {
-            await cleanupUnverifiedUserById(existingUser.MaNguoiDung);
+        user = await getUserWithAvatarByEmail(normalizedEmail);
+
+        if (!user) {
+            return res.status(500).json({ error: 'Không thể tạo tài khoản từ Google.' });
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const otp = generateOTP();
-        const otpExpiry = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+        return res.json(buildLoginResponse(req, user));
+    } catch (err) {
+        const message = String(err?.message || '').toLowerCase();
 
-        await savePendingRegistration({
-            email: normalizedEmail,
-            passwordHash: hashedPassword,
-            role: 'Nhà tuyển dụng',
-            name,
+        if (
+            message.includes('audience')
+            || message.includes('issuer')
+            || message.includes('invalid')
+            || message.includes('expired')
+            || message.includes('jwt')
+        ) {
+            return res.status(401).json({ error: 'Google credential không hợp lệ hoặc đã hết hạn.' });
+        }
+
+        return res.status(500).json({
+            error: err?.message || 'Đăng nhập Google thất bại.'
+        });
+    }
+});
+
+router.post('/select-role', authenticateToken, async (req, res) => {
+    const userId = Number.parseInt(req.user?.id, 10);
+    if (!Number.isFinite(userId)) {
+        return res.status(401).json({ error: 'Token không hợp lệ.' });
+    }
+
+    const selectedRole = normalizeRoleInput(req.body?.role, '');
+    if (![ROLE_CANDIDATE, ROLE_EMPLOYER].includes(selectedRole)) {
+        return res.status(400).json({ error: 'Vai trò không hợp lệ. Chỉ hỗ trợ Ứng viên hoặc Nhà tuyển dụng.' });
+    }
+
+    try {
+        const user = await getUserWithAvatarById(userId);
+        if (!user) {
+            return res.status(404).json({ error: 'Không tìm thấy người dùng.' });
+        }
+
+        await updateBasicUserInfo({ userId, role: selectedRole });
+
+        if (selectedRole === ROLE_EMPLOYER) {
+            await ensureEmployerAndCompanyProfile({
+                userId,
+                companyName: req.body?.companyName,
+                taxCode: req.body?.taxCode,
+                website: req.body?.website,
+                address: req.body?.address,
+                city: req.body?.city,
+                description: req.body?.description,
+                logo: req.body?.logo,
+                industry: req.body?.industry
+            });
+        } else {
+            await ensureCandidateProfile({
+                userId,
+                birthday: req.body?.birthday,
+                gender: req.body?.gender,
+                address: req.body?.address
+            });
+        }
+
+        const refreshedUser = await getUserWithAvatarById(userId);
+        if (!refreshedUser) {
+            return res.status(404).json({ error: 'Không thể tải lại thông tin người dùng.' });
+        }
+
+        const loginPayload = buildLoginResponse(req, refreshedUser);
+        const roleKey = selectedRole === ROLE_EMPLOYER ? 'employer' : 'candidate';
+
+        return res.json({
+            success: true,
+            message: 'Đã lưu vai trò thành công.',
+            selectedRole,
+            nextStep: `/onboarding/profile?role=${roleKey}`,
+            ...loginPayload
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message || 'Không thể lưu vai trò.' });
+    }
+});
+
+router.post('/complete-profile', authenticateToken, async (req, res) => {
+    const userId = Number.parseInt(req.user?.id, 10);
+    if (!Number.isFinite(userId)) {
+        return res.status(401).json({ error: 'Token không hợp lệ.' });
+    }
+
+    try {
+        const existingUser = await getUserWithAvatarById(userId);
+        if (!existingUser) {
+            return res.status(404).json({ error: 'Không tìm thấy người dùng.' });
+        }
+
+        const requestedRole = normalizeRoleInput(req.body?.role, '');
+        const fallbackRole = normalizeRoleInput(existingUser.VaiTro, ROLE_PENDING);
+        const role = [ROLE_CANDIDATE, ROLE_EMPLOYER].includes(requestedRole)
+            ? requestedRole
+            : fallbackRole;
+
+        if (![ROLE_CANDIDATE, ROLE_EMPLOYER].includes(role)) {
+            return res.status(400).json({ error: 'Vui lòng chọn vai trò trước khi hoàn thiện hồ sơ.' });
+        }
+
+        const fullName = req.body?.fullName ?? req.body?.HoTen;
+        const phone = req.body?.phone ?? req.body?.SoDienThoai;
+        const address = req.body?.address ?? req.body?.DiaChi;
+
+        await updateBasicUserInfo({
+            userId,
+            fullName,
             phone,
             address,
-            companyName,
-            taxCode,
-            otp,
-            otpExpiry
+            role
         });
 
-        const otpDispatchResult = await sendOtpToPendingRegistration({
-            email: normalizedEmail,
-            otp,
-            userName: name || companyName || normalizedEmail
-        });
-
-        return res.status(otpDispatchResult.success ? 201 : 202).json(buildRegistrationResponse({
-            email: normalizedEmail,
-            otp,
-            extra: otpDispatchResult.success
-                ? {}
-                : {
-                    message: 'Đăng ký tạm thành công. Hệ thống chưa gửi được email xác thực, vui lòng vào màn hình xác thực và bấm "Gửi lại mã".',
-                    otpDeliveryFailed: true
-                }
-        }));
-    } catch (err) {
-        if (isUniqueConstraintError(err)) {
-            return res.status(400).json({ error: 'Email này đã được sử dụng. Vui lòng sử dụng email khác.' });
+        if (role === ROLE_CANDIDATE) {
+            await ensureCandidateProfile({
+                userId,
+                birthday: req.body?.birthday ?? req.body?.NgaySinh,
+                gender: req.body?.gender ?? req.body?.GioiTinh,
+                address,
+                city: req.body?.city ?? req.body?.ThanhPho,
+                district: req.body?.district ?? req.body?.QuanHuyen,
+                intro: req.body?.introHtml ?? req.body?.GioiThieuBanThan,
+                experienceYears: req.body?.experienceYears ?? req.body?.SoNamKinhNghiem,
+                education: req.body?.education ?? req.body?.TrinhDoHocVan,
+                avatar: req.body?.avatar ?? req.body?.AnhDaiDien,
+                title: req.body?.title ?? req.body?.ChucDanh ?? req.body?.position,
+                personalLink: req.body?.personalLink ?? req.body?.LinkCaNhan,
+                educationList: req.body?.educationList,
+                workList: req.body?.workList,
+                languageList: req.body?.languageList
+            });
+        } else {
+            await ensureEmployerAndCompanyProfile({
+                userId,
+                companyName: req.body?.companyName ?? req.body?.TenCongTy,
+                taxCode: req.body?.taxCode ?? req.body?.MaSoThue,
+                website: req.body?.website ?? req.body?.Website,
+                address,
+                city: req.body?.city ?? req.body?.ThanhPho,
+                description: req.body?.description ?? req.body?.MoTa,
+                logo: req.body?.logo ?? req.body?.Logo,
+                industry: req.body?.industry ?? req.body?.LinhVuc
+            });
         }
 
-        return res.status(500).json({ error: err.message || 'Đăng ký thất bại' });
+        const refreshedUser = await getUserWithAvatarById(userId);
+        if (!refreshedUser) {
+            return res.status(404).json({ error: 'Không thể tải lại thông tin người dùng.' });
+        }
+
+        const loginPayload = buildLoginResponse(req, refreshedUser);
+
+        return res.json({
+            success: true,
+            message: 'Hoàn thiện hồ sơ thành công.',
+            redirectTo: role === ROLE_EMPLOYER ? '/employer' : '/profile',
+            ...loginPayload
+        });
+    } catch (err) {
+        return res.status(500).json({ error: err.message || 'Không thể lưu hồ sơ.' });
     }
 });
 
@@ -518,7 +1060,7 @@ router.post('/verify-otp', async (req, res) => {
             await cleanupUnverifiedUserById(existingUser.MaNguoiDung);
         }
 
-        const role = pending.VaiTro || 'Ứng viên';
+        const role = normalizeRoleInput(pending.VaiTro, ROLE_PENDING);
         let createdUserId = 0;
 
         try {
@@ -537,23 +1079,60 @@ router.post('/verify-otp', async (req, res) => {
             );
             createdUserId = insertUserResult.lastID;
 
-            if (role === 'Nhà tuyển dụng') {
-                await dbRunAsync(
-                    'INSERT INTO CongTy (TenCongTy, MaSoThue, DiaChi, NguoiDaiDien) VALUES (?, ?, ?, ?)',
-                    [
-                        pending.TenCongTy || pending.HoTen || 'Doanh nghiệp',
-                        pending.MaSoThue || null,
-                        pending.DiaChi || null,
-                        createdUserId
-                    ]
-                );
+            if (role === ROLE_EMPLOYER) {
+                await ensureEmployerAndCompanyProfile({
+                    userId: createdUserId,
+                    companyName: pending.TenCongTy,
+                    taxCode: pending.MaSoThue,
+                    address: pending.DiaChi,
+                    city: null,
+                    website: null,
+                    description: null,
+                    logo: null,
+                    industry: null
+                });
+            }
+
+            if (role === ROLE_CANDIDATE) {
+                await ensureCandidateProfile({
+                    userId: createdUserId,
+                    birthday: pending.NgaySinh,
+                    gender: pending.GioiTinh,
+                    address: pending.DiaChi
+                });
             }
 
             await dbRunAsync('DELETE FROM DangKyTam WHERE Email = ?', [normalizedEmail]);
 
+            const createdUser = await getUserWithAvatarById(createdUserId);
+            if (!createdUser) {
+                return res.status(500).json({ error: 'Không thể tải thông tin tài khoản sau xác thực.' });
+            }
+
+            let nextStep = '/onboarding/role';
+            let message = 'Xác thực thành công! Hãy chọn vai trò để tiếp tục.';
+            if (role === ROLE_EMPLOYER) {
+                nextStep = '/onboarding/profile?role=employer';
+                message = 'Xác thực thành công! Hãy hoàn thiện hồ sơ nhà tuyển dụng.';
+            } else if (role === ROLE_CANDIDATE) {
+                nextStep = '/onboarding/profile?role=candidate';
+                message = 'Xác thực thành công! Hãy hoàn thiện hồ sơ ứng viên.';
+            }
+
+            const loginPayload = buildLoginResponse(req, createdUser);
+
             return res.json({
-                message: 'Xác thực thành công! Bạn có thể đăng nhập ngay.',
-                success: true
+                success: true,
+                message,
+                nextStep,
+                prefill: {
+                    fullName: pending.HoTen || '',
+                    phone: pending.SoDienThoai || '',
+                    address: pending.DiaChi || '',
+                    birthday: pending.NgaySinh || '',
+                    gender: pending.GioiTinh || ''
+                },
+                ...loginPayload
             });
         } catch (createErr) {
             if (createdUserId) {

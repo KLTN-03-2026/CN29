@@ -114,7 +114,7 @@ async function resetSuperAdminPassword({ email, password } = {}) {
     await dbRun(
       `UPDATE NguoiDung
        SET MatKhau = ?, VaiTro = 'Quản trị', TrangThai = 1, IsSuperAdmin = 1,
-           SoLanDangNhapSai = 0, ThoiGianKhoaDangNhap = NULL, NgayCapNhat = datetime('now','localtime')
+           NgayCapNhat = datetime('now','localtime')
        WHERE MaNguoiDung = ?`,
       [hashedPassword, existingUser.MaNguoiDung]
     );
@@ -128,8 +128,8 @@ async function resetSuperAdminPassword({ email, password } = {}) {
 
   await dbRun(
     `INSERT INTO NguoiDung (
-      Email, MatKhau, VaiTro, HoTen, TrangThai, IsSuperAdmin, SoLanDangNhapSai, ThoiGianKhoaDangNhap
-    ) VALUES (?, ?, 'Quản trị', ?, 1, 1, 0, NULL)`,
+      Email, MatKhau, VaiTro, HoTen, TrangThai, IsSuperAdmin
+    ) VALUES (?, ?, 'Quản trị', ?, 1, 1)`,
     [targetEmail, hashedPassword, 'Siêu quản trị viên']
   );
 

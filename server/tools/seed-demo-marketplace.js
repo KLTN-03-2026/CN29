@@ -980,8 +980,6 @@ const upsertUser = async ({ email, fullName, phone, role, address, passwordHash 
            VaiTro = ?,
            TrangThai = ?,
            DiaChi = ?,
-           SoLanDangNhapSai = 0,
-           ThoiGianKhoaDangNhap = NULL,
            NgayCapNhat = datetime('now','localtime')
        WHERE MaNguoiDung = ?`,
       [passwordHash, fullName, phone, role, DEMO_STATUS, address, existing.MaNguoiDung]

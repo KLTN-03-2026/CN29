@@ -1,8 +1,0 @@
-@startuml
-skinparam shadowing false
-left to right direction
-title UC06 - Xem chi tiết tin tuyển dụng
-actor "Khách vãng lai" as ACTOR_1
-usecase "Xem chi tiết tin tuyển dụng" as UC_MAIN
-ACTOR_1 --> UC_MAIN
-@enduml

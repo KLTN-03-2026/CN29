@@ -20,14 +20,15 @@ db.serialize(() => {
             MatKhau TEXT NOT NULL,
             HoTen TEXT,
             SoDienThoai TEXT,
-            VaiTro TEXT CHECK (VaiTro IN ('Ứng viên', 'Nhà tuyển dụng', 'Quản trị')) DEFAULT 'Ứng viên',
+            VaiTro TEXT CHECK (VaiTro IN ('Ứng viên', 'Nhà tuyển dụng', 'Quản trị', 'Chưa chọn vai trò')) DEFAULT 'Chưa chọn vai trò',
             TrangThai INTEGER DEFAULT 1,
             DiaChi TEXT,
             NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
             NgayCapNhat TEXT DEFAULT (datetime('now', 'localtime')),
             LanDangNhapCuoi TEXT,
-            SoLanDangNhapSai INTEGER DEFAULT 0,
-            ThoiGianKhoaDangNhap TEXT DEFAULT NULL
+            MaXacThuc TEXT,
+            ThoiGianMaXacThuc TEXT,
+            IsSuperAdmin INTEGER DEFAULT 0
         )
     `);
 
@@ -66,9 +67,9 @@ db.serialize(() => {
             AnhDaiDien TEXT,
             ChucDanh TEXT,
             LinkCaNhan TEXT,
-            EducationListJson TEXT,
-            WorkListJson TEXT,
-            LanguageListJson TEXT,
+            DanhSachHocVanJson TEXT,
+            DanhSachKinhNghiemJson TEXT,
+            DanhSachNgoaiNguJson TEXT,
             NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
             NgayCapNhat TEXT DEFAULT (datetime('now', 'localtime')),
             FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaNguoiDung) ON DELETE CASCADE
@@ -195,13 +196,44 @@ db.serialize(() => {
         if (err && !String(err.message || '').includes('duplicate column name')) console.error(err);
     });
 
-    db.run('ALTER TABLE HoSoUngVien ADD COLUMN EducationListJson TEXT', (err) => {
+    db.run('ALTER TABLE NguoiDung ADD COLUMN MaXacThuc TEXT', (err) => {
         if (err && !String(err.message || '').includes('duplicate column name')) console.error(err);
     });
-    db.run('ALTER TABLE HoSoUngVien ADD COLUMN WorkListJson TEXT', (err) => {
+    db.run('ALTER TABLE NguoiDung ADD COLUMN ThoiGianMaXacThuc TEXT', (err) => {
         if (err && !String(err.message || '').includes('duplicate column name')) console.error(err);
     });
-    db.run('ALTER TABLE HoSoUngVien ADD COLUMN LanguageListJson TEXT', (err) => {
+    db.run('ALTER TABLE NguoiDung ADD COLUMN IsSuperAdmin INTEGER DEFAULT 0', (err) => {
+        if (err && !String(err.message || '').includes('duplicate column name')) console.error(err);
+    });
+    db.run('ALTER TABLE NguoiDung DROP COLUMN SoLanDangNhapSai', (err) => {
+        const message = String(err?.message || '').toLowerCase();
+        if (err && !message.includes('no such column') && !message.includes('syntax error')) console.error(err);
+    });
+    db.run('ALTER TABLE NguoiDung DROP COLUMN ThoiGianKhoaDangNhap', (err) => {
+        const message = String(err?.message || '').toLowerCase();
+        if (err && !message.includes('no such column') && !message.includes('syntax error')) console.error(err);
+    });
+
+    db.run('ALTER TABLE HoSoUngVien RENAME COLUMN EducationListJson TO DanhSachHocVanJson', (err) => {
+        const message = String(err?.message || '').toLowerCase();
+        if (err && !message.includes('no such column') && !message.includes('duplicate column name')) console.error(err);
+    });
+    db.run('ALTER TABLE HoSoUngVien RENAME COLUMN WorkListJson TO DanhSachKinhNghiemJson', (err) => {
+        const message = String(err?.message || '').toLowerCase();
+        if (err && !message.includes('no such column') && !message.includes('duplicate column name')) console.error(err);
+    });
+    db.run('ALTER TABLE HoSoUngVien RENAME COLUMN LanguageListJson TO DanhSachNgoaiNguJson', (err) => {
+        const message = String(err?.message || '').toLowerCase();
+        if (err && !message.includes('no such column') && !message.includes('duplicate column name')) console.error(err);
+    });
+
+    db.run('ALTER TABLE HoSoUngVien ADD COLUMN DanhSachHocVanJson TEXT', (err) => {
+        if (err && !String(err.message || '').includes('duplicate column name')) console.error(err);
+    });
+    db.run('ALTER TABLE HoSoUngVien ADD COLUMN DanhSachKinhNghiemJson TEXT', (err) => {
+        if (err && !String(err.message || '').includes('duplicate column name')) console.error(err);
+    });
+    db.run('ALTER TABLE HoSoUngVien ADD COLUMN DanhSachNgoaiNguJson TEXT', (err) => {
         if (err && !String(err.message || '').includes('duplicate column name')) console.error(err);
     });
 

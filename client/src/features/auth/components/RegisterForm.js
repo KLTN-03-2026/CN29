@@ -50,6 +50,8 @@ const RegisterForm = ({ onSuccess }) => {
 
     const monthIndex = months.indexOf(formData.month) + 1;
     const birthDate = new Date(formData.year, monthIndex - 1, formData.day);
+    const birthdayIso = `${formData.year}-${String(monthIndex).padStart(2, '0')}-${String(formData.day).padStart(2, '0')}`;
+    const normalizedGender = formData.gender === 'Tùy chỉnh' ? 'Khác' : formData.gender;
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -73,6 +75,12 @@ const RegisterForm = ({ onSuccess }) => {
     if (formData.phone && !/^[0-9]{9,12}$/.test(formData.phone.trim())) {
       setLoading(false);
       setError('Số điện thoại phải gồm 9 đến 12 chữ số');
+      return;
+    }
+
+    if (!formData.acceptedTerms) {
+      setLoading(false);
+      setError('Bạn cần đồng ý điều khoản sử dụng dịch vụ');
       return;
     }
 
@@ -108,7 +116,9 @@ const RegisterForm = ({ onSuccess }) => {
           confirmPassword: formData.confirmPassword,
           name: fullName,
           phone: formData.phone.trim(),
-          role: 'Ứng viên'
+          birthday: birthdayIso,
+          gender: normalizedGender,
+          acceptedTerms: formData.acceptedTerms
         })
       });
 
@@ -122,12 +132,24 @@ const RegisterForm = ({ onSuccess }) => {
         if (onSuccess) {
           onSuccess();
         }
+
+        const prefill = {
+          fullName,
+          phone: formData.phone.trim(),
+          birthday: birthdayIso,
+          gender: normalizedGender,
+          email: formData.email
+        };
+
+        localStorage.setItem('pending_onboarding_prefill', JSON.stringify(prefill));
+
         navigate('/verify-otp', {
           state: {
             email: formData.email,
             otpDeliveryFailed: Boolean(data.otpDeliveryFailed),
             verificationMessage: data.message || '',
-            otp: String(data.otp || '')
+            otp: String(data.otp || ''),
+            prefill
           }
         });
       } else {

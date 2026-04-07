@@ -45,6 +45,22 @@ npm run dev
 - **GEMINI_MODEL:** mặc định `gemini-2.5-flash`
 - **AI_PROVIDER:** `gemini` (khuyến nghị) hoặc `openai`
 
+#### Google Login Configuration
+- **Server (`server/.env`):** `GOOGLE_CLIENT_ID`
+- **Client (`client/.env.local`):** `REACT_APP_GOOGLE_CLIENT_ID`
+
+Ví dụ:
+
+```dotenv
+# server/.env
+GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
+```
+
+```dotenv
+# client/.env.local
+REACT_APP_GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
+```
+
 Tạo/cập nhật `server/.env`:
 
 ```bash
