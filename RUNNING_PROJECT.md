@@ -46,14 +46,15 @@ npm run dev
 - **AI_PROVIDER:** `gemini` (khuyến nghị) hoặc `openai`
 
 #### Google Login Configuration
-- **Server (`server/.env`):** `GOOGLE_CLIENT_ID`
-- **Client (`client/.env.local`):** `REACT_APP_GOOGLE_CLIENT_ID`
+- **Server (`server/.env`):** `GOOGLE_CLIENT_ID` (bat buoc), `GOOGLE_CLIENT_IDS` (tuy chon, danh sach cach nhau boi dau phay)
+- **Client (`client/.env.local` hoac Vercel Env):** `REACT_APP_GOOGLE_CLIENT_ID`
 
 Ví dụ:
 
 ```dotenv
 # server/.env
 GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_IDS=
 ```
 
 ```dotenv
@@ -61,31 +62,36 @@ GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 REACT_APP_GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 ```
 
-### Khi deploy len Vercel (fix Error 400: origin_mismatch)
+### Khi deploy len Vercel/Render (fix Error 400: origin_mismatch)
 
 Neu popup Google bao loi `Access blocked: Authorization Error` voi `Error 400: origin_mismatch`, nghia la domain frontend chua duoc khai bao trong Google Cloud Console.
 
+Loi nay thuong xay ra khi ban cau hinh origin tren OAuth Client A, nhung frontend lai dang dung OAuth Client B.
+
 Thuc hien theo checklist sau:
 
-1. Tren Vercel (frontend):
-   - Them env `REACT_APP_GOOGLE_CLIENT_ID` (Production/Preview neu can).
-   - Redeploy sau khi luu env.
+1. Tren Google Cloud Console:
+   - Vao APIs & Services > Credentials > OAuth 2.0 Client IDs.
+   - Mo dung **Web Client** ma frontend dang su dung.
+   - Them vao Authorized JavaScript origins:
+     - `http://localhost:3000`
+     - `https://job-finder-smoky-two.vercel.app` (hoac domain production cua ban)
+   - Save va cho 1-5 phut de cau hinh cap nhat.
 
-2. Tren backend (Render/Railway/VM):
-   - Dat `GOOGLE_CLIENT_ID` giong client ID o frontend.
+2. Tren Vercel (frontend):
+   - Dat `REACT_APP_GOOGLE_CLIENT_ID` = dung Web Client ID o tren.
+   - Redeploy sau khi luu env (env chi ap dung cho build moi).
+
+3. Tren backend (Render/Railway/VM):
+   - Dat `GOOGLE_CLIENT_ID` = cung gia tri voi frontend.
+   - (Tuy chon) Dat `GOOGLE_CLIENT_IDS` neu can ho tro them ID trong giai doan chuyen doi.
    - Dat `CORS_ORIGIN` chua domain frontend, vi du:
 
 ```dotenv
 CORS_ORIGIN=http://localhost:3000,https://job-finder-smoky-two.vercel.app
 ```
 
-3. Tren Google Cloud Console:
-   - Vao APIs & Services > Credentials > OAuth 2.0 Client IDs.
-   - Mo Web Client dang dung.
-   - Them vao Authorized JavaScript origins:
-     - `http://localhost:3000`
-     - `https://job-finder-smoky-two.vercel.app` (hoac domain production cua ban)
-   - Save va cho 1-5 phut de cau hinh cap nhat.
+4. Deploy lai ca frontend va backend sau khi doi env.
 
 Luu y: URL preview cua Vercel co the thay doi theo moi lan deploy. Nen uu tien dung 1 domain production co dinh de tranh bi `origin_mismatch` lap lai.
 

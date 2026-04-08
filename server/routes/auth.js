@@ -25,16 +25,25 @@ const ROLE_EMPLOYER = 'Nhà tuyển dụng';
 const ROLE_ADMIN = 'Quản trị';
 const ROLE_SUPER_ADMIN = 'Siêu quản trị viên';
 const ROLE_PENDING = 'Chưa chọn vai trò';
+
+const isTemplateGoogleClientId = (value) => /^(your_|react_app_|vite_|next_public_)/i.test(value);
+
+const GOOGLE_AUDIENCE_ENV_KEYS = [
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_IDS',
+    'GOOGLE_OAUTH_CLIENT_ID',
+    'REACT_APP_GOOGLE_CLIENT_ID',
+    'REACT_APP_GOOGLE_OAUTH_CLIENT_ID',
+    'VITE_GOOGLE_CLIENT_ID',
+    'EMAIL_OAUTH_CLIENT_ID'
+];
+
 const GOOGLE_AUDIENCES = Array.from(
     new Set(
-        [
-            process.env.GOOGLE_CLIENT_ID,
-            process.env.GOOGLE_OAUTH_CLIENT_ID,
-            process.env.REACT_APP_GOOGLE_CLIENT_ID
-        ]
-            .flatMap((value) => String(value || '').split(','))
+        GOOGLE_AUDIENCE_ENV_KEYS
+            .flatMap((key) => String(process.env[key] || '').split(','))
             .map((value) => value.trim())
-            .filter(Boolean)
+            .filter((value) => value && !isTemplateGoogleClientId(value))
     )
 );
 const googleOAuthClient = new OAuth2Client();

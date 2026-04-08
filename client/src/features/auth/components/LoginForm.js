@@ -5,23 +5,76 @@ import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const REMEMBER_KEY = 'remembered_login_identity';
 
+const GOOGLE_CLIENT_ID_ENV_KEYS = [
+  'REACT_APP_GOOGLE_CLIENT_ID',
+  'REACT_APP_GOOGLE_OAUTH_CLIENT_ID',
+  'REACT_APP_GSI_CLIENT_ID',
+  'VITE_GOOGLE_CLIENT_ID'
+];
+
+const GOOGLE_CLIENT_ID_META_SELECTORS = [
+  'meta[name="google-client-id"]',
+  'meta[name="react-app-google-client-id"]',
+  'meta[name="vite-google-client-id"]'
+];
+
+const isTemplateValue = (value) => /^(your_|react_app_|vite_|next_public_)/i.test(value);
+
+const parseGoogleClientIds = (rawValue) => String(rawValue || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter((value) => value && !isTemplateValue(value));
+
+const readGoogleClientIdFromEnv = () => {
+  if (typeof process === 'undefined' || !process.env) return '';
+
+  for (const key of GOOGLE_CLIENT_ID_ENV_KEYS) {
+    const ids = parseGoogleClientIds(process.env[key]);
+    if (ids.length > 0) return ids[0];
+  }
+
+  return '';
+};
+
 const resolveGoogleClientId = () => {
-  const envValue = String(process.env.REACT_APP_GOOGLE_CLIENT_ID || '').trim();
+  const envValue = readGoogleClientIdFromEnv();
   if (envValue) return envValue;
 
   if (typeof window !== 'undefined') {
-    const runtimeValue = String(window.__GOOGLE_CLIENT_ID__ || '').trim();
-    if (runtimeValue) return runtimeValue;
+    const runtimeCandidates = [
+      window.__GOOGLE_CLIENT_ID__,
+      window.__GOOGLE_CLIENT_IDS__
+    ];
+
+    for (const candidate of runtimeCandidates) {
+      const ids = parseGoogleClientIds(candidate);
+      if (ids.length > 0) return ids[0];
+    }
   }
 
   if (typeof document !== 'undefined') {
-    const metaValue = String(document.querySelector('meta[name="google-client-id"]')?.getAttribute('content') || '').trim();
-    if (metaValue && !metaValue.includes('REACT_APP_GOOGLE_CLIENT_ID')) {
-      return metaValue;
+    for (const selector of GOOGLE_CLIENT_ID_META_SELECTORS) {
+      const ids = parseGoogleClientIds(document.querySelector(selector)?.getAttribute('content'));
+      if (ids.length > 0) return ids[0];
     }
   }
 
   return '';
+};
+
+const getGoogleOriginMismatchHint = (clientId) => {
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+
+  if (!currentOrigin) {
+    return 'Google popup khong tra credential. Kha nang cao cau hinh OAuth chua dung origin.';
+  }
+
+  return [
+    'Google popup khong tra credential (thuong la Error 400: origin_mismatch).',
+    `Origin hien tai: ${currentOrigin}.`,
+    `Client ID dang dung: ${clientId || '(trong)'}.`,
+    'Hay them origin nay vao Authorized JavaScript origins cua dung OAuth Client tren Google Cloud va redeploy frontend.'
+  ].join(' ');
 };
 
 const parseJsonSafe = async (response) => {
@@ -61,6 +114,8 @@ const LoginForm = ({ onSuccess }) => {
   const apiBase = CLIENT_API_BASE;
   const googleButtonContainerRef = useRef(null);
   const googleInitializedRef = useRef(false);
+  const googleCallbackReceivedRef = useRef(false);
+  const googlePopupHintTimeoutRef = useRef(null);
   const GOOGLE_CLIENT_ID = resolveGoogleClientId();
 
   const [email, setEmail] = useState('');
@@ -70,6 +125,18 @@ const LoginForm = ({ onSuccess }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+
+  const clearGooglePopupHintTimeout = () => {
+    if (!googlePopupHintTimeoutRef.current) return;
+    window.clearTimeout(googlePopupHintTimeoutRef.current);
+    googlePopupHintTimeoutRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => {
+      clearGooglePopupHintTimeout();
+    };
+  }, []);
 
   useEffect(() => {
     const rememberedIdentity = localStorage.getItem(REMEMBER_KEY);
@@ -132,9 +199,11 @@ const LoginForm = ({ onSuccess }) => {
 
   const handleGoogleLogin = () => {
     setError('');
+    googleCallbackReceivedRef.current = false;
+    clearGooglePopupHintTimeout();
 
     if (!GOOGLE_CLIENT_ID) {
-      setError('Thiếu cấu hình REACT_APP_GOOGLE_CLIENT_ID cho đăng nhập Google. Nếu chạy trên Vercel, hãy thêm biến môi trường này trong Project Settings > Environment Variables rồi redeploy.');
+      setError('Thiếu cấu hình Google Client ID. Hãy thêm REACT_APP_GOOGLE_CLIENT_ID (hoặc REACT_APP_GOOGLE_OAUTH_CLIENT_ID) trong Vercel Project Settings > Environment Variables rồi redeploy.');
       return;
     }
 
@@ -149,9 +218,13 @@ const LoginForm = ({ onSuccess }) => {
         callback: async (response) => {
           const credential = String(response?.credential || '').trim();
           if (!credential) {
+            clearGooglePopupHintTimeout();
             setError('Không nhận được thông tin xác thực từ Google.');
             return;
           }
+
+          googleCallbackReceivedRef.current = true;
+          clearGooglePopupHintTimeout();
 
           setGoogleLoading(true);
           setError('');
@@ -186,11 +259,18 @@ const LoginForm = ({ onSuccess }) => {
 
     const googleButton = googleButtonContainerRef.current.querySelector('div[role="button"]');
     if (!googleButton) {
+      clearGooglePopupHintTimeout();
       setError('Không thể mở popup Google. Vui lòng thử lại.');
       return;
     }
 
     googleButton.click();
+
+    googlePopupHintTimeoutRef.current = window.setTimeout(() => {
+      if (!googleCallbackReceivedRef.current) {
+        setError(getGoogleOriginMismatchHint(GOOGLE_CLIENT_ID));
+      }
+    }, 4500);
   };
 
   const handleSubmit = async (e) => {
