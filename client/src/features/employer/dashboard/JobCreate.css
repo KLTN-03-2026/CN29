@@ -35,12 +35,13 @@
 .job-create-card {
   border: 1px solid #d9e6f3;
   border-radius: 20px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .job-create-card-body {
   padding: 24px;
   background: #ffffff;
+  overflow: visible;
 }
 
 .job-create-card .form-label {
@@ -68,6 +69,38 @@
 .job-create-card .form-select:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 0.18rem rgba(59, 130, 246, 0.16);
+}
+
+.job-create-section-title {
+  margin: 4px 0 2px;
+  padding-top: 8px;
+  border-top: 1px dashed #d9e7f5;
+  color: #0f2942;
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.job-create-select {
+  width: 100%;
+}
+
+.job-create-select .jf-jobs-select-trigger {
+  min-height: 44px;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.job-create-select .jf-jobs-select-menu {
+  z-index: 2600;
+}
+
+.job-create-select .jf-jobs-select-scroll {
+  max-height: 240px;
+}
+
+.job-create-select.is-disabled .jf-jobs-select-trigger {
+  opacity: 0.75;
+  cursor: not-allowed;
 }
 
 .job-create-helptext {

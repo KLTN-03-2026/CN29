@@ -3,7 +3,74 @@ import { useLocation } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
 import ProfileSidebar from './profile/ProfileSidebar';
 import ProfileMainContent from './profile/ProfileMainContent';
-import { PROFILE_TAB_SETTINGS, normalizeProfileTab } from './profile/profileNavigation';
+import { normalizeProfileTab } from './profile/profileNavigation';
+import './profile/ProfilePage.css';
+
+const EMPTY_PROFILE_SNAPSHOT = {
+    MaNguoiDung: '',
+    HoTen: '',
+    Email: '',
+    SoDienThoai: '',
+    NgaySinh: '',
+    GioiTinh: 'Nam',
+    DiaChi: '',
+    ThanhPho: '',
+    QuanHuyen: '',
+    GioiThieuBanThan: '',
+    SoNamKinhNghiem: 0,
+    TrinhDoHocVan: '',
+    AnhDaiDien: '',
+    ChucDanh: '',
+    LinkCaNhan: '',
+    DanhSachHocVanJson: '[]',
+    DanhSachKinhNghiemJson: '[]',
+    DanhSachNgoaiNguJson: '[]',
+    NgayTao: '',
+    NgayCapNhat: ''
+};
+
+const toJsonText = (value) => {
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) {
+        try {
+            return JSON.stringify(value, null, 2);
+        } catch {
+            return '[]';
+        }
+    }
+    return '[]';
+};
+
+const parseJsonArrayInput = (text, label) => {
+    try {
+        const normalized = String(text || '').trim();
+        if (!normalized) return [];
+        const parsed = JSON.parse(normalized);
+        if (!Array.isArray(parsed)) {
+            throw new Error(`${label} phải là mảng JSON hợp lệ.`);
+        }
+        return parsed;
+    } catch (error) {
+        throw new Error(error?.message || `${label} không hợp lệ.`);
+    }
+};
+
+const FORM_TO_SNAPSHOT_KEY = {
+    fullName: 'HoTen',
+    position: 'ChucDanh',
+    email: 'Email',
+    phone: 'SoDienThoai',
+    birthday: 'NgaySinh',
+    gender: 'GioiTinh',
+    city: 'ThanhPho',
+    district: 'QuanHuyen',
+    address: 'DiaChi',
+    personalLink: 'LinkCaNhan',
+    introHtml: 'GioiThieuBanThan',
+    experienceYears: 'SoNamKinhNghiem',
+    education: 'TrinhDoHocVan',
+    avatarUrl: 'AnhDaiDien'
+};
 
 const Profile = ({ initialTab = 'overview' }) => {
     const location = useLocation();
@@ -109,9 +176,15 @@ const Profile = ({ initialTab = 'overview' }) => {
         birthday: '',
         gender: 'Nam',
         city: '',
+        district: '',
         address: '',
-        personalLink: ''
+        personalLink: '',
+        introHtml: '',
+        experienceYears: '0',
+        education: '',
+        avatarUrl: ''
     });
+    const [profileSnapshot, setProfileSnapshot] = useState(EMPTY_PROFILE_SNAPSHOT);
     const [profileSummary, setProfileSummary] = useState({
         position: '',
         phone: '',
@@ -307,8 +380,11 @@ const Profile = ({ initialTab = 'overview' }) => {
                 throw new Error(data.error || 'Đổi mật khẩu thất bại.');
             }
 
-            setPasswordStatus({ type: 'success', message: data.message || 'Đổi mật khẩu thành công.' });
+            const successMessage = data.message || 'Đổi mật khẩu thành công.';
+            setPasswordStatus({ type: 'success', message: successMessage });
             setPasswordForm({ current: '', next: '', confirm: '' });
+            setShowPasswordForm(false);
+            notify({ type: 'success', message: successMessage });
         } catch (error) {
             setPasswordStatus({ type: 'error', message: error.message || 'Có lỗi xảy ra. Vui lòng thử lại.' });
         } finally {
@@ -489,18 +565,52 @@ const Profile = ({ initialTab = 'overview' }) => {
                     return;
                 }
                 const p = data.profile || {};
+                const raw = p.raw || {};
+                const snapshot = {
+                    MaNguoiDung: raw.MaNguoiDung ?? p.userId ?? userId ?? '',
+                    HoTen: raw.HoTen ?? p.fullName ?? '',
+                    Email: raw.Email ?? p.email ?? '',
+                    SoDienThoai: raw.SoDienThoai ?? p.phone ?? '',
+                    NgaySinh: raw.NgaySinh ?? p.birthday ?? '',
+                    GioiTinh: raw.GioiTinh ?? p.gender ?? 'Nam',
+                    DiaChi: raw.DiaChi ?? p.address ?? '',
+                    ThanhPho: raw.ThanhPho ?? p.city ?? '',
+                    QuanHuyen: raw.QuanHuyen ?? p.district ?? '',
+                    GioiThieuBanThan: raw.GioiThieuBanThan ?? p.introHtml ?? '',
+                    SoNamKinhNghiem: raw.SoNamKinhNghiem ?? p.experienceYears ?? 0,
+                    TrinhDoHocVan: raw.TrinhDoHocVan ?? p.education ?? '',
+                    AnhDaiDien: raw.AnhDaiDien ?? p.avatarUrl ?? '',
+                    ChucDanh: raw.ChucDanh ?? p.position ?? '',
+                    LinkCaNhan: raw.LinkCaNhan ?? p.personalLink ?? '',
+                    DanhSachHocVanJson: toJsonText(raw.DanhSachHocVanJson ?? p.educationList ?? []),
+                    DanhSachKinhNghiemJson: toJsonText(raw.DanhSachKinhNghiemJson ?? p.workList ?? []),
+                    DanhSachNgoaiNguJson: toJsonText(raw.DanhSachNgoaiNguJson ?? p.languageList ?? []),
+                    NgayTao: raw.NgayTao ?? p.createdAt ?? '',
+                    NgayCapNhat: raw.NgayCapNhat ?? p.updatedAt ?? ''
+                };
+
                 setFormData(prev => ({
                     ...prev,
-                    fullName: p.fullName || prev.fullName,
-                    position: p.position || prev.position,
-                    email: p.email || prev.email,
-                    phone: p.phone || '',
-                    birthday: p.birthday || '',
-                    gender: p.gender || 'Nam',
-                    city: p.city || '',
-                    address: p.address || '',
-                    personalLink: p.personalLink || prev.personalLink
+                    fullName: snapshot.HoTen || prev.fullName,
+                    position: snapshot.ChucDanh || prev.position,
+                    email: snapshot.Email || prev.email,
+                    phone: snapshot.SoDienThoai || '',
+                    birthday: snapshot.NgaySinh || '',
+                    gender: snapshot.GioiTinh || 'Nam',
+                    city: snapshot.ThanhPho || '',
+                    district: snapshot.QuanHuyen || '',
+                    address: snapshot.DiaChi || '',
+                    personalLink: snapshot.LinkCaNhan || prev.personalLink,
+                    introHtml: snapshot.GioiThieuBanThan || '',
+                    experienceYears: String(snapshot.SoNamKinhNghiem ?? 0),
+                    education: snapshot.TrinhDoHocVan || '',
+                    avatarUrl: snapshot.AnhDaiDien || ''
                 }));
+                setProfileSnapshot(snapshot);
+                setIntroHtml(snapshot.GioiThieuBanThan || '');
+                setEducationList(Array.isArray(p.educationList) ? p.educationList : []);
+                setWorkList(Array.isArray(p.workList) ? p.workList : []);
+                setLanguageList(Array.isArray(p.languageList) ? p.languageList : []);
                 const avatarFromServer = p.avatarAbsoluteUrl || p.avatarUrl || '';
                 if (avatarFromServer) {
                     setAvatarPreview(avatarFromServer);
@@ -584,6 +694,14 @@ const Profile = ({ initialTab = 'overview' }) => {
             ...prev,
             [name]: value
         }));
+
+        const snapshotKey = FORM_TO_SNAPSHOT_KEY[name];
+        if (snapshotKey) {
+            setProfileSnapshot((prev) => ({
+                ...prev,
+                [snapshotKey]: snapshotKey === 'SoNamKinhNghiem' ? Number(value || 0) : value
+            }));
+        }
     };
 
     const handleSaveProfile = async () => {
@@ -602,6 +720,19 @@ const Profile = ({ initialTab = 'overview' }) => {
             return;
         }
 
+        let parsedEducationList = [];
+        let parsedWorkList = [];
+        let parsedLanguageList = [];
+
+        try {
+            parsedEducationList = parseJsonArrayInput(profileSnapshot.DanhSachHocVanJson, 'DanhSachHocVanJson');
+            parsedWorkList = parseJsonArrayInput(profileSnapshot.DanhSachKinhNghiemJson, 'DanhSachKinhNghiemJson');
+            parsedLanguageList = parseJsonArrayInput(profileSnapshot.DanhSachNgoaiNguJson, 'DanhSachNgoaiNguJson');
+        } catch (jsonError) {
+            notify({ type: 'error', message: jsonError.message });
+            return;
+        }
+
         // Upload avatar nếu có
         let newAvatarUrl = null;
         if (avatarFile) {
@@ -616,6 +747,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                 const data = await res.json();
                 if (data.success && (data.absoluteUrl || data.avatarUrl)) {
                     newAvatarUrl = data.absoluteUrl || data.avatarUrl;
+                    setProfileSnapshot((prev) => ({ ...prev, AnhDaiDien: newAvatarUrl }));
                     console.log('Avatar uploaded successfully:', newAvatarUrl);
                 } else {
                     notify({ type: 'error', message: 'Lỗi upload ảnh: ' + (data.error || 'Không rõ') });
@@ -642,8 +774,16 @@ const Profile = ({ initialTab = 'overview' }) => {
                     birthday: formData.birthday,
                     gender: formData.gender,
                     city: formData.city,
+                    district: formData.district,
                     address: formData.address,
-                    personalLink: formData.personalLink
+                    personalLink: formData.personalLink,
+                    introHtml,
+                    experienceYears: Number.parseInt(formData.experienceYears || '0', 10) || 0,
+                    education: formData.education,
+                    avatar: newAvatarUrl || formData.avatarUrl || profileSnapshot.AnhDaiDien || '',
+                    educationList: parsedEducationList,
+                    workList: parsedWorkList,
+                    languageList: parsedLanguageList
                 })
             });
 
@@ -653,12 +793,17 @@ const Profile = ({ initialTab = 'overview' }) => {
                 return;
             }
 
+            const finalAvatar = newAvatarUrl || formData.avatarUrl || profileSnapshot.AnhDaiDien || user?.avatar || user?.AnhDaiDien || '';
+
             // Cập nhật localStorage với dữ liệu mới (bao gồm avatar mới nếu có)
             const updatedUser = {
                 ...user,
                 name: formData.fullName,
-                avatar: newAvatarUrl || user.avatar || user.AnhDaiDien,
-                AnhDaiDien: newAvatarUrl || user.AnhDaiDien
+                HoTen: formData.fullName,
+                avatar: finalAvatar,
+                avatarUrl: finalAvatar,
+                avatarAbsoluteUrl: finalAvatar,
+                AnhDaiDien: finalAvatar
             };
             localStorage.setItem('user', JSON.stringify(updatedUser));
             console.log('Updated localStorage with avatar:', updatedUser.avatar);
@@ -684,9 +829,9 @@ const Profile = ({ initialTab = 'overview' }) => {
     }
 
     return (
-        <div className="container-fluid" style={{ backgroundColor: '#f5f5f5', minHeight: '100vh', paddingTop: '110px' }}>
-            <div className="container">
-                <div className="row">
+        <div className="profile-page-wrap">
+            <div className="container profile-page-container">
+                <div className="row g-3 profile-page-grid">
                     <ProfileSidebar
                         activeTab={activeTab}
                         onChangeTab={setActiveTab}
@@ -697,21 +842,119 @@ const Profile = ({ initialTab = 'overview' }) => {
                         activeTab={activeTab}
                         user={user}
                         profileSummary={profileSummary}
-                        onGoSettings={() => setActiveTab(PROFILE_TAB_SETTINGS)}
-                        showPasswordForm={showPasswordForm}
-                        setShowPasswordForm={setShowPasswordForm}
-                        passwordForm={passwordForm}
-                        setPasswordForm={setPasswordForm}
-                        passwordShort={passwordShort}
-                        passwordMismatch={passwordMismatch}
-                        isPasswordValid={isPasswordValid}
-                        isChangingPassword={isChangingPassword}
-                        onPasswordChange={handlePasswordChange}
+                        onOpenProfileModal={() => setShowEditModal(true)}
+                        onOpenPasswordModal={() => {
+                            setPasswordStatus({ type: '', message: '' });
+                            setShowPasswordForm(true);
+                        }}
                         passwordStatus={passwordStatus}
-                        setPasswordStatus={setPasswordStatus}
                     />
                 </div>
             </div>
+
+            {showPasswordForm && (
+                <>
+                    <div
+                        className="modal-backdrop show"
+                        style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
+                        onClick={() => {
+                            setShowPasswordForm(false);
+                            setPasswordForm({ current: '', next: '', confirm: '' });
+                        }}
+                    ></div>
+                    <div className="modal show d-block" tabIndex="-1">
+                        <div className="modal-dialog modal-dialog-centered profile-password-modal-dialog">
+                            <div className="modal-content border-0 shadow-lg profile-password-modal-content profile-modal-shell">
+                                <div className="modal-header border-0 profile-modal-header">
+                                    <div>
+                                        <p className="profile-modal-kicker mb-1">Bảo mật tài khoản</p>
+                                        <h5 className="modal-title fw-bold mb-0">Đổi mật khẩu</h5>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        className="btn-close"
+                                        onClick={() => {
+                                            setShowPasswordForm(false);
+                                            setPasswordForm({ current: '', next: '', confirm: '' });
+                                        }}
+                                    ></button>
+                                </div>
+                                <div className="modal-body profile-modal-body">
+                                    <p className="profile-modal-description mb-3">
+                                        Mật khẩu mới cần tối thiểu 8 ký tự và khác mật khẩu hiện tại.
+                                    </p>
+                                    <div className="mb-3">
+                                        <label className="form-label">Mật khẩu hiện tại</label>
+                                        <input
+                                            type="password"
+                                            className="form-control profile-modal-input"
+                                            value={passwordForm.current}
+                                            onChange={(e) => {
+                                                setPasswordForm({ ...passwordForm, current: e.target.value });
+                                                setPasswordStatus({ type: '', message: '' });
+                                            }}
+                                            placeholder="Nhập mật khẩu hiện tại"
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label">Mật khẩu mới</label>
+                                        <input
+                                            type="password"
+                                            className={`form-control profile-modal-input ${passwordShort ? 'is-invalid' : ''}`}
+                                            value={passwordForm.next}
+                                            onChange={(e) => {
+                                                setPasswordForm({ ...passwordForm, next: e.target.value });
+                                                setPasswordStatus({ type: '', message: '' });
+                                            }}
+                                            placeholder="Tối thiểu 8 ký tự"
+                                        />
+                                        {passwordShort && <div className="invalid-feedback">Mật khẩu mới phải có ít nhất 8 ký tự.</div>}
+                                    </div>
+                                    <div className="mb-0">
+                                        <label className="form-label">Xác nhận mật khẩu mới</label>
+                                        <input
+                                            type="password"
+                                            className={`form-control profile-modal-input ${passwordMismatch ? 'is-invalid' : ''}`}
+                                            value={passwordForm.confirm}
+                                            onChange={(e) => {
+                                                setPasswordForm({ ...passwordForm, confirm: e.target.value });
+                                                setPasswordStatus({ type: '', message: '' });
+                                            }}
+                                            placeholder="Nhập lại mật khẩu mới"
+                                        />
+                                        {passwordMismatch && <div className="invalid-feedback">Mật khẩu xác nhận không khớp.</div>}
+                                    </div>
+                                    {passwordStatus.message && (
+                                        <div className={`alert alert-${passwordStatus.type === 'success' ? 'success' : 'danger'} mt-3 mb-0`} role="alert">
+                                            {passwordStatus.message}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="modal-footer border-0 profile-modal-footer">
+                                    <button
+                                        type="button"
+                                        className="btn profile-outline-btn"
+                                        onClick={() => {
+                                            setShowPasswordForm(false);
+                                            setPasswordForm({ current: '', next: '', confirm: '' });
+                                        }}
+                                    >
+                                        Hủy
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="btn profile-primary-btn"
+                                        disabled={!isPasswordValid || isChangingPassword}
+                                        onClick={handlePasswordChange}
+                                    >
+                                        {isChangingPassword ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </>
+            )}
 
             {/* Edit Profile Modal */}
             {showEditModal && (
@@ -722,126 +965,132 @@ const Profile = ({ initialTab = 'overview' }) => {
                         onClick={() => setShowEditModal(false)}
                     ></div>
                     <div className="modal show d-block" tabIndex="-1">
-                        <div className="modal-dialog modal-dialog-centered modal-xl">
-                            <div className="modal-content">
-                                <div className="modal-header border-0">
-                                    <h5 className="modal-title fw-bold fs-4">Thông tin cá nhân</h5>
+                        <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable profile-edit-modal-dialog">
+                            <div className="modal-content border-0 shadow-lg profile-edit-modal-content profile-modal-shell">
+                                <div className="modal-header border-0 profile-modal-header">
+                                    <div>
+                                        <p className="profile-modal-kicker mb-1">Hồ sơ ứng viên</p>
+                                        <h5 className="modal-title fw-bold fs-4 mb-0">Cập nhật hồ sơ chi tiết</h5>
+                                    </div>
                                     <button
                                         type="button"
                                         className="btn-close"
                                         onClick={() => setShowEditModal(false)}
                                     ></button>
                                 </div>
-                                <div className="modal-body pb-2">
-                                    <div className="row g-4">
-                                        {/* Left: Avatar & quick actions */}
-                                        <div className="col-xl-4">
-                                            <div className="text-center p-3 border rounded-3 bg-light">
-                                                <img
-                                                    src={avatarPreview}
-                                                    alt="avatar"
-                                                    className="rounded-circle mb-3 shadow-sm"
-                                                    style={{ width: 140, height: 140, objectFit: 'cover' }}
-                                                />
-                                                <div className="d-flex justify-content-center gap-2 mt-1">
-                                                    <button className="btn btn-outline-danger btn-sm" type="button" onClick={() => avatarInputRef.current?.click()}>
-                                                        <i className="bi bi-camera me-1"></i> Đổi ảnh
-                                                    </button>
-                                                    <button className="btn btn-outline-secondary btn-sm" type="button" onClick={() => { setAvatarPreview("https://cdn-icons-png.flaticon.com/512/149/149071.png"); setAvatarFile(null); }}>
-                                                        <i className="bi bi-trash me-1"></i> Xóa
-                                                    </button>
-                                                    <input
-                                                        ref={avatarInputRef}
-                                                        type="file"
-                                                        accept="image/*"
-                                                        style={{ display: 'none' }}
-                                                        onChange={e => {
-                                                            const file = e.target.files[0];
-                                                            if (!file) return;
-                                                            if (!file.type.startsWith('image/')) {
-                                                                notify({ type: 'error', message: 'Chỉ chấp nhận file ảnh.' });
-                                                                return;
-                                                            }
-                                                            if (file.size > 2 * 1024 * 1024) {
-                                                                notify({ type: 'error', message: 'Ảnh không được vượt quá 2MB.' });
-                                                                return;
-                                                            }
-                                                            const reader = new FileReader();
-                                                            reader.onload = ev => {
-                                                                setAvatarPreview(ev.target.result);
-                                                                setAvatarFile(file);
-                                                            };
-                                                            reader.readAsDataURL(file);
+                                <div className="modal-body pb-3 profile-modal-body profile-edit-modal-body">
+                                    <div className="row g-4 profile-edit-grid">
+                                        <div className="col-xl-3">
+                                            <div className="p-3 border rounded-3 h-100 profile-edit-aside profile-edit-avatar-card">
+                                                <div className="text-center">
+                                                    <img
+                                                        src={avatarPreview}
+                                                        alt="avatar"
+                                                        className="profile-edit-avatar mb-3"
+                                                        style={{ width: 148, height: 148, objectFit: 'cover' }}
+                                                        onError={(e) => {
+                                                            e.target.onerror = null;
+                                                            e.target.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
                                                         }}
                                                     />
+                                                    <div className="d-flex justify-content-center gap-2 mt-1 flex-wrap">
+                                                        <button className="btn btn-sm profile-outline-btn" type="button" onClick={() => avatarInputRef.current?.click()}>
+                                                            <i className="bi bi-camera me-1"></i> Đổi ảnh
+                                                        </button>
+                                                        <button
+                                                            className="btn btn-sm btn-outline-secondary"
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setAvatarPreview('https://cdn-icons-png.flaticon.com/512/149/149071.png');
+                                                                setAvatarFile(null);
+                                                                setFormData((prev) => ({ ...prev, avatarUrl: '' }));
+                                                                setProfileSnapshot((prev) => ({ ...prev, AnhDaiDien: '' }));
+                                                            }}
+                                                        >
+                                                            <i className="bi bi-trash me-1"></i> Xóa
+                                                        </button>
+                                                        <input
+                                                            ref={avatarInputRef}
+                                                            type="file"
+                                                            accept="image/*"
+                                                            style={{ display: 'none' }}
+                                                            onChange={(e) => {
+                                                                const file = e.target.files[0];
+                                                                if (!file) return;
+                                                                if (!file.type.startsWith('image/')) {
+                                                                    notify({ type: 'error', message: 'Chỉ chấp nhận file ảnh.' });
+                                                                    return;
+                                                                }
+                                                                if (file.size > 2 * 1024 * 1024) {
+                                                                    notify({ type: 'error', message: 'Ảnh không được vượt quá 2MB.' });
+                                                                    return;
+                                                                }
+                                                                const reader = new FileReader();
+                                                                reader.onload = (ev) => {
+                                                                    setAvatarPreview(ev.target.result);
+                                                                    setAvatarFile(file);
+                                                                };
+                                                                reader.readAsDataURL(file);
+                                                            }}
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="mt-3 small text-muted">
-                                                    Ảnh vuông, kích thước đề xuất 400×400px
+
+                                                <div className="small text-muted mt-3 profile-edit-hint">Ảnh vuông, kích thước đề xuất 400×400px. Ảnh sẽ được lưu trên Cloudinary.</div>
+
+                                                <div className="mt-3">
+                                                    <label className="form-label small fw-semibold mb-1">Email tài khoản</label>
+                                                    <input className="form-control form-control-sm profile-edit-readonly" value={formData.email || ''} disabled />
+                                                </div>
+                                                <div className="mt-2">
+                                                    <label className="form-label small fw-semibold mb-1">Cập nhật gần nhất</label>
+                                                    <input className="form-control form-control-sm profile-edit-readonly" value={profileSnapshot.NgayCapNhat || 'Chưa cập nhật'} disabled />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Right: Form fields */}
-                                        <div className="col-xl-8">
+                                        <div className="col-xl-9">
                                             <div className="row g-3">
                                                 <div className="col-12">
-                                                    <label className="form-label fw-semibold">Họ và Tên <span className="text-danger">*</span></label>
+                                                    <div className="small text-uppercase fw-bold text-muted profile-edit-section-title">Thông tin cơ bản</div>
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">Họ và tên</label>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-lg"
+                                                        className="form-control profile-modal-input"
                                                         name="fullName"
                                                         value={formData.fullName}
                                                         onChange={handleInputChange}
-                                                        placeholder="Họ và tên của bạn"
-                                                    />
-                                                </div>
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold">Chức danh <span className="text-danger">*</span></label>
-                                                    <input
-                                                        type="text"
-                                                        className="form-control form-control-lg"
-                                                        name="position"
-                                                        value={formData.position}
-                                                        onChange={handleInputChange}
-                                                        placeholder="Ví dụ: Frontend Developer"
+                                                        placeholder="Nhập họ và tên"
                                                     />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Địa chỉ email</label>
-                                                    <input
-                                                        type="email"
-                                                        className="form-control form-control-lg"
-                                                        name="email"
-                                                        value={formData.email}
-                                                        disabled
-                                                        style={{ backgroundColor: '#f5f5f5' }}
-                                                    />
-                                                </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Số điện thoại <span className="text-danger">*</span></label>
+                                                    <label className="form-label fw-semibold">Số điện thoại</label>
                                                     <input
                                                         type="tel"
-                                                        className="form-control form-control-lg"
+                                                        className="form-control profile-modal-input"
                                                         name="phone"
                                                         value={formData.phone}
                                                         onChange={handleInputChange}
                                                         placeholder="Nhập số điện thoại"
                                                     />
                                                 </div>
-                                                <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Ngày sinh <span className="text-danger">*</span></label>
+
+                                                <div className="col-md-4">
+                                                    <label className="form-label fw-semibold">Ngày sinh</label>
                                                     <input
                                                         type="date"
-                                                        className="form-control form-control-lg"
+                                                        className="form-control profile-modal-input"
                                                         name="birthday"
                                                         value={formData.birthday}
                                                         onChange={handleInputChange}
                                                     />
                                                 </div>
-                                                <div className="col-md-6">
+                                                <div className="col-md-4">
                                                     <label className="form-label fw-semibold">Giới tính</label>
                                                     <select
-                                                        className="form-select form-select-lg"
+                                                        className="form-select profile-modal-input"
                                                         name="gender"
                                                         value={formData.gender}
                                                         onChange={handleInputChange}
@@ -851,18 +1100,31 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                         <option value="Khác">Khác</option>
                                                     </select>
                                                 </div>
+                                                <div className="col-md-4">
+                                                    <label className="form-label fw-semibold">Số năm kinh nghiệm</label>
+                                                    <input
+                                                        type="number"
+                                                        min="0"
+                                                        className="form-control profile-modal-input"
+                                                        name="experienceYears"
+                                                        value={formData.experienceYears}
+                                                        onChange={handleInputChange}
+                                                    />
+                                                </div>
+
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Tỉnh/Thành phố hiện tại <span className="text-danger">*</span></label>
+                                                    <label className="form-label fw-semibold">Thành phố</label>
                                                     <div className="position-relative" ref={provinceDropdownRef}>
                                                         <input
                                                             type="text"
-                                                            className="form-control form-control-lg"
+                                                            className="form-control profile-modal-input"
                                                             placeholder="Tìm tỉnh/thành phố..."
                                                             value={provinceQuery}
                                                             onChange={(e) => {
                                                                 const value = e.target.value;
                                                                 setProvinceQuery(value);
-                                                                setFormData({ ...formData, city: value });
+                                                                setFormData((prev) => ({ ...prev, city: value }));
+                                                                setProfileSnapshot((prev) => ({ ...prev, ThanhPho: value }));
                                                                 setShowProvinceSuggestions(true);
                                                             }}
                                                             onFocus={() => {
@@ -872,7 +1134,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                             autoComplete="off"
                                                         />
                                                         {showProvinceSuggestions && (
-                                                            <div className="list-group position-absolute w-100 shadow-sm" style={{ maxHeight: 200, overflowY: 'auto', zIndex: 1100 }}>
+                                                            <div className="list-group position-absolute w-100 shadow-sm profile-city-suggestions" style={{ maxHeight: 200, overflowY: 'auto', zIndex: 1100 }}>
                                                                 {provinceSuggestions.length === 0 && (
                                                                     <div className="list-group-item small text-muted">Không tìm thấy tỉnh/thành phố phù hợp</div>
                                                                 )}
@@ -882,7 +1144,8 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                                         type="button"
                                                                         className="list-group-item list-group-item-action text-start"
                                                                         onMouseDown={() => {
-                                                                            setFormData({ ...formData, city: province });
+                                                                            setFormData((prev) => ({ ...prev, city: province }));
+                                                                            setProfileSnapshot((prev) => ({ ...prev, ThanhPho: province }));
                                                                             setProvinceQuery(province);
                                                                             setShowProvinceSuggestions(false);
                                                                         }}
@@ -894,42 +1157,78 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Địa chỉ (Tên đường, quận/huyện,...)</label>
+                                                    <label className="form-label fw-semibold">Quận/Huyện</label>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-lg"
+                                                        className="form-control profile-modal-input"
+                                                        name="district"
+                                                        value={formData.district}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Nhập quận/huyện"
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">Địa chỉ</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control profile-modal-input"
                                                         name="address"
                                                         value={formData.address}
                                                         onChange={handleInputChange}
-                                                        placeholder="Nhập địa chỉ chi tiết"
+                                                        placeholder="Nhập địa chỉ"
                                                     />
                                                 </div>
-                                                <div className="col-12">
-                                                    <label className="form-label fw-semibold">Link cá nhân (LinkedIn, portfolio,...)</label>
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">Chức danh</label>
                                                     <input
                                                         type="text"
-                                                        className="form-control form-control-lg"
+                                                        className="form-control profile-modal-input"
+                                                        name="position"
+                                                        value={formData.position}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Ví dụ: Frontend Developer"
+                                                    />
+                                                </div>
+
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">Trình độ học vấn</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control profile-modal-input"
+                                                        name="education"
+                                                        value={formData.education}
+                                                        onChange={handleInputChange}
+                                                        placeholder="Ví dụ: Đại học"
+                                                    />
+                                                </div>
+                                                <div className="col-md-6">
+                                                    <label className="form-label fw-semibold">Liên kết cá nhân</label>
+                                                    <input
+                                                        type="text"
+                                                        className="form-control profile-modal-input"
                                                         name="personalLink"
                                                         value={formData.personalLink}
                                                         onChange={handleInputChange}
                                                         placeholder="https://"
                                                     />
                                                 </div>
+
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div className="modal-footer border-0">
+                                <div className="modal-footer border-0 profile-modal-footer">
                                     <button
                                         type="button"
-                                        className="btn btn-outline-secondary px-4"
+                                        className="btn profile-outline-btn px-4"
                                         onClick={() => setShowEditModal(false)}
                                     >
                                         Huỷ
                                     </button>
                                     <button
                                         type="button"
-                                        className="btn btn-danger px-4"
+                                        className="btn profile-primary-btn px-4"
                                         onClick={handleSaveProfile}
                                     >
                                         Lưu

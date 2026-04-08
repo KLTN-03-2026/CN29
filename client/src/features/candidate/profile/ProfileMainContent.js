@@ -15,210 +15,199 @@ const ProfileMainContent = ({
   activeTab,
   user,
   profileSummary,
-  onGoSettings,
-  showPasswordForm,
-  setShowPasswordForm,
-  passwordForm,
-  setPasswordForm,
-  passwordShort,
-  passwordMismatch,
-  isPasswordValid,
-  isChangingPassword,
-  onPasswordChange,
-  passwordStatus,
-  setPasswordStatus
+  onOpenProfileModal,
+  onOpenPasswordModal,
+  passwordStatus
 }) => {
+  const currentEmail = user?.email || user?.Email || '';
+
   return (
-    <div className="col-md-9">
+    <div className="col-lg-9 col-md-8">
       {activeTab === PROFILE_TAB_OVERVIEW && (
         <>
-          <div className="bg-white rounded shadow-sm p-4 mb-3">
-            <div className="d-flex align-items-start gap-4">
+          <section className="profile-tab-card profile-overview-card mb-3">
+            <div className="profile-overview-head">
               <img
                 src={user?.avatar || user?.AnhDaiDien || avatarFallback}
                 alt="avatar"
-                className="rounded-circle"
-                style={{ width: 80, height: 80, objectFit: 'cover' }}
+                className="profile-overview-avatar"
                 onError={(e) => {
                   e.target.onerror = null;
                   e.target.src = avatarFallback;
                 }}
               />
-              <div className="flex-grow-1">
-                <h3 className="fw-bold mb-2">{user?.name || 'Người dùng'}</h3>
-                <div className="d-flex align-items-center gap-3 text-muted mb-2">
-                  <div>
-                    <i className="bi bi-briefcase me-2"></i>
-                    <span>{profileSummary.position || 'Chưa cập nhật chức danh'}</span>
-                  </div>
-                </div>
-                <div className="d-flex align-items-center gap-2 text-muted">
-                  <i className="bi bi-envelope me-1"></i>
-                  <span>{user?.email || ''}</span>
+              <div className="profile-overview-info">
+                <p className="profile-overview-eyebrow">Hồ sơ ứng viên</p>
+                <h3>{user?.name || 'Người dùng'}</h3>
+                <div className="profile-overview-meta">
+                  <span><i className="bi bi-briefcase"></i>{profileSummary.position || 'Chưa cập nhật chức danh'}</span>
+                  <span><i className="bi bi-geo-alt"></i>{profileSummary.city || 'Chưa cập nhật thành phố'}</span>
+                  <span><i className="bi bi-envelope"></i>{currentEmail || 'Chưa có email'}</span>
                 </div>
                 <button
                   type="button"
-                  onClick={onGoSettings}
-                  className="btn btn-link text-primary text-decoration-none mt-2 p-0"
+                  onClick={onOpenProfileModal}
+                  className="btn profile-primary-btn mt-3"
                 >
-                  Cập nhật hồ sơ <i className="bi bi-chevron-right"></i>
+                  <i className="bi bi-pencil-square me-2"></i>
+                  Cập nhật hồ sơ
                 </button>
               </div>
             </div>
-          </div>
+            <div className="profile-overview-kpis">
+              <div className="profile-kpi-item">
+                <span>Việc đã ứng tuyển</span>
+                <strong>0</strong>
+              </div>
+              <div className="profile-kpi-item">
+                <span>Lời mời mới</span>
+                <strong>0</strong>
+              </div>
+              <div className="profile-kpi-item">
+                <span>Thông báo</span>
+                <strong>0</strong>
+              </div>
+            </div>
+          </section>
 
-          <div className="bg-white rounded shadow-sm p-4 mb-3">
-            <h5 className="fw-bold mb-3">Hoàn thiện hồ sơ cá nhân</h5>
-            <p className="text-muted mb-3">
-              Cập nhật thông tin cơ bản, số điện thoại và mật khẩu để nhà tuyển dụng dễ liên hệ hơn.
-            </p>
-            <button type="button" className="btn btn-primary" onClick={onGoSettings}>
-              Đi tới Cài đặt
-            </button>
-          </div>
+          <section className="profile-tab-card profile-overview-actions">
+            <h5>Tiếp tục hành trình tìm việc</h5>
+            <p>Cập nhật hồ sơ và khám phá cơ hội phù hợp ngay hôm nay.</p>
+            <div className="profile-action-grid">
+              <Link to="/jobs" className="profile-action-link">
+                <i className="bi bi-search"></i>
+                <span>Tìm việc làm</span>
+              </Link>
+              <Link to="/jobs/saved" className="profile-action-link">
+                <i className="bi bi-bookmark"></i>
+                <span>Việc làm đã lưu</span>
+              </Link>
+              <Link to="/jobs/applied" className="profile-action-link">
+                <i className="bi bi-file-earmark-check"></i>
+                <span>Theo dõi ứng tuyển</span>
+              </Link>
+              <button type="button" className="profile-action-link" onClick={onOpenProfileModal}>
+                <i className="bi bi-person-vcard"></i>
+                <span>Hoàn thiện hồ sơ</span>
+              </button>
+            </div>
+          </section>
         </>
       )}
 
       {activeTab === PROFILE_TAB_JOBS && (
-        <div className="bg-white rounded shadow-sm p-4">
-          <h5 className="fw-bold mb-3">Việc làm của tôi</h5>
-          <div className="text-center py-5">
-            <i className="bi bi-briefcase text-secondary" style={{ fontSize: '4rem' }}></i>
-            <p className="text-muted mt-3">Bạn chưa ứng tuyển công việc nào</p>
-            <Link to="/jobs" className="btn btn-primary mt-2">
+        <section className="profile-tab-card profile-section-card">
+          <div className="profile-section-head">
+            <h5>Việc làm của tôi</h5>
+            <p>Quản lý các việc đã lưu và tiến trình ứng tuyển của bạn.</p>
+          </div>
+          <div className="profile-empty-state">
+            <div className="profile-empty-icon"><i className="bi bi-briefcase"></i></div>
+            <h6>Bạn chưa ứng tuyển công việc nào</h6>
+            <p>Khám phá danh sách việc làm mới nhất và bắt đầu ứng tuyển.</p>
+            <Link to="/jobs" className="btn profile-primary-btn">
               Tìm việc làm
             </Link>
           </div>
-        </div>
+        </section>
       )}
 
       {activeTab === PROFILE_TAB_INVITATIONS && (
-        <div className="bg-white rounded shadow-sm p-4">
-          <h5 className="fw-bold mb-3">Lời mời công việc</h5>
-          <div className="text-center py-5">
-            <i className="bi bi-envelope text-secondary" style={{ fontSize: '4rem' }}></i>
-            <p className="text-muted mt-3">Bạn chưa có lời mời công việc nào</p>
+        <section className="profile-tab-card profile-section-card">
+          <div className="profile-section-head">
+            <h5>Lời mời công việc</h5>
+            <p>Các nhà tuyển dụng sẽ gửi lời mời khi hồ sơ của bạn phù hợp.</p>
           </div>
-        </div>
+          <div className="profile-empty-state">
+            <div className="profile-empty-icon"><i className="bi bi-envelope-paper"></i></div>
+            <h6>Hiện chưa có lời mời nào</h6>
+            <p>Hãy cập nhật hồ sơ chi tiết để tăng khả năng được mời phỏng vấn.</p>
+            <button type="button" className="btn profile-outline-btn" onClick={onOpenProfileModal}>
+              Cập nhật hồ sơ ngay
+            </button>
+          </div>
+        </section>
       )}
 
       {activeTab === PROFILE_TAB_NOTIFICATIONS && (
-        <div className="bg-white rounded shadow-sm p-4">
-          <h5 className="fw-bold mb-3">Thông báo</h5>
-          <p className="text-muted">Bạn chưa có thông báo nào</p>
-        </div>
+        <section className="profile-tab-card profile-section-card">
+          <div className="profile-section-head">
+            <h5>Thông báo</h5>
+            <p>Thông tin việc làm mới, nhắc lịch và cập nhật trạng thái hồ sơ.</p>
+          </div>
+          <div className="profile-empty-state">
+            <div className="profile-empty-icon"><i className="bi bi-bell"></i></div>
+            <h6>Chưa có thông báo mới</h6>
+            <p>Khi có cập nhật quan trọng từ hệ thống, bạn sẽ thấy tại đây.</p>
+          </div>
+        </section>
       )}
 
       {activeTab === PROFILE_TAB_SETTINGS && (
-        <div className="bg-white rounded shadow-sm p-4">
-          <h5 className="fw-bold mb-3">Cài đặt</h5>
-          <div className="mb-4">
-            <h6 className="fw-semibold mb-3">Thông tin cá nhân</h6>
-            <div className="mb-3">
-              <label className="form-label">Họ và tên</label>
-              <input type="text" className="form-control" defaultValue={user?.name || ''} />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Email</label>
-              <input type="email" className="form-control" defaultValue={user?.email || ''} disabled />
-            </div>
-            <div className="mb-3">
-              <label className="form-label">Số điện thoại</label>
-              <input type="tel" className="form-control" defaultValue={user?.phone || ''} placeholder="Nhập số điện thoại" />
+        <section className="profile-tab-card profile-section-card profile-settings-card">
+          <div className="profile-settings-hero mb-4">
+            <span className="profile-settings-hero-icon" aria-hidden="true">
+              <i className="bi bi-sliders2"></i>
+            </span>
+            <div>
+              <h5>Cài đặt tài khoản</h5>
+              <p>Quản lý bảo mật, hồ sơ cá nhân và cài đặt ứng dụng JobFinder trên thiết bị của bạn.</p>
             </div>
           </div>
 
-          <div className="mb-4">
-            <div className="d-flex align-items-center justify-content-between mb-3">
-              <h6 className="fw-semibold mb-0">Đổi mật khẩu</h6>
-              {!showPasswordForm && (
+          <div className="profile-settings-grid">
+            <article className="profile-settings-panel profile-settings-panel--security">
+              <div className="profile-settings-panel-head">
+                <div>
+                  <p className="profile-settings-panel-kicker">Bảo mật</p>
+                  <h6>Đổi mật khẩu tài khoản</h6>
+                </div>
                 <button
                   type="button"
-                  className="btn btn-sm btn-outline-primary"
-                  onClick={() => setShowPasswordForm(true)}
+                  className="btn btn-sm profile-outline-btn"
+                  onClick={onOpenPasswordModal}
                 >
-                  <i className="bi bi-key me-1"></i>Đổi mật khẩu
+                  <i className="bi bi-key me-1"></i>
+                  Đổi mật khẩu
                 </button>
+              </div>
+              <p className="text-muted small mb-0">
+                Mật khẩu mới nên có tối thiểu 8 ký tự, bao gồm chữ hoa, chữ thường và số để tăng độ an toàn.
+              </p>
+              {passwordStatus.message && (
+                <div className={`alert alert-${passwordStatus.type === 'success' ? 'success' : 'danger'} mt-3 mb-0`} role="alert">
+                  {passwordStatus.message}
+                </div>
               )}
-            </div>
-            {showPasswordForm && (
-              <>
-                <div className="mb-3">
-                  <label className="form-label">Mật khẩu hiện tại</label>
-                  <input
-                    type="password"
-                    className="form-control"
-                    value={passwordForm.current}
-                    onChange={(e) => {
-                      setPasswordForm({ ...passwordForm, current: e.target.value });
-                      setPasswordStatus({ type: '', message: '' });
-                    }}
-                    placeholder="Nhập mật khẩu hiện tại"
-                  />
+            </article>
+
+            <article className="profile-settings-panel profile-settings-panel--profile">
+              <div className="profile-settings-panel-head">
+                <div>
+                  <p className="profile-settings-panel-kicker">Hồ sơ</p>
+                  <h6>Cập nhật thông tin ứng viên</h6>
                 </div>
-                <div className="mb-3">
-                  <label className="form-label">Mật khẩu mới</label>
-                  <input
-                    type="password"
-                    className={`form-control ${passwordShort ? 'is-invalid' : ''}`}
-                    value={passwordForm.next}
-                    onChange={(e) => {
-                      setPasswordForm({ ...passwordForm, next: e.target.value });
-                      setPasswordStatus({ type: '', message: '' });
-                    }}
-                    placeholder="Tối thiểu 8 ký tự"
-                  />
-                  {passwordShort && <div className="invalid-feedback">Mật khẩu mới phải có ít nhất 8 ký tự.</div>}
-                </div>
-                <div className="mb-3">
-                  <label className="form-label">Xác nhận mật khẩu mới</label>
-                  <input
-                    type="password"
-                    className={`form-control ${passwordMismatch ? 'is-invalid' : ''}`}
-                    value={passwordForm.confirm}
-                    onChange={(e) => {
-                      setPasswordForm({ ...passwordForm, confirm: e.target.value });
-                      setPasswordStatus({ type: '', message: '' });
-                    }}
-                    placeholder="Nhập lại mật khẩu mới"
-                  />
-                  {passwordMismatch && <div className="invalid-feedback">Mật khẩu xác nhận không khớp.</div>}
-                </div>
-                <div className="d-flex gap-2">
-                  <button
-                    type="button"
-                    className="btn btn-primary"
-                    disabled={!isPasswordValid || isChangingPassword}
-                    onClick={onPasswordChange}
-                  >
-                    {isChangingPassword ? 'Đang xử lý...' : 'Đổi mật khẩu'}
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline-secondary"
-                    onClick={() => {
-                      setShowPasswordForm(false);
-                      setPasswordForm({ current: '', next: '', confirm: '' });
-                      setPasswordStatus({ type: '', message: '' });
-                    }}
-                  >
-                    Hủy
-                  </button>
-                </div>
-                {passwordStatus.message && (
-                  <div className={`alert alert-${passwordStatus.type === 'success' ? 'success' : 'danger'} mt-3 mb-0`} role="alert">
-                    {passwordStatus.message}
-                  </div>
-                )}
-              </>
-            )}
+                <button type="button" className="btn profile-outline-btn" onClick={onOpenProfileModal}>
+                  <i className="bi bi-person-vcard me-1"></i>
+                  Mở hồ sơ chi tiết
+                </button>
+              </div>
+              <p className="text-muted small mb-0">
+                Tối ưu hồ sơ để tăng khả năng được nhà tuyển dụng tìm thấy và gửi lời mời phỏng vấn.
+              </p>
+            </article>
           </div>
 
-          <div className="mb-4">
+          <article className="profile-settings-panel profile-settings-panel--install mt-4">
+            <div className="profile-settings-panel-head mb-3">
+              <div>
+                <p className="profile-settings-panel-kicker">Ứng dụng</p>
+                <h6>Cài đặt JobFinder</h6>
+              </div>
+            </div>
             <InstallAppPanel />
-          </div>
-          <button type="button" className="btn btn-outline-secondary">Lưu thay đổi</button>
-        </div>
+          </article>
+        </section>
       )}
     </div>
   );

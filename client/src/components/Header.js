@@ -68,10 +68,12 @@ const Header = () => {
         || isSuperAdmin
     );
     const profileTitle = String(user?.HoTen || user?.name || user?.fullName || user?.username || user?.email || '').trim() || 'Tài khoản của tôi';
+    const avatarUrl = String(user?.avatar || user?.avatarAbsoluteUrl || user?.AnhDaiDien || user?.avatarUrl || '').trim();
     const profileIcon = isAdmin
         ? 'bi-shield-check'
         : (isEmployer ? 'bi-building-check' : 'bi-person-check');
     const dashboardLink = isEmployer ? '/employer/jobs' : (isAdmin ? '/admin' : '');
+    const messagingLink = isEmployer ? '/employer/messages' : (!isAdmin ? '/messages' : '');
 
     return (
         <nav className="navbar navbar-expand-lg bg-white border-bottom shadow-sm jf-main-navbar">
@@ -162,8 +164,20 @@ const Header = () => {
                                     data-bs-toggle="dropdown"
                                     aria-expanded="false"
                                 >
-                                    <span className="jf-user-chip-icon" aria-hidden="true">
-                                        <i className={`bi ${profileIcon}`}></i>
+                                    <span className={`jf-user-chip-icon ${avatarUrl ? 'has-avatar' : ''}`} aria-hidden="true">
+                                        {avatarUrl ? (
+                                            <img
+                                                src={avatarUrl}
+                                                alt={profileTitle}
+                                                className="jf-user-chip-avatar"
+                                                onError={(event) => {
+                                                    event.currentTarget.onerror = null;
+                                                    event.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                                                }}
+                                            />
+                                        ) : (
+                                            <i className={`bi ${profileIcon}`}></i>
+                                        )}
                                     </span>
                                     <span className="jf-user-chip-info">
                                         <strong>{profileTitle}</strong>
@@ -184,6 +198,14 @@ const Header = () => {
                                             <Link className="dropdown-item jf-user-dropdown-item" to={dashboardLink} onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-speedometer2 text-primary"></i>
                                                 <span>Dashboard</span>
+                                            </Link>
+                                        </li>
+                                    )}
+                                    {messagingLink && (
+                                        <li className="jf-user-dropdown-row">
+                                            <Link className="dropdown-item jf-user-dropdown-item" to={messagingLink} onClick={collapseMobileNavbar}>
+                                                <i className="bi bi-chat-dots text-primary"></i>
+                                                <span>Tin nhắn</span>
                                             </Link>
                                         </li>
                                     )}
@@ -222,7 +244,13 @@ const Header = () => {
                                     <li><hr className="dropdown-divider" /></li>
                                     <li className="jf-user-dropdown-row jf-user-dropdown-row-last">
                                         <button className="btn btn-link text-decoration-none jf-user-logout-btn"
-                                                onClick={() => { localStorage.removeItem('user'); localStorage.removeItem('token'); window.location.reload(); }}>
+                                                onClick={() => {
+                                                    const confirmed = window.confirm('Bạn có chắc chắn muốn đăng xuất?');
+                                                    if (!confirmed) return;
+                                                    localStorage.removeItem('user');
+                                                    localStorage.removeItem('token');
+                                                    window.location.reload();
+                                                }}>
                                             Đăng xuất
                                         </button>
                                     </li>

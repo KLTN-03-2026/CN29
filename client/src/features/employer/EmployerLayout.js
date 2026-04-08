@@ -11,9 +11,13 @@ const EmployerLayout = () => {
 
     const displayName = user?.name || user?.hoTen || user?.fullName || user?.email || 'Nhà tuyển dụng';
     const roleLabel = user?.role || user?.vaiTro || 'Nhà tuyển dụng';
+    const avatarUrl = String(user?.avatar || user?.avatarAbsoluteUrl || user?.AnhDaiDien || user?.avatarUrl || '').trim();
     const initial = String(displayName || 'N').trim().charAt(0).toUpperCase();
 
     const handleLogout = () => {
+        const confirmed = window.confirm('Bạn có chắc chắn muốn đăng xuất?');
+        if (!confirmed) return;
+
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         navigate('/login');
@@ -25,6 +29,7 @@ const EmployerLayout = () => {
         { path: '/employer/cv-manage', icon: 'bi-bookmark-check', label: 'Quản lý CV', subtitle: 'Danh sách CV đã lưu' },
         { path: '/employer/jobs', icon: 'bi-briefcase', label: 'Quản lý tin tuyển dụng', subtitle: 'Đăng và theo dõi tin' },
         { path: '/employer/applications', icon: 'bi-file-earmark-person', label: 'Quản lý hồ sơ ứng tuyển', subtitle: 'Duyệt hồ sơ ứng viên' },
+        { path: '/employer/messages', icon: 'bi-chat-dots', label: 'Tin nhắn', subtitle: 'Trao đổi với ứng viên' },
         { path: '/employer/statistics', icon: 'bi-bar-chart', label: 'Thống kê & báo cáo', subtitle: 'Hiệu quả tuyển dụng' },
         { path: '/employer/company', icon: 'bi-building', label: 'Thông tin công ty', subtitle: 'Hồ sơ doanh nghiệp' },
         { path: '/employer/account', icon: 'bi-person', label: 'Tài khoản', subtitle: 'Cập nhật hồ sơ cá nhân' }
@@ -61,18 +66,22 @@ const EmployerLayout = () => {
             />
 
             <aside className={`employer-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
-                <div className="employer-sidebar-header">
-                    <div className="employer-brand-mark">JF</div>
-                    {!sidebarCollapsed && (
-                        <div className="employer-brand-copy">
-                            <h5 className="mb-0">JobFinder</h5>
-                            <small>Employer Console</small>
-                        </div>
-                    )}
-                </div>
-
                 <div className="employer-sidebar-user">
-                    <div className="employer-user-avatar">{initial}</div>
+                    <div className="employer-user-avatar">
+                        {avatarUrl ? (
+                            <img
+                                src={avatarUrl}
+                                alt={displayName}
+                                className="employer-user-avatar-image"
+                                onError={(event) => {
+                                    event.currentTarget.onerror = null;
+                                    event.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                                }}
+                            />
+                        ) : (
+                            initial
+                        )}
+                    </div>
                     {!sidebarCollapsed && (
                         <div className="employer-user-info">
                             <h6>{displayName}</h6>
@@ -135,7 +144,19 @@ const EmployerLayout = () => {
                         </Link>
                         <div className="employer-header-user">
                             <div className="employer-user-pill-icon">
-                                <i className="bi bi-shield-check"></i>
+                                {avatarUrl ? (
+                                    <img
+                                        src={avatarUrl}
+                                        alt={displayName}
+                                        className="employer-user-pill-avatar"
+                                        onError={(event) => {
+                                            event.currentTarget.onerror = null;
+                                            event.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                                        }}
+                                    />
+                                ) : (
+                                    <i className="bi bi-shield-check"></i>
+                                )}
                             </div>
                             <div className="employer-user-pill-copy">
                                 <strong>{displayName}</strong>

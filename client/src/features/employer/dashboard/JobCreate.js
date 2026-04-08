@@ -18,6 +18,19 @@ const levelOptions = [
 ];
 const jobFieldOptions = ['CNTT', 'Marketing', 'Bán hàng', 'Hành chính', 'Kỹ thuật', 'Tài chính', 'Sản xuất', 'Dịch vụ', 'Khác'];
 
+const normalizeProvinceEntry = (entry) => {
+    if (!entry) return '';
+    if (typeof entry === 'string') return entry.trim();
+    return String(
+        entry.TenTinh
+        || entry.name
+        || entry.ten
+        || entry.province
+        || entry.label
+        || ''
+    ).trim();
+};
+
 const RichTextField = ({ label, onChange, rows = 4, placeholder, initialValue = '' }) => {
     const editorRef = useRef(null);
     const selectionRef = useRef(null);
@@ -231,6 +244,134 @@ const RichTextField = ({ label, onChange, rows = 4, placeholder, initialValue = 
     );
 };
 
+const JobsStyleSelect = ({
+    value,
+    options,
+    onChange,
+    placeholder = 'Chọn',
+    searchable = false,
+    searchPlaceholder = 'Nhập để tìm...',
+    locationMode = false,
+    disabled = false,
+    emptyText = 'Không tìm thấy lựa chọn'
+}) => {
+    const rootRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const [isOpen, setIsOpen] = useState(false);
+    const [query, setQuery] = useState('');
+
+    const normalizedOptions = useMemo(() => {
+        const source = Array.isArray(options) ? options : [];
+        return Array.from(new Set(source.map((item) => String(item || '').trim()).filter(Boolean)));
+    }, [options]);
+
+    const visibleOptions = useMemo(() => {
+        const keyword = String(query || '').trim().toLowerCase();
+        if (!keyword) return normalizedOptions;
+        return normalizedOptions.filter((item) => item.toLowerCase().includes(keyword));
+    }, [normalizedOptions, query]);
+
+    useEffect(() => {
+        if (!isOpen) return undefined;
+
+        const closeIfOutside = (event) => {
+            if (rootRef.current && !rootRef.current.contains(event.target)) {
+                setIsOpen(false);
+            }
+        };
+
+        const closeOnEscape = (event) => {
+            if (event.key === 'Escape') {
+                setIsOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', closeIfOutside);
+        document.addEventListener('keydown', closeOnEscape);
+        return () => {
+            document.removeEventListener('mousedown', closeIfOutside);
+            document.removeEventListener('keydown', closeOnEscape);
+        };
+    }, [isOpen]);
+
+    useEffect(() => {
+        if (!isOpen) {
+            setQuery('');
+            return;
+        }
+
+        if (!searchable) return;
+        const id = window.setTimeout(() => {
+            searchInputRef.current?.focus();
+        }, 0);
+        return () => window.clearTimeout(id);
+    }, [isOpen, searchable]);
+
+    const selectedLabel = value || placeholder;
+
+    return (
+        <div
+            ref={rootRef}
+            className={`jf-jobs-select job-create-select ${isOpen ? 'is-open' : ''} ${disabled ? 'is-disabled' : ''}`}
+        >
+            <button
+                type="button"
+                className="jf-jobs-select-trigger"
+                onClick={() => {
+                    if (disabled) return;
+                    setIsOpen((prev) => !prev);
+                }}
+                aria-haspopup="listbox"
+                aria-expanded={isOpen}
+                disabled={disabled}
+            >
+                <span className="jf-jobs-select-text">{selectedLabel}</span>
+                <i className="bi bi-chevron-down"></i>
+            </button>
+
+            {isOpen ? (
+                <div
+                    className={`jf-jobs-select-menu ${locationMode ? 'jf-jobs-select-menu--location' : ''}`}
+                    role="listbox"
+                >
+                    {searchable ? (
+                        <div className="jf-jobs-select-search-wrap">
+                            <i className="bi bi-search"></i>
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                value={query}
+                                onChange={(event) => setQuery(event.target.value)}
+                                placeholder={searchPlaceholder}
+                            />
+                        </div>
+                    ) : null}
+
+                    <div className="jf-jobs-select-scroll">
+                        {visibleOptions.length === 0 ? (
+                            <div className="jf-jobs-select-empty">{emptyText}</div>
+                        ) : (
+                            visibleOptions.map((item) => (
+                                <button
+                                    key={item}
+                                    type="button"
+                                    className={`jf-jobs-select-option ${value === item ? 'is-active' : ''}`}
+                                    onClick={() => {
+                                        onChange(item);
+                                        setIsOpen(false);
+                                    }}
+                                >
+                                    {item}
+                                </button>
+                            ))
+                        )}
+                    </div>
+                </div>
+            ) : null}
+        </div>
+    );
+};
+
 const USD_TO_VND_RATE = 25000;
 const MAX_VND_SALARY = 999999999;
 
@@ -321,8 +462,16 @@ const JobCreate = () => {
             try {
                 const res = await fetch('/api/provinces');
                 if (res.ok) {
-                    const data = await res.json();
-                    setProvinces(data);
+                    const payload = await res.json().catch(() => []);
+                    const source = Array.isArray(payload)
+                        ? payload
+                        : Array.isArray(payload?.data)
+                            ? payload.data
+                            : [];
+                    const normalized = Array.from(
+                        new Set(source.map(normalizeProvinceEntry).filter(Boolean))
+                    ).sort((a, b) => a.localeCompare(b, 'vi'));
+                    setProvinces(normalized);
                 }
             } catch (err) {
                 console.error('Error fetching provinces:', err);
@@ -333,8 +482,11 @@ const JobCreate = () => {
         fetchProvinces();
     }, []);
 
-    const setField = (key) => (e) => {
-        setForm((prev) => ({ ...prev, [key]: e.target.value }));
+    const setField = (key) => (valueOrEvent) => {
+        const value = valueOrEvent && valueOrEvent.target
+            ? valueOrEvent.target.value
+            : valueOrEvent;
+        setForm((prev) => ({ ...prev, [key]: value }));
     };
 
     const setRichField = (key) => (html) => {
@@ -513,6 +665,10 @@ const JobCreate = () => {
                             />
 
                             <div className="col-12">
+                                <h5 className="job-create-section-title">Địa điểm làm việc</h5>
+                            </div>
+
+                            <div className="col-12">
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-6">
                                         <label className="form-label">Địa điểm</label>
@@ -526,21 +682,23 @@ const JobCreate = () => {
 
                                     <div className="col-md-6">
                                         <label className="form-label">Thành phố</label>
-                                        <input
-                                            className="form-control"
-                                            list="province-list"
+                                        <JobsStyleSelect
                                             value={form.city}
+                                            options={provinces}
                                             onChange={setField('city')}
-                                            placeholder={loadingProvinces ? 'Đang tải danh sách tỉnh/thành...' : 'Gõ để tìm tỉnh/thành...'}
+                                            placeholder={loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh/thành'}
+                                            searchable
+                                            searchPlaceholder="Nhập để tìm tỉnh/thành"
+                                            locationMode
+                                            emptyText="Không tìm thấy tỉnh/thành phù hợp"
                                             disabled={loadingProvinces}
                                         />
-                                        <datalist id="province-list">
-                                            {provinces.map((province) => (
-                                                <option key={province} value={province} />
-                                            ))}
-                                        </datalist>
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="col-12">
+                                <h5 className="job-create-section-title">Mức lương</h5>
                             </div>
 
                             <div className="col-12">
@@ -569,71 +727,59 @@ const JobCreate = () => {
 
                                     <div className="col-md-2">
                                         <label className="form-label">Tiền tệ</label>
-                                        <select
-                                            className="form-select"
+                                        <JobsStyleSelect
                                             value={salaryCurrency}
-                                            onChange={(e) => setSalaryCurrency(e.target.value)}
-                                        >
-                                            <option value="VND">VND</option>
-                                            <option value="USD">USD</option>
-                                        </select>
+                                            options={['VND', 'USD']}
+                                            onChange={setSalaryCurrency}
+                                        />
                                     </div>
 
                                     <div className="col-md-4">
                                         <label className="form-label">Kiểu lương</label>
-                                        <select
-                                            className="form-select"
+                                        <JobsStyleSelect
                                             value={form.salaryType}
+                                            options={salaryTypes}
                                             onChange={setField('salaryType')}
-                                        >
-                                            {salaryTypes.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                 </div>
                             </div>
 
                             <div className="col-12">
+                                <h5 className="job-create-section-title">Tiêu chí tuyển dụng</h5>
+                            </div>
+
+                            <div className="col-12">
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-4">
                                         <label className="form-label">Kinh nghiệm</label>
-                                        <select
-                                            className="form-select"
+                                        <JobsStyleSelect
                                             value={form.experience}
+                                            options={experienceOptions}
                                             onChange={setField('experience')}
-                                        >
-                                            {experienceOptions.map((opt) => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                     <div className="col-md-4">
                                         <label className="form-label">Cấp bậc</label>
-                                        <select
-                                            className="form-select"
+                                        <JobsStyleSelect
                                             value={form.level}
+                                            options={levelOptions}
                                             onChange={setField('level')}
-                                        >
-                                            {levelOptions.map((opt) => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                     <div className="col-md-4">
                                         <label className="form-label">Lĩnh vực công việc</label>
-                                        <select
-                                            className="form-select"
+                                        <JobsStyleSelect
                                             value={form.jobField}
+                                            options={jobFieldOptions}
                                             onChange={setField('jobField')}
-                                        >
-                                            {jobFieldOptions.map((opt) => (
-                                                <option key={opt} value={opt}>{opt}</option>
-                                            ))}
-                                        </select>
+                                            searchable
+                                            searchPlaceholder="Nhập để tìm lĩnh vực"
+                                            emptyText="Không tìm thấy lĩnh vực phù hợp"
+                                        />
                                     </div>
                                 </div>
                             </div>
@@ -642,28 +788,20 @@ const JobCreate = () => {
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-4">
                                         <label className="form-label">Hình thức</label>
-                                        <select
-                                            className="form-select"
+                                        <JobsStyleSelect
                                             value={form.employmentType}
+                                            options={employmentTypes}
                                             onChange={setField('employmentType')}
-                                        >
-                                            {employmentTypes.map((t) => (
-                                                <option key={t} value={t}>{t}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                     <div className="col-md-4">
                                         <label className="form-label">Trạng thái</label>
-                                        <select
-                                            className="form-select"
+                                        <JobsStyleSelect
                                             value={form.status}
+                                            options={statuses}
                                             onChange={setField('status')}
-                                        >
-                                            {statuses.map((s) => (
-                                                <option key={s} value={s}>{s}</option>
-                                            ))}
-                                        </select>
+                                        />
                                     </div>
 
                                     <div className="col-md-4">

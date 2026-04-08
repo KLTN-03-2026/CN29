@@ -36,37 +36,18 @@ function registerValidSW(swUrl, config) {
     });
 }
 
-function checkValidServiceWorker(swUrl, config) {
-  fetch(swUrl, {
-    headers: { "Service-Worker": "script" },
-  })
-    .then((response) => {
-      const contentType = response.headers.get("content-type");
-
-      if (
-        response.status === 404 ||
-        (contentType != null && contentType.indexOf("javascript") === -1)
-      ) {
-        navigator.serviceWorker.ready.then((registration) => {
-          registration.unregister().then(() => {
-            window.location.reload();
-          });
-        });
-      } else {
-        registerValidSW(swUrl, config);
-      }
-    })
-    .catch(() => {
-      console.info("No internet connection found. App is running in offline mode.");
-    });
-}
-
 export function register(config) {
   if (process.env.NODE_ENV !== "production") {
     return;
   }
 
   if (!("serviceWorker" in navigator)) {
+    return;
+  }
+
+  // Avoid stale UI during localhost QA by disabling service worker caching locally.
+  if (isLocalhost) {
+    unregister();
     return;
   }
 
@@ -77,16 +58,7 @@ export function register(config) {
 
   window.addEventListener("load", () => {
     const swUrl = `${process.env.PUBLIC_URL}/sw.js`;
-
-    if (isLocalhost) {
-      checkValidServiceWorker(swUrl, config);
-
-      navigator.serviceWorker.ready.then(() => {
-        console.info("Service worker is active (localhost).");
-      });
-    } else {
-      registerValidSW(swUrl, config);
-    }
+    registerValidSW(swUrl, config);
   });
 }
 

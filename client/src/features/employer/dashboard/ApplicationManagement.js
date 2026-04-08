@@ -1,5 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
+
+const APPLICATION_FILTERS = [
+    { key: 'all', label: 'Tất cả', icon: 'bi-collection' },
+    { key: 'new', label: 'Chưa xem', icon: 'bi-envelope-paper' },
+    { key: 'viewed', label: 'Đã xem', icon: 'bi-eye' },
+    { key: 'interview', label: 'Phỏng vấn', icon: 'bi-calendar2-check' },
+    { key: 'rejected', label: 'Từ chối', icon: 'bi-x-circle' }
+];
+
+const STATUS_CLASS_BY_VALUE = {
+    'Đã nộp': 'viewed',
+    'Đang xem xét': 'contacted',
+    'Phỏng vấn': 'suitable',
+    'Đề nghị': 'suitable',
+    'Từ chối': 'rejected',
+    'Đã nhận': 'suitable'
+};
+
+const getStatusValue = (app) => String(app?.TrangThai || 'Đã nộp').trim();
 
 const ApplicationManagement = () => {
     const API_BASE = CLIENT_API_BASE;
@@ -13,11 +32,7 @@ const ApplicationManagement = () => {
     const [messages, setMessages] = useState([]);
     const [messagesLoading, setMessagesLoading] = useState(false);
 
-    useEffect(() => {
-        loadApplications();
-    }, []);
-
-    const loadApplications = async () => {
+    const loadApplications = useCallback(async () => {
         setLoading(true);
         setError('');
         const token = localStorage.getItem('token');
@@ -32,7 +47,7 @@ const ApplicationManagement = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không tải được hồ sơ');
+            if (!res.ok) throw new Error(data?.error || 'Không tải được hồ sơ ứng tuyển');
 
             setApplications(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -40,23 +55,36 @@ const ApplicationManagement = () => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [API_BASE]);
 
-    const filteredApps = applications.filter((app) => {
-        if (filter === 'all') return true;
-        if (filter === 'new') return app.TrangThai === 'Đã nộp';
-        if (filter === 'viewed') return app.TrangThai !== 'Đã nộp';
-        if (filter === 'suitable') return app.TrangThai === 'Phỏng vấn';
-        return true;
-    });
+    useEffect(() => {
+        loadApplications();
+    }, [loadApplications]);
 
-    const countByStatus = (status) => {
-        if (status === 'all') return applications.length;
-        if (status === 'new') return applications.filter((a) => a.TrangThai === 'Đã nộp').length;
-        if (status === 'viewed') return applications.filter((a) => a.TrangThai !== 'Đã nộp').length;
-        if (status === 'suitable') return applications.filter((a) => a.TrangThai === 'Phỏng vấn').length;
-        return 0;
-    };
+    const counts = useMemo(() => {
+        const all = applications.length;
+        const newCount = applications.filter((app) => getStatusValue(app) === 'Đã nộp').length;
+        const viewed = applications.filter((app) => getStatusValue(app) !== 'Đã nộp').length;
+        const interview = applications.filter((app) => ['Phỏng vấn', 'Đề nghị'].includes(getStatusValue(app))).length;
+        const rejected = applications.filter((app) => getStatusValue(app) === 'Từ chối').length;
+
+        return {
+            all,
+            new: newCount,
+            viewed,
+            interview,
+            rejected
+        };
+    }, [applications]);
+
+    const filteredApps = useMemo(() => {
+        if (filter === 'all') return applications;
+        if (filter === 'new') return applications.filter((app) => getStatusValue(app) === 'Đã nộp');
+        if (filter === 'viewed') return applications.filter((app) => getStatusValue(app) !== 'Đã nộp');
+        if (filter === 'interview') return applications.filter((app) => ['Phỏng vấn', 'Đề nghị'].includes(getStatusValue(app)));
+        if (filter === 'rejected') return applications.filter((app) => getStatusValue(app) === 'Từ chối');
+        return applications;
+    }, [applications, filter]);
 
     const openDetails = async (app) => {
         setSelectedApp(app);
@@ -129,8 +157,8 @@ const ApplicationManagement = () => {
                     app.MaUngTuyen === appId ? { ...app, TrangThai: newStatus } : app
                 )
             );
-            setSelectedApp(null);
-            alert(`Đã ${newStatus === 'Phù hợp' ? 'chấp nhận' : 'từ chối'} ứng viên thành công!`);
+            setSelectedApp((prev) => (prev?.MaUngTuyen === appId ? { ...prev, TrangThai: newStatus } : prev));
+            alert(`Đã cập nhật trạng thái hồ sơ thành "${newStatus}".`);
         } catch (err) {
             alert(err?.message || 'Có lỗi xảy ra');
         } finally {
@@ -140,56 +168,53 @@ const ApplicationManagement = () => {
 
     return (
         <div>
-            <h2 className="mb-4">Quản lý hồ sơ ứng tuyển</h2>
+            <div className="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
+                <div>
+                    <h2 className="mb-1">Quản lý hồ sơ ứng tuyển</h2>
+                    <p className="text-muted mb-0">Theo dõi nhanh hồ sơ mới, trạng thái xử lý và phản hồi ứng viên.</p>
+                </div>
+            </div>
 
             {error && <div className="alert alert-danger">{error}</div>}
 
+            <div className="card border-0 shadow-sm mb-3">
+                <div className="card-body">
+                    <div className="cv-manage-filter-wrap" role="tablist" aria-label="Lọc hồ sơ ứng tuyển">
+                        {APPLICATION_FILTERS.map((item) => {
+                            const active = filter === item.key;
+                            return (
+                                <button
+                                    key={item.key}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={active}
+                                    className={`cv-manage-filter-btn ${active ? 'active' : ''}`}
+                                    onClick={() => setFilter(item.key)}
+                                >
+                                    <span className="cv-manage-filter-icon"><i className={`bi ${item.icon}`}></i></span>
+                                    <span className="cv-manage-filter-label">{item.label}</span>
+                                    <span className="cv-manage-filter-count">{counts[item.key] || 0}</span>
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            </div>
+
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
-                    <div className="mb-3">
-                        <div className="btn-group" role="group">
-                            <button
-                                type="button"
-                                className={`btn btn-outline-primary ${filter === 'all' ? 'active' : ''}`}
-                                onClick={() => setFilter('all')}
-                            >
-                                Tất cả ({countByStatus('all')})
-                            </button>
-                            <button
-                                type="button"
-                                className={`btn btn-outline-primary ${filter === 'new' ? 'active' : ''}`}
-                                onClick={() => setFilter('new')}
-                            >
-                                Chưa xem ({countByStatus('new')})
-                            </button>
-                            <button
-                                type="button"
-                                className={`btn btn-outline-primary ${filter === 'viewed' ? 'active' : ''}`}
-                                onClick={() => setFilter('viewed')}
-                            >
-                                Đã xem ({countByStatus('viewed')})
-                            </button>
-                            <button
-                                type="button"
-                                className={`btn btn-outline-primary ${filter === 'suitable' ? 'active' : ''}`}
-                                onClick={() => setFilter('suitable')}
-                            >
-                                Phỏng vấn ({countByStatus('suitable')})
-                            </button>
-                        </div>
-                    </div>
-
-                    {loading && <p className="text-center py-5">Đang tải...</p>}
+                    {loading && <p className="text-center py-5 mb-0">Đang tải danh sách hồ sơ...</p>}
 
                     {!loading && filteredApps.length === 0 && (
-                        <p className="text-muted text-center py-5">
-                            {filter === 'all' ? 'Chưa có hồ sơ ứng tuyển nào.' : 'Không có hồ sơ phù hợp.'}
-                        </p>
+                        <div className="text-muted text-center py-5">
+                            <i className="bi bi-inbox fs-2 d-block mb-2"></i>
+                            {filter === 'all' ? 'Chưa có hồ sơ ứng tuyển nào.' : 'Không có hồ sơ phù hợp bộ lọc.'}
+                        </div>
                     )}
 
                     {!loading && filteredApps.length > 0 && (
                         <div className="table-responsive">
-                            <table className="table table-hover">
+                            <table className="table table-hover align-middle">
                                 <thead>
                                     <tr>
                                         <th>Ứng viên</th>
@@ -197,49 +222,58 @@ const ApplicationManagement = () => {
                                         <th>Vị trí ứng tuyển</th>
                                         <th>Ngày nộp</th>
                                         <th>Trạng thái</th>
-                                        <th></th>
+                                        <th className="text-end">Hành động</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {filteredApps.map((app) => (
-                                        <tr key={app.MaUngTuyen}>
-                                            <td className="fw-semibold">{app.TenUngVien || 'N/A'}</td>
-                                            <td>{app.EmailUngVien || 'N/A'}</td>
-                                            <td>{app.TieuDe || 'N/A'}</td>
-                                            <td>{app.NgayNop ? new Date(app.NgayNop).toLocaleDateString('vi-VN') : 'N/A'}</td>
-                                            <td>
-                                                <span className={`badge bg-${app.TrangThai === 'Đã nộp' ? 'primary' : app.TrangThai === 'Phỏng vấn' ? 'success' : app.TrangThai === 'Từ chối' ? 'danger' : 'secondary'}`}>
-                                                    {app.TrangThai || 'Đã nộp'}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className="btn btn-sm btn-outline-primary me-1"
-                                                    onClick={() => openDetails(app)}
-                                                >
-                                                    <i className="bi bi-eye"></i> Chi tiết
-                                                </button>
-                                                {app.TrangThai === 'Đã nộp' && (
-                                                    <>
+                                    {filteredApps.map((app) => {
+                                        const statusValue = getStatusValue(app);
+                                        return (
+                                            <tr key={app.MaUngTuyen}>
+                                                <td className="fw-semibold">{app.TenUngVien || 'N/A'}</td>
+                                                <td>{app.EmailUngVien || 'N/A'}</td>
+                                                <td>{app.TieuDe || 'N/A'}</td>
+                                                <td>{app.NgayNop ? new Date(app.NgayNop).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                                                <td>
+                                                    <span className={`cv-manage-status-pill ${STATUS_CLASS_BY_VALUE[statusValue] || 'default'}`}>
+                                                        {statusValue}
+                                                    </span>
+                                                </td>
+                                                <td className="text-end">
+                                                    <div className="cv-manage-row-actions">
                                                         <button
-                                                            className="btn btn-sm btn-success me-1"
-                                                            onClick={() => updateApplicationStatus(app.MaUngTuyen, 'Phỏng vấn')}
-                                                            disabled={updating}
+                                                            className="btn btn-sm btn-outline-primary"
+                                                            onClick={() => openDetails(app)}
                                                         >
-                                                            <i className="bi bi-check-circle"></i> Chấp nhận
+                                                            <i className="bi bi-eye me-1"></i>
+                                                            Chi tiết
                                                         </button>
-                                                        <button
-                                                            className="btn btn-sm btn-danger"
-                                                            onClick={() => updateApplicationStatus(app.MaUngTuyen, 'Từ chối')}
-                                                            disabled={updating}
-                                                        >
-                                                            <i className="bi bi-x-circle"></i> Từ chối
-                                                        </button>
-                                                    </>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
+
+                                                        {(statusValue === 'Đã nộp' || statusValue === 'Đang xem xét') && (
+                                                            <>
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-success"
+                                                                    onClick={() => updateApplicationStatus(app.MaUngTuyen, 'Phỏng vấn')}
+                                                                    disabled={updating}
+                                                                >
+                                                                    <i className="bi bi-check2-circle me-1"></i>
+                                                                    Mời phỏng vấn
+                                                                </button>
+                                                                <button
+                                                                    className="btn btn-sm btn-outline-danger"
+                                                                    onClick={() => updateApplicationStatus(app.MaUngTuyen, 'Từ chối')}
+                                                                    disabled={updating}
+                                                                >
+                                                                    <i className="bi bi-x-circle me-1"></i>
+                                                                    Từ chối
+                                                                </button>
+                                                            </>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
                                 </tbody>
                             </table>
                         </div>
@@ -287,16 +321,8 @@ const ApplicationManagement = () => {
                                 <div className="row mb-3">
                                     <div className="col-md-6">
                                         <h6 className="text-muted">Trạng thái</h6>
-                                        <span
-                                            className={`badge bg-${
-                                                selectedApp.TrangThai === 'Đã nộp'
-                                                    ? 'primary'
-                                                    : selectedApp.TrangThai === 'Phù hợp'
-                                                    ? 'success'
-                                                    : 'danger'
-                                            }`}
-                                        >
-                                            {selectedApp.TrangThai || 'Đã nộp'}
+                                        <span className={`cv-manage-status-pill ${STATUS_CLASS_BY_VALUE[getStatusValue(selectedApp)] || 'default'}`}>
+                                            {getStatusValue(selectedApp)}
                                         </span>
                                     </div>
                                     <div className="col-md-6">
@@ -307,7 +333,7 @@ const ApplicationManagement = () => {
                                 {selectedApp.ThuGioiThieu && (
                                     <div className="mb-3">
                                         <h6 className="text-muted">Thư giới thiệu</h6>
-                                        <p className="border rounded p-3 bg-light">
+                                        <p className="border rounded p-3 bg-light mb-0">
                                             {selectedApp.ThuGioiThieu}
                                         </p>
                                     </div>
@@ -320,10 +346,10 @@ const ApplicationManagement = () => {
                                             {selectedApp.CvFileAbsoluteUrl ? (
                                                 <>
                                                     <a className="btn btn-sm btn-outline-primary" href={selectedApp.CvFileAbsoluteUrl} target="_blank" rel="noreferrer">
-                                                        <i className="bi bi-eye"></i> Xem CV
+                                                        <i className="bi bi-eye me-1"></i> Xem CV
                                                     </a>
                                                     <a className="btn btn-sm btn-outline-secondary" href={selectedApp.CvFileAbsoluteUrl} download>
-                                                        <i className="bi bi-download"></i> Tải CV
+                                                        <i className="bi bi-download me-1"></i> Tải CV
                                                     </a>
                                                 </>
                                             ) : (
@@ -370,21 +396,21 @@ const ApplicationManagement = () => {
                                 </div>
                             </div>
                             <div className="modal-footer">
-                                {selectedApp.TrangThai === 'Đã nộp' && (
+                                {(getStatusValue(selectedApp) === 'Đã nộp' || getStatusValue(selectedApp) === 'Đang xem xét') && (
                                     <>
                                         <button
                                             className="btn btn-success"
                                             onClick={() => updateApplicationStatus(selectedApp.MaUngTuyen, 'Phỏng vấn')}
                                             disabled={updating}
                                         >
-                                            <i className="bi bi-check-circle"></i> Chấp nhận
+                                            <i className="bi bi-check-circle me-1"></i> Mời phỏng vấn
                                         </button>
                                         <button
                                             className="btn btn-danger"
                                             onClick={() => updateApplicationStatus(selectedApp.MaUngTuyen, 'Từ chối')}
                                             disabled={updating}
                                         >
-                                            <i className="bi bi-x-circle"></i> Từ chối
+                                            <i className="bi bi-x-circle me-1"></i> Từ chối
                                         </button>
                                     </>
                                 )}

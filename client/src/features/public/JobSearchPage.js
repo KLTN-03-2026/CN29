@@ -196,6 +196,8 @@ const JobSearchPage = () => {
   const jobsListRef = useRef(null);
   const industryRef = useRef(null);
   const locationRef = useRef(null);
+  const companyFieldRef = useRef(null);
+  const jobFieldRef = useRef(null);
   const locationSearchInputRef = useRef(null);
 
   const [jobs, setJobs] = useState([]);
@@ -213,6 +215,8 @@ const JobSearchPage = () => {
 
   const [isIndustryOpen, setIsIndustryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
+  const [isCompanyFieldOpen, setIsCompanyFieldOpen] = useState(false);
+  const [isJobFieldOpen, setIsJobFieldOpen] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
 
   const [expAdv, setExpAdv] = useState(ADV_DEFAULTS.exp);
@@ -318,12 +322,22 @@ const JobSearchPage = () => {
       if (locationRef.current && !locationRef.current.contains(event.target)) {
         setIsLocationOpen(false);
       }
+
+      if (companyFieldRef.current && !companyFieldRef.current.contains(event.target)) {
+        setIsCompanyFieldOpen(false);
+      }
+
+      if (jobFieldRef.current && !jobFieldRef.current.contains(event.target)) {
+        setIsJobFieldOpen(false);
+      }
     };
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
         setIsIndustryOpen(false);
         setIsLocationOpen(false);
+        setIsCompanyFieldOpen(false);
+        setIsJobFieldOpen(false);
       }
     };
 
@@ -473,6 +487,8 @@ const JobSearchPage = () => {
     event.preventDefault();
     setIsIndustryOpen(false);
     setIsLocationOpen(false);
+    setIsCompanyFieldOpen(false);
+    setIsJobFieldOpen(false);
     jobsListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
@@ -728,44 +744,102 @@ const JobSearchPage = () => {
                 <div className="jf-jobs-salary-range">
                   <input
                     type="number"
+                    className="jf-jobs-salary-input jf-jobs-salary-input--from"
                     placeholder="Từ"
                     value={salaryFrom}
                     onChange={(event) => setSalaryFrom(event.target.value)}
                   />
                   <input
                     type="number"
+                    className="jf-jobs-salary-input jf-jobs-salary-input--to"
                     placeholder="Đến"
                     value={salaryTo}
                     onChange={(event) => setSalaryTo(event.target.value)}
                   />
-                  <span>triệu</span>
+                  <span className="jf-jobs-salary-unit">triệu</span>
                 </div>
               </div>
 
               <div className="jf-jobs-filter-group">
                 <h3>Lĩnh vực công ty</h3>
-                <select
-                  className="jf-jobs-field-select"
-                  value={companyField}
-                  onChange={(event) => setCompanyField(event.target.value)}
-                >
-                  {fieldOptions.map((option) => (
-                    <option key={`company-${option}`} value={option}>{option}</option>
-                  ))}
-                </select>
+                <div className={`jf-jobs-select jf-jobs-select--filter ${isCompanyFieldOpen ? 'is-open' : ''}`} ref={companyFieldRef}>
+                  <button
+                    type="button"
+                    className="jf-jobs-select-trigger"
+                    onClick={() => {
+                      setIsCompanyFieldOpen((prev) => !prev);
+                      setIsJobFieldOpen(false);
+                      setIsIndustryOpen(false);
+                      setIsLocationOpen(false);
+                    }}
+                    aria-haspopup="listbox"
+                    aria-expanded={isCompanyFieldOpen}
+                  >
+                    <span className="jf-jobs-select-text">{companyField}</span>
+                    <i className="bi bi-chevron-down"></i>
+                  </button>
+
+                  {isCompanyFieldOpen ? (
+                    <div className="jf-jobs-select-menu" role="listbox" aria-label="Chọn lĩnh vực công ty">
+                      <div className="jf-jobs-select-scroll">
+                        {fieldOptions.map((option) => (
+                          <button
+                            key={`company-${option}`}
+                            type="button"
+                            className={`jf-jobs-select-option ${companyField === option ? 'is-active' : ''}`}
+                            onClick={() => {
+                              setCompanyField(option);
+                              setIsCompanyFieldOpen(false);
+                            }}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               <div className="jf-jobs-filter-group">
                 <h3>Lĩnh vực công việc</h3>
-                <select
-                  className="jf-jobs-field-select"
-                  value={jobField}
-                  onChange={(event) => setJobField(event.target.value)}
-                >
-                  {fieldOptions.map((option) => (
-                    <option key={`job-${option}`} value={option}>{option}</option>
-                  ))}
-                </select>
+                <div className={`jf-jobs-select jf-jobs-select--filter ${isJobFieldOpen ? 'is-open' : ''}`} ref={jobFieldRef}>
+                  <button
+                    type="button"
+                    className="jf-jobs-select-trigger"
+                    onClick={() => {
+                      setIsJobFieldOpen((prev) => !prev);
+                      setIsCompanyFieldOpen(false);
+                      setIsIndustryOpen(false);
+                      setIsLocationOpen(false);
+                    }}
+                    aria-haspopup="listbox"
+                    aria-expanded={isJobFieldOpen}
+                  >
+                    <span className="jf-jobs-select-text">{jobField}</span>
+                    <i className="bi bi-chevron-down"></i>
+                  </button>
+
+                  {isJobFieldOpen ? (
+                    <div className="jf-jobs-select-menu" role="listbox" aria-label="Chọn lĩnh vực công việc">
+                      <div className="jf-jobs-select-scroll">
+                        {fieldOptions.map((option) => (
+                          <button
+                            key={`job-${option}`}
+                            type="button"
+                            className={`jf-jobs-select-option ${jobField === option ? 'is-active' : ''}`}
+                            onClick={() => {
+                              setJobField(option);
+                              setIsJobFieldOpen(false);
+                            }}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
               </div>
 
               <div className="jf-jobs-filter-group">

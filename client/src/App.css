@@ -303,11 +303,23 @@
   border-radius: 9px;
   display: grid;
   place-items: center;
+  overflow: hidden;
   color: #0ea5e9;
   background: #e0f2fe;
   border: 1px solid #bae6fd;
   font-size: 0.86rem;
   flex-shrink: 0;
+}
+
+.jf-user-chip-icon.has-avatar {
+  background: #ffffff;
+  border-color: #cfe0f6;
+}
+
+.jf-user-chip-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .jf-user-chip-info {
@@ -1447,6 +1459,11 @@
 
 .jf-jobs-select {
   position: relative;
+  z-index: 5;
+}
+
+.jf-jobs-select.is-open {
+  z-index: 2600;
 }
 
 .jf-jobs-select-trigger {
@@ -1493,7 +1510,7 @@
   top: calc(100% + 8px);
   left: 0;
   right: 0;
-  z-index: 45;
+  z-index: 2550;
   border: 1px solid #cfe0f1;
   border-radius: 12px;
   background: #ffffff;
@@ -1575,6 +1592,24 @@
   padding: 12px;
   color: #6b829a;
   font-size: 0.88rem;
+}
+
+.jf-jobs-select--filter .jf-jobs-select-trigger {
+  height: 36px;
+  border-radius: 10px;
+  background: #f8fbff;
+  font-size: 0.86rem;
+  font-weight: 700;
+  padding: 0 10px;
+}
+
+.jf-jobs-select--filter .jf-jobs-select-menu {
+  top: calc(100% + 6px);
+}
+
+.jf-jobs-select--filter .jf-jobs-select-option {
+  font-size: 0.86rem;
+  padding: 8px 10px;
 }
 
 .jf-jobs-search-submit {
@@ -1718,8 +1753,11 @@
 .jf-jobs-salary-range {
   margin-top: 10px;
   display: grid;
-  grid-template-columns: 1fr 1fr auto;
-  gap: 6px;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "from unit"
+    "to unit";
+  gap: 6px 8px;
   align-items: center;
 }
 
@@ -1734,7 +1772,19 @@
   color: #1c3854;
 }
 
-.jf-jobs-salary-range span {
+.jf-jobs-salary-input--from {
+  grid-area: from;
+}
+
+.jf-jobs-salary-input--to {
+  grid-area: to;
+}
+
+.jf-jobs-salary-range span,
+.jf-jobs-salary-unit {
+  grid-area: unit;
+  align-self: center;
+  white-space: nowrap;
   color: #5f7992;
   font-size: 0.8rem;
   font-weight: 700;

@@ -61,6 +61,34 @@ GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 REACT_APP_GOOGLE_CLIENT_ID=your_google_web_client_id.apps.googleusercontent.com
 ```
 
+### Khi deploy len Vercel (fix Error 400: origin_mismatch)
+
+Neu popup Google bao loi `Access blocked: Authorization Error` voi `Error 400: origin_mismatch`, nghia la domain frontend chua duoc khai bao trong Google Cloud Console.
+
+Thuc hien theo checklist sau:
+
+1. Tren Vercel (frontend):
+   - Them env `REACT_APP_GOOGLE_CLIENT_ID` (Production/Preview neu can).
+   - Redeploy sau khi luu env.
+
+2. Tren backend (Render/Railway/VM):
+   - Dat `GOOGLE_CLIENT_ID` giong client ID o frontend.
+   - Dat `CORS_ORIGIN` chua domain frontend, vi du:
+
+```dotenv
+CORS_ORIGIN=http://localhost:3000,https://job-finder-smoky-two.vercel.app
+```
+
+3. Tren Google Cloud Console:
+   - Vao APIs & Services > Credentials > OAuth 2.0 Client IDs.
+   - Mo Web Client dang dung.
+   - Them vao Authorized JavaScript origins:
+     - `http://localhost:3000`
+     - `https://job-finder-smoky-two.vercel.app` (hoac domain production cua ban)
+   - Save va cho 1-5 phut de cau hinh cap nhat.
+
+Luu y: URL preview cua Vercel co the thay doi theo moi lan deploy. Nen uu tien dung 1 domain production co dinh de tranh bi `origin_mismatch` lap lai.
+
 Tạo/cập nhật `server/.env`:
 
 ```bash

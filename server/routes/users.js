@@ -33,6 +33,23 @@ const parseJsonArray = (text) => {
   }
 };
 
+const toJsonText = (value) => {
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    return trimmed || '[]';
+  }
+  if (Array.isArray(value)) {
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '[]';
+    }
+  }
+  return '[]';
+};
+
+const firstDefined = (...values) => values.find((value) => value !== undefined && value !== null);
+
 const isSchemaDriftError = (err) => {
   const message = String(err?.message || '').toLowerCase();
   return (
@@ -330,23 +347,39 @@ router.get('/profile/:userId', (req, res) => {
   }
 
   const userQueries = [
-    `SELECT MaNguoiDung AS userId, Email, HoTen, SoDienThoai, DiaChi
+      `SELECT MaNguoiDung AS userId, Email, HoTen, SoDienThoai, DiaChi,
+        NgayTao AS NguoiDungNgayTao, NgayCapNhat AS NguoiDungNgayCapNhat
      FROM NguoiDung
      WHERE MaNguoiDung = ?`,
-    `SELECT MaNguoiDung AS userId, Email, HoTen, SoDienThoai
+      `SELECT MaNguoiDung AS userId, Email, HoTen, SoDienThoai,
+        NgayTao AS NguoiDungNgayTao, NgayCapNhat AS NguoiDungNgayCapNhat
      FROM NguoiDung
-     WHERE MaNguoiDung = ?`
+      WHERE MaNguoiDung = ?`,
+     `SELECT *
+      FROM NguoiDung
+      WHERE MaNguoiDung = ?`
   ];
 
   const candidateQueries = [
     `SELECT NgaySinh, GioiTinh, DiaChi AS DiaChiHoSo, ThanhPho, QuanHuyen, AnhDaiDien, ChucDanh, LinkCaNhan,
             GioiThieuBanThan, SoNamKinhNghiem, TrinhDoHocVan,
-            DanhSachHocVanJson, DanhSachKinhNghiemJson, DanhSachNgoaiNguJson
+        DanhSachHocVanJson, DanhSachKinhNghiemJson, DanhSachNgoaiNguJson,
+        NgayTao AS HoSoNgayTao, NgayCapNhat AS HoSoNgayCapNhat
      FROM HoSoUngVien
      WHERE MaNguoiDung = ?`,
-    `SELECT NgaySinh, GioiTinh, DiaChi AS DiaChiHoSo, ThanhPho, QuanHuyen, AnhDaiDien
+     `SELECT NgaySinh, GioiTinh, DiaChi AS DiaChiHoSo, ThanhPho, QuanHuyen, AnhDaiDien, ChucDanh, LinkCaNhan,
+          GioiThieuBanThan, SoNamKinhNghiem, TrinhDoHocVan,
+      EducationListJson, WorkListJson, LanguageListJson,
+      NgayTao AS HoSoNgayTao, NgayCapNhat AS HoSoNgayCapNhat
+      FROM HoSoUngVien
+      WHERE MaNguoiDung = ?`,
+      `SELECT NgaySinh, GioiTinh, DiaChi AS DiaChiHoSo, ThanhPho, QuanHuyen, AnhDaiDien,
+        NgayTao AS HoSoNgayTao, NgayCapNhat AS HoSoNgayCapNhat
      FROM HoSoUngVien
-     WHERE MaNguoiDung = ?`
+      WHERE MaNguoiDung = ?`,
+     `SELECT *
+      FROM HoSoUngVien
+      WHERE MaNguoiDung = ?`
   ];
 
   getWithFallback(userQueries, [userId], (userErr, userRow) => {
@@ -360,34 +393,82 @@ router.get('/profile/:userId', (req, res) => {
 
     getWithFallback(candidateQueries, [userId], (candidateErr, candidateRow) => {
       if (candidateErr) {
-        console.error('Error fetching profile candidate data:', candidateErr);
-        return res.status(500).json({ error: 'Lỗi truy vấn hồ sơ', details: candidateErr.message });
+        // Keep account page usable even when optional candidate profile query fails unexpectedly.
+        console.warn('Error fetching candidate profile details, continue with base user:', candidateErr.message);
       }
 
-      const row = { ...userRow, ...(candidateRow || {}) };
+      const row = { ...userRow, ...(candidateErr ? {} : (candidateRow || {})) };
+
+      const educationJson = firstDefined(row.DanhSachHocVanJson, row.EducationListJson);
+      const workJson = firstDefined(row.DanhSachKinhNghiemJson, row.WorkListJson);
+      const languageJson = firstDefined(row.DanhSachNgoaiNguJson, row.LanguageListJson);
+      const resolvedUserId = firstDefined(row.userId, row.MaNguoiDung, userId);
+      const resolvedFullName = row.HoTen || '';
+      const resolvedEmail = row.Email || '';
+      const resolvedPhone = row.SoDienThoai || '';
+      const resolvedAddress = row.DiaChi || row.DiaChiHoSo || '';
+      const resolvedBirthday = row.NgaySinh || '';
+      const resolvedGender = row.GioiTinh || 'Nam';
+      const resolvedCity = row.ThanhPho || '';
+      const resolvedDistrict = row.QuanHuyen || '';
+      const resolvedAvatar = row.AnhDaiDien || '';
+      const resolvedPosition = row.ChucDanh || '';
+      const resolvedPersonalLink = row.LinkCaNhan || '';
+      const resolvedIntro = row.GioiThieuBanThan || '';
+      const resolvedExperienceYears = Number(row.SoNamKinhNghiem || 0);
+      const resolvedEducation = row.TrinhDoHocVan || '';
+      const resolvedCreatedAt = firstDefined(row.HoSoNgayTao, row.NgayTao, row.NguoiDungNgayTao, '');
+      const resolvedUpdatedAt = firstDefined(row.HoSoNgayCapNhat, row.NgayCapNhat, row.NguoiDungNgayCapNhat, '');
+      const educationJsonText = toJsonText(educationJson);
+      const workJsonText = toJsonText(workJson);
+      const languageJsonText = toJsonText(languageJson);
 
       return res.json({
         success: true,
         profile: {
-          userId: row.userId,
-          email: row.Email,
-          fullName: row.HoTen || '',
-          phone: row.SoDienThoai || '',
-          address: row.DiaChi || row.DiaChiHoSo || '',
-          birthday: row.NgaySinh || '',
-          gender: row.GioiTinh || 'Nam',
-          city: row.ThanhPho || '',
-          district: row.QuanHuyen || '',
-          avatarUrl: row.AnhDaiDien || '',
-          avatarAbsoluteUrl: buildAbsoluteUrl(req, row.AnhDaiDien || ''),
-          position: row.ChucDanh || '',
-          personalLink: row.LinkCaNhan || '',
-          introHtml: row.GioiThieuBanThan || '',
-          experienceYears: Number(row.SoNamKinhNghiem || 0),
-          education: row.TrinhDoHocVan || '',
-          educationList: parseJsonArray(row.DanhSachHocVanJson),
-          workList: parseJsonArray(row.DanhSachKinhNghiemJson),
-          languageList: parseJsonArray(row.DanhSachNgoaiNguJson)
+          userId: resolvedUserId,
+          email: resolvedEmail,
+          fullName: resolvedFullName,
+          phone: resolvedPhone,
+          address: resolvedAddress,
+          birthday: resolvedBirthday,
+          gender: resolvedGender,
+          city: resolvedCity,
+          district: resolvedDistrict,
+          avatarUrl: resolvedAvatar,
+          avatarAbsoluteUrl: buildAbsoluteUrl(req, resolvedAvatar),
+          position: resolvedPosition,
+          personalLink: resolvedPersonalLink,
+          introHtml: resolvedIntro,
+          experienceYears: resolvedExperienceYears,
+          education: resolvedEducation,
+          educationList: parseJsonArray(educationJson),
+          workList: parseJsonArray(workJson),
+          languageList: parseJsonArray(languageJson),
+          createdAt: resolvedCreatedAt,
+          updatedAt: resolvedUpdatedAt,
+          raw: {
+            MaNguoiDung: resolvedUserId,
+            HoTen: resolvedFullName,
+            Email: resolvedEmail,
+            SoDienThoai: resolvedPhone,
+            NgaySinh: resolvedBirthday,
+            GioiTinh: resolvedGender,
+            DiaChi: resolvedAddress,
+            ThanhPho: resolvedCity,
+            QuanHuyen: resolvedDistrict,
+            GioiThieuBanThan: resolvedIntro,
+            SoNamKinhNghiem: resolvedExperienceYears,
+            TrinhDoHocVan: resolvedEducation,
+            AnhDaiDien: resolvedAvatar,
+            ChucDanh: resolvedPosition,
+            LinkCaNhan: resolvedPersonalLink,
+            DanhSachHocVanJson: educationJsonText,
+            DanhSachKinhNghiemJson: workJsonText,
+            DanhSachNgoaiNguJson: languageJsonText,
+            NgayTao: resolvedCreatedAt,
+            NgayCapNhat: resolvedUpdatedAt
+          }
         }
       });
     });

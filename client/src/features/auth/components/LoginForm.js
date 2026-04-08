@@ -4,7 +4,6 @@ import { useNotification } from '../../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const REMEMBER_KEY = 'remembered_login_identity';
-const DEFAULT_GOOGLE_CLIENT_ID = '495035856699-gn6kkq84ab3fvstlglpuspigu9vt3s6f.apps.googleusercontent.com';
 
 const resolveGoogleClientId = () => {
   const envValue = String(process.env.REACT_APP_GOOGLE_CLIENT_ID || '').trim();
@@ -22,7 +21,7 @@ const resolveGoogleClientId = () => {
     }
   }
 
-  return DEFAULT_GOOGLE_CLIENT_ID;
+  return '';
 };
 
 const parseJsonSafe = async (response) => {
@@ -135,7 +134,7 @@ const LoginForm = ({ onSuccess }) => {
     setError('');
 
     if (!GOOGLE_CLIENT_ID) {
-      setError('Thiếu cấu hình REACT_APP_GOOGLE_CLIENT_ID cho đăng nhập Google. Hãy kiểm tra file .env và khởi động lại ứng dụng.');
+      setError('Thiếu cấu hình REACT_APP_GOOGLE_CLIENT_ID cho đăng nhập Google. Nếu chạy trên Vercel, hãy thêm biến môi trường này trong Project Settings > Environment Variables rồi redeploy.');
       return;
     }
 

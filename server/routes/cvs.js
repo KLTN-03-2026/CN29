@@ -21,6 +21,50 @@ fs.mkdirSync(cvStoragePath, { recursive: true });
 
 const buildCvRelativePath = (filename) => `${PUBLIC_PREFIX}/cvs/${filename}`;
 const buildAbsoluteUrl = (req, relativePath) => (relativePath ? `${req.protocol}://${req.get('host')}${relativePath}` : '');
+const toSafeCvFilename = (value) => path.basename(String(value || '').trim().replace(/\\/g, '/'));
+const resolveCvPublicUrls = (req, rawCvValue) => {
+    const raw = String(rawCvValue || '').trim();
+    if (!raw) {
+        return {
+            cvFileName: '',
+            cvFileUrl: '',
+            cvFileAbsoluteUrl: ''
+        };
+    }
+
+    if (/^https?:\/\//i.test(raw)) {
+        return {
+            cvFileName: toSafeCvFilename(raw.split('?')[0]),
+            cvFileUrl: '',
+            cvFileAbsoluteUrl: raw
+        };
+    }
+
+    const filename = toSafeCvFilename(raw);
+    if (!filename) {
+        return {
+            cvFileName: '',
+            cvFileUrl: '',
+            cvFileAbsoluteUrl: ''
+        };
+    }
+
+    const localCvPath = path.join(cvStoragePath, filename);
+    if (!fs.existsSync(localCvPath)) {
+        return {
+            cvFileName: filename,
+            cvFileUrl: '',
+            cvFileAbsoluteUrl: ''
+        };
+    }
+
+    const relative = buildCvRelativePath(filename);
+    return {
+        cvFileName: filename,
+        cvFileUrl: relative,
+        cvFileAbsoluteUrl: buildAbsoluteUrl(req, relative)
+    };
+};
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -505,8 +549,9 @@ router.get('/search', (req, res) => {
             cv.MaCV,
             cv.TieuDe,
             cv.TomTat,
+            cv.TepCV,
             cv.NgayCapNhat,
-            nd.MaNguoiDung,
+            nd.MaNguoiDung AS MaUngVien,
             nd.HoTen,
             nd.Email,
             nd.SoDienThoai,
@@ -540,7 +585,7 @@ router.get('/search', (req, res) => {
         else if (experience === '5+') sql += ` AND COALESCE(hsv.SoNamKinhNghiem, 0) >= 5`;
     }
 
-    sql += ` GROUP BY cv.MaCV ORDER BY cv.NgayCapNhat DESC LIMIT 50`;
+    sql += ` ORDER BY cv.NgayCapNhat DESC LIMIT 50`;
 
     db.all(sql, params, (err, rows) => {
         if (err) {
@@ -548,19 +593,25 @@ router.get('/search', (req, res) => {
             return res.status(500).json({ success: false, error: 'Lỗi truy vấn' });
         }
 
-        const results = rows.map(row => ({
-            cvId: row.MaCV,
-            title: row.TieuDe || 'CV ứng viên',
-            summary: row.TomTat || '',
-            candidateName: row.HoTen || 'N/A',
-            candidateEmail: row.Email || '',
-            candidatePhone: row.SoDienThoai || '',
-            city: row.ThanhPho || '',
-            experience: row.SoNamKinhNghiem != null ? `${row.SoNamKinhNghiem} năm` : '',
-            level: row.TrinhDoHocVan || '',
-            industry: row.ChucDanh || '',
-            updatedAt: row.NgayCapNhat || ''
-        }));
+        const results = rows.map((row) => {
+            const fileMeta = resolveCvPublicUrls(req, row.TepCV);
+
+            return {
+                cvId: row.MaCV,
+                candidateUserId: row.MaUngVien,
+                title: row.TieuDe || 'CV ứng viên',
+                summary: row.TomTat || '',
+                candidateName: row.HoTen || 'N/A',
+                candidateEmail: row.Email || '',
+                candidatePhone: row.SoDienThoai || '',
+                city: row.ThanhPho || '',
+                experience: row.SoNamKinhNghiem != null ? `${row.SoNamKinhNghiem} năm` : '',
+                level: row.TrinhDoHocVan || '',
+                industry: row.ChucDanh || '',
+                updatedAt: row.NgayCapNhat || '',
+                ...fileMeta
+            };
+        });
 
         return res.json({ success: true, results, count: results.length });
     });
@@ -606,7 +657,9 @@ router.get('/saved', authenticateToken, authorizeRole(['Nhà tuyển dụng']), 
                 lc.NgayLuu,
                 cv.TieuDe,
                 cv.TomTat,
+                cv.TepCV,
                 cv.NgayCapNhat,
+                cv.MaNguoiDung AS MaUngVien,
                 nd.HoTen,
                 nd.Email,
                 nd.SoDienThoai,
@@ -623,22 +676,28 @@ router.get('/saved', authenticateToken, authorizeRole(['Nhà tuyển dụng']), 
             params
         );
 
-        const saved = rows.map(r => ({
-            savedId: r.MaLuuCV,
-            cvId: r.MaCV,
-            status: r.TrangThai || 'Đã lưu',
-            savedAt: r.NgayLuu || '',
-            title: r.TieuDe || 'CV ứng viên',
-            summary: r.TomTat || '',
-            updatedAt: r.NgayCapNhat || '',
-            candidateName: r.HoTen || 'N/A',
-            candidateEmail: r.Email || '',
-            candidatePhone: r.SoDienThoai || '',
-            city: r.ThanhPho || '',
-            experience: r.SoNamKinhNghiem != null ? `${r.SoNamKinhNghiem} năm` : '',
-            level: r.TrinhDoHocVan || '',
-            industry: r.ChucDanh || ''
-        }));
+        const saved = rows.map((r) => {
+            const fileMeta = resolveCvPublicUrls(req, r.TepCV);
+
+            return {
+                savedId: r.MaLuuCV,
+                cvId: r.MaCV,
+                candidateUserId: r.MaUngVien,
+                status: r.TrangThai || '',
+                savedAt: r.NgayLuu || '',
+                title: r.TieuDe || 'CV ứng viên',
+                summary: r.TomTat || '',
+                updatedAt: r.NgayCapNhat || '',
+                candidateName: r.HoTen || 'N/A',
+                candidateEmail: r.Email || '',
+                candidatePhone: r.SoDienThoai || '',
+                city: r.ThanhPho || '',
+                experience: r.SoNamKinhNghiem != null ? `${r.SoNamKinhNghiem} năm` : '',
+                level: r.TrinhDoHocVan || '',
+                industry: r.ChucDanh || '',
+                ...fileMeta
+            };
+        });
 
         return res.json({ success: true, saved });
     } catch (err) {
@@ -672,7 +731,7 @@ router.patch('/saved/:cvId', authenticateToken, authorizeRole(['Nhà tuyển d�
         if (Number.isNaN(cvId)) return res.status(400).json({ success: false, error: 'cvId không hợp lệ' });
 
         const status = (req.body?.status || '').trim();
-        const allowed = ['Đã lưu', 'Đã xem', 'Phù hợp', 'Đã liên hệ'];
+        const allowed = ['Đã lưu', 'Đã xem', 'Đã liên hệ'];
         if (!allowed.includes(status)) {
             return res.status(400).json({ success: false, error: 'Trạng thái không hợp lệ' });
         }
@@ -684,6 +743,26 @@ router.patch('/saved/:cvId', authenticateToken, authorizeRole(['Nhà tuyển d�
         return res.json({ success: true });
     } catch (err) {
         console.error('Lỗi update saved CV:', err);
+        return res.status(500).json({ success: false, error: 'Lỗi truy vấn' });
+    }
+});
+
+router.delete('/saved/:cvId', authenticateToken, authorizeRole(['Nhà tuyển dụng']), async (req, res) => {
+    try {
+        const employerId = await getEmployerId(req.user.id);
+        if (!employerId) return res.status(400).json({ success: false, error: 'Tài khoản chưa có nhà tuyển dụng' });
+
+        const cvId = parseInt(req.params.cvId, 10);
+        if (Number.isNaN(cvId)) return res.status(400).json({ success: false, error: 'cvId không hợp lệ' });
+
+        const result = await dbRun('DELETE FROM LuuCV WHERE MaNhaTuyenDung = ? AND MaCV = ?', [employerId, cvId]);
+        if (!result?.changes) {
+            return res.status(404).json({ success: false, error: 'CV chưa được lưu' });
+        }
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Lỗi xóa saved CV:', err);
         return res.status(500).json({ success: false, error: 'Lỗi truy vấn' });
     }
 });

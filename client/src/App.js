@@ -36,6 +36,7 @@ import AIAssistantWidget from './components/AIAssistantWidget';
 import CareerGuide from './features/career-guide/CareerGuide';
 import CareerGuideDetail from './features/career-guide/CareerGuideDetail';
 import CareerGuideManage from './features/career-guide/CareerGuideManage';
+import MessagesPage from './features/messages/MessagesPage';
 import PWAUpdatePrompt from './components/pwa/PWAUpdatePrompt';
 import AccountInstallPrompt from './components/pwa/AccountInstallPrompt';
 import { API_BASE } from './config/apiBase';
@@ -110,6 +111,14 @@ function AppContent() {
           <Route path="/career-guide" element={<CareerGuide />} />
           <Route path="/career-guide/create" element={<CareerGuideManage />} />
           <Route path="/career-guide/:id" element={<CareerGuideDetail />} />
+          <Route
+            path="/messages"
+            element={(
+              <ProtectedRoute allowedRoles={['Nhà tuyển dụng', 'Ứng viên']}>
+                <MessagesPage />
+              </ProtectedRoute>
+            )}
+          />
 
           {/* Protected routes for role-based dashboards */}
           <Route
@@ -138,6 +147,7 @@ function AppContent() {
             <Route path="jobs/:id/edit" element={<JobCreate />} />
             <Route path="jobs/:id" element={<JobDetail />} />
             <Route path="applications" element={<ApplicationManagement />} />
+            <Route path="messages" element={<MessagesPage />} />
             <Route path="statistics" element={<Statistics />} />
             <Route path="company" element={<CompanyProfile />} />
             <Route path="account" element={<EmployerAccount />} />

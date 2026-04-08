@@ -4,7 +4,8 @@
     "mssql": "^12.1.0",
     "multer": "^2.0.2",
     "node-fetch": "^3.3.2",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "qrcode": "^1.5.4"
   },
   "devDependencies": {
     "concurrently": "^8.2.0",

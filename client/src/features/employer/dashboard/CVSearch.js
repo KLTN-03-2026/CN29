@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const EXPERIENCE_ENTRIES = [
@@ -16,6 +17,7 @@ const getProvinceLabel = (item) => {
 
 const CVSearch = () => {
     const API_BASE = CLIENT_API_BASE;
+    const navigate = useNavigate();
 
     const [searchParams, setSearchParams] = useState({
         keyword: '',
@@ -27,6 +29,9 @@ const CVSearch = () => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [searched, setSearched] = useState(false);
+    const [savedCvIds, setSavedCvIds] = useState(() => new Set());
+    const [savingCvIds, setSavingCvIds] = useState(() => new Set());
+    const [savedHighlightIds, setSavedHighlightIds] = useState(() => new Set());
 
     const [provinces, setProvinces] = useState([]);
     const [loadingProvinces, setLoadingProvinces] = useState(false);
@@ -63,6 +68,65 @@ const CVSearch = () => {
         };
 
         loadProvinces();
+        return () => {
+            cancelled = true;
+        };
+    }, [API_BASE]);
+
+    const markCvAsSaved = (cvId) => {
+        setSavedCvIds((prev) => {
+            const next = new Set(prev);
+            next.add(cvId);
+            return next;
+        });
+
+        setSavedHighlightIds((prev) => {
+            const next = new Set(prev);
+            next.add(cvId);
+            return next;
+        });
+
+        window.setTimeout(() => {
+            setSavedHighlightIds((prev) => {
+                const next = new Set(prev);
+                next.delete(cvId);
+                return next;
+            });
+        }, 1300);
+    };
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const loadSavedCvIds = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                setSavedCvIds(new Set());
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_BASE}/api/cvs/saved`, {
+                    headers: {
+                        Authorization: `Bearer ${token}`
+                    }
+                });
+                const data = await res.json().catch(() => null);
+                if (!res.ok) return;
+
+                const ids = new Set(
+                    (Array.isArray(data?.saved) ? data.saved : [])
+                        .map((item) => Number.parseInt(String(item?.cvId || ''), 10))
+                        .filter((value) => Number.isFinite(value))
+                );
+
+                if (!cancelled) setSavedCvIds(ids);
+            } catch {
+                if (!cancelled) setSavedCvIds(new Set());
+            }
+        };
+
+        loadSavedCvIds();
         return () => {
             cancelled = true;
         };
@@ -166,6 +230,16 @@ const CVSearch = () => {
             return;
         }
 
+        if (savedCvIds.has(cvId)) {
+            return;
+        }
+
+        setSavingCvIds((prev) => {
+            const next = new Set(prev);
+            next.add(cvId);
+            return next;
+        });
+
         try {
             const res = await fetch(`${API_BASE}/api/cvs/saved`, {
                 method: 'POST',
@@ -177,10 +251,59 @@ const CVSearch = () => {
             });
             const data = await res.json().catch(() => null);
             if (!res.ok) throw new Error(data?.error || 'Không lưu được CV');
-            alert('Đã lưu CV vào Quản lý CV');
+            markCvAsSaved(cvId);
         } catch (err) {
             alert(err?.message || 'Có lỗi xảy ra');
+        } finally {
+            setSavingCvIds((prev) => {
+                const next = new Set(prev);
+                next.delete(cvId);
+                return next;
+            });
         }
+    };
+
+    const openCvPreview = async (cv) => {
+        const fileUrl = String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim();
+        if (!fileUrl) {
+            alert('Ứng viên chưa đính kèm file CV để xem.');
+            return;
+        }
+
+        try {
+            const response = await fetch(fileUrl, { method: 'HEAD' });
+            if (!response.ok && response.status !== 405) {
+                alert('File CV không còn tồn tại trên hệ thống. Vui lòng liên hệ ứng viên để cập nhật CV mới.');
+                return;
+            }
+        } catch {
+            // If preflight check fails unexpectedly, still try opening in a new tab.
+        }
+
+        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    };
+
+    const hasCvAttachment = (cv) => Boolean(String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim());
+    const getCvPreviewHint = (cv) => {
+        if (hasCvAttachment(cv)) return 'Mở file CV đính kèm';
+        if (String(cv?.cvFileName || '').trim()) return 'File CV không còn tồn tại trên hệ thống';
+        return 'Ứng viên chưa đính kèm file CV';
+    };
+
+    const openMessageBox = (cv) => {
+        const candidateUserId = Number.parseInt(String(cv?.candidateUserId || ''), 10);
+        if (!Number.isFinite(candidateUserId)) {
+            setError('Không xác định được ứng viên để nhắn tin.');
+            return;
+        }
+
+        const params = new URLSearchParams({
+            userId: String(candidateUserId),
+            name: String(cv?.candidateName || ''),
+            email: String(cv?.candidateEmail || '')
+        });
+
+        navigate(`/employer/messages?${params.toString()}`);
     };
 
     const handleChange = (e) => {
@@ -349,74 +472,103 @@ const CVSearch = () => {
                                 <h5>Tìm thấy {searchResults.length} CV</h5>
                             </div>
                             <div className="row g-3">
-                                {searchResults.map((cv, idx) => (
-                                    <div key={idx} className="col-12">
-                                        <div className="card h-100 border">
-                                            <div className="card-body">
-                                                <div className="d-flex justify-content-between align-items-start mb-2">
-                                                    <div>
-                                                        <h5 className="card-title mb-1">
-                                                            {cv.candidateName}
-                                                        </h5>
-                                                        <p className="text-muted small mb-2">
-                                                            <i className="bi bi-envelope me-1"></i>
-                                                            {cv.candidateEmail}
-                                                            {cv.candidatePhone && (
-                                                                <>
-                                                                    {' • '}
-                                                                    <i className="bi bi-telephone me-1"></i>
-                                                                    {cv.candidatePhone}
-                                                                </>
-                                                            )}
-                                                        </p>
+                                {searchResults.map((cv, idx) => {
+                                    const parsedCvId = Number.parseInt(String(cv?.cvId || ''), 10);
+                                    const isSaved = Number.isFinite(parsedCvId) && savedCvIds.has(parsedCvId);
+                                    const isSaving = Number.isFinite(parsedCvId) && savingCvIds.has(parsedCvId);
+                                    const isHighlighted = Number.isFinite(parsedCvId) && savedHighlightIds.has(parsedCvId);
+
+                                    return (
+                                        <div key={idx} className="col-12">
+                                            <div className={`card h-100 border cv-search-card ${isSaved ? 'is-saved' : ''} ${isHighlighted ? 'saved-highlight' : ''}`}>
+                                                <div className="card-body">
+                                                    <div className="d-flex justify-content-between align-items-start mb-2">
+                                                        <div>
+                                                            <h5 className="card-title mb-1">
+                                                                {cv.candidateName}
+                                                            </h5>
+                                                            <p className="text-muted small mb-2">
+                                                                <i className="bi bi-envelope me-1"></i>
+                                                                {cv.candidateEmail}
+                                                                {cv.candidatePhone && (
+                                                                    <>
+                                                                        {' • '}
+                                                                        <i className="bi bi-telephone me-1"></i>
+                                                                        {cv.candidatePhone}
+                                                                    </>
+                                                                )}
+                                                            </p>
+                                                        </div>
+                                                        <span className="badge bg-primary">{cv.title}</span>
                                                     </div>
-                                                    <span className="badge bg-primary">{cv.title}</span>
-                                                </div>
-                                                
-                                                {cv.summary && (
-                                                    <p className="card-text mb-2">{cv.summary}</p>
-                                                )}
 
-                                                <div className="d-flex flex-wrap gap-2 mb-2">
-                                                    {cv.industry && (
-                                                        <span className="badge bg-secondary">
-                                                            <i className="bi bi-briefcase me-1"></i>
-                                                            {cv.industry}
-                                                        </span>
+                                                    {cv.summary && (
+                                                        <p className="card-text mb-2">{cv.summary}</p>
                                                     )}
-                                                    {cv.city && (
-                                                        <span className="badge bg-info">
-                                                            <i className="bi bi-geo-alt me-1"></i>
-                                                            {cv.city}
-                                                        </span>
-                                                    )}
-                                                    {cv.experience && (
-                                                        <span className="badge bg-success">
-                                                            <i className="bi bi-clock-history me-1"></i>
-                                                            {cv.experience}
-                                                        </span>
-                                                    )}
-                                                    {cv.level && (
-                                                        <span className="badge bg-warning text-dark">
-                                                            <i className="bi bi-star me-1"></i>
-                                                            {cv.level}
-                                                        </span>
-                                                    )}
-                                                </div>
 
-                                                <div className="d-flex justify-content-between align-items-center">
-                                                    <small className="text-muted">
-                                                        Cập nhật: {cv.updatedAt ? new Date(cv.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}
-                                                    </small>
-                                                    <button className="btn btn-sm btn-outline-primary" onClick={() => saveCv(cv.cvId)}>
-                                                        <i className="bi bi-bookmark-plus me-1"></i>
-                                                        Lưu CV
-                                                    </button>
+                                                    <div className="d-flex flex-wrap gap-2 mb-2">
+                                                        {cv.industry && (
+                                                            <span className="badge bg-secondary">
+                                                                <i className="bi bi-briefcase me-1"></i>
+                                                                {cv.industry}
+                                                            </span>
+                                                        )}
+                                                        {cv.city && (
+                                                            <span className="badge bg-info">
+                                                                <i className="bi bi-geo-alt me-1"></i>
+                                                                {cv.city}
+                                                            </span>
+                                                        )}
+                                                        {cv.experience && (
+                                                            <span className="badge bg-success">
+                                                                <i className="bi bi-clock-history me-1"></i>
+                                                                {cv.experience}
+                                                            </span>
+                                                        )}
+                                                        {cv.level && (
+                                                            <span className="badge bg-warning text-dark">
+                                                                <i className="bi bi-star me-1"></i>
+                                                                {cv.level}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="d-flex justify-content-between align-items-center">
+                                                        <small className="text-muted">
+                                                            Cập nhật: {cv.updatedAt ? new Date(cv.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}
+                                                        </small>
+                                                        <div className="d-flex gap-2">
+                                                            <button
+                                                                className="btn btn-sm btn-outline-secondary"
+                                                                onClick={() => openCvPreview(cv)}
+                                                                disabled={!hasCvAttachment(cv)}
+                                                                title={getCvPreviewHint(cv)}
+                                                            >
+                                                                <i className="bi bi-file-earmark-text me-1"></i>
+                                                                Xem CV
+                                                            </button>
+                                                            <button
+                                                                className={`btn btn-sm cv-search-save-btn ${isSaved ? 'btn-success is-saved' : 'btn-outline-primary'}`}
+                                                                onClick={() => saveCv(parsedCvId)}
+                                                                disabled={isSaved || isSaving || !Number.isFinite(parsedCvId)}
+                                                            >
+                                                                <i className={`bi ${isSaved ? 'bi-bookmark-check-fill' : 'bi-bookmark-plus'} me-1`}></i>
+                                                                {isSaved ? 'Đã lưu' : (isSaving ? 'Đang lưu...' : 'Lưu CV')}
+                                                            </button>
+                                                            <button
+                                                                className="btn btn-sm btn-primary"
+                                                                onClick={() => openMessageBox(cv)}
+                                                            >
+                                                                <i className="bi bi-chat-dots me-1"></i>
+                                                                Nhắn tin
+                                                            </button>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
