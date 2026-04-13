@@ -216,13 +216,15 @@ model BaoCao {
 }
 
 model NhatKyQuanTri {
-  maNhatKy     Int      @id @default(autoincrement()) @map("MaNhatKy")
-  maQuanTri    Int?     @map("MaQuanTri")
-  hanhDong     String?  @db.VarChar(255) @map("HanhDong")
-  doiTuong     String?  @db.VarChar(255) @map("DoiTuong")
-  maDoiTuong   Int?     @map("MaDoiTuong")
-  ghiChu       String?  @db.LongText @map("GhiChu")
-  ngayThucHien DateTime @default(now()) @map("NgayThucHien")
+  id         Int      @id @default(autoincrement()) @map("id")
+  userId     Int?     @map("user_id")
+  action     String?  @db.VarChar(100) @map("action")
+  entityType String?  @db.VarChar(100) @map("entity_type")
+  entityId   Int?     @map("entity_id")
+  timestamp  DateTime @default(now()) @map("timestamp")
+
+  @@index([userId], map: "IDX_NhatKyQuanTri_user_id")
+  @@index([timestamp], map: "IDX_NhatKyQuanTri_timestamp")
 
   @@map("NhatKyQuanTri")
 }

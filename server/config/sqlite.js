@@ -348,14 +348,13 @@ db.serialize(() => {
     // NhatKyQuanTri table
     db.run(`
         CREATE TABLE IF NOT EXISTS NhatKyQuanTri (
-            MaNhatKy INTEGER PRIMARY KEY AUTOINCREMENT,
-            MaQuanTri INTEGER NULL,
-            HanhDong TEXT,
-            DoiTuong TEXT,
-            MaDoiTuong INTEGER NULL,
-            GhiChu TEXT,
-            NgayThucHien TEXT DEFAULT (datetime('now', 'localtime')),
-            FOREIGN KEY (MaQuanTri) REFERENCES NguoiDung(MaNguoiDung) ON DELETE SET NULL
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NULL,
+            action TEXT,
+            entity_type TEXT,
+            entity_id INTEGER NULL,
+            timestamp TEXT DEFAULT (datetime('now', 'localtime')),
+            FOREIGN KEY (user_id) REFERENCES NguoiDung(MaNguoiDung) ON DELETE SET NULL
         )
     `);
 

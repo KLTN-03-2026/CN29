@@ -693,7 +693,8 @@
 }
 
 .main-content .cv-manage-row-actions,
-.main-content .app-manage-row-actions {
+.main-content .app-manage-row-actions,
+.main-content .job-manage-row-actions {
     display: inline-flex;
     align-items: center;
     justify-content: flex-end;
@@ -701,7 +702,8 @@
     gap: 6px;
 }
 
-.main-content .cv-manage-action-icon {
+.main-content .cv-manage-action-icon,
+.main-content .job-manage-action-icon {
     width: 34px;
     height: 34px;
     padding: 0;
@@ -711,7 +713,8 @@
     justify-content: center;
 }
 
-.main-content .cv-manage-action-icon i {
+.main-content .cv-manage-action-icon i,
+.main-content .job-manage-action-icon i {
     font-size: 0.95rem;
 }
 
@@ -993,6 +996,50 @@
 
 .employer-profile-actions .btn {
     min-width: 124px;
+}
+
+.employer-password-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2600;
+    background: rgba(15, 23, 42, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+}
+
+.employer-password-modal {
+    width: min(620px, 96vw);
+    border-radius: 16px !important;
+    border: 1px solid var(--employer-border) !important;
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.28);
+}
+
+.employer-password-modal .card-body {
+    padding: 1rem 1rem 1.1rem;
+}
+
+.employer-password-input-group .form-control {
+    border-right: 0;
+}
+
+.employer-password-visibility-btn {
+    min-width: 44px;
+    border-left: 0;
+    color: #475569;
+    background: #ffffff;
+}
+
+.employer-password-visibility-btn:hover,
+.employer-password-visibility-btn:focus {
+    color: #1d4ed8;
+    background: #eff6ff;
+}
+
+.employer-password-visibility-btn:disabled {
+    color: #94a3b8;
+    background: #f8fafc;
 }
 
 .employer-company-review-card {

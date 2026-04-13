@@ -3,11 +3,19 @@ import { useNavigate, Outlet, Link, useLocation } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
 import './EmployerLayout.css';
 
+const readStoredUser = () => {
+    try {
+        return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+        return {};
+    }
+};
+
 const EmployerLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { requestConfirm } = useNotification();
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const [user, setUser] = useState(() => readStoredUser());
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
@@ -36,6 +44,20 @@ const EmployerLayout = () => {
     useEffect(() => {
         setShowProfileDropdown(false);
     }, [location.pathname]);
+
+    useEffect(() => {
+        const refreshUser = () => {
+            setUser(readStoredUser());
+        };
+
+        window.addEventListener('storage', refreshUser);
+        window.addEventListener('jobfinder:user-updated', refreshUser);
+
+        return () => {
+            window.removeEventListener('storage', refreshUser);
+            window.removeEventListener('jobfinder:user-updated', refreshUser);
+        };
+    }, []);
 
     useEffect(() => {
         const handleClickOutside = (event) => {

@@ -305,17 +305,17 @@ CREATE TABLE IF NOT EXISTS `BaoCao` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `NhatKyQuanTri` (
-  `MaNhatKy` INT NOT NULL AUTO_INCREMENT,
-  `MaQuanTri` INT NULL,
-  `HanhDong` VARCHAR(255) NULL,
-  `DoiTuong` VARCHAR(255) NULL,
-  `MaDoiTuong` INT NULL,
-  `GhiChu` LONGTEXT NULL,
-  `NgayThucHien` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`MaNhatKy`),
-  KEY `IDX_NhatKyQuanTri_MaQuanTri` (`MaQuanTri`),
-  CONSTRAINT `FK_NhatKyQuanTri_NguoiDung`
-    FOREIGN KEY (`MaQuanTri`) REFERENCES `NguoiDung` (`MaNguoiDung`)
+  `id` INT NOT NULL AUTO_INCREMENT,
+  `user_id` INT NULL,
+  `action` VARCHAR(100) NULL,
+  `entity_type` VARCHAR(100) NULL,
+  `entity_id` INT NULL,
+  `timestamp` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `IDX_NhatKyQuanTri_user_id` (`user_id`),
+  KEY `IDX_NhatKyQuanTri_timestamp` (`timestamp`),
+  CONSTRAINT `FK_NhatKyQuanTri_user_id`
+    FOREIGN KEY (`user_id`) REFERENCES `NguoiDung` (`MaNguoiDung`)
     ON DELETE SET NULL ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

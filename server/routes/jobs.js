@@ -921,4 +921,37 @@ router.put('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']), as
     }
 });
 
+// Delete a job (employer only)
+router.delete('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']), async (req, res) => {
+    const jobId = Number.parseInt(String(req.params.id || ''), 10);
+    if (!Number.isFinite(jobId) || jobId <= 0) {
+        return res.status(400).json({ error: 'Mã tin tuyển dụng không hợp lệ' });
+    }
+
+    try {
+        const job = await dbGet('SELECT MaTin, MaNhaTuyenDung FROM TinTuyenDung WHERE MaTin = ?', [jobId]);
+        if (!job) {
+            return res.status(404).json({ error: 'Không tìm thấy tin tuyển dụng' });
+        }
+
+        const employerId = await getOrCreateEmployerId(req.user.id);
+        if (job.MaNhaTuyenDung !== employerId) {
+            return res.status(403).json({ error: 'Bạn không có quyền xóa tin này' });
+        }
+
+        // Remove related records first to avoid FK conflicts.
+        await dbRun('DELETE FROM UngTuyen WHERE MaTin = ?', [jobId]).catch(() => null);
+        await dbRun('DELETE FROM LuuTin WHERE MaTin = ?', [jobId]).catch(() => null);
+
+        const deleted = await dbRun('DELETE FROM TinTuyenDung WHERE MaTin = ?', [jobId]);
+        if (!deleted.changes) {
+            return res.status(404).json({ error: 'Không tìm thấy tin tuyển dụng' });
+        }
+
+        return res.json({ success: true, message: 'Đã xóa tin tuyển dụng thành công' });
+    } catch (err) {
+        return res.status(500).json({ error: err.message || 'Không thể xóa tin tuyển dụng' });
+    }
+});
+
 module.exports = router;

@@ -70,42 +70,138 @@ const toInt = (v, def) => {
 
 const isMysql = /^mysql:\/\//i.test(process.env.DATABASE_URL || '');
 
+const AUDIT_REQUIRED_COLUMNS = ['id', 'user_id', 'action', 'entity_type', 'entity_id', 'timestamp'];
+const AUDIT_LEGACY_COLUMNS = ['manhatky', 'maquantri', 'hanhdong', 'doituong', 'madoituong', 'ghichu', 'ngaythuchien'];
+
+const hasColumn = (columnSet, name) => columnSet.has(String(name || '').toLowerCase());
+
+const getAuditSelectExpr = (columnSet, orderedCandidates, fallbackSql, quote) => {
+  for (const candidate of orderedCandidates) {
+    if (hasColumn(columnSet, candidate)) {
+      return `${quote}${candidate}${quote}`;
+    }
+  }
+  return fallbackSql;
+};
+
 let ensureAdminAuditTablePromise = null;
 const ensureAdminAuditTable = async () => {
   if (ensureAdminAuditTablePromise) return ensureAdminAuditTablePromise;
 
   ensureAdminAuditTablePromise = (async () => {
+    const needsAuditTableRebuild = (columnSet) => {
+      const hasAllRequired = AUDIT_REQUIRED_COLUMNS.every((name) => hasColumn(columnSet, name));
+      const hasLegacy = AUDIT_LEGACY_COLUMNS.some((name) => hasColumn(columnSet, name));
+      return !hasAllRequired || hasLegacy;
+    };
+
     if (isMysql) {
-      await dbRun(
-        `CREATE TABLE IF NOT EXISTS NhatKyQuanTri (
-          MaNhatKy INT AUTO_INCREMENT PRIMARY KEY,
-          MaQuanTri INT NULL,
-          HanhDong VARCHAR(255) NULL,
-          DoiTuong VARCHAR(255) NULL,
-          MaDoiTuong INT NULL,
-          GhiChu LONGTEXT NULL,
-          NgayThucHien DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          KEY IDX_NhatKyQuanTri_MaQuanTri (MaQuanTri),
-          CONSTRAINT FK_NhatKyQuanTri_NguoiDung
-            FOREIGN KEY (MaQuanTri) REFERENCES NguoiDung(MaNguoiDung)
-            ON DELETE SET NULL ON UPDATE CASCADE
-        )`
+      const createMysqlAuditTableSql = `CREATE TABLE IF NOT EXISTS NhatKyQuanTri (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NULL,
+        \`action\` VARCHAR(100) NULL,
+        entity_type VARCHAR(100) NULL,
+        entity_id INT NULL,
+        \`timestamp\` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        KEY IDX_NhatKyQuanTri_user_id (user_id),
+        KEY IDX_NhatKyQuanTri_timestamp (\`timestamp\`)
+      )`;
+
+      await dbRun(createMysqlAuditTableSql);
+
+      const mysqlColumns = await dbAll(
+        `SELECT COLUMN_NAME
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'NhatKyQuanTri'`
       );
+      const mysqlColumnSet = new Set(
+        mysqlColumns
+          .map((col) => String(col?.COLUMN_NAME || '').trim().toLowerCase())
+          .filter(Boolean)
+      );
+
+      if (needsAuditTableRebuild(mysqlColumnSet)) {
+        const backupTable = `NhatKyQuanTri_legacy_${Date.now()}`;
+
+        await dbRun(`RENAME TABLE NhatKyQuanTri TO \`${backupTable}\``);
+        await dbRun(createMysqlAuditTableSql);
+
+        const idExpr = getAuditSelectExpr(mysqlColumnSet, ['id', 'MaNhatKy'], 'NULL', '`');
+        const userIdExpr = getAuditSelectExpr(mysqlColumnSet, ['user_id', 'MaQuanTri'], 'NULL', '`');
+        const actionExpr = getAuditSelectExpr(mysqlColumnSet, ['action', 'HanhDong'], 'NULL', '`');
+        const entityTypeExpr = getAuditSelectExpr(mysqlColumnSet, ['entity_type', 'DoiTuong'], 'NULL', '`');
+        const entityIdExpr = getAuditSelectExpr(mysqlColumnSet, ['entity_id', 'MaDoiTuong'], 'NULL', '`');
+        const timestampExpr = getAuditSelectExpr(mysqlColumnSet, ['timestamp', 'NgayThucHien'], 'CURRENT_TIMESTAMP', '`');
+
+        await dbRun(
+          `INSERT INTO NhatKyQuanTri (id, user_id, \`action\`, entity_type, entity_id, \`timestamp\`)
+           SELECT
+             ${idExpr},
+             ${userIdExpr},
+             ${actionExpr},
+             ${entityTypeExpr},
+             ${entityIdExpr},
+             COALESCE(${timestampExpr}, CURRENT_TIMESTAMP)
+           FROM \`${backupTable}\``
+        );
+
+        await dbRun(`DROP TABLE \`${backupTable}\``);
+      }
+
       return;
     }
 
-    await dbRun(
-      `CREATE TABLE IF NOT EXISTS NhatKyQuanTri (
-        MaNhatKy INTEGER PRIMARY KEY AUTOINCREMENT,
-        MaQuanTri INTEGER NULL,
-        HanhDong TEXT,
-        DoiTuong TEXT,
-        MaDoiTuong INTEGER NULL,
-        GhiChu TEXT,
-        NgayThucHien TEXT DEFAULT (datetime('now', 'localtime')),
-        FOREIGN KEY (MaQuanTri) REFERENCES NguoiDung(MaNguoiDung) ON DELETE SET NULL
-      )`
+    const createSqliteAuditTableSql = `CREATE TABLE IF NOT EXISTS NhatKyQuanTri (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NULL,
+      action TEXT,
+      entity_type TEXT,
+      entity_id INTEGER NULL,
+      timestamp TEXT DEFAULT (datetime('now', 'localtime'))
+    )`;
+
+    await dbRun(createSqliteAuditTableSql);
+
+    const sqliteColumns = await dbAll(`PRAGMA table_info('NhatKyQuanTri')`);
+    const sqliteColumnSet = new Set(
+      sqliteColumns
+        .map((col) => String(col?.name || '').trim().toLowerCase())
+        .filter(Boolean)
     );
+
+    if (needsAuditTableRebuild(sqliteColumnSet)) {
+      const backupTable = `NhatKyQuanTri_legacy_${Date.now()}`;
+
+      await dbRun(`ALTER TABLE NhatKyQuanTri RENAME TO "${backupTable}"`);
+      await dbRun(createSqliteAuditTableSql);
+
+      const idExpr = getAuditSelectExpr(sqliteColumnSet, ['id', 'MaNhatKy'], 'NULL', '"');
+      const userIdExpr = getAuditSelectExpr(sqliteColumnSet, ['user_id', 'MaQuanTri'], 'NULL', '"');
+      const actionExpr = getAuditSelectExpr(sqliteColumnSet, ['action', 'HanhDong'], 'NULL', '"');
+      const entityTypeExpr = getAuditSelectExpr(sqliteColumnSet, ['entity_type', 'DoiTuong'], 'NULL', '"');
+      const entityIdExpr = getAuditSelectExpr(sqliteColumnSet, ['entity_id', 'MaDoiTuong'], 'NULL', '"');
+      const timestampExpr = getAuditSelectExpr(
+        sqliteColumnSet,
+        ['timestamp', 'NgayThucHien'],
+        `datetime('now', 'localtime')`,
+        '"'
+      );
+
+      await dbRun(
+        `INSERT INTO NhatKyQuanTri (id, user_id, action, entity_type, entity_id, timestamp)
+         SELECT
+           ${idExpr},
+           ${userIdExpr},
+           ${actionExpr},
+           ${entityTypeExpr},
+           ${entityIdExpr},
+           COALESCE(${timestampExpr}, datetime('now', 'localtime'))
+         FROM "${backupTable}"`
+      );
+
+      await dbRun(`DROP TABLE "${backupTable}"`);
+    }
   })();
 
   try {
@@ -116,32 +212,23 @@ const ensureAdminAuditTable = async () => {
   }
 };
 
-const normalizeAuditNote = (note) => {
-  if (note == null) return '';
-  if (typeof note === 'string') return note.trim();
-  try {
-    return JSON.stringify(note);
-  } catch {
-    return String(note);
-  }
-};
-
-const writeAdminAuditLog = async ({ adminId, action, object, objectId = null, note = '' }) => {
+const writeAdminAuditLog = ({ adminId, userId, action, entityType, object, entityId, objectId = null }) => {
   const actionText = String(action || '').trim();
-  const objectText = String(object || '').trim();
-  if (!actionText || !objectText) return;
+  const entityTypeText = String(entityType || object || '').trim();
+  if (!actionText || !entityTypeText) return Promise.resolve();
 
-  await ensureAdminAuditTable();
+  const numericUserId = Number.isFinite(Number(userId)) ? Number(userId) : null;
+  const numericAdminId = Number.isFinite(Number(adminId)) ? Number(adminId) : null;
+  const normalizedUserId = numericUserId ?? numericAdminId;
+  const normalizedEntityId = Number.isFinite(Number(entityId))
+    ? Number(entityId)
+    : (Number.isFinite(Number(objectId)) ? Number(objectId) : null);
 
-  const rawNote = normalizeAuditNote(note);
-  const auditNote = rawNote.length > 4000 ? `${rawNote.slice(0, 3997)}...` : rawNote;
-  const normalizedObjectId = Number.isFinite(Number(objectId)) ? Number(objectId) : null;
-
-  await dbRun(
-    `INSERT INTO NhatKyQuanTri (MaQuanTri, HanhDong, DoiTuong, MaDoiTuong, GhiChu, NgayThucHien)
-     VALUES (?, ?, ?, ?, ?, datetime('now', 'localtime'))`,
-    [adminId || null, actionText, objectText, normalizedObjectId, auditNote || null]
-  );
+  return ensureAdminAuditTable().then(() => dbRun(
+    `INSERT INTO NhatKyQuanTri (user_id, \`action\`, entity_type, entity_id, \`timestamp\`)
+     VALUES (?, ?, ?, ?, datetime('now', 'localtime'))`,
+    [normalizedUserId, actionText, entityTypeText, normalizedEntityId]
+  ));
 };
 
 const logAdminAction = async (payload) => {
@@ -251,6 +338,85 @@ const ensureCvTemplateTable = async () => {
     await ensureCvTemplateTablePromise;
   } catch (err) {
     ensureCvTemplateTablePromise = null;
+    throw err;
+  }
+};
+
+let ensureCareerGuideAdminSchemaPromise = null;
+const ensureCareerGuideAdminSchema = async () => {
+  if (ensureCareerGuideAdminSchemaPromise) return ensureCareerGuideAdminSchemaPromise;
+
+  ensureCareerGuideAdminSchemaPromise = (async () => {
+    if (isMysql) {
+      await dbRun(`
+        CREATE TABLE IF NOT EXISTS CamNangNgheNghiep (
+          MaBaiViet INT NOT NULL AUTO_INCREMENT,
+          TieuDe VARCHAR(255) NOT NULL,
+          NoiDung LONGTEXT NOT NULL,
+          MaTacGia INT NOT NULL,
+          LoaiTacGia VARCHAR(50) NOT NULL,
+          NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          LuotXem INT NOT NULL DEFAULT 0,
+          PRIMARY KEY (MaBaiViet),
+          KEY IDX_CamNangNgheNghiep_MaTacGia (MaTacGia),
+          CONSTRAINT FK_CamNangNgheNghiep_TacGia
+            FOREIGN KEY (MaTacGia) REFERENCES NguoiDung(MaNguoiDung)
+        )
+      `);
+
+      await dbRun(`
+        CREATE TABLE IF NOT EXISTS BinhLuanCamNangNgheNghiep (
+          MaBinhLuan INT NOT NULL AUTO_INCREMENT,
+          MaBaiViet INT NOT NULL,
+          MaNguoiDung INT NOT NULL,
+          LoaiNguoiDung VARCHAR(50) NOT NULL,
+          NoiDung LONGTEXT NOT NULL,
+          NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (MaBinhLuan),
+          KEY IDX_BinhLuanCamNang_MaBaiViet (MaBaiViet),
+          KEY IDX_BinhLuanCamNang_MaNguoiDung (MaNguoiDung)
+        )
+      `);
+
+      return;
+    }
+
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS CamNangNgheNghiep (
+        MaBaiViet INTEGER PRIMARY KEY AUTOINCREMENT,
+        TieuDe TEXT NOT NULL,
+        NoiDung TEXT NOT NULL,
+        MaTacGia INTEGER NOT NULL,
+        LoaiTacGia TEXT NOT NULL,
+        NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
+        NgayCapNhat TEXT DEFAULT (datetime('now', 'localtime')),
+        LuotXem INTEGER DEFAULT 0,
+        FOREIGN KEY (MaTacGia) REFERENCES NguoiDung(MaNguoiDung) ON DELETE RESTRICT
+      )
+    `);
+    await dbRun('CREATE INDEX IF NOT EXISTS IDX_CamNangNgheNghiep_MaTacGia ON CamNangNgheNghiep(MaTacGia)');
+
+    await dbRun(`
+      CREATE TABLE IF NOT EXISTS BinhLuanCamNangNgheNghiep (
+        MaBinhLuan INTEGER PRIMARY KEY AUTOINCREMENT,
+        MaBaiViet INTEGER NOT NULL,
+        MaNguoiDung INTEGER NOT NULL,
+        LoaiNguoiDung TEXT NOT NULL,
+        NoiDung TEXT NOT NULL,
+        NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
+        FOREIGN KEY (MaBaiViet) REFERENCES CamNangNgheNghiep(MaBaiViet) ON DELETE CASCADE,
+        FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaNguoiDung) ON DELETE CASCADE
+      )
+    `);
+    await dbRun('CREATE INDEX IF NOT EXISTS IDX_BinhLuanCamNang_MaBaiViet ON BinhLuanCamNangNgheNghiep(MaBaiViet)');
+    await dbRun('CREATE INDEX IF NOT EXISTS IDX_BinhLuanCamNang_MaNguoiDung ON BinhLuanCamNangNgheNghiep(MaNguoiDung)');
+  })();
+
+  try {
+    await ensureCareerGuideAdminSchemaPromise;
+  } catch (err) {
+    ensureCareerGuideAdminSchemaPromise = null;
     throw err;
   }
 };
@@ -385,9 +551,12 @@ router.get('/audit-logs', async (req, res) => {
 
     const limit = Math.min(Math.max(toInt(req.query.limit, 30), 1), 200);
     const offset = Math.max(toInt(req.query.offset, 0), 0);
-    const adminId = req.query.adminId != null ? toInt(req.query.adminId, NaN) : NaN;
+    const userId = req.query.userId != null
+      ? toInt(req.query.userId, NaN)
+      : (req.query.adminId != null ? toInt(req.query.adminId, NaN) : NaN);
     const action = String(req.query.action || '').trim();
-    const object = String(req.query.object || '').trim();
+    const entityType = String(req.query.entityType || req.query.object || '').trim();
+    const entityId = req.query.entityId != null ? toInt(req.query.entityId, NaN) : NaN;
     const keyword = String(req.query.keyword || '').trim().toLowerCase();
     const fromDate = String(req.query.fromDate || '').trim();
     const toDate = String(req.query.toDate || '').trim();
@@ -395,37 +564,43 @@ router.get('/audit-logs', async (req, res) => {
     const whereParts = [];
     const params = [];
 
-    if (Number.isFinite(adminId)) {
-      whereParts.push('nk.MaQuanTri = ?');
-      params.push(adminId);
+    if (Number.isFinite(userId)) {
+      whereParts.push('nk.user_id = ?');
+      params.push(userId);
     }
 
     if (action) {
-      whereParts.push('lower(IFNULL(nk.HanhDong, "")) = ?');
+      whereParts.push('lower(IFNULL(nk.\`action\`, "")) = ?');
       params.push(action.toLowerCase());
     }
 
-    if (object) {
-      whereParts.push('lower(IFNULL(nk.DoiTuong, "")) = ?');
-      params.push(object.toLowerCase());
+    if (entityType) {
+      whereParts.push('lower(IFNULL(nk.entity_type, "")) = ?');
+      params.push(entityType.toLowerCase());
+    }
+
+    if (Number.isFinite(entityId)) {
+      whereParts.push('nk.entity_id = ?');
+      params.push(entityId);
     }
 
     if (fromDate) {
-      whereParts.push('nk.NgayThucHien >= ?');
+      whereParts.push('nk.\`timestamp\` >= ?');
       params.push(`${fromDate} 00:00:00`);
     }
 
     if (toDate) {
-      whereParts.push('nk.NgayThucHien <= ?');
+      whereParts.push('nk.\`timestamp\` <= ?');
       params.push(`${toDate} 23:59:59`);
     }
 
     if (keyword) {
       const like = `%${keyword}%`;
+      const entityIdTextExpr = isMysql ? 'CAST(nk.entity_id AS CHAR)' : 'CAST(nk.entity_id AS TEXT)';
       whereParts.push(`(
-        lower(IFNULL(nk.HanhDong, "")) LIKE ?
-        OR lower(IFNULL(nk.DoiTuong, "")) LIKE ?
-        OR lower(IFNULL(nk.GhiChu, "")) LIKE ?
+        lower(IFNULL(nk.\`action\`, "")) LIKE ?
+        OR lower(IFNULL(nk.entity_type, "")) LIKE ?
+        OR lower(IFNULL(${entityIdTextExpr}, "")) LIKE ?
         OR lower(IFNULL(nd.HoTen, "")) LIKE ?
         OR lower(IFNULL(nd.Email, "")) LIKE ?
       )`);
@@ -436,19 +611,18 @@ router.get('/audit-logs', async (req, res) => {
 
     const rows = await dbAll(
       `SELECT
-          nk.MaNhatKy,
-          nk.MaQuanTri,
-          nd.HoTen AS TenQuanTri,
-          nd.Email AS EmailQuanTri,
-          nk.HanhDong,
-          nk.DoiTuong,
-          nk.MaDoiTuong,
-          nk.GhiChu,
-          nk.NgayThucHien
+         nk.id,
+         nk.user_id,
+         nd.HoTen AS user_name,
+         nd.Email AS user_email,
+         nk.\`action\` AS action,
+         nk.entity_type,
+         nk.entity_id,
+         nk.\`timestamp\` AS timestamp
        FROM NhatKyQuanTri nk
-       LEFT JOIN NguoiDung nd ON nd.MaNguoiDung = nk.MaQuanTri
+       LEFT JOIN NguoiDung nd ON nd.MaNguoiDung = nk.user_id
        ${whereSql}
-       ORDER BY datetime(nk.NgayThucHien) DESC, nk.MaNhatKy DESC
+       ORDER BY nk.\`timestamp\` DESC, nk.id DESC
        LIMIT ? OFFSET ?`,
       [...params, limit, offset]
     );
@@ -456,7 +630,7 @@ router.get('/audit-logs', async (req, res) => {
     const totalRow = await dbGet(
       `SELECT COUNT(*) AS c
        FROM NhatKyQuanTri nk
-       LEFT JOIN NguoiDung nd ON nd.MaNguoiDung = nk.MaQuanTri
+       LEFT JOIN NguoiDung nd ON nd.MaNguoiDung = nk.user_id
        ${whereSql}`,
       params
     );
@@ -470,6 +644,24 @@ router.get('/audit-logs', async (req, res) => {
         total: Number(totalRow?.c || 0)
       }
     });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.delete('/audit-logs/:id', async (req, res) => {
+  try {
+    await ensureAdminAuditTable();
+
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+
+    const result = await dbRun('DELETE FROM NhatKyQuanTri WHERE id = ?', [id]);
+    if (!Number(result?.changes || 0)) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy audit-log' });
+    }
+
+    return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -942,6 +1134,147 @@ router.delete('/companies/:id', requireSuperAdmin, async (req, res) => {
   }
 });
 
+const normalizeVietnameseText = (value) => String(value || '')
+  .trim()
+  .toLowerCase()
+  .normalize('NFD')
+  .replace(/[\u0300-\u036f]/g, '')
+  .replace(/[đĐ]/g, 'd');
+
+const resolveReportTargetType = (rawType) => {
+  const text = normalizeVietnameseText(rawType);
+  if (!text) return 'unknown';
+
+  if (text.includes('tin') || text.includes('tuyendung') || text.includes('job')) return 'job';
+  if (text.includes('nguoidung') || text.includes('ungvien') || text.includes('user')) return 'user';
+  if (text.includes('congty') || text.includes('company')) return 'company';
+  return 'unknown';
+};
+
+const getReportById = (id) => dbGet(
+  `SELECT
+      bc.MaBaoCao,
+      bc.MaNguoiBaoCao,
+      nd.Email AS EmailNguoiBaoCao,
+      bc.LoaiDoiTuong,
+      bc.MaDoiTuong,
+      bc.LyDo,
+      bc.ChiTiet,
+      bc.TrangThai,
+      bc.NgayBaoCao
+   FROM BaoCao bc
+   LEFT JOIN NguoiDung nd ON nd.MaNguoiDung = bc.MaNguoiBaoCao
+   WHERE bc.MaBaoCao = ?`,
+  [id]
+);
+
+const applyReportModerationActions = async ({ report, hideContent, lockEntity }) => {
+  const moderation = {
+    targetType: resolveReportTargetType(report?.LoaiDoiTuong),
+    targetId: toInt(report?.MaDoiTuong, NaN),
+    hideContentRequested: Boolean(hideContent),
+    lockEntityRequested: Boolean(lockEntity),
+    hideContentApplied: false,
+    lockEntityApplied: false,
+    warnings: []
+  };
+
+  if (!Number.isFinite(moderation.targetId)) {
+    moderation.warnings.push('Mã đối tượng không hợp lệ');
+    return moderation;
+  }
+
+  if (hideContent) {
+    const hiddenText = '[Nội dung đã bị ẩn bởi quản trị viên]';
+
+    if (moderation.targetType === 'job') {
+      const result = await dbRun(
+        `UPDATE TinTuyenDung
+         SET MoTa = ?,
+             YeuCau = '',
+             QuyenLoi = '',
+             TrangThai = 'Lưu trữ'
+         WHERE MaTin = ?`,
+        [hiddenText, moderation.targetId]
+      );
+      moderation.hideContentApplied = Number(result?.changes || 0) > 0;
+    } else if (moderation.targetType === 'company') {
+      const result = await dbRun(
+        'UPDATE CongTy SET MoTa = ? WHERE MaCongTy = ?',
+        [hiddenText, moderation.targetId]
+      );
+      moderation.hideContentApplied = Number(result?.changes || 0) > 0;
+    } else if (moderation.targetType === 'user') {
+      let totalChanges = 0;
+      try {
+        const profileResult = await dbRun(
+          'UPDATE HoSoUngVien SET GioiThieuBanThan = ? WHERE MaNguoiDung = ?',
+          [hiddenText, moderation.targetId]
+        );
+        totalChanges += Number(profileResult?.changes || 0);
+      } catch {
+        // HoSoUngVien may not exist for this account type.
+      }
+
+      const userResult = await dbRun(
+        'UPDATE NguoiDung SET DiaChi = NULL, NgayCapNhat = datetime("now", "localtime") WHERE MaNguoiDung = ?',
+        [moderation.targetId]
+      );
+      totalChanges += Number(userResult?.changes || 0);
+
+      moderation.hideContentApplied = totalChanges > 0;
+    } else {
+      moderation.warnings.push('Không hỗ trợ ẩn nội dung cho loại đối tượng này');
+    }
+
+    if (!moderation.hideContentApplied && moderation.targetType !== 'unknown') {
+      moderation.warnings.push('Không tìm thấy đối tượng để ẩn nội dung');
+    }
+  }
+
+  if (lockEntity) {
+    if (moderation.targetType === 'job') {
+      const result = await dbRun(
+        `UPDATE TinTuyenDung
+         SET TrangThai = 'Đã đóng'
+         WHERE MaTin = ?`,
+        [moderation.targetId]
+      );
+      moderation.lockEntityApplied = Number(result?.changes || 0) > 0;
+    } else if (moderation.targetType === 'user') {
+      await ensureNguoiDungNgayXoaColumn();
+      const result = await dbRun(
+        `UPDATE NguoiDung
+         SET TrangThai = 0,
+             NgayXoa = COALESCE(NgayXoa, datetime("now", "localtime")),
+             NgayCapNhat = datetime("now", "localtime")
+         WHERE MaNguoiDung = ?`,
+        [moderation.targetId]
+      );
+      moderation.lockEntityApplied = Number(result?.changes || 0) > 0;
+    } else if (moderation.targetType === 'company') {
+      const company = await getCompanyWithOwner(moderation.targetId);
+      if (company?.NguoiDaiDien) {
+        const result = await dbRun(
+          'UPDATE NguoiDung SET TrangThai = 0, NgayCapNhat = datetime("now", "localtime") WHERE MaNguoiDung = ?',
+          [company.NguoiDaiDien]
+        );
+        moderation.lockEntityApplied = Number(result?.changes || 0) > 0;
+      } else {
+        moderation.warnings.push('Công ty không có người đại diện để khóa');
+      }
+    } else {
+      moderation.warnings.push('Không hỗ trợ khóa đối tượng cho loại này');
+    }
+
+    if (!moderation.lockEntityApplied && moderation.targetType !== 'unknown') {
+      moderation.warnings.push('Không tìm thấy đối tượng để khóa');
+    }
+  }
+
+  return moderation;
+};
+
 router.get('/reports', async (req, res) => {
   try {
     const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
@@ -966,6 +1299,103 @@ router.get('/reports', async (req, res) => {
     );
 
     return res.json({ success: true, reports: rows });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.get('/career-guide-posts', async (req, res) => {
+  try {
+    await ensureCareerGuideAdminSchema();
+
+    const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
+    const offset = Math.max(toInt(req.query.offset, 0), 0);
+    const keyword = String(req.query.keyword || '').trim().toLowerCase();
+
+    const whereParts = [];
+    const params = [];
+
+    if (keyword) {
+      const like = `%${keyword}%`;
+      whereParts.push(`(
+        lower(IFNULL(cg.TieuDe, "")) LIKE ?
+        OR lower(IFNULL(cg.NoiDung, "")) LIKE ?
+        OR lower(IFNULL(cg.LoaiTacGia, "")) LIKE ?
+      )`);
+      params.push(like, like, like);
+    }
+
+    const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : '';
+    const orderBy = isMysql
+      ? 'cg.NgayCapNhat DESC, cg.MaBaiViet DESC'
+      : 'datetime(cg.NgayCapNhat) DESC, cg.MaBaiViet DESC';
+
+    const posts = await dbAll(
+      `SELECT
+          cg.MaBaiViet,
+          cg.TieuDe,
+          cg.NoiDung,
+          cg.MaTacGia,
+          cg.LoaiTacGia,
+          cg.NgayTao,
+          cg.NgayCapNhat,
+          cg.LuotXem
+       FROM CamNangNgheNghiep cg
+       ${whereSql}
+       ORDER BY ${orderBy}
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
+    );
+
+    const totalRow = await dbGet(
+      `SELECT COUNT(*) AS c
+       FROM CamNangNgheNghiep cg
+       ${whereSql}`,
+      params
+    );
+
+    return res.json({
+      success: true,
+      posts,
+      pagination: {
+        limit,
+        offset,
+        total: Number(totalRow?.c || 0)
+      }
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.delete('/career-guide-posts/:id', async (req, res) => {
+  try {
+    await ensureCareerGuideAdminSchema();
+
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) {
+      return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+    }
+
+    const existing = await dbGet(
+      'SELECT MaBaiViet FROM CamNangNgheNghiep WHERE MaBaiViet = ?',
+      [id]
+    );
+    if (!existing) {
+      return res.status(404).json({ success: false, error: 'Không tìm thấy bài viết' });
+    }
+
+    await dbRun('DELETE FROM BinhLuanCamNangNgheNghiep WHERE MaBaiViet = ?', [id]);
+    await dbRun('DELETE FROM CamNangNgheNghiep WHERE MaBaiViet = ?', [id]);
+
+    await logAdminAction({
+      adminId: req.user?.id,
+      action: 'Xóa bài viết hướng nghiệp',
+      object: 'CamNangNgheNghiep',
+      objectId: id
+    });
+
+    return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -1002,6 +1432,72 @@ router.patch('/reports/:id', async (req, res) => {
     );
 
     return res.json({ success: true, report });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.post('/reports/:id/approve', async (req, res) => {
+  try {
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+
+    const report = await getReportById(id);
+    if (!report) return res.status(404).json({ success: false, error: 'Không tìm thấy báo cáo' });
+
+    const hideContent = req.body?.hideContent === true;
+    const lockEntity = req.body?.lockEntity === true;
+
+    const moderation = await applyReportModerationActions({ report, hideContent, lockEntity });
+
+    await dbRun(
+      'UPDATE BaoCao SET TrangThai = ?, ChiTiet = COALESCE(ChiTiet, ?) WHERE MaBaoCao = ?',
+      ['Đã xử lý', report?.ChiTiet || '', id]
+    );
+
+    await logAdminAction({
+      adminId: req.user?.id,
+      action: 'Phê duyệt báo cáo',
+      object: 'BaoCao',
+      objectId: id,
+      note: {
+        targetType: report?.LoaiDoiTuong,
+        targetId: report?.MaDoiTuong,
+        hideContent,
+        lockEntity,
+        moderation
+      }
+    });
+
+    const updatedReport = await getReportById(id);
+    return res.json({
+      success: true,
+      report: updatedReport,
+      moderation
+    });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.delete('/reports/:id', async (req, res) => {
+  try {
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+
+    const existing = await dbGet('SELECT MaBaoCao FROM BaoCao WHERE MaBaoCao = ?', [id]);
+    if (!existing) return res.status(404).json({ success: false, error: 'Không tìm thấy báo cáo' });
+
+    await dbRun('DELETE FROM BaoCao WHERE MaBaoCao = ?', [id]);
+
+    await logAdminAction({
+      adminId: req.user?.id,
+      action: 'Xóa báo cáo',
+      object: 'BaoCao',
+      objectId: id
+    });
+
+    return res.json({ success: true });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }

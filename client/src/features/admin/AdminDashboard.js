@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import {
     BarChart3,
+    BookOpen,
     BriefcaseBusiness,
     Building2,
     Bell,
@@ -26,6 +27,7 @@ import AdminNotificationsPage from './pages/AdminNotificationsPage';
 import AdminProfilePage from './pages/AdminProfilePage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminAuditLogsPage from './pages/AdminAuditLogsPage';
+import AdminCareerGuidePostsPage from './pages/AdminCareerGuidePostsPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
 import AdminUsersPage from './pages/AdminUsersPage';
 import './AdminDashboard.css';
@@ -108,6 +110,7 @@ const menuItems = [
         ]
     },
     { key: 'reports', icon: ClipboardList, label: 'Báo cáo', to: '/admin/reports' },
+    { key: 'career-guide-posts', icon: BookOpen, label: 'Quản lý bài viết hướng nghiệp', to: '/admin/career-guide-posts' },
     { key: 'audit-logs', icon: History, label: 'Nhật ký quản trị', to: '/admin/audit-logs' }
 ];
 
@@ -121,6 +124,7 @@ const resolvePageTitle = (pathname) => {
     if (pathname.startsWith('/admin/companies')) return 'Quản lý công ty';
     if (pathname.startsWith('/admin/templates')) return 'Quản lý template CV';
     if (pathname.startsWith('/admin/reports')) return 'Báo cáo';
+    if (pathname.startsWith('/admin/career-guide-posts')) return 'Quản lý bài viết hướng nghiệp';
     if (pathname.startsWith('/admin/audit-logs')) return 'Nhật ký quản trị';
     return 'Dashboard';
 };
@@ -162,6 +166,7 @@ const AdminDashboard = () => {
     const [jobs, setJobs] = useState([]);
     const [companies, setCompanies] = useState([]);
     const [reports, setReports] = useState([]);
+    const [careerGuidePosts, setCareerGuidePosts] = useState([]);
     const [templates, setTemplates] = useState([]);
 
     const confirmResolveRef = useRef(null);
@@ -214,12 +219,13 @@ const AdminDashboard = () => {
         setLoading(true);
         setError('');
         try {
-            const [ov, us, js, cs, rs, ts] = await Promise.all([
+            const [ov, us, js, cs, rs, cgp, ts] = await Promise.all([
                 fetch(`${API_BASE}/api/admin/overview`, { headers: authHeaders }),
                 fetch(`${API_BASE}/api/admin/users?limit=50`, { headers: authHeaders }),
                 fetch(`${API_BASE}/api/admin/jobs?limit=50`, { headers: authHeaders }),
                 fetch(`${API_BASE}/api/admin/companies?limit=50`, { headers: authHeaders }),
                 fetch(`${API_BASE}/api/admin/reports?limit=50`, { headers: authHeaders }),
+                fetch(`${API_BASE}/api/admin/career-guide-posts?limit=100`, { headers: authHeaders }),
                 fetch(`${API_BASE}/api/admin/templates?limit=50&offset=0`, { headers: authHeaders })
             ]);
 
@@ -228,6 +234,7 @@ const AdminDashboard = () => {
             const jsData = await js.json().catch(() => null);
             const csData = await cs.json().catch(() => null);
             const rsData = await rs.json().catch(() => null);
+            const cgpData = await cgp.json().catch(() => null);
             const tsData = await ts.json().catch(() => null);
 
             if (!ov.ok) throw new Error(ovData?.error || 'Không tải được thống kê');
@@ -235,12 +242,14 @@ const AdminDashboard = () => {
             if (!js.ok) throw new Error(jsData?.error || 'Không tải được tin tuyển dụng');
             if (!cs.ok) throw new Error(csData?.error || 'Không tải được công ty');
             if (!rs.ok) throw new Error(rsData?.error || 'Không tải được báo cáo');
+            if (!cgp.ok) throw new Error(cgpData?.error || 'Không tải được bài viết hướng nghiệp');
 
             setCounts(ovData?.counts || {});
             setUsers(Array.isArray(usData?.users) ? usData.users : []);
             setJobs(Array.isArray(jsData?.jobs) ? jsData.jobs : []);
             setCompanies(Array.isArray(csData?.companies) ? csData.companies : []);
             setReports(Array.isArray(rsData?.reports) ? rsData.reports : []);
+            setCareerGuidePosts(Array.isArray(cgpData?.posts) ? cgpData.posts : []);
 
             const templateRows = Array.isArray(tsData?.templates)
                 ? tsData.templates
@@ -327,6 +336,35 @@ const AdminDashboard = () => {
         return data?.report;
     };
 
+    const approveReport = async (id, payload) => {
+        const res = await fetch(`${API_BASE}/api/admin/reports/${id}/approve`, {
+            method: 'POST',
+            headers: authHeaders,
+            body: JSON.stringify(payload || {})
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || 'Không phê duyệt được báo cáo');
+        return data?.report;
+    };
+
+    const deleteReport = async (id) => {
+        const res = await fetch(`${API_BASE}/api/admin/reports/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || 'Không xóa được báo cáo');
+    };
+
+    const deleteCareerGuidePost = async (id) => {
+        const res = await fetch(`${API_BASE}/api/admin/career-guide-posts/${id}`, {
+            method: 'DELETE',
+            headers: authHeaders
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || 'Không xóa được bài viết hướng nghiệp');
+    };
+
     const deleteJob = async (id) => {
         const res = await fetch(`${API_BASE}/api/admin/jobs/${id}`, {
             method: 'DELETE',
@@ -409,6 +447,21 @@ const AdminDashboard = () => {
     const saveReportById = async (reportId, payload) => {
         const updated = await patchReport(reportId, payload);
         setReports((prev) => prev.map((item) => (item.MaBaoCao === reportId ? { ...item, ...updated } : item)));
+    };
+
+    const approveReportById = async (reportId, payload) => {
+        const updated = await approveReport(reportId, payload);
+        setReports((prev) => prev.map((item) => (item.MaBaoCao === reportId ? { ...item, ...updated } : item)));
+    };
+
+    const deleteReportById = async (reportId) => {
+        await deleteReport(reportId);
+        setReports((prev) => prev.filter((item) => item.MaBaoCao !== reportId));
+    };
+
+    const deleteCareerGuidePostById = async (postId) => {
+        await deleteCareerGuidePost(postId);
+        setCareerGuidePosts((prev) => prev.filter((item) => item.MaBaiViet !== postId));
     };
 
     const greetingName = user?.name || user?.full_name || user?.email || 'Admin';
@@ -767,6 +820,9 @@ const AdminDashboard = () => {
                                     reports={reports}
                                     loading={loading}
                                     onSaveReport={saveReportById}
+                                    onApproveReport={approveReportById}
+                                    onDeleteReport={deleteReportById}
+                                    requestConfirm={requestConfirm}
                                 />
                             }
                         />
@@ -776,6 +832,17 @@ const AdminDashboard = () => {
                                 <AdminAuditLogsPage
                                     API_BASE={API_BASE}
                                     authHeaders={authHeaders}
+                                />
+                            }
+                        />
+                        <Route
+                            path="career-guide-posts"
+                            element={
+                                <AdminCareerGuidePostsPage
+                                    posts={careerGuidePosts}
+                                    loading={loading}
+                                    requestConfirm={requestConfirm}
+                                    onDeletePost={deleteCareerGuidePostById}
                                 />
                             }
                         />

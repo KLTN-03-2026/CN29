@@ -1,11 +1,83 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNotification } from '../../../components/NotificationProvider';
 
+const PROVINCE_FALLBACKS = [
+    'An Giang',
+    'Bà Rịa - Vũng Tàu',
+    'Bắc Giang',
+    'Bắc Kạn',
+    'Bạc Liêu',
+    'Bắc Ninh',
+    'Bến Tre',
+    'Bình Định',
+    'Bình Dương',
+    'Bình Phước',
+    'Bình Thuận',
+    'Cà Mau',
+    'Cần Thơ',
+    'Cao Bằng',
+    'Đà Nẵng',
+    'Đắk Lắk',
+    'Đắk Nông',
+    'Điện Biên',
+    'Đồng Nai',
+    'Đồng Tháp',
+    'Gia Lai',
+    'Hà Giang',
+    'Hà Nam',
+    'Hà Nội',
+    'Hà Tĩnh',
+    'Hải Dương',
+    'Hải Phòng',
+    'Hậu Giang',
+    'Hòa Bình',
+    'Hồ Chí Minh',
+    'Hưng Yên',
+    'Khánh Hòa',
+    'Kiên Giang',
+    'Kon Tum',
+    'Lai Châu',
+    'Lâm Đồng',
+    'Lạng Sơn',
+    'Lào Cai',
+    'Long An',
+    'Nam Định',
+    'Nghệ An',
+    'Ninh Bình',
+    'Ninh Thuận',
+    'Phú Thọ',
+    'Phú Yên',
+    'Quảng Bình',
+    'Quảng Nam',
+    'Quảng Ngãi',
+    'Quảng Ninh',
+    'Quảng Trị',
+    'Sóc Trăng',
+    'Sơn La',
+    'Tây Ninh',
+    'Thái Bình',
+    'Thái Nguyên',
+    'Thanh Hóa',
+    'Thừa Thiên Huế',
+    'Tiền Giang',
+    'Trà Vinh',
+    'Tuyên Quang',
+    'Vĩnh Long',
+    'Vĩnh Phúc',
+    'Yên Bái'
+].sort((a, b) => a.localeCompare(b, 'vi'));
+
 const normalizeProvinceEntry = (entry) => {
     if (!entry) return '';
     if (typeof entry === 'string') return entry.trim();
     return String(
         entry.TenTinh
+        || entry.tenTinh
+        || entry.ten_tinh
+        || entry.city
+        || entry.City
+        || entry.ThanhPho
+        || entry.thanhPho
         || entry.name
         || entry.ten
         || entry.province
@@ -82,7 +154,11 @@ const CompanyProfile = () => {
         try {
             const res = await fetch('/api/provinces');
             const payload = await res.json().catch(() => []);
-            if (!res.ok) return;
+
+            if (!res.ok) {
+                setProvinces(PROVINCE_FALLBACKS);
+                return;
+            }
 
             const source = Array.isArray(payload)
                 ? payload
@@ -94,9 +170,9 @@ const CompanyProfile = () => {
                 new Set(source.map(normalizeProvinceEntry).filter(Boolean))
             ).sort((a, b) => a.localeCompare(b, 'vi'));
 
-            setProvinces(normalized);
+            setProvinces(normalized.length > 0 ? normalized : PROVINCE_FALLBACKS);
         } catch (err) {
-            // silent fail
+            setProvinces(PROVINCE_FALLBACKS);
         } finally {
             setLoadingProvinces(false);
         }
@@ -405,13 +481,14 @@ const CompanyProfile = () => {
                                         type="button"
                                         className="jf-jobs-select-trigger"
                                         onClick={() => {
-                                            if (!editing) return;
+                                            if (!editing) {
+                                                setEditing(true);
+                                            }
                                             setIsCityOpen((prev) => !prev);
                                             setCityQuery('');
                                         }}
                                         aria-haspopup="listbox"
                                         aria-expanded={isCityOpen}
-                                        disabled={!editing}
                                     >
                                         <span className="jf-jobs-select-text">{selectedCityLabel}</span>
                                         <i className="bi bi-chevron-down"></i>

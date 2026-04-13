@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const AVATAR_FALLBACK = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
+const createEmptyPasswords = () => ({ current: '', next: '', confirm: '' });
+const createHiddenPasswordFlags = () => ({ current: false, next: false, confirm: false });
+
 const fetchProfile = async (userId) => {
   const res = await fetch(`/users/profile/${userId}`);
   const data = await res.json();
@@ -56,6 +59,10 @@ const EmployerAccount = () => {
   const [loadingProvinces, setLoadingProvinces] = useState(false);
   const [saving, setSaving] = useState(false);
   const [changingPass, setChangingPass] = useState(false);
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordVisible, setPasswordVisible] = useState(() => createHiddenPasswordFlags());
+  const [passwordModalKey, setPasswordModalKey] = useState(0);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
 
@@ -69,7 +76,7 @@ const EmployerAccount = () => {
     avatarUrl: ''
   });
 
-  const [passwords, setPasswords] = useState({ current: '', next: '', confirm: '' });
+  const [passwords, setPasswords] = useState(() => createEmptyPasswords());
   const [provinces, setProvinces] = useState([]);
   const [isCityOpen, setIsCityOpen] = useState(false);
   const [cityQuery, setCityQuery] = useState('');
@@ -212,6 +219,36 @@ const EmployerAccount = () => {
     }
   }, []);
 
+  useEffect(() => {
+    if (!passwordModalOpen) return undefined;
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && !changingPass) {
+        setPasswordModalOpen(false);
+      }
+    };
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [passwordModalOpen, changingPass]);
+
+  useEffect(() => {
+    if (!passwordModalOpen) return undefined;
+
+    const id = window.setTimeout(() => {
+      // Keep current password input empty even when browser password manager tries to prefill.
+      setPasswords(createEmptyPasswords());
+    }, 120);
+
+    return () => window.clearTimeout(id);
+  }, [passwordModalOpen]);
+
   const syncLocalUser = (overrides = {}) => {
     try {
       const current = JSON.parse(localStorage.getItem('user') || '{}');
@@ -220,6 +257,7 @@ const EmployerAccount = () => {
         ...overrides
       };
       localStorage.setItem('user', JSON.stringify(next));
+      window.dispatchEvent(new CustomEvent('jobfinder:user-updated', { detail: next }));
     } catch (_) {}
   };
 
@@ -308,7 +346,9 @@ const EmployerAccount = () => {
 
       syncLocalUser({
         avatar: uploadedAvatar,
-        AnhDaiDien: uploadedAvatar
+        AnhDaiDien: uploadedAvatar,
+        avatarAbsoluteUrl: uploadedAvatar,
+        avatarUrl: uploadedAvatar
       });
 
       setMessage('Đã cập nhật ảnh đại diện.');
@@ -334,7 +374,9 @@ const EmployerAccount = () => {
         name: form.fullName || user?.name || user?.HoTen || '',
         HoTen: form.fullName || user?.HoTen || user?.name || '',
         avatar: form.avatarUrl || user?.avatar || user?.AnhDaiDien || '',
-        AnhDaiDien: form.avatarUrl || user?.AnhDaiDien || user?.avatar || ''
+        AnhDaiDien: form.avatarUrl || user?.AnhDaiDien || user?.avatar || '',
+        avatarAbsoluteUrl: form.avatarUrl || user?.avatarAbsoluteUrl || user?.avatarUrl || '',
+        avatarUrl: form.avatarUrl || user?.avatarUrl || user?.avatarAbsoluteUrl || ''
       });
       if (draftKey) {
         try {
@@ -349,26 +391,44 @@ const EmployerAccount = () => {
   };
 
   const handleChangePassword = async () => {
-    setError('');
+    setPasswordError('');
     setMessage('');
     if (!passwords.current || !passwords.next || !passwords.confirm) {
-      setError('Vui lòng nhập đầy đủ mật khẩu.');
+      setPasswordError('Vui lòng nhập đầy đủ mật khẩu.');
       return;
     }
     if (passwords.next !== passwords.confirm) {
-      setError('Mật khẩu mới và xác nhận không khớp.');
+      setPasswordError('Mật khẩu mới và xác nhận không khớp.');
       return;
     }
     setChangingPass(true);
     try {
       await changePassword(token, passwords.current, passwords.next);
       setMessage('Đổi mật khẩu thành công.');
-      setPasswords({ current: '', next: '', confirm: '' });
+      setPasswords(createEmptyPasswords());
+      setPasswordVisible(createHiddenPasswordFlags());
+      setPasswordModalOpen(false);
     } catch (err) {
-      setError(err.message || 'Đổi mật khẩu thất bại');
+      setPasswordError(err.message || 'Đổi mật khẩu thất bại');
     } finally {
       setChangingPass(false);
     }
+  };
+
+  const openPasswordModal = () => {
+    setPasswordError('');
+    setPasswords(createEmptyPasswords());
+    setPasswordVisible(createHiddenPasswordFlags());
+    setPasswordModalKey((prev) => prev + 1);
+    setPasswordModalOpen(true);
+  };
+
+  const closePasswordModal = () => {
+    if (changingPass) return;
+    setPasswordModalOpen(false);
+    setPasswordError('');
+    setPasswords(createEmptyPasswords());
+    setPasswordVisible(createHiddenPasswordFlags());
   };
 
   const updateForm = (key, value) => {
@@ -548,35 +608,153 @@ const EmployerAccount = () => {
 
               <div className="employer-profile-divider my-4"></div>
 
-              <div className="mb-3">
-                <h5 className="mb-1 employer-profile-section-title">Đổi mật khẩu</h5>
-                <p className="text-muted mb-0">Nhập mật khẩu hiện tại và mật khẩu mới để bảo mật tài khoản.</p>
-              </div>
-
-              <div className="row g-3 mb-2 employer-profile-grid">
-                <div className="col-md-4">
-                  <label className="form-label">Mật khẩu hiện tại</label>
-                  <input type="password" className="form-control" value={passwords.current} onChange={(e) => setPasswords((p) => ({ ...p, current: e.target.value }))} />
+              <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-2">
+                <div>
+                  <h5 className="mb-1 employer-profile-section-title">Đổi mật khẩu</h5>
+                  <p className="text-muted mb-0">Thực hiện trong popup riêng để bảo mật và thao tác gọn hơn.</p>
                 </div>
-                <div className="col-md-4">
-                  <label className="form-label">Mật khẩu mới</label>
-                  <input type="password" className="form-control" value={passwords.next} onChange={(e) => setPasswords((p) => ({ ...p, next: e.target.value }))} />
-                </div>
-                <div className="col-md-4">
-                  <label className="form-label">Nhập lại mật khẩu mới</label>
-                  <input type="password" className="form-control" value={passwords.confirm} onChange={(e) => setPasswords((p) => ({ ...p, confirm: e.target.value }))} />
-                </div>
-              </div>
-
-              <div className="d-flex justify-content-end employer-profile-actions">
-                <button className="btn btn-primary" onClick={handleChangePassword} disabled={changingPass}>
-                  {changingPass ? 'Đang đổi...' : 'Đổi mật khẩu'}
+                <button type="button" className="btn btn-outline-primary" onClick={openPasswordModal}>
+                  <i className="bi bi-shield-lock me-2"></i>
+                  Mở bảng đổi mật khẩu
                 </button>
               </div>
             </>
           )}
         </div>
       </div>
+
+      {passwordModalOpen ? (
+        <div
+          className="employer-password-modal-backdrop"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Đổi mật khẩu"
+          onClick={closePasswordModal}
+        >
+          <div key={passwordModalKey} className="employer-password-modal card border-0" onClick={(event) => event.stopPropagation()}>
+            <div className="card-body">
+              <div className="d-flex align-items-start justify-content-between gap-2 mb-3">
+                <div>
+                  <h5 className="mb-1 employer-profile-section-title">Đổi mật khẩu</h5>
+                  <p className="text-muted mb-0">Nhập mật khẩu hiện tại và mật khẩu mới để tăng bảo mật.</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary btn-sm"
+                  onClick={closePasswordModal}
+                  disabled={changingPass}
+                  aria-label="Đóng bảng đổi mật khẩu"
+                >
+                  <i className="bi bi-x-lg"></i>
+                </button>
+              </div>
+
+              {passwordError ? <div className="alert alert-danger py-2">{passwordError}</div> : null}
+
+              <input
+                type="text"
+                name="username"
+                autoComplete="username"
+                className="d-none"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+              <input
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                className="d-none"
+                tabIndex={-1}
+                aria-hidden="true"
+              />
+
+              <div className="row g-3 employer-profile-grid">
+                <div className="col-12">
+                  <label className="form-label">Mật khẩu hiện tại</label>
+                  <div className="input-group employer-password-input-group">
+                    <input
+                      type={passwordVisible.current ? 'text' : 'password'}
+                      className="form-control"
+                      value={passwords.current}
+                      name="employer_security_current"
+                      autoComplete="new-password"
+                      onChange={(e) => setPasswords((p) => ({ ...p, current: e.target.value }))}
+                      disabled={changingPass}
+                      placeholder="Nhập mật khẩu hiện tại"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary employer-password-visibility-btn"
+                      onClick={() => setPasswordVisible((prev) => ({ ...prev, current: !prev.current }))}
+                      disabled={changingPass}
+                      aria-label={passwordVisible.current ? 'Ẩn mật khẩu hiện tại' : 'Hiện mật khẩu hiện tại'}
+                    >
+                      <i className={`bi ${passwordVisible.current ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </button>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Mật khẩu mới</label>
+                  <div className="input-group employer-password-input-group">
+                    <input
+                      type={passwordVisible.next ? 'text' : 'password'}
+                      className="form-control"
+                      value={passwords.next}
+                      name="employer_security_new"
+                      autoComplete="new-password"
+                      onChange={(e) => setPasswords((p) => ({ ...p, next: e.target.value }))}
+                      disabled={changingPass}
+                      placeholder="Nhập mật khẩu mới"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary employer-password-visibility-btn"
+                      onClick={() => setPasswordVisible((prev) => ({ ...prev, next: !prev.next }))}
+                      disabled={changingPass}
+                      aria-label={passwordVisible.next ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
+                    >
+                      <i className={`bi ${passwordVisible.next ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </button>
+                  </div>
+                </div>
+                <div className="col-md-6">
+                  <label className="form-label">Nhập lại mật khẩu mới</label>
+                  <div className="input-group employer-password-input-group">
+                    <input
+                      type={passwordVisible.confirm ? 'text' : 'password'}
+                      className="form-control"
+                      value={passwords.confirm}
+                      name="employer_security_confirm"
+                      autoComplete="new-password"
+                      onChange={(e) => setPasswords((p) => ({ ...p, confirm: e.target.value }))}
+                      disabled={changingPass}
+                      placeholder="Nhập lại mật khẩu mới"
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-outline-secondary employer-password-visibility-btn"
+                      onClick={() => setPasswordVisible((prev) => ({ ...prev, confirm: !prev.confirm }))}
+                      disabled={changingPass}
+                      aria-label={passwordVisible.confirm ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
+                    >
+                      <i className={`bi ${passwordVisible.confirm ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="d-flex justify-content-end gap-2 mt-3 employer-profile-actions">
+                <button type="button" className="btn btn-outline-secondary" onClick={closePasswordModal} disabled={changingPass}>
+                  Hủy
+                </button>
+                <button type="button" className="btn btn-primary" onClick={handleChangePassword} disabled={changingPass}>
+                  {changingPass ? 'Đang đổi...' : 'Đổi mật khẩu'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

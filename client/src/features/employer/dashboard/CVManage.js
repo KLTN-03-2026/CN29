@@ -4,13 +4,11 @@ import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const STATUS_FILTERS = [
     { key: 'all', label: 'Tất cả', icon: 'bi-collection' },
-    { key: 'na', label: 'N/A', icon: 'bi-dot' },
     { key: 'viewed', label: 'Đã xem', icon: 'bi-eye' },
     { key: 'contacted', label: 'Đã liên hệ', icon: 'bi-chat-dots' }
 ];
 
 const STATUS_VALUE_BY_FILTER = {
-    na: 'N/A',
     viewed: 'Đã xem',
     contacted: 'Đã liên hệ'
 };
@@ -149,10 +147,9 @@ const CVManage = () => {
 
     const counts = useMemo(() => {
         const all = savedCVs.length;
-        const na = savedCVs.filter((x) => normalizeCvStatus(x.status) === 'N/A').length;
         const viewed = savedCVs.filter((x) => normalizeCvStatus(x.status) === 'Đã xem').length;
         const contacted = savedCVs.filter((x) => normalizeCvStatus(x.status) === 'Đã liên hệ').length;
-        return { all, na, viewed, contacted };
+        return { all, viewed, contacted };
     }, [savedCVs]);
 
     const filteredSavedCVs = useMemo(() => {

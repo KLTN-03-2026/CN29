@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 const db = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
+const { isCloudinaryConfigured, uploadImageFromPath } = require('../config/cloudinary');
 const articleSamples = require('../mocks/articleSamples');
 
 const isMysql = /^mysql:\/\//i.test(process.env.DATABASE_URL || '');
@@ -23,6 +27,71 @@ const dbRun = (sql, params = []) =>
       resolve({ lastID: this.lastID, changes: this.changes });
     });
   });
+
+const BASE_PATH = (() => {
+  const basePath = process.env.BASE_PATH || '/';
+  let normalized = basePath;
+  if (!normalized.startsWith('/')) normalized = `/${normalized}`;
+  if (normalized.length > 1 && normalized.endsWith('/')) normalized = normalized.slice(0, -1);
+  return normalized;
+})();
+const PUBLIC_PREFIX = BASE_PATH === '/' ? '' : BASE_PATH;
+
+const isAbsoluteUrl = (value = '') => /^https?:\/\//i.test(value) || value.startsWith('//');
+const buildAbsoluteUrl = (req, relativePath) => {
+  if (!relativePath) return '';
+  if (isAbsoluteUrl(relativePath)) {
+    return relativePath.startsWith('//') ? `${req.protocol}:${relativePath}` : relativePath;
+  }
+  return `${req.protocol}://${req.get('host')}${relativePath}`;
+};
+
+const CAREER_GUIDE_IMAGE_DIR = path.join(__dirname, '../public/images/career-guide');
+try {
+  fs.mkdirSync(CAREER_GUIDE_IMAGE_DIR, { recursive: true });
+} catch (err) {
+  console.warn('[career-guide] cannot ensure upload directory:', err?.message || err);
+}
+
+const careerGuideImageStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, CAREER_GUIDE_IMAGE_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname || '').toLowerCase() || '.jpg';
+    const usage = String(req.query?.usage || 'inline').trim().toLowerCase() === 'cover' ? 'cover' : 'inline';
+    const userId = Number(req.user?.id || 0);
+    cb(null, `career_${usage}_${userId || 'user'}_${Date.now()}${ext}`);
+  }
+});
+
+const careerGuideImageUpload = multer({
+  storage: careerGuideImageStorage,
+  limits: {
+    fileSize: 8 * 1024 * 1024
+  },
+  fileFilter: (req, file, cb) => {
+    if (!String(file?.mimetype || '').startsWith('image/')) {
+      return cb(new Error('Chỉ hỗ trợ tải lên file ảnh.'));
+    }
+    cb(null, true);
+  }
+});
+
+const runCareerGuideImageUpload = (req, res, next) => {
+  careerGuideImageUpload.single('upload')(req, res, (err) => {
+    if (!err) return next();
+
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({ success: false, error: 'Kích thước ảnh tối đa là 8MB.' });
+      }
+      return res.status(400).json({ success: false, error: err.message || 'Upload ảnh không thành công.' });
+    }
+
+    return res.status(400).json({ success: false, error: err.message || 'Upload ảnh không thành công.' });
+  });
+};
 
 const resolveCareerAuthorType = (role) => {
   const normalizedRole = String(role || '').trim();
@@ -511,6 +580,55 @@ router.get('/my-posts', authenticateToken, async (req, res) => {
     });
   } catch (error) {
     return res.status(500).json({ success: false, error: 'Lỗi khi tải bài viết của bạn' });
+  }
+});
+
+router.post('/upload-image', authenticateToken, runCareerGuideImageUpload, async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ success: false, error: 'Vui lòng chọn một ảnh để tải lên.' });
+  }
+
+  const usage = String(req.query?.usage || 'inline').trim().toLowerCase() === 'cover' ? 'cover' : 'inline';
+  const localRelativeUrl = `${PUBLIC_PREFIX}/images/career-guide/${req.file.filename}`;
+
+  try {
+    if (isCloudinaryConfigured()) {
+      const uploadResult = await uploadImageFromPath(req.file.path, {
+        folder: usage === 'cover' ? 'jobfinder/career-guide/covers' : 'jobfinder/career-guide/content',
+        public_id: `${usage}_${req.user?.id || 'user'}_${Date.now()}`
+      });
+
+      const cloudUrl = uploadResult?.secure_url || uploadResult?.url || '';
+      if (!cloudUrl) {
+        throw new Error('Cloudinary không trả về URL ảnh hợp lệ.');
+      }
+
+      if (req.file.path) {
+        fs.unlink(req.file.path, () => {});
+      }
+
+      return res.json({
+        success: true,
+        url: cloudUrl,
+        absoluteUrl: buildAbsoluteUrl(req, cloudUrl),
+        source: 'cloudinary'
+      });
+    }
+
+    return res.json({
+      success: true,
+      url: localRelativeUrl,
+      absoluteUrl: buildAbsoluteUrl(req, localRelativeUrl),
+      source: 'local'
+    });
+  } catch (error) {
+    console.error('[career-guide] upload image failed:', error?.message || error);
+
+    if (req.file?.path && fs.existsSync(req.file.path)) {
+      fs.unlink(req.file.path, () => {});
+    }
+
+    return res.status(500).json({ success: false, error: 'Không thể tải ảnh lên. Vui lòng thử lại.' });
   }
 });
 
