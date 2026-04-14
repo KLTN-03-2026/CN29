@@ -13,10 +13,6 @@
   },
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm start --prefix client\"",
-    "start": "npm run dev",
-    "render:usecases": "node tools/render-usecase-diagrams.js",
-    "render:usecases:file": "node tools/render-usecase-diagrams.js docs/usecase-sequence-activity-all.txt",
-    "render:usecase": "node tools/render-usecase-models.js",
-    "render:usecase:file": "node tools/render-usecase-models.js docs/usecase-sequence-activity-all.txt"
+    "start": "npm run dev"
   }
 }
