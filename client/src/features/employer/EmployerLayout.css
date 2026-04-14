@@ -996,6 +996,30 @@
     border-top: 1px dashed #dbe6f1;
 }
 
+.employer-settings-install {
+    border: 1px solid #dbe6f2;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    padding: 0.95rem;
+}
+
+.employer-settings-install-head {
+    margin-bottom: 0.75rem;
+}
+
+.employer-settings-install-kicker {
+    margin: 0 0 0.22rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #2563eb;
+}
+
+.employer-settings-install-head .employer-profile-section-title {
+    margin-bottom: 0.2rem;
+}
+
 .employer-profile-actions .btn {
     min-width: 124px;
 }
@@ -1227,6 +1251,10 @@
     .employer-avatar-image {
         width: 76px;
         height: 76px;
+    }
+
+    .employer-settings-install {
+        padding: 0.8rem;
     }
 
     .main-content .table > :not(caption) > * > * {

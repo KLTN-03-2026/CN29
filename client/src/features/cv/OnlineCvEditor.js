@@ -18,6 +18,24 @@ const escapeHtml = (s = '') => String(s)
 
 const stripScriptsFromHtml = (html = '') => String(html).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
 
+const normalizeTemplateDocumentHtml = (html = '') => {
+  const raw = String(html || '').trim();
+  if (!raw) return '';
+
+  const doctypeIndex = raw.search(/<!doctype\s+html/i);
+  const htmlIndex = raw.search(/<html[\s>]/i);
+  let startIndex = 0;
+
+  if (doctypeIndex >= 0) startIndex = doctypeIndex;
+  else if (htmlIndex >= 0) startIndex = htmlIndex;
+
+  const sliced = raw.slice(startIndex).trimStart();
+  const closeMatch = sliced.match(/<\/html\s*>/i);
+  if (!closeMatch || typeof closeMatch.index !== 'number') return sliced;
+
+  return sliced.slice(0, closeMatch.index + closeMatch[0].length);
+};
+
 const DEFAULT_AVATAR_DATA_URI = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="420" height="420" viewBox="0 0 420 420" fill="none"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#0f766e"/><stop offset="100%" stop-color="#38bdf8"/></linearGradient></defs><rect width="420" height="420" rx="48" fill="url(#g)"/><circle cx="210" cy="156" r="72" fill="rgba(255,255,255,0.92)"/><path d="M86 338c24-58 76-86 124-86s100 28 124 86" fill="rgba(255,255,255,0.92)"/></svg>'
 )}`;
@@ -996,7 +1014,7 @@ const OnlineCvEditor = () => {
           .map((row) => ({
             key: normalizeTemplateKey(row?.Slug || row?.MaTemplateCV, ''),
             label: String(row?.TenTemplate || `Template #${row?.MaTemplateCV || ''}`).trim(),
-            htmlContent: String(row?.HtmlContent || '')
+            htmlContent: normalizeTemplateDocumentHtml(String(row?.HtmlContent || ''))
           }))
           .filter((item) => item.key);
 
@@ -1169,14 +1187,15 @@ const OnlineCvEditor = () => {
             setProjects(data.cv?.content?.projects || '');
 
             const savedHtml = String(data.cv?.html || '').trim();
-            if (savedHtml) {
-              setPersistedEditedHtml(savedHtml);
+            const normalizedSavedHtml = normalizeTemplateDocumentHtml(savedHtml);
+            if (normalizedSavedHtml) {
+              setPersistedEditedHtml(normalizedSavedHtml);
             } else {
               setPersistedEditedHtml('');
             }
 
             const avatarFromMeta = normalizeAvatarUrl(data.cv?.avatarUrl);
-            const avatarFromHtml = extractAvatarUrlFromHtml(savedHtml);
+            const avatarFromHtml = extractAvatarUrlFromHtml(normalizedSavedHtml);
             const avatarFromProfile = resolveAvatarFromProfile(profile, user);
             const resolvedAvatar = avatarFromMeta || avatarFromHtml || avatarFromProfile || DEFAULT_AVATAR_DATA_URI;
             setAvatarImageUrl(resolvedAvatar);
@@ -1228,7 +1247,9 @@ const OnlineCvEditor = () => {
     const link = escapeHtml(pick(p.personalLink, p.LinkCaNhan, p.linkCaNhan, useSample ? 'linkedin.com/in/nguyenvana' : ''));
     const avatarUrl = normalizeAvatarUrl(avatarImageUrl) || DEFAULT_AVATAR_DATA_URI;
 
-    const managedTemplateHtml = stripScriptsFromHtml(String(persistedEditedHtml || selectedTemplateHtml || '').trim());
+    const managedTemplateHtml = normalizeTemplateDocumentHtml(
+      stripScriptsFromHtml(String(persistedEditedHtml || selectedTemplateHtml || '').trim())
+    );
     if (managedTemplateHtml) {
       const tokenMap = {
         title,

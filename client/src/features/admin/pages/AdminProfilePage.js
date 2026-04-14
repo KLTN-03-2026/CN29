@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ShieldCheck, UserRound } from 'lucide-react';
+import InstallAppPanel from '../../../components/pwa/InstallAppPanel';
 
 const formatDateTime = (value) => {
     if (!value) return 'Chưa có dữ liệu';
@@ -137,6 +138,15 @@ const AdminProfilePage = ({ user, roleLabel, greetingName }) => {
                     </strong>
                 </article>
             </div>
+
+            <section className="admin-profile-settings">
+                <div className="admin-profile-settings-head">
+                    <p className="admin-profile-settings-kicker">Ứng dụng</p>
+                    <h4>Cài đặt JobFinder</h4>
+                    <p>Cài app để truy cập nhanh hơn và hoạt động ổn định khi mạng yếu.</p>
+                </div>
+                <InstallAppPanel />
+            </section>
         </section>
     );
 };

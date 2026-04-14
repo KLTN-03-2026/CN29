@@ -6,6 +6,10 @@ const isLocalhost = Boolean(
     ),
 );
 
+const allowLocalhostServiceWorker = String(process.env.REACT_APP_ENABLE_SW_LOCALHOST || '')
+  .trim()
+  .toLowerCase() === 'true';
+
 function registerValidSW(swUrl, config) {
   navigator.serviceWorker
     .register(swUrl)
@@ -45,8 +49,8 @@ export function register(config) {
     return;
   }
 
-  // Avoid stale UI during localhost QA by disabling service worker caching locally.
-  if (isLocalhost) {
+  // Default keeps localhost cache-safe; enable manually when testing PWA push on local network.
+  if (isLocalhost && !allowLocalhostServiceWorker) {
     unregister();
     return;
   }

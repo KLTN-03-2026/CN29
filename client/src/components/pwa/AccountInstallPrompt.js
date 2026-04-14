@@ -107,7 +107,7 @@ const AccountInstallPrompt = () => {
   return (
     <div className="account-install-prompt" role="dialog" aria-label="Cài đặt ứng dụng JobFinder">
       <div className="account-install-prompt__icon-wrap">
-        <img src="/pwa-192x192.png" alt="JobFinder" className="account-install-prompt__icon" />
+        <img src="/logo.jpg" alt="JobFinder" className="account-install-prompt__icon" />
       </div>
 
       <div className="account-install-prompt__text">

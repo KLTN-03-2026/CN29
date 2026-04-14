@@ -1,15 +1,11 @@
-const SHELL_CACHE = "jobfinder-shell-v1";
-const STATIC_CACHE = "jobfinder-static-v1";
+const SHELL_CACHE = "jobfinder-shell-v2";
+const STATIC_CACHE = "jobfinder-static-v2";
 
 const APP_SHELL_FILES = [
   "/",
   "/index.html",
   "/manifest.json",
-  "/favicon-32x32.png",
-  "/apple-touch-icon.png",
-  "/pwa-192x192.png",
-  "/pwa-512x512.png",
-  "/pwa-maskable-512x512.png",
+  "/logo.jpg",
 ];
 
 const API_PREFIXES = [
@@ -65,8 +61,8 @@ try {
         || '/messages'
       ).trim() || '/messages';
 
-      const icon = String(payload?.notification?.icon || '/pwa-192x192.png').trim() || '/pwa-192x192.png';
-      const badge = String(payload?.notification?.badge || '/favicon-32x32.png').trim() || '/favicon-32x32.png';
+      const icon = String(payload?.notification?.icon || '/logo.jpg').trim() || '/logo.jpg';
+      const badge = String(payload?.notification?.badge || '/logo.jpg').trim() || '/logo.jpg';
 
       self.registration.showNotification(title, {
         body,

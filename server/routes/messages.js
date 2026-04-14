@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../config/db');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
+const { sendFirebaseMessageToToken } = require('../config/firebaseMessaging');
 
 const router = express.Router();
 
@@ -17,6 +18,110 @@ const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
         if (err) return reject(err);
         resolve({ lastID: this.lastID, changes: this.changes });
     });
+});
+
+const isDuplicateColumnError = (error) => {
+    const message = String(error?.message || '').toLowerCase();
+    return message.includes('duplicate column') || message.includes('duplicate field name') || message.includes('already exists');
+};
+
+let ensureFcmTokenColumnPromise = null;
+const ensureFcmTokenColumn = async () => {
+    if (!ensureFcmTokenColumnPromise) {
+        ensureFcmTokenColumnPromise = (async () => {
+            try {
+                await dbRun('ALTER TABLE NguoiDung ADD COLUMN FcmToken TEXT');
+            } catch (error) {
+                if (!isDuplicateColumnError(error)) {
+                    throw error;
+                }
+            }
+        })().catch((error) => {
+            ensureFcmTokenColumnPromise = null;
+            throw error;
+        });
+    }
+
+    return ensureFcmTokenColumnPromise;
+};
+
+const buildMessagePreview = (content) => {
+    const text = String(content || '').trim();
+    if (!text) {
+        return 'Ban co tin nhan moi.';
+    }
+
+    if (text.length <= 120) {
+        return text;
+    }
+
+    return `${text.slice(0, 117)}...`;
+};
+
+const resolveInboxPathByRole = (role) => {
+    return String(role || '').trim() === 'Nhà tuyển dụng' ? '/employer/messages' : '/messages';
+};
+
+const sendPushForIncomingMessage = async ({ fromUserId, toUserId, content }) => {
+    await ensureFcmTokenColumn();
+
+    const recipient = await dbGet(
+        'SELECT FcmToken, VaiTro FROM NguoiDung WHERE MaNguoiDung = ?',
+        [toUserId]
+    );
+
+    const recipientToken = String(recipient?.FcmToken || '').trim();
+    if (!recipientToken) {
+        return { sent: false, reason: 'missing-recipient-token' };
+    }
+
+    const sender = await dbGet(
+        'SELECT HoTen, Email FROM NguoiDung WHERE MaNguoiDung = ?',
+        [fromUserId]
+    );
+
+    const senderName = String(sender?.HoTen || sender?.Email || 'Co nguoi').trim();
+    const targetUrl = resolveInboxPathByRole(recipient?.VaiTro);
+
+    return sendFirebaseMessageToToken({
+        token: recipientToken,
+        title: 'Tin nhan moi tren JobFinder',
+        body: `${senderName}: ${buildMessagePreview(content)}`,
+        data: {
+            type: 'message',
+            fromUserId: String(fromUserId || ''),
+            toUserId: String(toUserId || ''),
+            url: targetUrl
+        }
+    });
+};
+
+router.post('/fcm-token', authenticateToken, authorizeRole(['Nhà tuyển dụng', 'Ứng viên']), async (req, res) => {
+    try {
+        const token = String(req.body?.token || '').trim();
+        if (!token || token.length < 20) {
+            return res.status(400).json({ success: false, error: 'FCM token không hợp lệ' });
+        }
+
+        await ensureFcmTokenColumn();
+        await dbRun('UPDATE NguoiDung SET FcmToken = ? WHERE MaNguoiDung = ?', [token, req.user.id]);
+
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Save FCM token error:', err);
+        return res.status(500).json({ success: false, error: err.message || 'Server error' });
+    }
+});
+
+router.delete('/fcm-token', authenticateToken, authorizeRole(['Nhà tuyển dụng', 'Ứng viên']), async (req, res) => {
+    try {
+        await ensureFcmTokenColumn();
+        await dbRun('UPDATE NguoiDung SET FcmToken = NULL WHERE MaNguoiDung = ?', [req.user.id]);
+        return res.json({ success: true });
+    } catch (err) {
+        console.error('Delete FCM token error:', err);
+        return res.status(500).json({ success: false, error: err.message || 'Server error' });
+    }
 });
 
 // Unread conversations count (number of distinct senders with unread messages)
@@ -128,6 +233,14 @@ router.post('/', authenticateToken, authorizeRole(['Nhà tuyển dụng', 'Ứng
              VALUES (?, ?, ?, ?)` ,
             [req.user.id, toUserId, jobId, content]
         );
+
+        void sendPushForIncomingMessage({
+            fromUserId: req.user.id,
+            toUserId,
+            content
+        }).catch((pushError) => {
+            console.warn('FCM push skipped:', pushError?.message || pushError);
+        });
 
         return res.status(201).json({
             success: true,

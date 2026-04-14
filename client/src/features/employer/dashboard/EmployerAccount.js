@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import InstallAppPanel from '../../../components/pwa/InstallAppPanel';
 
 const AVATAR_FALLBACK = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
 
@@ -621,6 +622,19 @@ const EmployerAccount = () => {
                   Mở bảng đổi mật khẩu
                 </button>
               </div>
+
+              <div className="employer-profile-divider my-4"></div>
+
+              <section className="employer-settings-install">
+                <div className="employer-settings-install-head">
+                  <p className="employer-settings-install-kicker">Ứng dụng</p>
+                  <h5 className="employer-profile-section-title">Cài đặt JobFinder</h5>
+                  <p className="text-muted mb-0">
+                    Cài ứng dụng để mở nhanh hơn và sử dụng ổn định khi mạng yếu.
+                  </p>
+                </div>
+                <InstallAppPanel />
+              </section>
             </>
           )}
         </div>

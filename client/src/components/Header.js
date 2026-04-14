@@ -199,7 +199,7 @@ const Header = () => {
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/career-guide" onClick={collapseMobileNavbar}>
-                                Cẩm nang nghề nghiệp
+                                Bài viết hướng nghiệp
                             </Link>
                         </li>
                     </ul>

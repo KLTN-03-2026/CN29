@@ -10,7 +10,7 @@ const Footer = () => {
                         <div className="fw-semibold jf-footer-title">JobFinder</div>
                         <ul className="list-unstyled mt-2 mb-0">
                             <li><Link to="/">Trang chủ</Link></li>
-                            <li><Link to="/career-guide">Cẩm nang nghề nghiệp</Link></li>
+                            <li><Link to="/career-guide">Bài viết hướng nghiệp</Link></li>
                             <li><Link to="/jobs">Tìm việc làm</Link></li>
                             <li><a href="mailto:support@jobfinder.vn">support@jobfinder.vn</a></li>
                         </ul>

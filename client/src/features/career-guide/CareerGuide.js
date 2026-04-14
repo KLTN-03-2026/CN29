@@ -162,7 +162,7 @@ function CareerGuide() {
         <div className="cg-shell cg-hero-grid">
           <div className="cg-hero-content">
             <p className="cg-hero-eyebrow">Blog nghề nghiệp JobFinder</p>
-            <h1>Cẩm Nang Nghề Nghiệp</h1>
+            <h1>Bài viết hướng nghiệp</h1>
             <p className="cg-hero-subtitle">
               Cập nhật xu hướng tuyển dụng, chiến lược phỏng vấn và bí quyết xây dựng hồ sơ để bạn ứng tuyển hiệu quả hơn mỗi ngày.
             </p>

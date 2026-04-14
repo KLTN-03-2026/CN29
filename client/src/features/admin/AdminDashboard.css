@@ -1121,6 +1121,40 @@
     color: #15803d;
 }
 
+.admin-profile-settings {
+    margin-top: 1rem;
+    border: 1px solid #dbe5f1;
+    border-radius: 14px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    padding: 0.9rem;
+}
+
+.admin-profile-settings-head {
+    margin-bottom: 0.75rem;
+}
+
+.admin-profile-settings-kicker {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #2563eb;
+}
+
+.admin-profile-settings-head h4 {
+    margin: 0.18rem 0 0.2rem;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.admin-profile-settings-head p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.82rem;
+}
+
 .admin-profile-form {
     margin-top: 1rem;
     border: 1px solid #dbe5f1;
@@ -1555,6 +1589,10 @@
 
     .admin-profile-form-grid {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    .admin-profile-settings {
+        padding: 0.75rem;
     }
 
     .admin-profile-field-span-2 {

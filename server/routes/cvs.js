@@ -110,6 +110,24 @@ const normalizeTemplateKey = (value) => {
     return ok ? v : 'accent-one';
 };
 
+const normalizeTemplateDocumentHtml = (html = '') => {
+    const raw = String(html || '').trim();
+    if (!raw) return '';
+
+    const doctypeIndex = raw.search(/<!doctype\s+html/i);
+    const htmlIndex = raw.search(/<html[\s>]/i);
+    let startIndex = 0;
+
+    if (doctypeIndex >= 0) startIndex = doctypeIndex;
+    else if (htmlIndex >= 0) startIndex = htmlIndex;
+
+    const sliced = raw.slice(startIndex).trimStart();
+    const closeMatch = sliced.match(/<\/html\s*>/i);
+    if (!closeMatch || typeof closeMatch.index !== 'number') return sliced;
+
+    return sliced.slice(0, closeMatch.index + closeMatch[0].length);
+};
+
 const isMysql = /^mysql:\/\//i.test(process.env.DATABASE_URL || '');
 
 const toInt = (value, fallback) => {
@@ -308,6 +326,11 @@ router.get('/templates', async (req, res) => {
             )
             : [];
 
+        const normalizedTemplates = templates.map((template) => ({
+            ...template,
+            HtmlContent: normalizeTemplateDocumentHtml(template?.HtmlContent)
+        }));
+
         const styleRows = await sqlAll(
             `SELECT lower(IFNULL(PhongCachCV, '')) AS styleKey, COUNT(*) AS c
              FROM CvTemplate
@@ -327,7 +350,7 @@ router.get('/templates', async (req, res) => {
 
         return res.json({
             success: true,
-            templates,
+            templates: normalizedTemplates,
             total,
             from,
             to,

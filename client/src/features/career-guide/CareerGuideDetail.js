@@ -237,7 +237,7 @@ function CareerGuideDetail() {
         <nav aria-label="breadcrumb" className="breadcrumb-nav">
           <ol className="breadcrumb">
             <li className="breadcrumb-item">
-              <Link to="/career-guide">Cẩm nang nghề nghiệp</Link>
+              <Link to="/career-guide">Bài viết hướng nghiệp</Link>
             </li>
             <li className="breadcrumb-item active" aria-current="page">
               {post.title}

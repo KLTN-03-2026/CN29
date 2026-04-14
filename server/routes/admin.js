@@ -458,6 +458,24 @@ const normalizeTemplateStyle = (value) => {
   return TEMPLATE_STYLE_KEYS.has(normalized) ? normalized : 'professional';
 };
 
+const normalizeTemplateDocumentHtml = (html = '') => {
+  const raw = String(html || '').trim();
+  if (!raw) return '';
+
+  const doctypeIndex = raw.search(/<!doctype\s+html/i);
+  const htmlIndex = raw.search(/<html[\s>]/i);
+  let startIndex = 0;
+
+  if (doctypeIndex >= 0) startIndex = doctypeIndex;
+  else if (htmlIndex >= 0) startIndex = htmlIndex;
+
+  const sliced = raw.slice(startIndex).trimStart();
+  const closeMatch = sliced.match(/<\/html\s*>/i);
+  if (!closeMatch || typeof closeMatch.index !== 'number') return sliced;
+
+  return sliced.slice(0, closeMatch.index + closeMatch[0].length);
+};
+
 const mapUserRow = (row) => {
   if (!row) return null;
   return {
@@ -1655,7 +1673,7 @@ router.post('/templates', async (req, res) => {
     const description = String(req.body?.description || '').trim();
     const thumbnailUrl = String(req.body?.thumbnailUrl || req.body?.ThumbnailUrl || '').trim();
     const style = normalizeTemplateStyle(req.body?.style ?? req.body?.PhongCachCV);
-    const htmlContent = String(req.body?.htmlContent || '');
+    const htmlContent = normalizeTemplateDocumentHtml(String(req.body?.htmlContent || ''));
     const status = req.body?.status != null ? toInt(req.body.status, null) : 1;
 
     if (!name) return res.status(400).json({ success: false, error: 'Tên template là bắt buộc' });
@@ -1757,7 +1775,7 @@ router.patch('/templates/:id', async (req, res) => {
     }
 
     if (req.body?.htmlContent != null) {
-      const htmlContent = String(req.body.htmlContent || '');
+      const htmlContent = normalizeTemplateDocumentHtml(String(req.body.htmlContent || ''));
       if (!htmlContent.trim()) return res.status(400).json({ success: false, error: 'HTML content là bắt buộc' });
       fields.push('HtmlContent = ?');
       params.push(htmlContent);

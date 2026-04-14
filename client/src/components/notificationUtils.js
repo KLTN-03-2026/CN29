@@ -53,8 +53,8 @@ export const showBrowserNotification = async ({ title, body, url = '/', tag = 'j
     renotify: true,
     silent: false,
     data: { url },
-    icon: '/pwa-192x192.png',
-    badge: '/favicon-32x32.png'
+    icon: '/logo.jpg',
+    badge: '/logo.jpg'
   };
 
   if (typeof navigator !== 'undefined' && navigator.serviceWorker?.ready) {
