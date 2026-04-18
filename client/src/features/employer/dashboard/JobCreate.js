@@ -304,6 +304,11 @@ const inputDigitsToVndDigits = (inputDigits, currency) => {
     return String(clamped);
 };
 
+const normalizeHeading = (value, fallback) => {
+    const normalized = String(value || '').trim();
+    return normalized || fallback;
+};
+
 const normalizeExtraSectionItem = (item) => {
     if (!item || typeof item !== 'object') return null;
 
@@ -379,7 +384,14 @@ const JobCreate = () => {
         requirements: '',
         benefits: ''
     });
+    const [editorTitles, setEditorTitles] = useState({
+        description: 'Mô tả công việc',
+        requirements: 'Yêu cầu',
+        benefits: 'Quyền lợi'
+    });
     const [extraSections, setExtraSections] = useState([]);
+    const [showLocationModal, setShowLocationModal] = useState(false);
+    const [locationModalError, setLocationModalError] = useState('');
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -422,6 +434,14 @@ const JobCreate = () => {
         setRichValues((prev) => ({
             ...prev,
             [key]: html
+        }));
+    };
+
+    const setEditorTitle = (key) => (event) => {
+        const nextValue = event?.target?.value ?? '';
+        setEditorTitles((prev) => ({
+            ...prev,
+            [key]: nextValue
         }));
     };
 
@@ -500,6 +520,27 @@ const JobCreate = () => {
                 };
                 setRichValues(nextRich);
 
+                setEditorTitles({
+                    description: normalizeHeading(
+                        data.sectionTitles?.description
+                        ?? data.descriptionTitle
+                        ?? data.moTaTieuDe,
+                        'Mô tả công việc'
+                    ),
+                    requirements: normalizeHeading(
+                        data.sectionTitles?.requirements
+                        ?? data.requirementsTitle
+                        ?? data.yeuCauTieuDe,
+                        'Yêu cầu'
+                    ),
+                    benefits: normalizeHeading(
+                        data.sectionTitles?.benefits
+                        ?? data.benefitsTitle
+                        ?? data.quyenLoiTieuDe,
+                        'Quyền lợi'
+                    )
+                });
+
                 const nextExtraSections = parseExtraSectionsPayload(
                     data.extraSections
                     ?? data.ExtraSections
@@ -527,26 +568,19 @@ const JobCreate = () => {
         return () => { cancelled = true; };
     }, [isEdit, jobId, token]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (loadingJob) return;
-        setError('');
-
-        if (!form.title.trim()) {
-            setError('Vui lòng nhập tiêu đề tin tuyển dụng.');
-            return;
-        }
-        if (!token) {
-            setError('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.');
-            return;
-        }
-
+    const submitJob = async () => {
         setSubmitting(true);
         try {
             const payloadExtraSections = extraSections.map((section) => ({
                 title: String(section.title || '').trim(),
                 content: String(section.content || '')
             }));
+
+            const payloadSectionTitles = {
+                description: normalizeHeading(editorTitles.description, 'Mô tả công việc'),
+                requirements: normalizeHeading(editorTitles.requirements, 'Yêu cầu'),
+                benefits: normalizeHeading(editorTitles.benefits, 'Quyền lợi')
+            };
 
             const res = await fetch(isEdit ? `/jobs/${jobId}` : '/jobs', {
                 method: isEdit ? 'PUT' : 'POST',
@@ -559,6 +593,10 @@ const JobCreate = () => {
                     description: richValues.description,
                     requirements: richValues.requirements,
                     benefits: richValues.benefits,
+                    sectionTitles: payloadSectionTitles,
+                    descriptionTitle: payloadSectionTitles.description,
+                    requirementsTitle: payloadSectionTitles.requirements,
+                    benefitsTitle: payloadSectionTitles.benefits,
                     extraSections: payloadExtraSections,
                     salaryFrom: form.salaryFrom === '' ? null : Math.min(MAX_VND_SALARY, Number(digitsOnly(form.salaryFrom))),
                     salaryTo: form.salaryTo === '' ? null : Math.min(MAX_VND_SALARY, Number(digitsOnly(form.salaryTo)))
@@ -580,6 +618,45 @@ const JobCreate = () => {
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        if (loadingJob || submitting) return;
+        setError('');
+
+        if (!form.title.trim()) {
+            setError('Vui lòng nhập tiêu đề tin tuyển dụng.');
+            return;
+        }
+        if (!token) {
+            setError('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.');
+            return;
+        }
+
+        setLocationModalError('');
+        setShowLocationModal(true);
+    };
+
+    const handleConfirmLocationSubmit = async () => {
+        if (loadingJob || submitting) return;
+
+        const locationText = String(form.location || '').trim();
+        const cityText = String(form.city || '').trim();
+
+        if (!locationText) {
+            setLocationModalError('Vui lòng nhập địa điểm làm việc.');
+            return;
+        }
+
+        if (!cityText) {
+            setLocationModalError('Vui lòng chọn tỉnh/thành phố.');
+            return;
+        }
+
+        setLocationModalError('');
+        setShowLocationModal(false);
+        await submitJob();
     };
 
     return (
@@ -623,7 +700,13 @@ const JobCreate = () => {
                             </div>
 
                             <div className="col-12">
-                                <label className="form-label">Mô tả công việc</label>
+                                <input
+                                    className="form-control job-create-section-heading-input"
+                                    value={editorTitles.description}
+                                    onChange={setEditorTitle('description')}
+                                    placeholder="Mô tả công việc"
+                                    disabled={submitting || loadingJob}
+                                />
                                 <CareerRichTextEditor
                                     value={richValues.description}
                                     onChange={setRichField('description')}
@@ -635,7 +718,13 @@ const JobCreate = () => {
                             </div>
 
                             <div className="col-12">
-                                <label className="form-label">Yêu cầu</label>
+                                <input
+                                    className="form-control job-create-section-heading-input"
+                                    value={editorTitles.requirements}
+                                    onChange={setEditorTitle('requirements')}
+                                    placeholder="Yêu cầu"
+                                    disabled={submitting || loadingJob}
+                                />
                                 <CareerRichTextEditor
                                     value={richValues.requirements}
                                     onChange={setRichField('requirements')}
@@ -647,7 +736,13 @@ const JobCreate = () => {
                             </div>
 
                             <div className="col-12">
-                                <label className="form-label">Quyền lợi</label>
+                                <input
+                                    className="form-control job-create-section-heading-input"
+                                    value={editorTitles.benefits}
+                                    onChange={setEditorTitle('benefits')}
+                                    placeholder="Quyền lợi"
+                                    disabled={submitting || loadingJob}
+                                />
                                 <CareerRichTextEditor
                                     value={richValues.benefits}
                                     onChange={setRichField('benefits')}
@@ -660,11 +755,10 @@ const JobCreate = () => {
 
                             <div className="col-12">
                                 <div className="job-create-extra-sections-wrap">
-                                    {extraSections.map((section, index) => (
+                                    {extraSections.map((section) => (
                                         <div key={section.id} className="card border-0 shadow-sm job-create-card job-create-extra-card">
                                             <div className="card-body job-create-extra-card-body">
                                                 <div className="job-create-extra-card-head">
-                                                    <label className="form-label mb-0">Mục thêm {index + 1}</label>
                                                     <button
                                                         type="button"
                                                         className="btn job-create-extra-remove-btn"
@@ -677,7 +771,7 @@ const JobCreate = () => {
 
                                                 <div className="mb-3">
                                                     <input
-                                                        className="form-control"
+                                                        className="form-control job-create-extra-title-input"
                                                         value={section.title}
                                                         onChange={(event) => updateExtraSection(section.id, 'title', event.target.value)}
                                                         placeholder="Tên mục..."
@@ -706,39 +800,6 @@ const JobCreate = () => {
                                         >
                                             + Thêm mục
                                         </button>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-12">
-                                <h5 className="job-create-section-title">Địa điểm làm việc</h5>
-                            </div>
-
-                            <div className="col-12">
-                                <div className="row g-3 align-items-end">
-                                    <div className="col-md-6">
-                                        <label className="form-label">Địa điểm</label>
-                                        <input
-                                            className="form-control"
-                                            value={form.location}
-                                            onChange={setField('location')}
-                                            placeholder="VD: Quận 1, 123 Nguyễn Huệ..."
-                                        />
-                                    </div>
-
-                                    <div className="col-md-6">
-                                        <label className="form-label">Thành phố</label>
-                                        <JobsStyleSelect
-                                            value={form.city}
-                                            options={provinces}
-                                            onChange={setField('city')}
-                                            placeholder={loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh/thành'}
-                                            searchable
-                                            searchPlaceholder="Nhập để tìm tỉnh/thành"
-                                            locationMode
-                                            emptyText="Không tìm thấy tỉnh/thành phù hợp"
-                                            disabled={loadingProvinces}
-                                        />
                                     </div>
                                 </div>
                             </div>
@@ -882,6 +943,96 @@ const JobCreate = () => {
                     </form>
                 </div>
             </div>
+
+            {showLocationModal ? (
+                <div
+                    className="job-create-location-modal-backdrop"
+                    role="presentation"
+                    onClick={() => {
+                        if (submitting) return;
+                        setShowLocationModal(false);
+                    }}
+                >
+                    <div
+                        className="job-create-location-modal card border-0 shadow-sm job-create-card"
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="job-create-location-modal-title"
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className="job-create-location-modal-header">
+                            <div>
+                                <h5 id="job-create-location-modal-title" className="mb-1">Địa điểm làm việc</h5>
+                                <p className="mb-0 text-muted small">Nhập địa điểm trước khi {isEdit ? 'lưu thay đổi' : 'đăng tin'} để giao diện chính gọn hơn.</p>
+                            </div>
+                            <button
+                                type="button"
+                                className="btn job-create-location-close-btn"
+                                onClick={() => setShowLocationModal(false)}
+                                disabled={submitting}
+                                aria-label="Đóng modal địa điểm"
+                            >
+                                <i className="bi bi-x-lg"></i>
+                            </button>
+                        </div>
+
+                        <div className="job-create-location-modal-body">
+                            {locationModalError ? (
+                                <div className="alert alert-danger mb-3" role="alert">
+                                    {locationModalError}
+                                </div>
+                            ) : null}
+
+                            <div className="row g-3 align-items-end">
+                                <div className="col-md-6">
+                                    <label className="form-label">Địa điểm</label>
+                                    <input
+                                        className="form-control"
+                                        value={form.location}
+                                        onChange={setField('location')}
+                                        placeholder="VD: Quận 1, 123 Nguyễn Huệ..."
+                                        disabled={submitting || loadingJob}
+                                    />
+                                </div>
+
+                                <div className="col-md-6">
+                                    <label className="form-label">Thành phố</label>
+                                    <JobsStyleSelect
+                                        value={form.city}
+                                        options={provinces}
+                                        onChange={setField('city')}
+                                        placeholder={loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh/thành'}
+                                        searchable
+                                        searchPlaceholder="Nhập để tìm tỉnh/thành"
+                                        locationMode
+                                        emptyText="Không tìm thấy tỉnh/thành phù hợp"
+                                        disabled={loadingProvinces || submitting || loadingJob}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="job-create-location-modal-footer">
+                            <button
+                                type="button"
+                                className="btn job-create-cancel-btn"
+                                onClick={() => setShowLocationModal(false)}
+                                disabled={submitting}
+                            >
+                                Đóng
+                            </button>
+                            <button
+                                type="button"
+                                className="btn job-create-submit-btn"
+                                onClick={handleConfirmLocationSubmit}
+                                disabled={submitting || loadingJob}
+                            >
+                                {submitting ? (isEdit ? 'Đang lưu...' : 'Đang đăng...') : (isEdit ? 'Xác nhận & Lưu thay đổi' : 'Xác nhận & Đăng tin')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            ) : null}
         </div>
         </div>
     );

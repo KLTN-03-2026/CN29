@@ -122,6 +122,18 @@
   min-height: 160px;
 }
 
+.job-create-section-heading-input {
+  max-width: 420px;
+  margin: 0 auto 10px;
+  text-align: center;
+  font-weight: 800;
+  color: #0f2942;
+}
+
+.job-create-section-heading-input::placeholder {
+  color: #6f86a3;
+}
+
 .job-create-extra-sections-wrap {
   display: flex;
   flex-direction: column;
@@ -139,9 +151,18 @@
 .job-create-extra-card-head {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 12px;
   margin-bottom: 10px;
+}
+
+.job-create-extra-title-input {
+  text-align: center;
+  font-weight: 700;
+}
+
+.job-create-extra-title-input::placeholder {
+  color: #7b8da6;
 }
 
 .job-create-extra-remove-btn {
@@ -191,6 +212,34 @@
 
 .job-create-deadline-menu {
   z-index: 3000;
+  width: min(300px, calc(100vw - 24px));
+  min-width: 268px;
+}
+
+.job-create-deadline-menu .calendar-date-picker__header {
+  padding: 9px 10px;
+}
+
+.job-create-deadline-menu .calendar-date-picker__weekdays {
+  padding: 6px 8px 2px;
+}
+
+.job-create-deadline-menu .calendar-date-picker__grid {
+  padding: 2px 8px 8px;
+}
+
+.job-create-deadline-menu .calendar-date-picker__cell {
+  height: 34px;
+  font-size: 0.93rem;
+}
+
+.job-create-deadline-menu .calendar-date-picker__footer {
+  padding: 8px 10px;
+}
+
+.job-create-deadline-menu .calendar-date-picker__today-btn {
+  font-size: 0.95rem;
+  padding: 5px 9px;
 }
 
 .job-create-deadline-actions {
@@ -362,6 +411,69 @@
   transform: none;
 }
 
+.job-create-location-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3200;
+  background: rgba(15, 23, 42, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.job-create-location-modal {
+  width: min(760px, 100%);
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.job-create-location-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid #dfebf8;
+  background: linear-gradient(180deg, #f7fbff 0%, #f3f8ff 100%);
+}
+
+.job-create-location-modal-header h5 {
+  font-weight: 800;
+  color: #0f2942;
+}
+
+.job-create-location-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #cbdcf1;
+  background: #ffffff;
+  color: #3f5f82;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-create-location-close-btn:hover {
+  background: #edf4ff;
+  border-color: #9cbfe8;
+}
+
+.job-create-location-modal-body {
+  padding: 16px 18px;
+  background: #ffffff;
+}
+
+.job-create-location-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 12px 18px 16px;
+  border-top: 1px solid #dfebf8;
+  background: #f8fbff;
+}
+
 @media (max-width: 768px) {
   .job-create-shell {
     padding: 12px;
@@ -382,6 +494,14 @@
   }
 
   .job-create-deadline-chip {
+    width: 100%;
+  }
+
+  .job-create-location-modal-footer {
+    flex-direction: column-reverse;
+  }
+
+  .job-create-location-modal-footer .btn {
     width: 100%;
   }
 }
