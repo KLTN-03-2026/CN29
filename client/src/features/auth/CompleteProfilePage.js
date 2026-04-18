@@ -2,25 +2,17 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import AuthLayout from './components/AuthLayout';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
+import CalendarDatePicker from '../../components/date/CalendarDatePicker';
 
 const CANDIDATE_ROLE = 'Ứng viên';
 const EMPLOYER_ROLE = 'Nhà tuyển dụng';
 const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
-const MONTH_OPTIONS = Array.from({ length: 12 }, (_, idx) => idx + 1);
-const YEAR_OPTIONS = Array.from({ length: 80 }, (_, idx) => new Date().getFullYear() - idx);
 
 const pad2 = (value) => String(value).padStart(2, '0');
 
-const getDaysInMonth = (year, month) => {
-  if (!year || !month) return 31;
-  return new Date(year, month, 0).getDate();
-};
-
-const parseBirthdayParts = (value) => {
+const normalizeIsoDate = (value) => {
   const text = String(value || '').trim();
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
-    return { day: '', month: '', year: '' };
-  }
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return '';
 
   const [yearRaw, monthRaw, dayRaw] = text.split('-');
   const year = Number(yearRaw);
@@ -28,44 +20,24 @@ const parseBirthdayParts = (value) => {
   const day = Number(dayRaw);
 
   if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
-    return { day: '', month: '', year: '' };
+    return '';
   }
 
   if (month < 1 || month > 12) {
-    return { day: '', month: '', year: '' };
+    return '';
   }
 
-  const maxDay = getDaysInMonth(year, month);
+  const maxDay = new Date(year, month, 0).getDate();
   if (day < 1 || day > maxDay) {
-    return { day: '', month: '', year: '' };
+    return '';
   }
 
-  return {
-    day: String(day),
-    month: String(month),
-    year: String(year)
-  };
+  return `${year}-${pad2(month)}-${pad2(day)}`;
 };
 
-const toBirthdayIso = ({ day, month, year }) => {
-  const dayNum = Number(day);
-  const monthNum = Number(month);
-  const yearNum = Number(year);
-
-  if (!Number.isFinite(dayNum) || !Number.isFinite(monthNum) || !Number.isFinite(yearNum)) {
-    return '';
-  }
-
-  if (monthNum < 1 || monthNum > 12) {
-    return '';
-  }
-
-  const maxDay = getDaysInMonth(yearNum, monthNum);
-  if (dayNum < 1 || dayNum > maxDay) {
-    return '';
-  }
-
-  return `${yearNum}-${pad2(monthNum)}-${pad2(dayNum)}`;
+const formatIsoDate = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
 };
 
 const resolveUserId = (user) => {
@@ -112,19 +84,18 @@ const CompleteProfilePage = () => {
   const [avatarFile, setAvatarFile] = useState(null);
   const [avatarInputKey, setAvatarInputKey] = useState(0);
   const previewObjectUrlRef = useRef('');
+  const maxBirthdayDate = useMemo(() => formatIsoDate(new Date()), []);
 
   const initialBirthday = useMemo(
-    () => parseBirthdayParts(prefill.birthday),
+    () => normalizeIsoDate(prefill.birthday),
     [prefill.birthday]
   );
-
-  const [birthdayParts, setBirthdayParts] = useState(initialBirthday);
 
   const [candidateForm, setCandidateForm] = useState({
     fullName: prefill.fullName || currentUser?.name || '',
     phone: prefill.phone || '',
     address: prefill.address || '',
-    birthday: toBirthdayIso(initialBirthday),
+    birthday: initialBirthday,
     gender: prefill.gender || 'Nam',
     city: '',
     district: '',
@@ -163,28 +134,17 @@ const CompleteProfilePage = () => {
   }, [navigate, prefill, role, token]);
 
   useEffect(() => {
-    setBirthdayParts(initialBirthday);
-  }, [initialBirthday]);
-
-  useEffect(() => {
     setCandidateForm((prev) => ({
       ...prev,
-      birthday: toBirthdayIso(birthdayParts)
+      birthday: initialBirthday
     }));
-  }, [birthdayParts]);
+  }, [initialBirthday]);
 
   useEffect(() => () => {
     if (previewObjectUrlRef.current) {
       URL.revokeObjectURL(previewObjectUrlRef.current);
     }
   }, []);
-
-  const birthdayDays = useMemo(() => {
-    const yearNum = Number(birthdayParts.year);
-    const monthNum = Number(birthdayParts.month);
-    const maxDay = getDaysInMonth(yearNum, monthNum);
-    return Array.from({ length: maxDay }, (_, idx) => idx + 1);
-  }, [birthdayParts.month, birthdayParts.year]);
 
   if (!token || !role || ![CANDIDATE_ROLE, EMPLOYER_ROLE].includes(role)) {
     return null;
@@ -203,25 +163,11 @@ const CompleteProfilePage = () => {
     setEmployerForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleBirthdayPartChange = (event) => {
-    const { name, value } = event.target;
-
-    setBirthdayParts((prev) => {
-      const next = { ...prev, [name]: value };
-
-      const monthNum = Number(next.month);
-      const yearNum = Number(next.year);
-      const dayNum = Number(next.day);
-
-      if (Number.isFinite(monthNum) && Number.isFinite(yearNum) && Number.isFinite(dayNum)) {
-        const maxDay = getDaysInMonth(yearNum, monthNum);
-        if (dayNum > maxDay) {
-          next.day = String(maxDay);
-        }
-      }
-
-      return next;
-    });
+  const handleBirthdayChange = (nextBirthday) => {
+    setCandidateForm((prev) => ({
+      ...prev,
+      birthday: nextBirthday
+    }));
   };
 
   const handleAvatarFileChange = (event) => {
@@ -405,46 +351,15 @@ const CompleteProfilePage = () => {
             <div className="auth-grid-two">
               <div className="auth-field">
                 <label className="auth-field-label" htmlFor="candidateBirthday">Ngày sinh</label>
-                <div className="auth-grid-three auth-birthday-grid">
-                  <select
+                <div className="auth-birthday-grid">
+                  <CalendarDatePicker
                     id="candidateBirthday"
-                    name="day"
-                    className="auth-select"
-                    value={birthdayParts.day}
-                    onChange={handleBirthdayPartChange}
-                    required
-                  >
-                    <option value="">Ngày</option>
-                    {birthdayDays.map((day) => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    name="month"
-                    className="auth-select"
-                    value={birthdayParts.month}
-                    onChange={handleBirthdayPartChange}
-                    required
-                  >
-                    <option value="">Tháng</option>
-                    {MONTH_OPTIONS.map((month) => (
-                      <option key={month} value={month}>{`Tháng ${month}`}</option>
-                    ))}
-                  </select>
-
-                  <select
-                    name="year"
-                    className="auth-select"
-                    value={birthdayParts.year}
-                    onChange={handleBirthdayPartChange}
-                    required
-                  >
-                    <option value="">Năm</option>
-                    {YEAR_OPTIONS.map((year) => (
-                      <option key={year} value={year}>{year}</option>
-                    ))}
-                  </select>
+                    value={candidateForm.birthday}
+                    onChange={handleBirthdayChange}
+                    placeholder="Chọn ngày sinh"
+                    maxDate={maxBirthdayDate}
+                    inputClassName="auth-input"
+                  />
                 </div>
               </div>
               <div className="auth-field">

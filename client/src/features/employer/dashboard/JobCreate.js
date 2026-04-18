@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import CareerRichTextEditor from '../../career-guide/components/CareerRichTextEditor';
+import CalendarDatePicker from '../../../components/date/CalendarDatePicker';
 import './JobCreate.css';
 
 const salaryTypes = ['Thỏa thuận', 'Tháng', 'Năm', 'Khoảng', 'Không xác định'];
@@ -61,11 +62,6 @@ const formatIsoDate = (date) => {
     const month = pad2(date.getMonth() + 1);
     const day = pad2(date.getDate());
     return `${year}-${month}-${day}`;
-};
-
-const getDaysInMonth = (year, month) => {
-    if (!year || !month) return 31;
-    return new Date(year, month, 0).getDate();
 };
 
 const JobsStyleSelect = ({
@@ -198,62 +194,11 @@ const JobsStyleSelect = ({
 
 const DeadlineDateField = ({ value, onChange, disabled = false }) => {
     const parsed = useMemo(() => parseIsoDateParts(value), [value]);
-    const [year, setYear] = useState(parsed ? String(parsed.year) : '');
-    const [month, setMonth] = useState(parsed ? pad2(parsed.month) : '');
-    const [day, setDay] = useState(parsed ? pad2(parsed.day) : '');
-
-    useEffect(() => {
-        setYear(parsed ? String(parsed.year) : '');
-        setMonth(parsed ? pad2(parsed.month) : '');
-        setDay(parsed ? pad2(parsed.day) : '');
-    }, [parsed]);
-
-    const yearOptions = useMemo(() => {
-        const currentYear = new Date().getFullYear();
-        return Array.from({ length: 8 }, (_, index) => String(currentYear + index));
+    const todayIso = useMemo(() => formatIsoDate(new Date()), []);
+    const maxDateIso = useMemo(() => {
+        const maxYear = new Date().getFullYear() + 7;
+        return `${maxYear}-12-31`;
     }, []);
-
-    const monthOptions = useMemo(
-        () => Array.from({ length: 12 }, (_, index) => pad2(index + 1)),
-        []
-    );
-
-    const dayOptions = useMemo(() => {
-        if (!year || !month) return [];
-        const totalDays = getDaysInMonth(Number(year), Number(month));
-        return Array.from({ length: totalDays }, (_, index) => pad2(index + 1));
-    }, [year, month]);
-
-    const emitNextValue = (nextYear, nextMonth, nextDay) => {
-        if (!nextYear || !nextMonth || !nextDay) {
-            onChange('');
-            return;
-        }
-
-        const maxDay = getDaysInMonth(Number(nextYear), Number(nextMonth));
-        const clampedDay = pad2(Math.min(maxDay, Number(nextDay)));
-
-        if (clampedDay !== nextDay) {
-            setDay(clampedDay);
-        }
-
-        onChange(`${nextYear}-${nextMonth}-${clampedDay}`);
-    };
-
-    const handleChangeYear = (nextYear) => {
-        setYear(nextYear);
-        emitNextValue(nextYear, month, day);
-    };
-
-    const handleChangeMonth = (nextMonth) => {
-        setMonth(nextMonth);
-        emitNextValue(year, nextMonth, day);
-    };
-
-    const handleChangeDay = (nextDay) => {
-        setDay(nextDay);
-        emitNextValue(year, month, nextDay);
-    };
 
     const setQuickDate = (daysToAdd) => {
         const next = new Date();
@@ -268,35 +213,16 @@ const DeadlineDateField = ({ value, onChange, disabled = false }) => {
 
     return (
         <div className="job-create-deadline-picker">
-            <div className="row g-2">
-                <div className="col-4">
-                    <JobsStyleSelect
-                        value={day}
-                        options={dayOptions}
-                        onChange={handleChangeDay}
-                        placeholder="Ngày"
-                        disabled={disabled || !year || !month}
-                    />
-                </div>
-                <div className="col-4">
-                    <JobsStyleSelect
-                        value={month}
-                        options={monthOptions}
-                        onChange={handleChangeMonth}
-                        placeholder="Tháng"
-                        disabled={disabled}
-                    />
-                </div>
-                <div className="col-4">
-                    <JobsStyleSelect
-                        value={year}
-                        options={yearOptions}
-                        onChange={handleChangeYear}
-                        placeholder="Năm"
-                        disabled={disabled}
-                    />
-                </div>
-            </div>
+            <CalendarDatePicker
+                value={value}
+                onChange={onChange}
+                placeholder="Chọn hạn nộp hồ sơ"
+                disabled={disabled}
+                minDate={todayIso}
+                maxDate={maxDateIso}
+                inputClassName="form-control job-create-deadline-input"
+                menuClassName="job-create-deadline-menu"
+            />
 
             <div className="job-create-deadline-actions">
                 <button
@@ -319,9 +245,6 @@ const DeadlineDateField = ({ value, onChange, disabled = false }) => {
                     type="button"
                     className="job-create-deadline-chip is-clear"
                     onClick={() => {
-                        setYear('');
-                        setMonth('');
-                        setDay('');
                         onChange('');
                     }}
                     disabled={disabled}
@@ -381,11 +304,56 @@ const inputDigitsToVndDigits = (inputDigits, currency) => {
     return String(clamped);
 };
 
+const normalizeExtraSectionItem = (item) => {
+    if (!item || typeof item !== 'object') return null;
+
+    const title = String(
+        item.title
+        ?? item.TieuDe
+        ?? item.tenMuc
+        ?? item.label
+        ?? ''
+    ).trim();
+
+    const content = String(
+        item.content
+        ?? item.NoiDung
+        ?? item.noiDung
+        ?? item.html
+        ?? item.moTa
+        ?? ''
+    );
+
+    if (!title && !content) return null;
+
+    return { title, content };
+};
+
+const parseExtraSectionsPayload = (rawValue) => {
+    if (!rawValue) return [];
+
+    let source = rawValue;
+    if (typeof source === 'string') {
+        try {
+            source = JSON.parse(source);
+        } catch {
+            return [];
+        }
+    }
+
+    if (!Array.isArray(source)) return [];
+
+    return source
+        .map((item) => normalizeExtraSectionItem(item))
+        .filter(Boolean);
+};
+
 const JobCreate = () => {
     const navigate = useNavigate();
     const { id: jobId } = useParams();
     const token = useMemo(() => localStorage.getItem('token') || '', []);
     const isEdit = Boolean(jobId);
+    const extraSectionIdRef = useRef(1);
 
     const [form, setForm] = useState({
         title: '',
@@ -411,6 +379,7 @@ const JobCreate = () => {
         requirements: '',
         benefits: ''
     });
+    const [extraSections, setExtraSections] = useState([]);
 
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState('');
@@ -453,6 +422,33 @@ const JobCreate = () => {
         setRichValues((prev) => ({
             ...prev,
             [key]: html
+        }));
+    };
+
+    const addExtraSection = () => {
+        const nextId = extraSectionIdRef.current;
+        extraSectionIdRef.current += 1;
+        setExtraSections((prev) => ([
+            ...prev,
+            {
+                id: nextId,
+                title: '',
+                content: ''
+            }
+        ]));
+    };
+
+    const removeExtraSection = (id) => {
+        setExtraSections((prev) => prev.filter((section) => section.id !== id));
+    };
+
+    const updateExtraSection = (id, key, value) => {
+        setExtraSections((prev) => prev.map((section) => {
+            if (section.id !== id) return section;
+            return {
+                ...section,
+                [key]: value
+            };
         }));
     };
 
@@ -503,6 +499,24 @@ const JobCreate = () => {
                     benefits: data.QuyenLoi || ''
                 };
                 setRichValues(nextRich);
+
+                const nextExtraSections = parseExtraSectionsPayload(
+                    data.extraSections
+                    ?? data.ExtraSections
+                    ?? data.ExtraSectionsJson
+                    ?? data.MucBoSung
+                    ?? data.MucBoSungJson
+                ).map((section) => {
+                    const nextId = extraSectionIdRef.current;
+                    extraSectionIdRef.current += 1;
+                    return {
+                        id: nextId,
+                        title: section.title,
+                        content: section.content
+                    };
+                });
+
+                setExtraSections(nextExtraSections);
             } catch (err) {
                 if (!cancelled) setError(err.message || 'Có lỗi khi tải tin.');
             } finally {
@@ -529,6 +543,11 @@ const JobCreate = () => {
 
         setSubmitting(true);
         try {
+            const payloadExtraSections = extraSections.map((section) => ({
+                title: String(section.title || '').trim(),
+                content: String(section.content || '')
+            }));
+
             const res = await fetch(isEdit ? `/jobs/${jobId}` : '/jobs', {
                 method: isEdit ? 'PUT' : 'POST',
                 headers: {
@@ -540,6 +559,7 @@ const JobCreate = () => {
                     description: richValues.description,
                     requirements: richValues.requirements,
                     benefits: richValues.benefits,
+                    extraSections: payloadExtraSections,
                     salaryFrom: form.salaryFrom === '' ? null : Math.min(MAX_VND_SALARY, Number(digitsOnly(form.salaryFrom))),
                     salaryTo: form.salaryTo === '' ? null : Math.min(MAX_VND_SALARY, Number(digitsOnly(form.salaryTo)))
                 })
@@ -636,6 +656,58 @@ const JobCreate = () => {
                                     toolbarMode="word-basic"
                                     className="job-create-career-editor"
                                 />
+                            </div>
+
+                            <div className="col-12">
+                                <div className="job-create-extra-sections-wrap">
+                                    {extraSections.map((section, index) => (
+                                        <div key={section.id} className="card border-0 shadow-sm job-create-card job-create-extra-card">
+                                            <div className="card-body job-create-extra-card-body">
+                                                <div className="job-create-extra-card-head">
+                                                    <label className="form-label mb-0">Mục thêm {index + 1}</label>
+                                                    <button
+                                                        type="button"
+                                                        className="btn job-create-extra-remove-btn"
+                                                        onClick={() => removeExtraSection(section.id)}
+                                                        disabled={submitting || loadingJob}
+                                                    >
+                                                        Xóa
+                                                    </button>
+                                                </div>
+
+                                                <div className="mb-3">
+                                                    <input
+                                                        className="form-control"
+                                                        value={section.title}
+                                                        onChange={(event) => updateExtraSection(section.id, 'title', event.target.value)}
+                                                        placeholder="Tên mục..."
+                                                        disabled={submitting || loadingJob}
+                                                    />
+                                                </div>
+
+                                                <CareerRichTextEditor
+                                                    value={section.content}
+                                                    onChange={(html) => updateExtraSection(section.id, 'content', html)}
+                                                    placeholder="Nhập nội dung..."
+                                                    minHeight={160}
+                                                    toolbarMode="word-basic"
+                                                    className="job-create-career-editor"
+                                                />
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    <div className="job-create-extra-add-wrap">
+                                        <button
+                                            type="button"
+                                            className="btn job-create-cancel-btn job-create-extra-add-btn"
+                                            onClick={addExtraSection}
+                                            disabled={submitting || loadingJob}
+                                        >
+                                            + Thêm mục
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="col-12">

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Building2, Eye, Mail, MapPin, PencilLine, RotateCcw, Trash2, Users } from 'lucide-react';
 import SmartPagination from '../../../components/SmartPagination';
+import CalendarDatePicker from '../../../components/date/CalendarDatePicker';
 
 const formatDateTime = (value) => {
     if (!value) return '-';
@@ -807,12 +808,13 @@ const AdminUsersPage = ({
                                             <div className="row g-3">
                                                 <div className="col-md-4">
                                                     <label className="form-label">Ngày sinh</label>
-                                                    <input
-                                                        type="date"
-                                                        className="form-control"
+                                                    <CalendarDatePicker
                                                         value={editModal.form.candidate.birthday}
-                                                        onChange={(e) => updateCandidateField('birthday', e.target.value)}
+                                                        onChange={(nextValue) => updateCandidateField('birthday', nextValue)}
+                                                        placeholder="Chọn ngày sinh"
+                                                        maxDate={new Date()}
                                                         disabled={editModal.saving}
+                                                        inputClassName="form-control"
                                                     />
                                                 </div>
                                                 <div className="col-md-4">

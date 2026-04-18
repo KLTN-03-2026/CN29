@@ -122,11 +122,75 @@
   min-height: 160px;
 }
 
+.job-create-extra-sections-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.job-create-extra-card {
+  border-radius: 16px;
+}
+
+.job-create-extra-card-body {
+  padding: 16px;
+}
+
+.job-create-extra-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.job-create-extra-remove-btn {
+  border-radius: 10px;
+  border: 1px solid #efc0c0;
+  background: #ffffff;
+  color: #b42318;
+  font-weight: 700;
+  min-height: 34px;
+  padding: 5px 12px;
+}
+
+.job-create-extra-remove-btn:hover {
+  border-color: #e49a9a;
+  background: #fff2f2;
+  color: #912018;
+}
+
+.job-create-extra-remove-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.job-create-extra-add-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.job-create-extra-add-btn {
+  min-width: 170px;
+  justify-content: center;
+}
+
 .job-create-deadline-picker {
   border: 1px solid #d5e3f2;
   border-radius: 12px;
   padding: 10px;
   background: linear-gradient(180deg, #fbfdff 0%, #f7fbff 100%);
+}
+
+.job-create-deadline-input {
+  min-height: 44px;
+  border: 1px solid #cfdbea;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.job-create-deadline-menu {
+  z-index: 3000;
 }
 
 .job-create-deadline-actions {

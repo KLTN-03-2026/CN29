@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
+import CalendarDatePicker from '../../components/date/CalendarDatePicker';
 import ProfileSidebar from './profile/ProfileSidebar';
 import ProfileMainContent from './profile/ProfileMainContent';
 import { normalizeProfileTab } from './profile/profileNavigation';
@@ -1203,12 +1204,17 @@ const Profile = ({ initialTab = 'overview' }) => {
 
                                                 <div className="col-md-4">
                                                     <label className="form-label fw-semibold">Ngày sinh</label>
-                                                    <input
-                                                        type="date"
-                                                        className="form-control profile-modal-input"
-                                                        name="birthday"
+                                                    <CalendarDatePicker
                                                         value={formData.birthday}
-                                                        onChange={handleInputChange}
+                                                        onChange={(nextValue) => handleInputChange({
+                                                            target: {
+                                                                name: 'birthday',
+                                                                value: nextValue
+                                                            }
+                                                        })}
+                                                        placeholder="Chọn ngày sinh"
+                                                        maxDate={new Date()}
+                                                        inputClassName="form-control profile-modal-input"
                                                     />
                                                 </div>
                                                 <div className="col-md-4">

@@ -2,13 +2,40 @@ import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
+import CalendarDatePicker from '../../../components/date/CalendarDatePicker';
 
-const days = Array.from({ length: 31 }, (_, idx) => idx + 1);
-const years = Array.from({ length: 80 }, (_, idx) => new Date().getFullYear() - idx);
-const months = [
-  'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6',
-  'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'
-];
+const pad2 = (value) => String(value).padStart(2, '0');
+
+const parseIsoDate = (value) => {
+  const text = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
+
+  const [yearRaw, monthRaw, dayRaw] = text.split('-');
+  const year = Number(yearRaw);
+  const month = Number(monthRaw);
+  const day = Number(dayRaw);
+
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) {
+    return null;
+  }
+
+  if (month < 1 || month > 12) return null;
+
+  const maxDay = new Date(year, month, 0).getDate();
+  if (day < 1 || day > maxDay) return null;
+
+  return {
+    year,
+    month,
+    day,
+    date: new Date(year, month - 1, day)
+  };
+};
+
+const formatIsoDate = (date) => {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
+  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+};
 
 const RegisterForm = ({ onSuccess }) => {
   const navigate = useNavigate();
@@ -20,9 +47,7 @@ const RegisterForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    day: days[0],
-    month: months[0],
-    year: years[0],
+    birthday: '',
     gender: 'Nữ',
     email: '',
     phone: '',
@@ -32,6 +57,7 @@ const RegisterForm = ({ onSuccess }) => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const maxBirthdayDate = useMemo(() => formatIsoDate(new Date()), []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -48,9 +74,15 @@ const RegisterForm = ({ onSuccess }) => {
 
     const fullName = `${formData.lastName} ${formData.firstName}`.trim();
 
-    const monthIndex = months.indexOf(formData.month) + 1;
-    const birthDate = new Date(formData.year, monthIndex - 1, formData.day);
-    const birthdayIso = `${formData.year}-${String(monthIndex).padStart(2, '0')}-${String(formData.day).padStart(2, '0')}`;
+    const birthday = parseIsoDate(formData.birthday);
+    if (!birthday) {
+      setLoading(false);
+      setError('Vui lòng chọn ngày sinh hợp lệ');
+      return;
+    }
+
+    const birthDate = birthday.date;
+    const birthdayIso = `${birthday.year}-${pad2(birthday.month)}-${pad2(birthday.day)}`;
     const normalizedGender = formData.gender === 'Tùy chỉnh' ? 'Khác' : formData.gender;
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -205,29 +237,13 @@ const RegisterForm = ({ onSuccess }) => {
 
       <div className="auth-field">
         <label className="auth-field-label">Ngày sinh</label>
-        <div className="auth-grid-two">
-          <select name="day" className="auth-select" value={formData.day} onChange={handleChange}>
-            {days.map((day) => (
-              <option key={day} value={day}>{day}</option>
-            ))}
-          </select>
-          <select name="month" className="auth-select" value={formData.month} onChange={handleChange}>
-            {months.map((month) => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
-        </div>
-        <select
-          name="year"
-          className="auth-select"
-          value={formData.year}
-          onChange={handleChange}
-          style={{ marginTop: 10 }}
-        >
-          {years.map((year) => (
-            <option key={year} value={year}>{year}</option>
-          ))}
-        </select>
+        <CalendarDatePicker
+          value={formData.birthday}
+          onChange={(nextBirthday) => setFormData((prev) => ({ ...prev, birthday: nextBirthday }))}
+          placeholder="Chọn ngày sinh"
+          maxDate={maxBirthdayDate}
+          inputClassName="auth-input"
+        />
       </div>
 
       <div className="auth-field">
