@@ -417,15 +417,18 @@
   z-index: 3200;
   background: rgba(15, 23, 42, 0.45);
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: 16px;
+  overflow-y: auto;
+  padding: clamp(14px, 4vh, 34px) 16px;
 }
 
 .job-create-location-modal {
-  width: min(760px, 100%);
+  width: min(980px, 100%);
+  margin: 0 auto;
   border-radius: 18px;
-  overflow: hidden;
+  overflow: visible;
+  box-shadow: 0 28px 48px rgba(15, 23, 42, 0.26);
 }
 
 .job-create-location-modal-header {
@@ -463,6 +466,23 @@
 .job-create-location-modal-body {
   padding: 16px 18px;
   background: #ffffff;
+}
+
+.job-create-modal-section + .job-create-modal-section {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px dashed #d6e4f3;
+}
+
+.job-create-location-section-title {
+  margin: 0 0 8px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: #173759;
+}
+
+.job-create-location-modal-body .job-create-select .jf-jobs-select-menu {
+  z-index: 3600;
 }
 
 .job-create-location-modal-footer {
@@ -503,5 +523,9 @@
 
   .job-create-location-modal-footer .btn {
     width: 100%;
+  }
+
+  .job-create-location-modal {
+    border-radius: 14px;
   }
 }

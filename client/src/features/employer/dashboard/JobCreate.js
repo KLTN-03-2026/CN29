@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useNavigate, useParams } from 'react-router-dom';
 import CareerRichTextEditor from '../../career-guide/components/CareerRichTextEditor';
 import CalendarDatePicker from '../../../components/date/CalendarDatePicker';
@@ -568,6 +569,18 @@ const JobCreate = () => {
         return () => { cancelled = true; };
     }, [isEdit, jobId, token]);
 
+    useEffect(() => {
+        if (!showLocationModal) return undefined;
+        if (typeof document === 'undefined') return undefined;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [showLocationModal]);
+
     const submitJob = async () => {
         setSubmitting(true);
         try {
@@ -805,93 +818,6 @@ const JobCreate = () => {
                             </div>
 
                             <div className="col-12">
-                                <h5 className="job-create-section-title">Mức lương</h5>
-                            </div>
-
-                            <div className="col-12">
-                                <div className="row g-3 align-items-end">
-                                    <div className="col-md-3">
-                                        <label className="form-label">Lương từ</label>
-                                        <input
-                                            className="form-control"
-                                            inputMode="numeric"
-                                            value={salaryDisplayValue(form.salaryFrom)}
-                                            onChange={setSalaryField('salaryFrom')}
-                                            placeholder={salaryCurrency === 'USD' ? 'VD: 1.000' : 'VD: 10.000.000'}
-                                        />
-                                    </div>
-
-                                    <div className="col-md-3">
-                                        <label className="form-label">Lương đến</label>
-                                        <input
-                                            className="form-control"
-                                            inputMode="numeric"
-                                            value={salaryDisplayValue(form.salaryTo)}
-                                            onChange={setSalaryField('salaryTo')}
-                                            placeholder={salaryCurrency === 'USD' ? 'VD: 2.000' : 'VD: 30.000.000'}
-                                        />
-                                    </div>
-
-                                    <div className="col-md-2">
-                                        <label className="form-label">Tiền tệ</label>
-                                        <JobsStyleSelect
-                                            value={salaryCurrency}
-                                            options={['VND', 'USD']}
-                                            onChange={setSalaryCurrency}
-                                        />
-                                    </div>
-
-                                    <div className="col-md-4">
-                                        <label className="form-label">Kiểu lương</label>
-                                        <JobsStyleSelect
-                                            value={form.salaryType}
-                                            options={salaryTypes}
-                                            onChange={setField('salaryType')}
-                                        />
-                                    </div>
-
-                                </div>
-                            </div>
-
-                            <div className="col-12">
-                                <h5 className="job-create-section-title">Tiêu chí tuyển dụng</h5>
-                            </div>
-
-                            <div className="col-12">
-                                <div className="row g-3 align-items-end">
-                                    <div className="col-md-4">
-                                        <label className="form-label">Kinh nghiệm</label>
-                                        <JobsStyleSelect
-                                            value={form.experience}
-                                            options={experienceOptions}
-                                            onChange={setField('experience')}
-                                        />
-                                    </div>
-
-                                    <div className="col-md-4">
-                                        <label className="form-label">Cấp bậc</label>
-                                        <JobsStyleSelect
-                                            value={form.level}
-                                            options={levelOptions}
-                                            onChange={setField('level')}
-                                        />
-                                    </div>
-
-                                    <div className="col-md-4">
-                                        <label className="form-label">Lĩnh vực công việc</label>
-                                        <JobsStyleSelect
-                                            value={form.jobField}
-                                            options={jobFieldOptions}
-                                            onChange={setField('jobField')}
-                                            searchable
-                                            searchPlaceholder="Nhập để tìm lĩnh vực"
-                                            emptyText="Không tìm thấy lĩnh vực phù hợp"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="col-12">
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-4">
                                         <label className="form-label">Hình thức</label>
@@ -944,7 +870,7 @@ const JobCreate = () => {
                 </div>
             </div>
 
-            {showLocationModal ? (
+            {showLocationModal && typeof document !== 'undefined' ? createPortal(
                 <div
                     className="job-create-location-modal-backdrop"
                     role="presentation"
@@ -962,15 +888,15 @@ const JobCreate = () => {
                     >
                         <div className="job-create-location-modal-header">
                             <div>
-                                <h5 id="job-create-location-modal-title" className="mb-1">Địa điểm làm việc</h5>
-                                <p className="mb-0 text-muted small">Nhập địa điểm trước khi {isEdit ? 'lưu thay đổi' : 'đăng tin'} để giao diện chính gọn hơn.</p>
+                                <h5 id="job-create-location-modal-title" className="mb-1">Thông tin trước khi đăng tin</h5>
+                                <p className="mb-0 text-muted small">Hoàn tất địa điểm, mức lương và tiêu chí tuyển dụng trước khi {isEdit ? 'lưu thay đổi' : 'đăng tin'}.</p>
                             </div>
                             <button
                                 type="button"
                                 className="btn job-create-location-close-btn"
                                 onClick={() => setShowLocationModal(false)}
                                 disabled={submitting}
-                                aria-label="Đóng modal địa điểm"
+                                aria-label="Đóng modal"
                             >
                                 <i className="bi bi-x-lg"></i>
                             </button>
@@ -983,31 +909,121 @@ const JobCreate = () => {
                                 </div>
                             ) : null}
 
-                            <div className="row g-3 align-items-end">
-                                <div className="col-md-6">
-                                    <label className="form-label">Địa điểm</label>
-                                    <input
-                                        className="form-control"
-                                        value={form.location}
-                                        onChange={setField('location')}
-                                        placeholder="VD: Quận 1, 123 Nguyễn Huệ..."
-                                        disabled={submitting || loadingJob}
-                                    />
-                                </div>
+                            <div className="job-create-modal-section">
+                                <h6 className="job-create-location-section-title">Địa điểm làm việc</h6>
+                                <div className="row g-3 align-items-end">
+                                    <div className="col-md-6">
+                                        <label className="form-label">Địa điểm</label>
+                                        <input
+                                            className="form-control"
+                                            value={form.location}
+                                            onChange={setField('location')}
+                                            placeholder="VD: Quận 1, 123 Nguyễn Huệ..."
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
 
-                                <div className="col-md-6">
-                                    <label className="form-label">Thành phố</label>
-                                    <JobsStyleSelect
-                                        value={form.city}
-                                        options={provinces}
-                                        onChange={setField('city')}
-                                        placeholder={loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh/thành'}
-                                        searchable
-                                        searchPlaceholder="Nhập để tìm tỉnh/thành"
-                                        locationMode
-                                        emptyText="Không tìm thấy tỉnh/thành phù hợp"
-                                        disabled={loadingProvinces || submitting || loadingJob}
-                                    />
+                                    <div className="col-md-6">
+                                        <label className="form-label">Thành phố</label>
+                                        <JobsStyleSelect
+                                            value={form.city}
+                                            options={provinces}
+                                            onChange={setField('city')}
+                                            placeholder={loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh/thành'}
+                                            searchable
+                                            searchPlaceholder="Nhập để tìm tỉnh/thành"
+                                            locationMode
+                                            emptyText="Không tìm thấy tỉnh/thành phù hợp"
+                                            disabled={loadingProvinces || submitting || loadingJob}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="job-create-modal-section">
+                                <h6 className="job-create-location-section-title">Mức lương</h6>
+                                <div className="row g-3 align-items-end">
+                                    <div className="col-md-3">
+                                        <label className="form-label">Lương từ</label>
+                                        <input
+                                            className="form-control"
+                                            inputMode="numeric"
+                                            value={salaryDisplayValue(form.salaryFrom)}
+                                            onChange={setSalaryField('salaryFrom')}
+                                            placeholder={salaryCurrency === 'USD' ? 'VD: 1.000' : 'VD: 10.000.000'}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-3">
+                                        <label className="form-label">Lương đến</label>
+                                        <input
+                                            className="form-control"
+                                            inputMode="numeric"
+                                            value={salaryDisplayValue(form.salaryTo)}
+                                            onChange={setSalaryField('salaryTo')}
+                                            placeholder={salaryCurrency === 'USD' ? 'VD: 2.000' : 'VD: 30.000.000'}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-2">
+                                        <label className="form-label">Tiền tệ</label>
+                                        <JobsStyleSelect
+                                            value={salaryCurrency}
+                                            options={['VND', 'USD']}
+                                            onChange={setSalaryCurrency}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-4">
+                                        <label className="form-label">Kiểu lương</label>
+                                        <JobsStyleSelect
+                                            value={form.salaryType}
+                                            options={salaryTypes}
+                                            onChange={setField('salaryType')}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="job-create-modal-section">
+                                <h6 className="job-create-location-section-title">Tiêu chí tuyển dụng</h6>
+                                <div className="row g-3 align-items-end">
+                                    <div className="col-md-4">
+                                        <label className="form-label">Kinh nghiệm</label>
+                                        <JobsStyleSelect
+                                            value={form.experience}
+                                            options={experienceOptions}
+                                            onChange={setField('experience')}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-4">
+                                        <label className="form-label">Cấp bậc</label>
+                                        <JobsStyleSelect
+                                            value={form.level}
+                                            options={levelOptions}
+                                            onChange={setField('level')}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-4">
+                                        <label className="form-label">Lĩnh vực công việc</label>
+                                        <JobsStyleSelect
+                                            value={form.jobField}
+                                            options={jobFieldOptions}
+                                            onChange={setField('jobField')}
+                                            searchable
+                                            searchPlaceholder="Nhập để tìm lĩnh vực"
+                                            emptyText="Không tìm thấy lĩnh vực phù hợp"
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1031,7 +1047,8 @@ const JobCreate = () => {
                             </button>
                         </div>
                     </div>
-                </div>
+                </div>,
+                document.body
             ) : null}
         </div>
         </div>
