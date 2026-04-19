@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { requestBrowserNotificationPermission } from '../../components/notificationUtils';
 import { useNotification } from '../../components/NotificationProvider';
@@ -128,11 +128,15 @@ const SupportCenterPage = () => {
   const [feedLoading, setFeedLoading] = useState(false);
   const [feedError, setFeedError] = useState('');
   const [notificationFeed, setNotificationFeed] = useState([]);
+  const [privateFeedDenied, setPrivateFeedDenied] = useState(false);
+  const loadingInFlightRef = useRef(false);
+  const lastRefreshAtRef = useRef(0);
 
   const normalizedRole = normalizeRoleName(currentUser);
   const messageLink = buildMessageLink(normalizedRole);
   const canReadPrivateNotifications = normalizedRole === 'nha tuyen dung' || normalizedRole === 'ung vien';
   const isLoggedIn = Boolean(token);
+  const notificationsEnabled = permissionState === 'granted';
 
   useEffect(() => {
     if (typeof Notification !== 'undefined') {
@@ -167,12 +171,23 @@ const SupportCenterPage = () => {
   }, []);
 
   useEffect(() => {
+    setPrivateFeedDenied(false);
+    loadingInFlightRef.current = false;
+    lastRefreshAtRef.current = 0;
+  }, [token, normalizedRole]);
+
+  useEffect(() => {
     let cancelled = false;
-    let loadingInFlight = false;
     let intervalId = null;
 
-    const loadNotifications = async () => {
-      if (loadingInFlight) return;
+    const shouldSkipRefresh = (reason) => {
+      if (reason === 'interval') return false;
+      const now = Date.now();
+      return now - lastRefreshAtRef.current < 1800;
+    };
+
+    const loadNotifications = async (reason = 'manual') => {
+      if (loadingInFlightRef.current) return;
 
       if (!token || !canReadPrivateNotifications) {
         setNotificationFeed([]);
@@ -181,7 +196,17 @@ const SupportCenterPage = () => {
         return;
       }
 
-      loadingInFlight = true;
+      if (privateFeedDenied) {
+        setFeedLoading(false);
+        return;
+      }
+
+      if (shouldSkipRefresh(reason)) {
+        return;
+      }
+
+      loadingInFlightRef.current = true;
+      lastRefreshAtRef.current = Date.now();
       setFeedLoading(true);
       setFeedError('');
 
@@ -190,44 +215,54 @@ const SupportCenterPage = () => {
 
         const inboxPromise = fetch(`${API_BASE}/api/messages/inbox`, { headers })
           .then(async (response) => {
-            if (!response.ok) return { success: false, inbox: [] };
-            return response.json().catch(() => ({ success: false, inbox: [] }));
+            const payload = await response.json().catch(() => ({ success: false, inbox: [] }));
+            return { status: response.status, payload };
           })
-          .catch(() => ({ success: false, inbox: [] }));
+          .catch(() => ({ status: 0, payload: { success: false, inbox: [] } }));
 
         const applicationsPromise = normalizedRole === 'ung vien'
           ? fetch(`${API_BASE}/applications/mine`, { headers })
             .then(async (response) => {
-              if (!response.ok) return [];
-              return response.json().catch(() => []);
+              const payload = await response.json().catch(() => []);
+              return { status: response.status, payload };
             })
-            .catch(() => [])
+            .catch(() => ({ status: 0, payload: [] }))
           : normalizedRole === 'nha tuyen dung'
             ? fetch(`${API_BASE}/applications`, { headers })
               .then(async (response) => {
-                if (!response.ok) return [];
-                return response.json().catch(() => []);
+                const payload = await response.json().catch(() => []);
+                return { status: response.status, payload };
               })
-              .catch(() => [])
-            : Promise.resolve([]);
+              .catch(() => ({ status: 0, payload: [] }))
+            : Promise.resolve({ status: 200, payload: [] });
 
         const employerReviewPromise = normalizedRole === 'nha tuyen dung'
           ? fetch(`${API_BASE}/api/companies/me/reviews`, { headers })
             .then(async (response) => {
-              if (!response.ok) return { success: false, comments: [], recentRatings: [] };
-              return response.json().catch(() => ({ success: false, comments: [], recentRatings: [] }));
+              const payload = await response.json().catch(() => ({ success: false, comments: [], recentRatings: [] }));
+              return { status: response.status, payload };
             })
-            .catch(() => ({ success: false, comments: [], recentRatings: [] }))
-          : Promise.resolve({ success: false, comments: [], recentRatings: [] });
+            .catch(() => ({ status: 0, payload: { success: false, comments: [], recentRatings: [] } }))
+          : Promise.resolve({ status: 200, payload: { success: false, comments: [], recentRatings: [] } });
 
-        const [inboxPayload, applicationsPayload, employerReviewPayload] = await Promise.all([
+        const [inboxResult, applicationsResult, employerReviewResult] = await Promise.all([
           inboxPromise,
           applicationsPromise,
           employerReviewPromise
         ]);
         if (cancelled) return;
 
-        const inboxRows = Array.isArray(inboxPayload?.inbox) ? inboxPayload.inbox : [];
+        const hasAccessDenied = [inboxResult, applicationsResult, employerReviewResult]
+          .some((result) => Number(result?.status) === 401 || Number(result?.status) === 403);
+
+        if (hasAccessDenied) {
+          setPrivateFeedDenied(true);
+          setNotificationFeed([]);
+          setFeedError('Tài khoản hiện tại không có quyền đọc hộp thông báo riêng trên trang này.');
+          return;
+        }
+
+        const inboxRows = Array.isArray(inboxResult?.payload?.inbox) ? inboxResult.payload.inbox : [];
         const messageNotifications = inboxRows
           .map((row, index) => ({
             id: `msg-${row?.userId || index}`,
@@ -244,7 +279,7 @@ const SupportCenterPage = () => {
             actionTo: messageLink
           }));
 
-        const appRows = Array.isArray(applicationsPayload) ? applicationsPayload : [];
+        const appRows = Array.isArray(applicationsResult?.payload) ? applicationsResult.payload : [];
         const candidateApplicationNotifications = normalizedRole === 'ung vien'
           ? appRows
             .map((row, index) => {
@@ -288,7 +323,7 @@ const SupportCenterPage = () => {
             })
           : [];
 
-        const commentRows = Array.isArray(employerReviewPayload?.comments) ? employerReviewPayload.comments : [];
+        const commentRows = Array.isArray(employerReviewResult?.payload?.comments) ? employerReviewResult.payload.comments : [];
         const companyCommentNotifications = normalizedRole === 'nha tuyen dung'
           ? commentRows.map((row, index) => {
             const author = String(row?.userName || 'Ứng viên').trim() || 'Ứng viên';
@@ -307,7 +342,7 @@ const SupportCenterPage = () => {
           })
           : [];
 
-        const ratingRows = Array.isArray(employerReviewPayload?.recentRatings) ? employerReviewPayload.recentRatings : [];
+        const ratingRows = Array.isArray(employerReviewResult?.payload?.recentRatings) ? employerReviewResult.payload.recentRatings : [];
         const companyRatingNotifications = normalizedRole === 'nha tuyen dung'
           ? ratingRows.map((row, index) => {
             const stars = Number(row?.stars || 0);
@@ -343,32 +378,32 @@ const SupportCenterPage = () => {
           setNotificationFeed([]);
         }
       } finally {
-        loadingInFlight = false;
+        loadingInFlightRef.current = false;
         if (!cancelled) {
           setFeedLoading(false);
         }
       }
     };
 
-    loadNotifications();
+    loadNotifications('initial');
 
     const refreshOnFocus = () => {
       if (document.visibilityState === 'visible') {
-        loadNotifications();
+        loadNotifications('focus');
       }
     };
 
     const refreshOnVisible = () => {
       if (document.visibilityState === 'visible') {
-        loadNotifications();
+        loadNotifications('visibility');
       }
     };
 
-    if (typeof window !== 'undefined') {
-      intervalId = window.setInterval(loadNotifications, 15000);
+    if (typeof window !== 'undefined' && !privateFeedDenied) {
+      intervalId = window.setInterval(() => loadNotifications('interval'), 30000);
       window.addEventListener('focus', refreshOnFocus);
     }
-    if (typeof document !== 'undefined') {
+    if (typeof document !== 'undefined' && !privateFeedDenied) {
       document.addEventListener('visibilitychange', refreshOnVisible);
     }
 
@@ -384,7 +419,7 @@ const SupportCenterPage = () => {
         document.removeEventListener('visibilitychange', refreshOnVisible);
       }
     };
-  }, [API_BASE, canReadPrivateNotifications, messageLink, normalizedRole, token]);
+  }, [API_BASE, canReadPrivateNotifications, messageLink, normalizedRole, privateFeedDenied, token]);
 
   const handleEnableNotifications = async () => {
     const result = await requestBrowserNotificationPermission();
@@ -410,9 +445,14 @@ const SupportCenterPage = () => {
             Theo dõi toàn bộ thông báo trên JobFinder: tin nhắn, ứng tuyển, lịch phỏng vấn, đánh giá và bình luận công ty.
           </p>
           <div className="support-hero-actions">
-            <button type="button" className="btn btn-primary support-primary-btn" onClick={handleEnableNotifications}>
+            <button
+              type="button"
+              className={`btn btn-primary support-primary-btn ${notificationsEnabled ? 'is-enabled' : ''}`}
+              onClick={handleEnableNotifications}
+              disabled={notificationsEnabled}
+            >
               <i className="bi bi-bell me-2"></i>
-              {permissionState === 'granted' ? 'Thông báo đã bật' : 'Bật thông báo thiết bị'}
+              {notificationsEnabled ? 'Thông báo đã bật' : 'Bật thông báo thiết bị'}
             </button>
           </div>
         </div>
@@ -443,14 +483,21 @@ const SupportCenterPage = () => {
             </div>
           ) : null}
 
-          {canReadPrivateNotifications && !feedLoading && !feedError && notificationFeed.length === 0 ? (
+          {isLoggedIn && canReadPrivateNotifications && privateFeedDenied ? (
+            <div className="support-empty-state">
+              <h3>Không thể tải thông báo riêng</h3>
+              <p>Tài khoản hiện tại chưa có quyền đọc dữ liệu thông báo riêng ở máy chủ. Vui lòng liên hệ quản trị viên hoặc kiểm tra lại phiên đăng nhập.</p>
+            </div>
+          ) : null}
+
+          {canReadPrivateNotifications && !privateFeedDenied && !feedLoading && !feedError && notificationFeed.length === 0 ? (
             <div className="support-empty-state">
               <h3>Chưa có thông báo mới</h3>
               <p>Khi có tin nhắn, cập nhật hồ sơ ứng tuyển, lịch phỏng vấn, đánh giá hoặc bình luận công ty, hệ thống sẽ hiển thị tại đây.</p>
             </div>
           ) : null}
 
-          {canReadPrivateNotifications && !feedLoading && !feedError && notificationFeed.length > 0 ? (
+          {canReadPrivateNotifications && !privateFeedDenied && !feedLoading && !feedError && notificationFeed.length > 0 ? (
             <div className="support-feed-list">
               {notificationFeed.map((item) => (
                 <article key={item.id} className="support-feed-item">
@@ -471,19 +518,6 @@ const SupportCenterPage = () => {
             </div>
           ) : null}
         </div>
-      </section>
-
-      <section className="support-notice-band">
-        <div>
-          <span className="support-band-label">Thông báo hệ thống</span>
-          <h2>Nhận thông báo khi có cập nhật quan trọng</h2>
-          <p>
-            Khi có tin nhắn mới hoặc hồ sơ được duyệt, JobFinder sẽ hiển thị toast trong ứng dụng và thông báo thiết bị nếu bạn đã cấp quyền.
-          </p>
-        </div>
-        <Link to={messageLink} className="btn btn-light support-band-btn">
-          Mở thông báo
-        </Link>
       </section>
     </div>
   );

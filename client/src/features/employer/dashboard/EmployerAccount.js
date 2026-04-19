@@ -711,7 +711,6 @@ const EmployerAccount = () => {
               <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 mb-2">
                 <div>
                   <h5 className="mb-1 employer-profile-section-title">Đổi mật khẩu</h5>
-                  <p className="text-muted mb-0">Thực hiện trong popup riêng để bảo mật và thao tác gọn hơn.</p>
                 </div>
                 <button type="button" className="btn btn-outline-primary" onClick={openPasswordModal}>
                   <i className="bi bi-shield-lock me-2"></i>

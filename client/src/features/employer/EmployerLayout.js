@@ -11,6 +11,21 @@ const readStoredUser = () => {
     }
 };
 
+const syncLocalUserSnapshot = (overrides = {}) => {
+    try {
+        const current = readStoredUser();
+        const next = {
+            ...current,
+            ...overrides
+        };
+        localStorage.setItem('user', JSON.stringify(next));
+        window.dispatchEvent(new CustomEvent('jobfinder:user-updated', { detail: next }));
+        return next;
+    } catch {
+        return readStoredUser();
+    }
+};
+
 const SIDEBAR_LOGO_URL = '/images/logo.png';
 
 const normalizeAvatarUrl = (value) => {
@@ -44,10 +59,20 @@ const EmployerLayout = () => {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [showProfileDropdown, setShowProfileDropdown] = useState(false);
     const profileDropdownRef = useRef(null);
+    const avatarHydratedUserIdRef = useRef('');
 
+    const userId = user?.id || user?.MaNguoiDung || user?.userId || user?.userID || null;
     const displayName = user?.name || user?.HoTen || user?.hoTen || user?.fullName || user?.full_name || user?.email || 'Nhà tuyển dụng';
     const roleLabel = user?.role || user?.VaiTro || user?.vaiTro || user?.LoaiNguoiDung || 'Nhà tuyển dụng';
-    const avatarRaw = String(user?.avatar || user?.avatarAbsoluteUrl || user?.AnhDaiDien || user?.avatarUrl || '').trim();
+    const avatarRaw = String(
+        user?.avatar
+        || user?.avatarAbsoluteUrl
+        || user?.AnhDaiDien
+        || user?.anhDaiDien
+        || user?.avatarUrl
+        || user?.avatar_url
+        || ''
+    ).trim();
     const avatarUrl = withAvatarVersion(avatarRaw, user?.avatarUpdatedAt);
 
     const handleLogout = async () => {
@@ -101,6 +126,64 @@ const EmployerLayout = () => {
         };
     }, []);
 
+    useEffect(() => {
+        const normalizedUserId = String(userId || '').trim();
+        if (!normalizedUserId) return undefined;
+        if (avatarRaw) return undefined;
+        if (avatarHydratedUserIdRef.current === normalizedUserId) return undefined;
+
+        avatarHydratedUserIdRef.current = normalizedUserId;
+        let cancelled = false;
+
+        (async () => {
+            try {
+                const response = await fetch(`/users/profile/${normalizedUserId}`);
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok || !data?.success || cancelled) return;
+
+                const profile = data.profile || {};
+                const normalizedAvatar = normalizeAvatarUrl(
+                    profile.avatarAbsoluteUrl
+                    || profile.avatarUrl
+                    || profile.avatar
+                    || profile.AnhDaiDien
+                    || ''
+                );
+                const normalizedName = String(profile.fullName || '').trim();
+
+                if (!normalizedAvatar && !normalizedName) return;
+
+                const next = syncLocalUserSnapshot({
+                    ...(normalizedName
+                        ? {
+                            name: normalizedName,
+                            HoTen: normalizedName
+                        }
+                        : {}),
+                    ...(normalizedAvatar
+                        ? {
+                            avatar: normalizedAvatar,
+                            AnhDaiDien: normalizedAvatar,
+                            avatarAbsoluteUrl: normalizedAvatar,
+                            avatarUrl: normalizedAvatar,
+                            avatarUpdatedAt: Date.now()
+                        }
+                        : {})
+                });
+
+                if (!cancelled) {
+                    setUser(next);
+                }
+            } catch {
+                // Ignore silent hydration errors; fallback icon remains.
+            }
+        })();
+
+        return () => {
+            cancelled = true;
+        };
+    }, [avatarRaw, userId]);
+
     const handleHeaderMenuNavigate = (to) => {
         setShowProfileDropdown(false);
         navigate(to);
@@ -111,7 +194,7 @@ const EmployerLayout = () => {
         { path: '/employer/cv-search', icon: 'bi-search', label: 'Tìm kiếm CV', subtitle: 'Tìm ứng viên phù hợp' },
         { path: '/employer/cv-manage', icon: 'bi-bookmark-check', label: 'Quản lý CV', subtitle: 'Danh sách CV đã lưu' },
         { path: '/employer/jobs', icon: 'bi-briefcase', label: 'Quản lý tin tuyển dụng', subtitle: 'Đăng và theo dõi tin' },
-        { path: '/employer/notifications', icon: 'bi-bell', label: 'Thông báo', subtitle: 'Trung tâm thông báo tuyển dụng' },
+        { path: '/employer/notifications', icon: 'bi-bell', label: 'Thông báo', subtitle: 'Xem nhanh tại dashboard' },
         { path: '/employer/applications', icon: 'bi-file-earmark-person', label: 'Quản lý hồ sơ ứng tuyển', subtitle: 'Duyệt hồ sơ ứng viên' },
         { path: '/employer/messages', icon: 'bi-chat-dots', label: 'Tin nhắn tuyển dụng', subtitle: 'Trao đổi với ứng viên' },
         { path: '/employer/company', icon: 'bi-building', label: 'Thông tin công ty', subtitle: 'Hồ sơ doanh nghiệp' },
@@ -259,7 +342,7 @@ const EmployerLayout = () => {
                                         <i className="bi bi-briefcase"></i>
                                         <span>Quản lý tin tuyển dụng</span>
                                     </button>
-                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer/notifications')}>
+                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer')}>
                                         <i className="bi bi-bell"></i>
                                         <span>Thông báo</span>
                                     </button>

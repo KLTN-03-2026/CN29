@@ -7,6 +7,7 @@ import LatestJobsSection from './home/LatestJobsSection';
 import CVBuilderCTA from './home/CVBuilderCTA';
 import HowItWorksSection from './home/HowItWorksSection';
 import TrustBenefitsSection from './home/TrustBenefitsSection';
+import { buildIndustryLabels, buildLocationLabels } from './jobSearchOptions';
 import './home/HomePage.css';
 
 const COUNT_FORMAT = new Intl.NumberFormat('vi-VN');
@@ -25,17 +26,6 @@ const TOOLBAR_FILTER_OPTIONS = [
   { key: 'remote', label: 'Remote' },
   { key: 'intern', label: 'Thực tập' },
   { key: 'it', label: 'IT' }
-];
-
-const COMMON_INDUSTRIES = [
-  'Công nghệ thông tin',
-  'Marketing',
-  'Kinh doanh',
-  'Kế toán',
-  'Thiết kế',
-  'Chăm sóc khách hàng',
-  'Nhân sự',
-  'Tài chính - Ngân hàng'
 ];
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
@@ -306,25 +296,11 @@ const HomePage = () => {
   }, []);
 
   const industries = useMemo(() => {
-    const dynamic = jobs
-      .map((job) => job?.LinhVucCongViec || job?.LinhVucCongTy || '')
-      .filter(Boolean);
-
-    const merged = [...COMMON_INDUSTRIES, ...dynamic]
-      .map((value) => String(value).trim())
-      .filter(Boolean);
-
-    return [...new Set(merged)];
+    return buildIndustryLabels(jobs);
   }, [jobs]);
 
   const locations = useMemo(() => {
-    const fromJobs = jobs
-      .map((job) => job?.ThanhPho || '')
-      .filter(Boolean)
-      .map((item) => String(item).trim());
-
-    const merged = [...provinces, ...fromJobs].filter(Boolean);
-    return [...new Set(merged)];
+    return buildLocationLabels(jobs, provinces);
   }, [jobs, provinces]);
 
   const trustStats = useMemo(() => {

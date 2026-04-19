@@ -249,7 +249,7 @@ function AppContent() {
             <Route path="jobs/:id" element={<JobDetail />} />
             <Route path="applications" element={<ApplicationManagement />} />
             <Route path="messages" element={<MessagesPage />} />
-            <Route path="notifications" element={<SupportCenterPage />} />
+            <Route path="notifications" element={<Navigate to="/employer" replace />} />
             <Route path="statistics" element={<Navigate to="/employer" replace />} />
             <Route path="company" element={<CompanyProfile />} />
             <Route path="account" element={<EmployerAccount />} />

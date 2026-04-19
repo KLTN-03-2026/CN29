@@ -177,24 +177,28 @@ const Header = () => {
                                         <span className="fw-semibold">Tìm việc làm</span>
                                     </Link>
                                 </li>
-                                <li className="px-2 pb-2">
-                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/saved" onClick={collapseMobileNavbar}>
-                                        <i className="bi bi-bookmark fs-5 text-primary"></i>
-                                        <span className="fw-semibold">Việc làm đã lưu</span>
-                                    </Link>
-                                </li>
-                                <li className="px-2 pb-2">
-                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/applied" onClick={collapseMobileNavbar}>
-                                        <i className="bi bi-file-earmark-check fs-5 text-primary"></i>
-                                        <span className="fw-semibold">Việc làm đã ứng tuyển</span>
-                                    </Link>
-                                </li>
-                                <li className="px-2 pb-3">
-                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/matching" onClick={collapseMobileNavbar}>
-                                        <i className="bi bi-hand-thumbs-up fs-5 text-primary"></i>
-                                        <span className="fw-semibold">Việc làm phù hợp</span>
-                                    </Link>
-                                </li>
+                                {!isEmployer && (
+                                    <>
+                                        <li className="px-2 pb-2">
+                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/saved" onClick={collapseMobileNavbar}>
+                                                <i className="bi bi-bookmark fs-5 text-primary"></i>
+                                                <span className="fw-semibold">Việc làm đã lưu</span>
+                                            </Link>
+                                        </li>
+                                        <li className="px-2 pb-2">
+                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/applied" onClick={collapseMobileNavbar}>
+                                                <i className="bi bi-file-earmark-check fs-5 text-primary"></i>
+                                                <span className="fw-semibold">Việc làm đã ứng tuyển</span>
+                                            </Link>
+                                        </li>
+                                        <li className="px-2 pb-3">
+                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/matching" onClick={collapseMobileNavbar}>
+                                                <i className="bi bi-hand-thumbs-up fs-5 text-primary"></i>
+                                                <span className="fw-semibold">Việc làm phù hợp</span>
+                                            </Link>
+                                        </li>
+                                    </>
+                                )}
                             </ul>
                         </li>
                         <li className="nav-item">

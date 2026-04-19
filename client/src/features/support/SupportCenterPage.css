@@ -88,6 +88,18 @@
   color: #ffffff;
 }
 
+.support-primary-btn.is-enabled,
+.support-primary-btn.is-enabled:hover,
+.support-primary-btn.is-enabled:focus,
+.support-primary-btn.is-enabled:disabled {
+  background: #ffffff !important;
+  color: #123a5e !important;
+  border: 1px solid #d5e2f2 !important;
+  box-shadow: none !important;
+  opacity: 1 !important;
+  cursor: not-allowed;
+}
+
 .support-hero-panel {
   display: flex;
   flex-direction: column;
@@ -431,31 +443,6 @@
   line-height: 1.6;
 }
 
-.support-notice-band {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-radius: 22px;
-  padding: 1.2rem 1.35rem;
-  background: linear-gradient(135deg, #0f2742 0%, #204d74 100%);
-  color: #ffffff;
-  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.14);
-}
-
-.support-notice-band h2 {
-  margin: 0.45rem 0 0.45rem;
-  font-size: 1.25rem;
-  font-weight: 900;
-}
-
-.support-notice-band p {
-  margin: 0;
-  max-width: 74ch;
-  color: rgba(226, 238, 250, 0.9);
-  line-height: 1.65;
-}
-
 .support-band-btn {
   flex-shrink: 0;
   background: #ffffff;
@@ -466,8 +453,7 @@
 @media (max-width: 991px) {
   .support-hero,
   .support-content-grid,
-  .support-grid,
-  .support-notice-band {
+  .support-grid {
     grid-template-columns: 1fr;
   }
 
@@ -475,8 +461,7 @@
     grid-template-columns: 1fr;
   }
 
-  .support-panel-head,
-  .support-notice-band {
+  .support-panel-head {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -489,8 +474,7 @@
 
   .support-hero,
   .support-panel,
-  .support-card,
-  .support-notice-band {
+  .support-card {
     border-radius: 18px;
   }
 }

@@ -775,7 +775,7 @@ const AdminDashboard = () => {
                                         <UserRound size={16} />
                                         <span>Hồ sơ của tôi</span>
                                     </button>
-                                    <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/support')}>
+                                    <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/admin/dashboard')}>
                                         <Bell size={16} />
                                         <span>Thông báo</span>
                                     </button>

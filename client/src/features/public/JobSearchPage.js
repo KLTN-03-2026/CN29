@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useNotification } from '../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
+import { buildIndustryEntries, buildLocationEntries } from './jobSearchOptions';
 
 const fmtVnd = new Intl.NumberFormat('vi-VN');
 
@@ -41,17 +42,6 @@ const SALARY_OPTIONS = [
 ];
 
 const WORKING_FORM_OPTIONS = ['Tất cả', 'Toàn thời gian', 'Bán thời gian', 'Thực tập', 'Khác'];
-
-const COMMON_INDUSTRIES = [
-  'Công nghệ thông tin',
-  'Marketing',
-  'Kinh doanh',
-  'Kế toán',
-  'Nhân sự',
-  'Thiết kế',
-  'Tài chính - Ngân hàng',
-  'Chăm sóc khách hàng'
-];
 
 const formatSalary = (job) => {
   const type = job.KieuLuong || 'Thỏa thuận';
@@ -358,27 +348,11 @@ const JobSearchPage = () => {
   }, [isLocationOpen]);
 
   const industryEntries = useMemo(() => {
-    const dynamic = jobs
-      .map((job) => String(job?.LinhVucCongViec || job?.LinhVucCongTy || '').trim())
-      .filter(Boolean);
-
-    const unique = [...new Set([...COMMON_INDUSTRIES, ...dynamic])];
-    return [
-      { value: '', label: 'Tất cả ngành nghề' },
-      ...unique.map((item) => ({ value: item, label: item }))
-    ];
+    return buildIndustryEntries(jobs);
   }, [jobs]);
 
   const locationEntries = useMemo(() => {
-    const fromJobs = jobs
-      .map((job) => String(job?.ThanhPho || '').trim())
-      .filter(Boolean);
-
-    const unique = [...new Set([...provinces, ...fromJobs])];
-    return [
-      { value: '', label: 'Toàn quốc' },
-      ...unique.map((item) => ({ value: item, label: item }))
-    ];
+    return buildLocationEntries(jobs, provinces);
   }, [jobs, provinces]);
 
   const visibleLocationEntries = useMemo(() => {
