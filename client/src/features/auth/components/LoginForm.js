@@ -25,11 +25,23 @@ const parseGoogleClientIds = (rawValue) => String(rawValue || '')
   .map((value) => value.trim())
   .filter((value) => value && !isTemplateValue(value));
 
+const readRuntimeEnv = () => {
+  if (typeof import.meta !== 'undefined' && import.meta.env) {
+    return import.meta.env;
+  }
+
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env;
+  }
+
+  return {};
+};
+
 const readGoogleClientIdFromEnv = () => {
-  if (typeof process === 'undefined' || !process.env) return '';
+  const env = readRuntimeEnv();
 
   for (const key of GOOGLE_CLIENT_ID_ENV_KEYS) {
-    const ids = parseGoogleClientIds(process.env[key]);
+    const ids = parseGoogleClientIds(env[key]);
     if (ids.length > 0) return ids[0];
   }
 
@@ -335,7 +347,12 @@ const LoginForm = ({ onSuccess }) => {
 
       handleLoginSuccess(data, email);
     } catch (err) {
-      setError(err.message);
+      const message = String(err?.message || '').trim();
+      if (/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(message)) {
+        setError(`Không thể kết nối máy chủ đăng nhập (${apiBase || 'same-origin'}). Hãy chạy backend bằng lệnh: npm run dev --prefix server`);
+      } else {
+        setError(message || 'Đăng nhập thất bại.');
+      }
     } finally {
       setLoading(false);
     }

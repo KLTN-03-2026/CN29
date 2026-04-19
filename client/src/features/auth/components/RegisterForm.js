@@ -2,7 +2,6 @@ import React, { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
-import CalendarDatePicker from '../../../components/date/CalendarDatePicker';
 
 const pad2 = (value) => String(value).padStart(2, '0');
 
@@ -32,11 +31,6 @@ const parseIsoDate = (value) => {
   };
 };
 
-const formatIsoDate = (date) => {
-  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
-  return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
-};
-
 const RegisterForm = ({ onSuccess }) => {
   const navigate = useNavigate();
   const { notify } = useNotification();
@@ -47,7 +41,6 @@ const RegisterForm = ({ onSuccess }) => {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
-    birthday: '',
     gender: 'Nữ',
     email: '',
     phone: '',
@@ -55,9 +48,29 @@ const RegisterForm = ({ onSuccess }) => {
     confirmPassword: '',
     acceptedTerms: false
   });
+  const [birthdayParts, setBirthdayParts] = useState({
+    day: '',
+    month: '',
+    year: ''
+  });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const maxBirthdayDate = useMemo(() => formatIsoDate(new Date()), []);
+  const currentYear = new Date().getFullYear();
+
+  const yearOptions = useMemo(
+    () => Array.from({ length: 90 }, (_, index) => String(currentYear - index)),
+    [currentYear]
+  );
+
+  const dayOptions = useMemo(() => {
+    const monthNumber = Number(birthdayParts.month || 0);
+    const yearNumber = Number(birthdayParts.year || 0);
+    const maxDays = monthNumber && yearNumber
+      ? new Date(yearNumber, monthNumber, 0).getDate()
+      : 31;
+
+    return Array.from({ length: maxDays }, (_, index) => String(index + 1));
+  }, [birthdayParts.month, birthdayParts.year]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -67,6 +80,30 @@ const RegisterForm = ({ onSuccess }) => {
     }));
   };
 
+  const handleBirthdayPartChange = (part) => (event) => {
+    const nextValue = event.target.value;
+
+    setBirthdayParts((prev) => {
+      const next = {
+        ...prev,
+        [part]: nextValue
+      };
+
+      const monthNumber = Number(next.month || 0);
+      const yearNumber = Number(next.year || 0);
+      const dayNumber = Number(next.day || 0);
+
+      if (monthNumber && yearNumber && dayNumber) {
+        const maxDays = new Date(yearNumber, monthNumber, 0).getDate();
+        if (dayNumber > maxDays) {
+          next.day = '';
+        }
+      }
+
+      return next;
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -74,15 +111,17 @@ const RegisterForm = ({ onSuccess }) => {
 
     const fullName = `${formData.lastName} ${formData.firstName}`.trim();
 
-    const birthday = parseIsoDate(formData.birthday);
+    const birthdayIso = (birthdayParts.year && birthdayParts.month && birthdayParts.day)
+      ? `${birthdayParts.year}-${pad2(birthdayParts.month)}-${pad2(birthdayParts.day)}`
+      : '';
+    const birthday = parseIsoDate(birthdayIso);
     if (!birthday) {
       setLoading(false);
-      setError('Vui lòng chọn ngày sinh hợp lệ');
+      setError('Vui lòng chọn đầy đủ ngày, tháng, năm hợp lệ');
       return;
     }
 
     const birthDate = birthday.date;
-    const birthdayIso = `${birthday.year}-${pad2(birthday.month)}-${pad2(birthday.day)}`;
     const normalizedGender = formData.gender === 'Tùy chỉnh' ? 'Khác' : formData.gender;
     const today = new Date();
     let age = today.getFullYear() - birthDate.getFullYear();
@@ -237,13 +276,46 @@ const RegisterForm = ({ onSuccess }) => {
 
       <div className="auth-field">
         <label className="auth-field-label">Ngày sinh</label>
-        <CalendarDatePicker
-          value={formData.birthday}
-          onChange={(nextBirthday) => setFormData((prev) => ({ ...prev, birthday: nextBirthday }))}
-          placeholder="Chọn ngày sinh"
-          maxDate={maxBirthdayDate}
-          inputClassName="auth-input"
-        />
+        <div className="auth-birthday-select-grid">
+          <select
+            id="registerBirthDay"
+            className="auth-select"
+            value={birthdayParts.day}
+            onChange={handleBirthdayPartChange('day')}
+            required
+          >
+            <option value="">Ngày</option>
+            {dayOptions.map((day) => (
+              <option key={day} value={day}>{day}</option>
+            ))}
+          </select>
+
+          <select
+            id="registerBirthMonth"
+            className="auth-select"
+            value={birthdayParts.month}
+            onChange={handleBirthdayPartChange('month')}
+            required
+          >
+            <option value="">Tháng</option>
+            {Array.from({ length: 12 }, (_, index) => String(index + 1)).map((month) => (
+              <option key={month} value={month}>{month}</option>
+            ))}
+          </select>
+
+          <select
+            id="registerBirthYear"
+            className="auth-select"
+            value={birthdayParts.year}
+            onChange={handleBirthdayPartChange('year')}
+            required
+          >
+            <option value="">Năm</option>
+            {yearOptions.map((year) => (
+              <option key={year} value={year}>{year}</option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="auth-field">

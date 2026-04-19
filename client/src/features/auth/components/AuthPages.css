@@ -182,6 +182,12 @@
   gap: 10px;
 }
 
+.auth-birthday-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .auth-birthday-grid {
   margin-top: 2px;
 }
@@ -687,6 +693,7 @@
 
   .auth-grid-two,
   .auth-grid-three,
+  .auth-birthday-select-grid,
   .auth-radio-group {
     grid-template-columns: 1fr;
   }
