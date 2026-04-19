@@ -485,6 +485,10 @@
   z-index: 3600;
 }
 
+.job-create-location-modal-body .job-create-deadline-menu {
+  z-index: 3600;
+}
+
 .job-create-location-modal-footer {
   display: flex;
   justify-content: flex-end;

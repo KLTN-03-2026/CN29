@@ -22,7 +22,6 @@ import JobManagement from './features/employer/dashboard/JobManagement';
 import JobCreate from './features/employer/dashboard/JobCreate';
 import JobDetail from './features/employer/dashboard/JobDetail';
 import ApplicationManagement from './features/employer/dashboard/ApplicationManagement';
-import Statistics from './features/employer/dashboard/Statistics';
 import CompanyProfile from './features/employer/dashboard/CompanyProfile';
 import EmployerAccount from './features/employer/dashboard/EmployerAccount';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -250,7 +249,7 @@ function AppContent() {
             <Route path="jobs/:id" element={<JobDetail />} />
             <Route path="applications" element={<ApplicationManagement />} />
             <Route path="messages" element={<MessagesPage />} />
-            <Route path="statistics" element={<Statistics />} />
+            <Route path="statistics" element={<Navigate to="/employer" replace />} />
             <Route path="company" element={<CompanyProfile />} />
             <Route path="account" element={<EmployerAccount />} />
           </Route>

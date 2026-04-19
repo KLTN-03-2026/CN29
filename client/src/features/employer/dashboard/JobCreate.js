@@ -817,37 +817,6 @@ const JobCreate = () => {
                                 </div>
                             </div>
 
-                            <div className="col-12">
-                                <div className="row g-3 align-items-end">
-                                    <div className="col-md-4">
-                                        <label className="form-label">Hình thức</label>
-                                        <JobsStyleSelect
-                                            value={form.employmentType}
-                                            options={employmentTypes}
-                                            onChange={setField('employmentType')}
-                                        />
-                                    </div>
-
-                                    <div className="col-md-4">
-                                        <label className="form-label">Trạng thái</label>
-                                        <JobsStyleSelect
-                                            value={form.status}
-                                            options={statuses}
-                                            onChange={setField('status')}
-                                        />
-                                    </div>
-
-                                    <div className="col-md-4">
-                                        <label className="form-label">Hạn nộp hồ sơ</label>
-                                        <DeadlineDateField
-                                            value={form.deadline}
-                                            onChange={setField('deadline')}
-                                            disabled={submitting || loadingJob}
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-
                             <div className="col-12 d-flex gap-2 justify-content-end pt-2">
                                 <button
                                     type="button"
@@ -1021,6 +990,40 @@ const JobCreate = () => {
                                             searchable
                                             searchPlaceholder="Nhập để tìm lĩnh vực"
                                             emptyText="Không tìm thấy lĩnh vực phù hợp"
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="job-create-modal-section">
+                                <h6 className="job-create-location-section-title">Thiết lập đăng tin</h6>
+                                <div className="row g-3 align-items-end">
+                                    <div className="col-md-4">
+                                        <label className="form-label">Hình thức</label>
+                                        <JobsStyleSelect
+                                            value={form.employmentType}
+                                            options={employmentTypes}
+                                            onChange={setField('employmentType')}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-4">
+                                        <label className="form-label">Trạng thái</label>
+                                        <JobsStyleSelect
+                                            value={form.status}
+                                            options={statuses}
+                                            onChange={setField('status')}
+                                            disabled={submitting || loadingJob}
+                                        />
+                                    </div>
+
+                                    <div className="col-md-4">
+                                        <label className="form-label">Hạn nộp hồ sơ</label>
+                                        <DeadlineDateField
+                                            value={form.deadline}
+                                            onChange={setField('deadline')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>

@@ -96,13 +96,12 @@ const EmployerLayout = () => {
     };
 
     const menuItems = [
-        { path: '/employer', icon: 'bi-grid-1x2', label: 'Bảng tin', exact: true, subtitle: 'Tổng quan tuyển dụng' },
+        { path: '/employer', icon: 'bi-speedometer2', label: 'Dashboard', exact: true, subtitle: 'Tổng quan & báo cáo tuyển dụng' },
         { path: '/employer/cv-search', icon: 'bi-search', label: 'Tìm kiếm CV', subtitle: 'Tìm ứng viên phù hợp' },
         { path: '/employer/cv-manage', icon: 'bi-bookmark-check', label: 'Quản lý CV', subtitle: 'Danh sách CV đã lưu' },
         { path: '/employer/jobs', icon: 'bi-briefcase', label: 'Quản lý tin tuyển dụng', subtitle: 'Đăng và theo dõi tin' },
         { path: '/employer/applications', icon: 'bi-file-earmark-person', label: 'Quản lý hồ sơ ứng tuyển', subtitle: 'Duyệt hồ sơ ứng viên' },
         { path: '/employer/messages', icon: 'bi-chat-dots', label: 'Tin nhắn', subtitle: 'Trao đổi với ứng viên' },
-        { path: '/employer/statistics', icon: 'bi-bar-chart', label: 'Thống kê & báo cáo', subtitle: 'Hiệu quả tuyển dụng' },
         { path: '/employer/company', icon: 'bi-building', label: 'Thông tin công ty', subtitle: 'Hồ sơ doanh nghiệp' },
         { path: '/employer/account', icon: 'bi-person', label: 'Tài khoản', subtitle: 'Cập nhật hồ sơ cá nhân' }
     ];
