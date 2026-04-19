@@ -1,9 +1,13 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useNotification } from '../../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const pad2 = (value) => String(value).padStart(2, '0');
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => ({
+  value: String(index + 1),
+  label: `Tháng ${index + 1}`
+}));
 
 const parseIsoDate = (value) => {
   const text = String(value || '').trim();
@@ -53,12 +57,14 @@ const RegisterForm = ({ onSuccess }) => {
     month: '',
     year: ''
   });
+  const [birthdayOpen, setBirthdayOpen] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const birthdayPickerRef = useRef(null);
   const currentYear = new Date().getFullYear();
 
   const yearOptions = useMemo(
-    () => Array.from({ length: 90 }, (_, index) => String(currentYear - index)),
+    () => Array.from({ length: 85 }, (_, index) => String(currentYear - 16 - index)),
     [currentYear]
   );
 
@@ -80,9 +86,7 @@ const RegisterForm = ({ onSuccess }) => {
     }));
   };
 
-  const handleBirthdayPartChange = (part) => (event) => {
-    const nextValue = event.target.value;
-
+  const handleBirthdayPartChange = (part, nextValue) => {
     setBirthdayParts((prev) => {
       const next = {
         ...prev,
@@ -104,6 +108,39 @@ const RegisterForm = ({ onSuccess }) => {
     });
   };
 
+  const birthdayDisplayValue = useMemo(() => {
+    const day = birthdayParts.day ? pad2(birthdayParts.day) : 'Ngày';
+    const month = birthdayParts.month ? pad2(birthdayParts.month) : 'Tháng';
+    const year = birthdayParts.year || 'Năm';
+    return `${day} / ${month} / ${year}`;
+  }, [birthdayParts.day, birthdayParts.month, birthdayParts.year]);
+
+  useEffect(() => {
+    if (!birthdayOpen) return undefined;
+
+    const handlePointerDown = (event) => {
+      if (birthdayPickerRef.current && !birthdayPickerRef.current.contains(event.target)) {
+        setBirthdayOpen(false);
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setBirthdayOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handlePointerDown);
+    document.addEventListener('touchstart', handlePointerDown, true);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+      document.removeEventListener('touchstart', handlePointerDown, true);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [birthdayOpen]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -116,6 +153,7 @@ const RegisterForm = ({ onSuccess }) => {
       : '';
     const birthday = parseIsoDate(birthdayIso);
     if (!birthday) {
+      setBirthdayOpen(true);
       setLoading(false);
       setError('Vui lòng chọn đầy đủ ngày, tháng, năm hợp lệ');
       return;
@@ -276,45 +314,85 @@ const RegisterForm = ({ onSuccess }) => {
 
       <div className="auth-field">
         <label className="auth-field-label">Ngày sinh</label>
-        <div className="auth-birthday-select-grid">
-          <select
-            id="registerBirthDay"
-            className="auth-select"
-            value={birthdayParts.day}
-            onChange={handleBirthdayPartChange('day')}
-            required
+        <div className="auth-birthday-picker" ref={birthdayPickerRef}>
+          <button
+            id="registerBirthdayTrigger"
+            type="button"
+            className={`auth-input auth-birthday-trigger ${birthdayOpen ? 'is-open' : ''}`}
+            onClick={() => setBirthdayOpen((prev) => !prev)}
+            aria-haspopup="dialog"
+            aria-expanded={birthdayOpen}
+            aria-label="Chọn ngày sinh"
           >
-            <option value="">Ngày</option>
-            {dayOptions.map((day) => (
-              <option key={day} value={day}>{day}</option>
-            ))}
-          </select>
+            <span className={birthdayParts.day && birthdayParts.month && birthdayParts.year ? '' : 'is-placeholder'}>
+              {birthdayDisplayValue}
+            </span>
+            <i className={`bi ${birthdayOpen ? 'bi-chevron-up' : 'bi-calendar3'}`} aria-hidden="true"></i>
+          </button>
 
-          <select
-            id="registerBirthMonth"
-            className="auth-select"
-            value={birthdayParts.month}
-            onChange={handleBirthdayPartChange('month')}
-            required
-          >
-            <option value="">Tháng</option>
-            {Array.from({ length: 12 }, (_, index) => String(index + 1)).map((month) => (
-              <option key={month} value={month}>{month}</option>
-            ))}
-          </select>
+          {birthdayOpen && (
+            <div className="auth-birthday-menu" role="dialog" aria-label="Chọn ngày sinh">
+              <div className="auth-birthday-menu-head">
+                <div>
+                  <div className="auth-birthday-menu-title">Chọn ngày sinh</div>
+                  <div className="auth-birthday-menu-subtitle">Chọn theo 3 cột riêng để dễ thao tác hơn.</div>
+                </div>
+                <button type="button" className="auth-birthday-menu-close" onClick={() => setBirthdayOpen(false)}>
+                  Đóng
+                </button>
+              </div>
 
-          <select
-            id="registerBirthYear"
-            className="auth-select"
-            value={birthdayParts.year}
-            onChange={handleBirthdayPartChange('year')}
-            required
-          >
-            <option value="">Năm</option>
-            {yearOptions.map((year) => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+              <div className="auth-birthday-grid">
+                {[
+                  {
+                    key: 'day',
+                    label: 'Ngày',
+                    options: dayOptions,
+                    getValue: (option) => option,
+                    getLabel: (option) => pad2(option)
+                  },
+                  {
+                    key: 'month',
+                    label: 'Tháng',
+                    options: MONTH_OPTIONS,
+                    getValue: (option) => option.value,
+                    getLabel: (option) => option.label
+                  },
+                  {
+                    key: 'year',
+                    label: 'Năm',
+                    options: yearOptions,
+                    getValue: (option) => option,
+                    getLabel: (option) => option
+                  }
+                ].map((column) => (
+                  <div key={column.key} className="auth-birthday-column">
+                    <div className="auth-birthday-column-title">{column.label}</div>
+                    <div className="auth-birthday-options" role="listbox" aria-label={column.label}>
+                      {column.options.map((option) => {
+                        const optionValue = column.getValue(option);
+                        const selected = String(birthdayParts[column.key]) === String(optionValue);
+
+                        return (
+                          <button
+                            key={optionValue}
+                            type="button"
+                            className={`auth-birthday-option ${selected ? 'is-selected' : ''}`}
+                            onClick={() => handleBirthdayPartChange(column.key, optionValue)}
+                            aria-pressed={selected}
+                          >
+                            {column.getLabel(option)}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="auth-birthday-hint">Bạn phải đủ 16 tuổi để đăng ký tài khoản.</div>
+            </div>
+          )}
         </div>
       </div>
 

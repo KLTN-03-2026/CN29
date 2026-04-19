@@ -46,6 +46,22 @@
 .admin-template-create-header {
     background: linear-gradient(110deg, #f8fbff 0%, #f4f8ff 56%, #fff9ef 100%);
     border-bottom: 1px solid #e2e8f0;
+    padding-left: 12px;
+    padding-right: 16px;
+}
+
+.admin-template-create-header-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+}
+
+.admin-template-create-header h5 {
+    color: #0f172a;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .admin-template-create-subtitle {
@@ -282,6 +298,17 @@
 :is(html.dark, html[data-bs-theme='dark']) .admin-template-create-header {
     background: linear-gradient(110deg, #f4f8ff 0%, #edf4ff 56%, #fff7ea 100%);
     border-bottom-color: #cfd8e6;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-template-create-header,
+:is(html.dark, html[data-bs-theme='dark']) .admin-template-create-header * {
+    color: #0f172a !important;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-template-create-header .btn-outline-secondary {
+    border-color: #94a3b8;
+    background: #ffffff;
+    color: #0f172a !important;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .admin-template-create-subtitle {

@@ -598,17 +598,14 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             {isCreateMode && (
                 <div className="col-12 admin-template-pane">
                     <div className="card border-0 shadow-sm h-100 admin-template-create-card">
-                        <div className="card-header border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3 admin-template-create-header">
-                            <div>
-                                <h5 className="mb-1">
+                        <div className="card-header border-0 py-3 d-flex justify-content-start align-items-center flex-wrap gap-3 admin-template-create-header">
+                            <div className="admin-template-create-header-copy">
+                                <h5 className="mb-0">
                                     <i className="bi bi-code-square me-2"></i>
                                     {form.MaTemplateCV ? `Chỉnh sửa template #${form.MaTemplateCV}` : 'Tạo template CV mới'}
                                 </h5>
-                                <p className="admin-template-create-subtitle mb-0">
-                                    Thiết kế mẫu CV rõ ràng, đẹp mắt và sẵn sàng cho ứng viên sử dụng ngay.
-                                </p>
                             </div>
-                            <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => navigate('/admin/templates')}>
+                            <button type="button" className="btn btn-sm btn-outline-secondary ms-auto" onClick={() => navigate('/admin/templates')}>
                                 Tất cả template
                             </button>
                         </div>
