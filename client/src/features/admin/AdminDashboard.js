@@ -12,6 +12,7 @@ import {
     History,
     House,
     LayoutDashboard,
+    Languages,
     LogOut,
     Menu,
     Moon,
@@ -21,6 +22,7 @@ import {
     Users,
     X
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import { useDarkMode } from '../../context/DarkModeContext';
 import AdminCompaniesPage from './pages/AdminCompaniesPage';
@@ -75,27 +77,27 @@ const parseDateSafe = (value) => {
     return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const formatRelativeTime = (value) => {
+const formatRelativeTime = (value, t) => {
     const date = value instanceof Date ? value : parseDateSafe(value);
-    if (!date) return 'Chưa có thời gian';
+    if (!date) return t('admin.time.noTimestamp');
 
     const diffInMs = Date.now() - date.getTime();
-    if (diffInMs < 60 * 1000) return 'Vừa xong';
+    if (diffInMs < 60 * 1000) return t('admin.time.justNow');
 
     const minutes = Math.floor(diffInMs / (60 * 1000));
-    if (minutes < 60) return `${minutes} phút trước`;
+    if (minutes < 60) return t('admin.time.minutesAgo', { count: minutes });
 
     const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} giờ trước`;
+    if (hours < 24) return t('admin.time.hoursAgo', { count: hours });
 
     const days = Math.floor(hours / 24);
-    if (days < 30) return `${days} ngày trước`;
+    if (days < 30) return t('admin.time.daysAgo', { count: days });
 
     const months = Math.floor(days / 30);
-    if (months < 12) return `${months} tháng trước`;
+    if (months < 12) return t('admin.time.monthsAgo', { count: months });
 
     const years = Math.floor(months / 12);
-    return `${years} năm trước`;
+    return t('admin.time.yearsAgo', { count: years });
 };
 
 const getTemplateName = (template, index = 0) => {
@@ -128,43 +130,48 @@ const getTemplateCreatedAt = (template) => parseDateSafe(
 );
 
 const menuItems = [
-    { key: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', to: '/admin/dashboard' },
-    { key: 'users', icon: Users, label: 'Quản lý người dùng', to: '/admin/usersmanament' },
-    { key: 'jobs', icon: BriefcaseBusiness, label: 'Kiểm duyệt tin tuyển dụng', to: '/admin/jobs' },
-    { key: 'companies', icon: Building2, label: 'Quản lý công ty', to: '/admin/companies' },
+    { key: 'dashboard', icon: LayoutDashboard, labelKey: 'admin.menu.dashboard', to: '/admin/dashboard' },
+    { key: 'users', icon: Users, labelKey: 'admin.menu.users', to: '/admin/usersmanament' },
+    { key: 'jobs', icon: BriefcaseBusiness, labelKey: 'admin.menu.jobs', to: '/admin/jobs' },
+    { key: 'companies', icon: Building2, labelKey: 'admin.menu.companies', to: '/admin/companies' },
     {
         key: 'templates',
         icon: FileStack,
-        label: 'Quản lý template CV',
+        labelKey: 'admin.menu.templates',
         children: [
-            { key: 'templates-all', label: 'Tất cả template', to: '/admin/templates', exact: true },
-            { key: 'templates-create', label: 'Tạo template mới', to: '/admin/templates/create' }
+            { key: 'templates-all', labelKey: 'admin.menu.templatesAll', to: '/admin/templates', exact: true },
+            { key: 'templates-create', labelKey: 'admin.menu.templatesCreate', to: '/admin/templates/create' }
         ]
     },
-    { key: 'reports', icon: ClipboardList, label: 'Báo cáo', to: '/admin/reports' },
-    { key: 'career-guide-posts', icon: BookOpen, label: 'Quản lý bài viết hướng nghiệp', to: '/admin/career-guide-posts' },
-    { key: 'audit-logs', icon: History, label: 'Nhật ký quản trị', to: '/admin/audit-logs' },
-    { key: 'profile', icon: UserRound, label: 'Hồ sơ admin', to: '/admin/profile' }
+    { key: 'reports', icon: ClipboardList, labelKey: 'admin.menu.reports', to: '/admin/reports' },
+    { key: 'career-guide-posts', icon: BookOpen, labelKey: 'admin.menu.careerGuidePosts', to: '/admin/career-guide-posts' },
+    { key: 'audit-logs', icon: History, labelKey: 'admin.menu.auditLogs', to: '/admin/audit-logs' },
+    { key: 'profile', icon: UserRound, labelKey: 'admin.menu.profile', to: '/admin/profile' }
 ];
 
 const SIDEBAR_LOGO_URL = 'https://i.postimg.cc/nhWfcVvh/logo.png';
 
-const resolvePageTitle = (pathname) => {
-    if (pathname.startsWith('/admin/profile')) return 'Hồ sơ';
-    if (pathname.startsWith('/admin/usersmanament')) return 'Quản lý người dùng';
-    if (pathname.startsWith('/admin/jobs')) return 'Kiểm duyệt tin tuyển dụng';
-    if (pathname.startsWith('/admin/companies')) return 'Quản lý công ty';
-    if (pathname.startsWith('/admin/templates')) return 'Quản lý template CV';
-    if (pathname.startsWith('/admin/reports')) return 'Báo cáo';
-    if (pathname.startsWith('/admin/career-guide-posts')) return 'Quản lý bài viết hướng nghiệp';
-    if (pathname.startsWith('/admin/audit-logs')) return 'Nhật ký quản trị';
-    return 'Dashboard';
+const resolvePageTitleKey = (pathname) => {
+    if (pathname.startsWith('/admin/profile')) return 'admin.pageTitle.profile';
+    if (pathname.startsWith('/admin/usersmanament')) return 'admin.pageTitle.users';
+    if (pathname.startsWith('/admin/jobs')) return 'admin.pageTitle.jobs';
+    if (pathname.startsWith('/admin/companies')) return 'admin.pageTitle.companies';
+    if (pathname.startsWith('/admin/templates')) return 'admin.pageTitle.templates';
+    if (pathname.startsWith('/admin/reports')) return 'admin.pageTitle.reports';
+    if (pathname.startsWith('/admin/career-guide-posts')) return 'admin.pageTitle.careerGuidePosts';
+    if (pathname.startsWith('/admin/audit-logs')) return 'admin.pageTitle.auditLogs';
+    return 'admin.pageTitle.dashboard';
 };
 
 const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t, i18n } = useTranslation();
     const { isDarkMode, toggleDarkMode } = useDarkMode();
+
+    const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
+    const isEnglish = normalizedLanguage.startsWith('en');
+    const currentLocale = isEnglish ? 'en-US' : 'vi-VN';
 
     const API_BASE = CLIENT_API_BASE;
     const token = String(localStorage.getItem('token') || '').trim();
@@ -199,7 +206,8 @@ const AdminDashboard = () => {
         || user?.IsSuperAdmin === '1'
     );
     const currentRole = user?.role || user?.VaiTro || user?.vaiTro || user?.LoaiNguoiDung || '';
-    const isAdmin = isSuperAdmin || currentRole === 'Quản trị';
+    const normalizedCurrentRole = String(currentRole || '').trim().toLowerCase();
+    const isAdmin = isSuperAdmin || normalizedCurrentRole.includes('quản trị') || normalizedCurrentRole.includes('quan tri');
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -518,8 +526,10 @@ const AdminDashboard = () => {
         setCareerGuidePosts((prev) => prev.filter((item) => item.MaBaiViet !== postId));
     };
 
-    const greetingName = user?.HoTen || user?.name || user?.full_name || user?.email || 'Admin';
-    const roleLabel = isSuperAdmin ? 'Siêu quản trị viên' : (currentRole || 'Quản trị');
+    const greetingName = user?.HoTen || user?.name || user?.full_name || user?.email || t('admin.greetingDefault');
+    const roleLabel = (isSuperAdmin || normalizedCurrentRole.includes('siêu') || normalizedCurrentRole.includes('sieu'))
+        ? t('admin.role.superAdmin')
+        : t('admin.role.admin');
     const adminAvatarRaw = String(user?.avatar || user?.avatarAbsoluteUrl || user?.AnhDaiDien || user?.avatarUrl || '').trim();
     const adminAvatarUrl = withAvatarVersion(adminAvatarRaw, user?.avatarUpdatedAt);
 
@@ -529,33 +539,33 @@ const AdminDashboard = () => {
     const statsCards = [
         {
             key: 'total-templates',
-            title: 'Tổng template CV',
+            title: t('admin.stats.totalTemplatesTitle'),
             value: totalTemplateCount,
-            meta: `${totalTemplateCount > 0 ? '+12%' : '0%'} so với tháng trước`,
+            meta: t('admin.stats.totalTemplatesMeta', { percent: totalTemplateCount > 0 ? '+12%' : '0%' }),
             icon: FileStack,
             iconClass: 'sky'
         },
         {
             key: 'used-templates',
-            title: 'Template đã sử dụng',
+            title: t('admin.stats.usedTemplatesTitle'),
             value: usedTemplateCount,
-            meta: `${usedTemplateCount} template có lượt dùng`,
+            meta: t('admin.stats.usedTemplatesMeta', { count: usedTemplateCount }),
             icon: BarChart3,
             iconClass: 'violet'
         },
         {
             key: 'users',
-            title: 'Người dùng',
+            title: t('admin.stats.usersTitle'),
             value: safeNumber(counts?.NguoiDung),
-            meta: `${safeNumber(counts?.NguoiDung) > 0 ? '+6%' : '0%'} so với tháng trước`,
+            meta: t('admin.stats.usersMeta', { percent: safeNumber(counts?.NguoiDung) > 0 ? '+6%' : '0%' }),
             icon: Users,
             iconClass: 'blue'
         },
         {
             key: 'companies',
-            title: 'Công ty',
+            title: t('admin.stats.companiesTitle'),
             value: safeNumber(counts?.CongTy),
-            meta: `${safeNumber(counts?.CongTy) > 0 ? '+4%' : '0%'} so với tháng trước`,
+            meta: t('admin.stats.companiesMeta', { percent: safeNumber(counts?.CongTy) > 0 ? '+4%' : '0%' }),
             icon: Building2,
             iconClass: 'indigo'
         }
@@ -570,8 +580,8 @@ const AdminDashboard = () => {
                     name: getTemplateName(template, index),
                     createdAt,
                     usage: getTemplateUsage(template),
-                    relativeTime: formatRelativeTime(createdAt),
-                    exactTime: createdAt ? createdAt.toLocaleString('vi-VN') : 'Chưa có dữ liệu ngày tạo'
+                    relativeTime: formatRelativeTime(createdAt, t),
+                    exactTime: createdAt ? createdAt.toLocaleString(currentLocale) : t('admin.time.noCreatedDate')
                 };
             })
             .sort((a, b) => {
@@ -581,7 +591,7 @@ const AdminDashboard = () => {
             });
 
         return rows.slice(0, 6);
-    }, [templates]);
+    }, [templates, currentLocale, t]);
 
     const popularTemplates = useMemo(() => {
         const rows = templates
@@ -619,6 +629,10 @@ const AdminDashboard = () => {
         navigate(path);
     };
 
+    const handleToggleLanguage = () => {
+        i18n.changeLanguage(isEnglish ? 'vi' : 'en');
+    };
+
     const handleProfileMenuThemeToggle = () => {
         toggleDarkMode();
         setProfileMenuOpen(false);
@@ -653,6 +667,7 @@ const AdminDashboard = () => {
                 <div className="admin-menu">
                     {menuItems.map((item) => {
                         const Icon = item.icon;
+                        const itemLabel = t(item.labelKey);
 
                         if (Array.isArray(item.children) && item.children.length > 0) {
                             const isGroupActive = item.children.some((child) => isPathActive(child.to, child.exact));
@@ -674,10 +689,10 @@ const AdminDashboard = () => {
                                                 [item.key]: !prev[item.key]
                                             }));
                                         }}
-                                        title={item.label}
+                                        title={itemLabel}
                                     >
                                         <Icon size={18} strokeWidth={2.1} />
-                                        {!sidebarCollapsed && <span>{item.label}</span>}
+                                        {!sidebarCollapsed && <span>{itemLabel}</span>}
                                         {!sidebarCollapsed && (
                                             <ChevronDown
                                                 size={16}
@@ -696,7 +711,7 @@ const AdminDashboard = () => {
                                                     className={({ isActive }) => `admin-submenu-item ${isActive ? 'active' : ''}`}
                                                     onClick={handleSidebarItemClick}
                                                 >
-                                                    {child.label}
+                                                    {t(child.labelKey)}
                                                 </NavLink>
                                             ))}
                                         </div>
@@ -711,10 +726,10 @@ const AdminDashboard = () => {
                                 to={item.to}
                                 className={({ isActive }) => `admin-menu-item ${isActive ? 'active' : ''}`}
                                 onClick={handleSidebarItemClick}
-                                title={item.label}
+                                title={itemLabel}
                             >
                                 <Icon size={18} strokeWidth={2.1} />
-                                {!sidebarCollapsed && <span>{item.label}</span>}
+                                {!sidebarCollapsed && <span>{itemLabel}</span>}
                             </NavLink>
                         );
                     })}
@@ -728,11 +743,11 @@ const AdminDashboard = () => {
                             handleSidebarItemClick();
                             handleLogout();
                         }}
-                        title="Đăng xuất"
-                        aria-label="Đăng xuất"
+                        title={t('admin.actions.logout')}
+                        aria-label={t('admin.actions.logout')}
                     >
                         <LogOut size={18} strokeWidth={2.1} />
-                        <span>Đăng xuất</span>
+                        <span>{t('admin.actions.logout')}</span>
                     </button>
                 </div>
             </div>
@@ -744,21 +759,32 @@ const AdminDashboard = () => {
                             type="button"
                             className="admin-sidebar-toggle"
                             onClick={handleSidebarToggle}
-                            aria-label="Bật hoặc tắt sidebar"
+                            aria-label={t('header.aria.toggleNavigation')}
                         >
                             {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
                         </button>
-                        <h1 className="admin-header-page-title">{resolvePageTitle(location.pathname)}</h1>
+                        <h1 className="admin-header-page-title">{t(resolvePageTitleKey(location.pathname))}</h1>
                     </div>
 
                     <div className="admin-header-user">
                         <button
                             type="button"
                             className="admin-header-home-btn"
+                            onClick={handleToggleLanguage}
+                            title={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
+                            aria-label={t('common.languageSwitch')}
+                        >
+                            <Languages size={16} />
+                            <span>{isEnglish ? 'VI' : 'EN'}</span>
+                        </button>
+
+                        <button
+                            type="button"
+                            className="admin-header-home-btn"
                             onClick={() => navigate('/')}
                         >
                             <House size={16} />
-                            <span>Trang chủ</span>
+                            <span>{t('admin.actions.home')}</span>
                         </button>
 
                         <div className={`admin-header-user-menu ${profileMenuOpen ? 'open' : ''}`} ref={profileMenuRef}>
@@ -794,19 +820,19 @@ const AdminDashboard = () => {
                                 <div className="admin-header-dropdown" role="menu">
                                     <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/admin/dashboard')}>
                                         <LayoutDashboard size={16} />
-                                        <span>Dashboard</span>
+                                        <span>{t('admin.dropdown.dashboard')}</span>
                                     </button>
                                     <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/admin/profile')}>
                                         <UserRound size={16} />
-                                        <span>Hồ sơ của tôi</span>
+                                        <span>{t('admin.dropdown.profile')}</span>
                                     </button>
                                     <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/admin/dashboard')}>
                                         <Bell size={16} />
-                                        <span>Thông báo</span>
+                                        <span>{t('admin.dropdown.notifications')}</span>
                                     </button>
                                     <button type="button" className="admin-header-dropdown-item" onClick={handleProfileMenuThemeToggle}>
                                         {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-                                        <span>{isDarkMode ? 'Giao diện sáng' : 'Giao diện tối'}</span>
+                                        <span>{isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark')}</span>
                                     </button>
                                     <button
                                         type="button"
@@ -814,7 +840,7 @@ const AdminDashboard = () => {
                                         onClick={handleLogout}
                                     >
                                         <LogOut size={16} />
-                                        <span>Đăng xuất</span>
+                                        <span>{t('admin.dropdown.logout')}</span>
                                     </button>
                                 </div>
                             )}
@@ -824,7 +850,7 @@ const AdminDashboard = () => {
 
                 <div className="admin-content">
                     {error && <div className="alert alert-danger admin-feedback">{error}</div>}
-                    {loading && <div className="alert alert-info admin-feedback">Đang tải dữ liệu...</div>}
+                    {loading && <div className="alert alert-info admin-feedback">{t('admin.loadingData')}</div>}
 
                     <Routes>
                         <Route index element={<Navigate to="dashboard" replace />} />

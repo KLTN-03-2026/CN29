@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min';
 import 'bootstrap-icons/font/bootstrap-icons.css';
 import App from './App';
+import './i18n/config';
 import { NotificationProvider } from './components/NotificationProvider';
 import { API_BASE } from './config/apiBase';
 import reportWebVitals from './reportWebVitals';

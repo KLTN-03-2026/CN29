@@ -1,0 +1,155 @@
+{
+  "common": {
+    "languageSwitch": "Đổi ngôn ngữ",
+    "switchToEnglish": "Chuyển sang tiếng Anh",
+    "switchToVietnamese": "Chuyển sang tiếng Việt",
+    "toggleDarkMode": "Đổi giao diện",
+    "switchToDark": "Chuyển sang giao diện tối",
+    "switchToLight": "Chuyển sang giao diện sáng"
+  },
+  "header": {
+    "nav": {
+      "home": "Trang chủ",
+      "jobs": "Việc làm",
+      "cvTemplates": "Mẫu CV",
+      "cvManagement": "Quản lý CV",
+      "careerGuide": "Bài viết hướng nghiệp"
+    },
+    "jobsMenu": {
+      "title": "Việc làm",
+      "findJobs": "Tìm việc làm",
+      "savedJobs": "Việc làm đã lưu",
+      "appliedJobs": "Việc làm đã ứng tuyển",
+      "matchingJobs": "Việc làm phù hợp"
+    },
+    "auth": {
+      "login": "Đăng nhập",
+      "register": "Đăng ký"
+    },
+    "user": {
+      "profile": "Hồ sơ của tôi",
+      "dashboard": "Dashboard",
+      "messages": "Tin nhắn",
+      "manageEmployerJobs": "Quản lý tin tuyển dụng",
+      "manageJobs": "Quản lý việc làm",
+      "notifications": "Thông báo",
+      "logout": "Đăng xuất"
+    },
+    "confirmLogout": {
+      "title": "Xác nhận đăng xuất",
+      "message": "Bạn có chắc chắn muốn đăng xuất?",
+      "confirm": "Đăng xuất",
+      "cancel": "Ở lại"
+    },
+    "role": {
+      "superAdmin": "Siêu quản trị viên",
+      "admin": "Quản trị",
+      "employer": "Nhà tuyển dụng",
+      "candidate": "Ứng viên"
+    },
+    "profileFallback": "Tài khoản của tôi",
+    "aria": {
+      "openJobsMenu": "Mở menu việc làm",
+      "toggleNavigation": "Bật hoặc tắt điều hướng"
+    }
+  },
+  "admin": {
+    "greetingDefault": "Admin",
+    "role": {
+      "superAdmin": "Siêu quản trị viên",
+      "admin": "Quản trị"
+    },
+    "loadingData": "Đang tải dữ liệu...",
+    "actions": {
+      "home": "Trang chủ",
+      "logout": "Đăng xuất"
+    },
+    "menu": {
+      "dashboard": "Dashboard",
+      "users": "Quản lý người dùng",
+      "jobs": "Kiểm duyệt tin tuyển dụng",
+      "companies": "Quản lý công ty",
+      "templates": "Quản lý template CV",
+      "templatesAll": "Tất cả template",
+      "templatesCreate": "Tạo template mới",
+      "reports": "Báo cáo",
+      "careerGuidePosts": "Quản lý bài viết hướng nghiệp",
+      "auditLogs": "Nhật ký quản trị",
+      "profile": "Hồ sơ admin"
+    },
+    "pageTitle": {
+      "dashboard": "Dashboard",
+      "users": "Quản lý người dùng",
+      "jobs": "Kiểm duyệt tin tuyển dụng",
+      "companies": "Quản lý công ty",
+      "templates": "Quản lý template CV",
+      "reports": "Báo cáo",
+      "careerGuidePosts": "Quản lý bài viết hướng nghiệp",
+      "auditLogs": "Nhật ký quản trị",
+      "profile": "Hồ sơ"
+    },
+    "dropdown": {
+      "dashboard": "Dashboard",
+      "profile": "Hồ sơ của tôi",
+      "notifications": "Thông báo",
+      "themeDark": "Giao diện tối",
+      "themeLight": "Giao diện sáng",
+      "logout": "Đăng xuất"
+    },
+    "stats": {
+      "totalTemplatesTitle": "Tổng template CV",
+      "totalTemplatesMeta": "{{percent}} so với tháng trước",
+      "usedTemplatesTitle": "Template đã sử dụng",
+      "usedTemplatesMeta": "{{count}} template có lượt dùng",
+      "usersTitle": "Người dùng",
+      "usersMeta": "{{percent}} so với tháng trước",
+      "companiesTitle": "Công ty",
+      "companiesMeta": "{{percent}} so với tháng trước"
+    },
+    "time": {
+      "noTimestamp": "Chưa có thời gian",
+      "noCreatedDate": "Chưa có dữ liệu ngày tạo",
+      "justNow": "Vừa xong",
+      "minutesAgo": "{{count}} phút trước",
+      "hoursAgo": "{{count}} giờ trước",
+      "daysAgo": "{{count}} ngày trước",
+      "monthsAgo": "{{count}} tháng trước",
+      "yearsAgo": "{{count}} năm trước"
+    },
+    "overview": {
+      "heroChip": "Admin Dashboard",
+      "heroTitle": "Chào mừng trở lại, {{name}}",
+      "heroSubtitle": "Tổng quan hoạt động hệ thống của bạn",
+      "export": "Tải Excel",
+      "exporting": "Đang xuất...",
+      "exportError": "Không thể xuất file Excel Dashboard.",
+      "recentTitle": "Hoạt động gần đây",
+      "recentSubtitle": "Template mới tạo",
+      "recentEmpty": "Chưa có template mới tạo.",
+      "popularTitle": "Template phổ biến",
+      "popularSubtitle": "Dựa trên lượt sử dụng",
+      "popularEmpty": "Chưa có dữ liệu lượt sử dụng template.",
+      "usageCount": "{{count}} lượt",
+      "excel": {
+        "summarySheet": "Tổng quan dashboard",
+        "recentSheet": "Hoạt động gần đây",
+        "popularSheet": "Template phổ biến",
+        "reportTitle": "JOBFINDER - BÁO CÁO DASHBOARD ADMIN",
+        "adminLabel": "Quản trị viên",
+        "exportDateLabel": "Ngày xuất",
+        "metricHeader": "Chỉ số",
+        "valueHeader": "Giá trị",
+        "noteHeader": "Ghi chú",
+        "noStats": "Không có dữ liệu thống kê",
+        "indexHeader": "STT",
+        "templateNameHeader": "Tên template",
+        "exactTimeHeader": "Thời gian",
+        "relativeTimeHeader": "Mốc tương đối",
+        "noRecent": "Chưa có hoạt động",
+        "usageHeader": "Lượt sử dụng",
+        "progressHeader": "Tỉ lệ (%)",
+        "noPopular": "Chưa có dữ liệu"
+      }
+    }
+  }
+}

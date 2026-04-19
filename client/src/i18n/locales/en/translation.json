@@ -1,0 +1,155 @@
+{
+  "common": {
+    "languageSwitch": "Switch language",
+    "switchToEnglish": "Switch to English",
+    "switchToVietnamese": "Switch to Vietnamese",
+    "toggleDarkMode": "Toggle theme",
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode"
+  },
+  "header": {
+    "nav": {
+      "home": "Home",
+      "jobs": "Jobs",
+      "cvTemplates": "CV Templates",
+      "cvManagement": "CV Management",
+      "careerGuide": "Career Guide"
+    },
+    "jobsMenu": {
+      "title": "Jobs",
+      "findJobs": "Find jobs",
+      "savedJobs": "Saved jobs",
+      "appliedJobs": "Applied jobs",
+      "matchingJobs": "Matching jobs"
+    },
+    "auth": {
+      "login": "Login",
+      "register": "Register"
+    },
+    "user": {
+      "profile": "My profile",
+      "dashboard": "Dashboard",
+      "messages": "Messages",
+      "manageEmployerJobs": "Manage job postings",
+      "manageJobs": "Job management",
+      "notifications": "Notifications",
+      "logout": "Logout"
+    },
+    "confirmLogout": {
+      "title": "Confirm logout",
+      "message": "Are you sure you want to log out?",
+      "confirm": "Logout",
+      "cancel": "Stay"
+    },
+    "role": {
+      "superAdmin": "Super administrator",
+      "admin": "Administrator",
+      "employer": "Employer",
+      "candidate": "Candidate"
+    },
+    "profileFallback": "My account",
+    "aria": {
+      "openJobsMenu": "Open jobs menu",
+      "toggleNavigation": "Toggle navigation"
+    }
+  },
+  "admin": {
+    "greetingDefault": "Admin",
+    "role": {
+      "superAdmin": "Super administrator",
+      "admin": "Administrator"
+    },
+    "loadingData": "Loading data...",
+    "actions": {
+      "home": "Home",
+      "logout": "Logout"
+    },
+    "menu": {
+      "dashboard": "Dashboard",
+      "users": "User management",
+      "jobs": "Job moderation",
+      "companies": "Company management",
+      "templates": "CV template management",
+      "templatesAll": "All templates",
+      "templatesCreate": "Create new template",
+      "reports": "Reports",
+      "careerGuidePosts": "Career guide posts",
+      "auditLogs": "Admin audit logs",
+      "profile": "Admin profile"
+    },
+    "pageTitle": {
+      "dashboard": "Dashboard",
+      "users": "User management",
+      "jobs": "Job moderation",
+      "companies": "Company management",
+      "templates": "CV template management",
+      "reports": "Reports",
+      "careerGuidePosts": "Career guide posts",
+      "auditLogs": "Admin audit logs",
+      "profile": "Profile"
+    },
+    "dropdown": {
+      "dashboard": "Dashboard",
+      "profile": "My profile",
+      "notifications": "Notifications",
+      "themeDark": "Dark mode",
+      "themeLight": "Light mode",
+      "logout": "Logout"
+    },
+    "stats": {
+      "totalTemplatesTitle": "Total CV templates",
+      "totalTemplatesMeta": "{{percent}} compared to last month",
+      "usedTemplatesTitle": "Used templates",
+      "usedTemplatesMeta": "{{count}} templates with usage",
+      "usersTitle": "Users",
+      "usersMeta": "{{percent}} compared to last month",
+      "companiesTitle": "Companies",
+      "companiesMeta": "{{percent}} compared to last month"
+    },
+    "time": {
+      "noTimestamp": "No timestamp",
+      "noCreatedDate": "No creation date data",
+      "justNow": "Just now",
+      "minutesAgo": "{{count}} minutes ago",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "monthsAgo": "{{count}} months ago",
+      "yearsAgo": "{{count}} years ago"
+    },
+    "overview": {
+      "heroChip": "Admin Dashboard",
+      "heroTitle": "Welcome back, {{name}}",
+      "heroSubtitle": "System activity overview",
+      "export": "Export Excel",
+      "exporting": "Exporting...",
+      "exportError": "Unable to export dashboard Excel file.",
+      "recentTitle": "Recent activity",
+      "recentSubtitle": "Recently created templates",
+      "recentEmpty": "No newly created templates.",
+      "popularTitle": "Popular templates",
+      "popularSubtitle": "Based on usage count",
+      "popularEmpty": "No template usage data yet.",
+      "usageCount": "{{count}} uses",
+      "excel": {
+        "summarySheet": "Dashboard summary",
+        "recentSheet": "Recent activity",
+        "popularSheet": "Popular templates",
+        "reportTitle": "JOBFINDER - ADMIN DASHBOARD REPORT",
+        "adminLabel": "Administrator",
+        "exportDateLabel": "Exported at",
+        "metricHeader": "Metric",
+        "valueHeader": "Value",
+        "noteHeader": "Note",
+        "noStats": "No statistics available",
+        "indexHeader": "No.",
+        "templateNameHeader": "Template name",
+        "exactTimeHeader": "Timestamp",
+        "relativeTimeHeader": "Relative",
+        "noRecent": "No activity yet",
+        "usageHeader": "Usage count",
+        "progressHeader": "Rate (%)",
+        "noPopular": "No data"
+      }
+    }
+  }
+}

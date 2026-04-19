@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Download, History, Trash2 } from 'lucide-react';
 import SmartPagination from '../../../components/SmartPagination';
+import { downloadBlobFile, loadExcelJs } from '../../../utils/excelExport';
 
 const PAGE_LIMIT = 30;
 const EXPORT_BATCH_LIMIT = 200;
@@ -38,17 +39,6 @@ const loadJobFinderLogoAsset = async () => {
     } catch {
         return null;
     }
-};
-
-const downloadBlobFile = (blob, fileName) => {
-    const objectUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(objectUrl);
 };
 
 const formatDateTime = (value) => {
@@ -171,8 +161,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
                 throw new Error('Chưa có dữ liệu nhật ký quản trị để xuất Excel.');
             }
 
-            const excelModule = await import('exceljs/dist/exceljs.min.js');
-            const ExcelJS = excelModule?.default || excelModule;
+            const ExcelJS = await loadExcelJs();
             const workbook = new ExcelJS.Workbook();
 
             workbook.creator = 'JobFinder';

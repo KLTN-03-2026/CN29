@@ -37,6 +37,23 @@
   margin-right: 0;
 }
 
+.jf-utility-actions {
+  flex-shrink: 0;
+}
+
+.jf-utility-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 999px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.jf-utility-btn i {
+  font-size: 0.9rem;
+}
+
 @media (min-width: 992px) {
   .jf-main-navbar__collapse {
     display: flex !important;
@@ -115,6 +132,16 @@
   .jf-main-navbar .jf-user-chip,
   .jf-main-navbar .dropdown {
     width: 100%;
+  }
+
+  .jf-main-navbar .jf-utility-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .jf-main-navbar .jf-utility-actions .jf-utility-btn {
+    flex: 1;
+    justify-content: center;
   }
 
   .jf-main-navbar .jf-user-chip {
@@ -2283,6 +2310,19 @@ html[data-bs-theme='dark'] .jf-main-navbar .nav-link,
 html[data-bs-theme='dark'] .jf-nav-dropdown-toggle,
 html[data-bs-theme='dark'] .jf-user-chip-info strong {
   color: #e2e8f0 !important;
+}
+
+html[data-bs-theme='dark'] .jf-utility-btn {
+  border-color: #334155;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+html[data-bs-theme='dark'] .jf-utility-btn:hover,
+html[data-bs-theme='dark'] .jf-utility-btn:focus-visible {
+  background: #111d34;
+  color: #f8fafc;
+  border-color: #475569;
 }
 
 html[data-bs-theme='dark'] .jf-user-chip-info small {

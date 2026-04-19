@@ -43,7 +43,7 @@ import AccountInstallPrompt from './components/pwa/AccountInstallPrompt';
 import FirebaseMessagingBridge from './components/FirebaseMessagingBridge';
 import MessageNotificationBridge from './components/MessageNotificationBridge';
 import { API_BASE } from './config/apiBase';
-import { DarkModeProvider, useDarkMode } from './context/DarkModeContext';
+import { DarkModeProvider } from './context/DarkModeContext';
 import './App.css';
 
 const normalizeRoleValue = (value) => String(value || '')
@@ -84,8 +84,6 @@ const hasCareerGuideCreatePermission = (user) => {
 };
 
 function AppContent() {
-  const { isDarkMode, toggleDarkMode } = useDarkMode();
-
   const location = useLocation();
   const normalizedPath = location.pathname.length > 1
     ? location.pathname.replace(/\/+$/, '')
@@ -267,18 +265,6 @@ function AppContent() {
       <MessageNotificationBridge />
       <AccountInstallPrompt />
       <PWAUpdatePrompt />
-      {showPublicChrome && (
-        <button
-          type="button"
-          className="btn btn-outline-secondary btn-sm jobfinder-theme-toggle"
-          onClick={toggleDarkMode}
-          aria-label={isDarkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-          title={isDarkMode ? 'Chuyển sang giao diện sáng' : 'Chuyển sang giao diện tối'}
-        >
-          <i className={`bi ${isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`} aria-hidden="true"></i>
-          <span>{isDarkMode ? 'Giao diện sáng' : 'Giao diện tối'}</span>
-        </button>
-      )}
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from './NotificationProvider';
+import { useDarkMode } from '../context/DarkModeContext';
 
 const readStoredUser = () => {
     try {
@@ -35,18 +37,27 @@ const withAvatarVersion = (url, version) => {
 const Header = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t, i18n } = useTranslation();
     const { requestConfirm } = useNotification();
+    const { isDarkMode, toggleDarkMode } = useDarkMode();
     const [currentUser, setCurrentUser] = useState(() => readStoredUser());
     const [showJobManagement, setShowJobManagement] = useState(false);
     const [showMobileJobsMenu, setShowMobileJobsMenu] = useState(false);
 
+    const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
+    const isEnglish = normalizedLanguage.startsWith('en');
+
+    const handleToggleLanguage = () => {
+        i18n.changeLanguage(isEnglish ? 'vi' : 'en');
+    };
+
     const handleLogout = async () => {
         const confirmed = await requestConfirm({
             type: 'warning',
-            title: 'Xác nhận đăng xuất',
-            message: 'Bạn có chắc chắn muốn đăng xuất?',
-            confirmText: 'Đăng xuất',
-            cancelText: 'Ở lại'
+            title: t('header.confirmLogout.title'),
+            message: t('header.confirmLogout.message'),
+            confirmText: t('header.confirmLogout.confirm'),
+            cancelText: t('header.confirmLogout.cancel')
         });
 
         if (!confirmed) return;
@@ -108,10 +119,10 @@ const Header = () => {
 
     const resolveRoleLabel = (rawRole, isSuperAdmin) => {
         const role = normalize(rawRole);
-        if (isSuperAdmin || role.includes('siêu') || role.includes('sieu')) return 'Siêu quản trị viên';
-        if (role.includes('quản trị') || role.includes('quan tri')) return 'Quản trị';
-        if (role.includes('nhà tuyển dụng') || role.includes('nha tuyen dung')) return 'Nhà tuyển dụng';
-        return 'Ứng viên';
+        if (isSuperAdmin || role.includes('siêu') || role.includes('sieu')) return t('header.role.superAdmin');
+        if (role.includes('quản trị') || role.includes('quan tri')) return t('header.role.admin');
+        if (role.includes('nhà tuyển dụng') || role.includes('nha tuyen dung')) return t('header.role.employer');
+        return t('header.role.candidate');
     };
     
     // Kiểm tra trạng thái đăng nhập
@@ -127,13 +138,13 @@ const Header = () => {
         || user?.IsSuperAdmin === '1'
     );
     const roleLabel = resolveRoleLabel(userRole, isSuperAdmin);
-    const isEmployer = roleLabel === 'Nhà tuyển dụng';
+    const isEmployer = roleLabel === t('header.role.employer');
     const isAdmin = (
-        roleLabel === 'Quản trị'
-        || roleLabel === 'Siêu quản trị viên'
+        roleLabel === t('header.role.admin')
+        || roleLabel === t('header.role.superAdmin')
         || isSuperAdmin
     );
-    const profileTitle = String(user?.HoTen || user?.name || user?.fullName || user?.username || user?.email || '').trim() || 'Tài khoản của tôi';
+    const profileTitle = String(user?.HoTen || user?.name || user?.fullName || user?.username || user?.email || '').trim() || t('header.profileFallback');
     const avatarUrlRaw = String(user?.avatar || user?.avatarAbsoluteUrl || user?.AnhDaiDien || user?.avatarUrl || '').trim();
     const avatarUrl = withAvatarVersion(avatarUrlRaw, user?.avatarUpdatedAt);
     const profileIcon = isAdmin
@@ -149,13 +160,13 @@ const Header = () => {
                 <Link className="navbar-brand d-flex align-items-center gap-3 text-decoration-none jf-main-navbar__brand" to="/">
                     <img src="/images/logo.png" alt="JobFinder Logo" className="jf-main-navbar__logo" />
                 </Link>
-                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label={t('header.aria.toggleNavigation')}>
                     <span className="navbar-toggler-icon"></span>
                 </button>
                 <div className="collapse navbar-collapse justify-content-between jf-main-navbar__collapse" id="mainNavbar">
                     <ul className="navbar-nav align-items-lg-center gap-lg-4 mb-3 mb-lg-0 jf-main-navbar__menu">
                         <li className="nav-item">
-                            <Link className="nav-link fw-semibold fs-6" to="/" onClick={collapseMobileNavbar}>Trang chủ</Link>
+                            <Link className="nav-link fw-semibold fs-6" to="/" onClick={collapseMobileNavbar}>{t('header.nav.home')}</Link>
                         </li>
                         <li className="nav-item dropdown jf-nav-dropdown">
                             <button
@@ -163,18 +174,18 @@ const Header = () => {
                                 className="nav-link d-flex align-items-center gap-1 fw-semibold fs-6 jf-nav-dropdown-toggle"
                                 onClick={() => setShowMobileJobsMenu((prev) => !prev)}
                                 aria-expanded={showMobileJobsMenu}
-                                aria-label="Mở menu việc làm"
+                                aria-label={t('header.aria.openJobsMenu')}
                             >
-                                Việc làm <i className="bi bi-chevron-down small jf-nav-chevron"></i>
+                                {t('header.nav.jobs')} <i className="bi bi-chevron-down small jf-nav-chevron"></i>
                             </button>
                             <ul className={`dropdown-menu jf-nav-dropdown-menu p-0 ${showMobileJobsMenu ? 'is-open' : ''}`} style={{ minWidth: 280, borderRadius: 12 }}>
                                 <li className="px-3 pt-3 pb-2 text-uppercase text-secondary" style={{ fontSize: 12, letterSpacing: 1 }}>
-                                    Việc làm
+                                    {t('header.jobsMenu.title')}
                                 </li>
                                 <li className="px-2 pb-2">
                                     <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs" onClick={collapseMobileNavbar}>
                                         <i className="bi bi-search fs-5 text-primary"></i>
-                                        <span className="fw-semibold">Tìm việc làm</span>
+                                        <span className="fw-semibold">{t('header.jobsMenu.findJobs')}</span>
                                     </Link>
                                 </li>
                                 {!isEmployer && (
@@ -182,19 +193,19 @@ const Header = () => {
                                         <li className="px-2 pb-2">
                                             <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/saved" onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-bookmark fs-5 text-primary"></i>
-                                                <span className="fw-semibold">Việc làm đã lưu</span>
+                                                <span className="fw-semibold">{t('header.jobsMenu.savedJobs')}</span>
                                             </Link>
                                         </li>
                                         <li className="px-2 pb-2">
                                             <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/applied" onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-file-earmark-check fs-5 text-primary"></i>
-                                                <span className="fw-semibold">Việc làm đã ứng tuyển</span>
+                                                <span className="fw-semibold">{t('header.jobsMenu.appliedJobs')}</span>
                                             </Link>
                                         </li>
                                         <li className="px-2 pb-3">
                                             <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/matching" onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-hand-thumbs-up fs-5 text-primary"></i>
-                                                <span className="fw-semibold">Việc làm phù hợp</span>
+                                                <span className="fw-semibold">{t('header.jobsMenu.matchingJobs')}</span>
                                             </Link>
                                         </li>
                                     </>
@@ -203,28 +214,52 @@ const Header = () => {
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/create-cv/templates" onClick={collapseMobileNavbar}>
-                                Mẫu CV
+                                {t('header.nav.cvTemplates')}
                             </Link>
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/cv-management" onClick={collapseMobileNavbar}>
-                                Quản lý CV
+                                {t('header.nav.cvManagement')}
                             </Link>
                         </li>
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/career-guide" onClick={collapseMobileNavbar}>
-                                Bài viết hướng nghiệp
+                                {t('header.nav.careerGuide')}
                             </Link>
                         </li>
                     </ul>
                     <div className="d-flex align-items-center gap-3 jf-main-navbar__actions">
+                        <div className="d-flex align-items-center gap-2 jf-utility-actions">
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary btn-sm jf-utility-btn"
+                                onClick={handleToggleLanguage}
+                                title={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
+                                aria-label={t('common.languageSwitch')}
+                            >
+                                <i className="bi bi-translate" aria-hidden="true"></i>
+                                <span>{isEnglish ? 'VI' : 'EN'}</span>
+                            </button>
+
+                            <button
+                                type="button"
+                                className="btn btn-outline-secondary btn-sm jf-utility-btn"
+                                onClick={toggleDarkMode}
+                                title={isDarkMode ? t('common.switchToLight') : t('common.switchToDark')}
+                                aria-label={t('common.toggleDarkMode')}
+                            >
+                                <i className={`bi ${isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`} aria-hidden="true"></i>
+                                <span>{isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark')}</span>
+                            </button>
+                        </div>
+
                         {!user ? (
                             <>
                                 <Link className="btn btn-outline-primary fw-semibold fs-6 px-4 py-1" to="/login" onClick={collapseMobileNavbar}>
-                                    Đăng nhập
+                                    {t('header.auth.login')}
                                 </Link>
                                 <Link className="btn btn-primary fw-semibold fs-6 px-4 py-1" to="/register" onClick={collapseMobileNavbar}>
-                                    Đăng ký
+                                    {t('header.auth.register')}
                                 </Link>
                             </>
                         ) : (
@@ -262,14 +297,14 @@ const Header = () => {
                                     <li className="jf-user-dropdown-row">
                                         <Link className="dropdown-item jf-user-dropdown-item" to={profileLink} onClick={collapseMobileNavbar}>
                                             <i className="bi bi-file-earmark-person text-primary"></i>
-                                            <span>Hồ sơ của tôi</span>
+                                            <span>{t('header.user.profile')}</span>
                                         </Link>
                                     </li>
                                     {dashboardLink && (
                                         <li className="jf-user-dropdown-row">
                                             <Link className="dropdown-item jf-user-dropdown-item" to={dashboardLink} onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-speedometer2 text-primary"></i>
-                                                <span>Dashboard</span>
+                                                <span>{t('header.user.dashboard')}</span>
                                             </Link>
                                         </li>
                                     )}
@@ -277,7 +312,7 @@ const Header = () => {
                                         <li className="jf-user-dropdown-row">
                                             <Link className="dropdown-item jf-user-dropdown-item" to={messagingLink} onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-chat-dots text-primary"></i>
-                                                <span>Tin nhắn</span>
+                                                <span>{t('header.user.messages')}</span>
                                             </Link>
                                         </li>
                                     )}
@@ -285,7 +320,7 @@ const Header = () => {
                                         <li className="jf-user-dropdown-row">
                                             <Link className="dropdown-item jf-user-dropdown-item" to="/employer/jobs" onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-briefcase text-primary"></i>
-                                                <span>Quản lý tin tuyển dụng</span>
+                                                <span>{t('header.user.manageEmployerJobs')}</span>
                                             </Link>
                                         </li>
                                     ) : (
@@ -294,7 +329,7 @@ const Header = () => {
                                                 onClick={e => { e.stopPropagation(); setShowJobManagement(!showJobManagement); }}>
                                                 <div className="d-flex align-items-center gap-2">
                                                     <i className="bi bi-briefcase text-primary"></i>
-                                                    <span>Quản lý việc làm</span>
+                                                    <span>{t('header.user.manageJobs')}</span>
                                                 </div>
                                                 <i className={`bi bi-chevron-${showJobManagement ? 'up' : 'down'}`}></i>
                                             </div>
@@ -303,13 +338,13 @@ const Header = () => {
                                                     <li>
                                                         <Link className="jf-user-submenu-link" to="/jobs/applied" onClick={collapseMobileNavbar}>
                                                             <i className="bi bi-file-earmark-check text-primary"></i>
-                                                            <span>Việc làm đã ứng tuyển</span>
+                                                            <span>{t('header.jobsMenu.appliedJobs')}</span>
                                                         </Link>
                                                     </li>
                                                     <li>
                                                         <Link className="jf-user-submenu-link" to="/jobs/saved" onClick={collapseMobileNavbar}>
                                                             <i className="bi bi-bookmark text-primary"></i>
-                                                            <span>Việc làm đã lưu</span>
+                                                            <span>{t('header.jobsMenu.savedJobs')}</span>
                                                         </Link>
                                                     </li>
                                                 </ul>
@@ -319,14 +354,24 @@ const Header = () => {
                                     <li className="jf-user-dropdown-row">
                                         <Link className="dropdown-item jf-user-dropdown-item" to="/support" onClick={collapseMobileNavbar}>
                                             <i className="bi bi-bell text-primary"></i>
-                                            <span>Thông báo</span>
+                                            <span>{t('header.user.notifications')}</span>
                                         </Link>
+                                    </li>
+                                    <li className="jf-user-dropdown-row">
+                                        <button
+                                            type="button"
+                                            className="dropdown-item jf-user-dropdown-item"
+                                            onClick={toggleDarkMode}
+                                        >
+                                            <i className={`bi ${isDarkMode ? 'bi-sun-fill text-primary' : 'bi-moon-stars text-primary'}`}></i>
+                                            <span>{isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark')}</span>
+                                        </button>
                                     </li>
                                     <li><hr className="dropdown-divider" /></li>
                                     <li className="jf-user-dropdown-row jf-user-dropdown-row-last">
                                         <button className="btn btn-link text-decoration-none jf-user-logout-btn"
                                                 onClick={handleLogout}>
-                                            Đăng xuất
+                                            {t('header.user.logout')}
                                         </button>
                                     </li>
                                 </ul>

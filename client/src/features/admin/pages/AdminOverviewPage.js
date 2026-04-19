@@ -1,22 +1,13 @@
 import React, { useState } from 'react';
 import { ChevronRight, Download, FileStack } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import { downloadBlobFile, loadExcelJs } from '../../../utils/excelExport';
 
 const EXCEL_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
 const buildFileToken = (date = new Date()) => {
     const pad = (value) => String(value).padStart(2, '0');
     return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
-};
-
-const downloadBlobFile = (blob, fileName) => {
-    const objectUrl = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = objectUrl;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(objectUrl);
 };
 
 const styleSheetHeader = (row) => {
@@ -38,8 +29,13 @@ const styleSheetHeader = (row) => {
 };
 
 const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivities, popularTemplates }) => {
+    const { t, i18n } = useTranslation();
     const [exporting, setExporting] = useState(false);
     const [exportError, setExportError] = useState('');
+
+    const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en')
+        ? 'en-US'
+        : 'vi-VN';
 
     const handleExportDashboardExcel = async () => {
         if (exporting) return;
@@ -48,8 +44,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
         setExportError('');
 
         try {
-            const excelModule = await import('exceljs/dist/exceljs.min.js');
-            const ExcelJS = excelModule?.default || excelModule;
+            const ExcelJS = await loadExcelJs();
             const workbook = new ExcelJS.Workbook();
 
             workbook.creator = 'JobFinder';
@@ -57,7 +52,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
             workbook.created = new Date();
             workbook.modified = new Date();
 
-            const summarySheet = workbook.addWorksheet('Tổng quan dashboard');
+            const summarySheet = workbook.addWorksheet(t('admin.overview.excel.summarySheet'));
             summarySheet.columns = [
                 { width: 34 },
                 { width: 18 },
@@ -65,15 +60,19 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
             ];
 
             summarySheet.mergeCells('A1:C1');
-            summarySheet.getCell('A1').value = 'JOBFINDER - BÁO CÁO DASHBOARD ADMIN';
+            summarySheet.getCell('A1').value = t('admin.overview.excel.reportTitle');
             summarySheet.getCell('A1').font = { bold: true, size: 15, color: { argb: 'FF0F172A' } };
             summarySheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
 
-            summarySheet.addRow(['Quản trị viên', currentAdminName || 'Admin', '']);
-            summarySheet.addRow(['Ngày xuất', new Date().toLocaleString('vi-VN'), '']);
+            summarySheet.addRow([t('admin.overview.excel.adminLabel'), currentAdminName || t('admin.greetingDefault'), '']);
+            summarySheet.addRow([t('admin.overview.excel.exportDateLabel'), new Date().toLocaleString(locale), '']);
             summarySheet.addRow([]);
 
-            const summaryHeader = summarySheet.addRow(['Chỉ số', 'Giá trị', 'Ghi chú']);
+            const summaryHeader = summarySheet.addRow([
+                t('admin.overview.excel.metricHeader'),
+                t('admin.overview.excel.valueHeader'),
+                t('admin.overview.excel.noteHeader')
+            ]);
             styleSheetHeader(summaryHeader);
 
             (statsCards || []).forEach((card) => {
@@ -86,17 +85,22 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
             });
 
             if ((statsCards || []).length === 0) {
-                summarySheet.addRow(['Không có dữ liệu thống kê', '-', '-']);
+                summarySheet.addRow([t('admin.overview.excel.noStats'), '-', '-']);
             }
 
-            const recentSheet = workbook.addWorksheet('Hoạt động gần đây');
+            const recentSheet = workbook.addWorksheet(t('admin.overview.excel.recentSheet'));
             recentSheet.columns = [
                 { width: 8 },
                 { width: 34 },
                 { width: 28 },
                 { width: 24 }
             ];
-            const recentHeader = recentSheet.addRow(['STT', 'Tên template', 'Thời gian', 'Mốc tương đối']);
+            const recentHeader = recentSheet.addRow([
+                t('admin.overview.excel.indexHeader'),
+                t('admin.overview.excel.templateNameHeader'),
+                t('admin.overview.excel.exactTimeHeader'),
+                t('admin.overview.excel.relativeTimeHeader')
+            ]);
             styleSheetHeader(recentHeader);
 
             if ((recentTemplateActivities || []).length > 0) {
@@ -109,17 +113,22 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                     ]);
                 });
             } else {
-                recentSheet.addRow([1, 'Chưa có hoạt động', '-', '-']);
+                recentSheet.addRow([1, t('admin.overview.excel.noRecent'), '-', '-']);
             }
 
-            const popularSheet = workbook.addWorksheet('Template phổ biến');
+            const popularSheet = workbook.addWorksheet(t('admin.overview.excel.popularSheet'));
             popularSheet.columns = [
                 { width: 8 },
                 { width: 34 },
                 { width: 16 },
                 { width: 16 }
             ];
-            const popularHeader = popularSheet.addRow(['STT', 'Tên template', 'Lượt sử dụng', 'Tỉ lệ (%)']);
+            const popularHeader = popularSheet.addRow([
+                t('admin.overview.excel.indexHeader'),
+                t('admin.overview.excel.templateNameHeader'),
+                t('admin.overview.excel.usageHeader'),
+                t('admin.overview.excel.progressHeader')
+            ]);
             styleSheetHeader(popularHeader);
 
             if ((popularTemplates || []).length > 0) {
@@ -132,7 +141,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                     ]);
                 });
             } else {
-                popularSheet.addRow([1, 'Chưa có dữ liệu', 0, 0]);
+                popularSheet.addRow([1, t('admin.overview.excel.noPopular'), 0, 0]);
             }
 
             const fileName = `jobfinder-dashboard-${buildFileToken(new Date())}.xlsx`;
@@ -140,7 +149,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
             const blob = new Blob([buffer], { type: EXCEL_MIME_TYPE });
             downloadBlobFile(blob, fileName);
         } catch (error) {
-            setExportError(error?.message || 'Không thể xuất file Excel Dashboard.');
+            setExportError(error?.message || t('admin.overview.exportError'));
         } finally {
             setExporting(false);
         }
@@ -150,7 +159,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
         <>
             <section className="admin-hero-banner">
                 <div className="admin-hero-banner-head">
-                    <p className="admin-hero-chip">Admin Dashboard</p>
+                    <p className="admin-hero-chip">{t('admin.overview.heroChip')}</p>
                     <button
                         type="button"
                         className="btn btn-light btn-sm admin-hero-export-btn"
@@ -158,11 +167,11 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                         disabled={exporting}
                     >
                         <Download size={14} />
-                        <span>{exporting ? 'Đang xuất...' : 'Tải Excel'}</span>
+                        <span>{exporting ? t('admin.overview.exporting') : t('admin.overview.export')}</span>
                     </button>
                 </div>
-                <h1>Chào mừng trở lại, Admin</h1>
-                <p>Tổng quan hoạt động hệ thống của bạn</p>
+                <h1>{t('admin.overview.heroTitle', { name: currentAdminName || t('admin.greetingDefault') })}</h1>
+                <p>{t('admin.overview.heroSubtitle')}</p>
             </section>
 
             {exportError ? <div className="alert alert-danger admin-feedback mb-0">{exportError}</div> : null}
@@ -177,7 +186,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                             </div>
                             <div className="admin-stat-content">
                                 <div className="admin-stat-title">{card.title}</div>
-                                <div className="admin-stat-value">{card.value.toLocaleString('vi-VN')}</div>
+                                <div className="admin-stat-value">{card.value.toLocaleString(locale)}</div>
                                 <div className="admin-stat-meta">{card.meta}</div>
                             </div>
                         </article>
@@ -188,8 +197,8 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
             <section className="admin-panels-grid">
                 <article className="admin-panel-card">
                     <div className="admin-panel-head">
-                        <h3>Hoạt động gần đây</h3>
-                        <span>Template mới tạo</span>
+                        <h3>{t('admin.overview.recentTitle')}</h3>
+                        <span>{t('admin.overview.recentSubtitle')}</span>
                     </div>
 
                     {recentTemplateActivities.length > 0 ? (
@@ -211,14 +220,14 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                             ))}
                         </div>
                     ) : (
-                        <div className="admin-empty-state">Chưa có template mới tạo.</div>
+                        <div className="admin-empty-state">{t('admin.overview.recentEmpty')}</div>
                     )}
                 </article>
 
                 <article className="admin-panel-card">
                     <div className="admin-panel-head">
-                        <h3>Template phổ biến</h3>
-                        <span>Dựa trên lượt sử dụng</span>
+                        <h3>{t('admin.overview.popularTitle')}</h3>
+                        <span>{t('admin.overview.popularSubtitle')}</span>
                     </div>
 
                     {popularTemplates.length > 0 ? (
@@ -227,7 +236,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                                 <div key={item.id} className="admin-popular-item">
                                     <div className="admin-popular-row">
                                         <span className="admin-popular-name">{item.name}</span>
-                                        <span className="admin-popular-usage">{item.usage} lượt</span>
+                                        <span className="admin-popular-usage">{t('admin.overview.usageCount', { count: item.usage })}</span>
                                     </div>
                                     <div className="admin-progress-track">
                                         <div
@@ -239,7 +248,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                             ))}
                         </div>
                     ) : (
-                        <div className="admin-empty-state">Chưa có dữ liệu lượt sử dụng template.</div>
+                        <div className="admin-empty-state">{t('admin.overview.popularEmpty')}</div>
                     )}
                 </article>
             </section>
