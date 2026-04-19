@@ -126,7 +126,6 @@ const getTemplateCreatedAt = (template) => parseDateSafe(
 
 const menuItems = [
     { key: 'dashboard', icon: LayoutDashboard, label: 'Dashboard', to: '/admin/dashboard' },
-    { key: 'profile', icon: UserRound, label: 'Hồ sơ admin', to: '/admin/profile' },
     { key: 'users', icon: Users, label: 'Quản lý người dùng', to: '/admin/usersmanament' },
     { key: 'jobs', icon: BriefcaseBusiness, label: 'Quản lý tin tuyển dụng', to: '/admin/jobs' },
     { key: 'companies', icon: Building2, label: 'Quản lý công ty', to: '/admin/companies' },
@@ -141,7 +140,8 @@ const menuItems = [
     },
     { key: 'reports', icon: ClipboardList, label: 'Báo cáo', to: '/admin/reports' },
     { key: 'career-guide-posts', icon: BookOpen, label: 'Quản lý bài viết hướng nghiệp', to: '/admin/career-guide-posts' },
-    { key: 'audit-logs', icon: History, label: 'Nhật ký quản trị', to: '/admin/audit-logs' }
+    { key: 'audit-logs', icon: History, label: 'Nhật ký quản trị', to: '/admin/audit-logs' },
+    { key: 'profile', icon: UserRound, label: 'Hồ sơ admin', to: '/admin/profile' }
 ];
 
 const SIDEBAR_LOGO_URL = 'https://i.postimg.cc/nhWfcVvh/logo.png';
@@ -276,7 +276,7 @@ const AdminDashboard = () => {
                 fetch(`${API_BASE}/api/admin/companies?limit=50`, { headers: authHeaders }),
                 fetch(`${API_BASE}/api/admin/reports?limit=50`, { headers: authHeaders }),
                 fetch(`${API_BASE}/api/admin/career-guide-posts?limit=100`, { headers: authHeaders }),
-                fetch(`${API_BASE}/api/admin/templates?limit=50&offset=0`, { headers: authHeaders })
+                fetch(`${API_BASE}/api/admin/templates?limit=200&offset=0`, { headers: authHeaders })
             ]);
 
             const ovData = await ov.json().catch(() => null);

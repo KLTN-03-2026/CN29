@@ -138,14 +138,23 @@ const AdminProfilePage = ({ user, roleLabel, greetingName }) => {
                 setForm(nextForm);
                 setAvatarPreview(normalizedAvatar || AVATAR_FALLBACK);
 
+                const storedUser = readStoredUser();
+                const fallbackName = storedUser?.name || storedUser?.HoTen || '';
+                const fallbackAvatar = normalizeAvatarUrl(
+                    storedUser?.avatar
+                    || storedUser?.avatarAbsoluteUrl
+                    || storedUser?.AnhDaiDien
+                    || storedUser?.avatarUrl
+                    || ''
+                );
+
                 syncLocalUserSnapshot({
-                    name: nextForm.fullName || user?.name || user?.HoTen || '',
-                    HoTen: nextForm.fullName || user?.HoTen || user?.name || '',
-                    avatar: normalizedAvatar || user?.avatar || user?.AnhDaiDien || '',
-                    AnhDaiDien: normalizedAvatar || user?.AnhDaiDien || user?.avatar || '',
-                    avatarAbsoluteUrl: normalizedAvatar || user?.avatarAbsoluteUrl || user?.avatarUrl || '',
-                    avatarUrl: normalizedAvatar || user?.avatarUrl || user?.avatarAbsoluteUrl || '',
-                    avatarUpdatedAt: Date.now()
+                    name: nextForm.fullName || fallbackName,
+                    HoTen: nextForm.fullName || fallbackName,
+                    avatar: normalizedAvatar || fallbackAvatar,
+                    AnhDaiDien: normalizedAvatar || fallbackAvatar,
+                    avatarAbsoluteUrl: normalizedAvatar || fallbackAvatar,
+                    avatarUrl: normalizedAvatar || fallbackAvatar
                 });
             } catch (err) {
                 if (!cancelled) {
@@ -163,7 +172,7 @@ const AdminProfilePage = ({ user, roleLabel, greetingName }) => {
         return () => {
             cancelled = true;
         };
-    }, [API_BASE, userId, user]);
+    }, [API_BASE, userId]);
 
     const handleFieldChange = (key) => (event) => {
         const value = event.target.value;

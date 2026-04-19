@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { Ban, Building2, ShieldCheck, Trash2 } from 'lucide-react';
+import { Ban, Building2, Eye, ShieldCheck, Trash2 } from 'lucide-react';
+
+const normalizeWebsiteUrl = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+    if (/^https?:\/\//i.test(raw)) return raw;
+    return `https://${raw}`;
+};
 
 const AdminCompanyRow = ({ company, onSaveStatus, onDelete, canEdit, requestConfirm, displayIndex }) => {
     const initialStatus = Number(company.TrangThaiDaiDien ?? 1);
+    const websiteHref = normalizeWebsiteUrl(company?.Website);
     const [status, setStatus] = useState(initialStatus);
     const [saving, setSaving] = useState(false);
     const [err, setErr] = useState('');
@@ -50,19 +58,41 @@ const AdminCompanyRow = ({ company, onSaveStatus, onDelete, canEdit, requestConf
             <td>{company.MaSoThue || '-'}</td>
             <td>{company.ThanhPho || '-'}</td>
             <td>
-                {company.Website ? (
-                    <a href={company.Website} target="_blank" rel="noreferrer">{company.Website}</a>
+                {websiteHref ? (
+                    <a href={websiteHref} target="_blank" rel="noreferrer">{company.Website}</a>
                 ) : '-'}
             </td>
-            <td>
+            <td className="admin-status-col">
                 {status === 1 ? (
                     <span className="badge bg-success-subtle text-success">Hoạt động</span>
                 ) : (
                     <span className="badge bg-danger-subtle text-danger">Đã chặn</span>
                 )}
             </td>
-            <td>
-                <div className="d-flex flex-wrap gap-2">
+            <td className="admin-action-col">
+                <div className="admin-row-actions">
+                    {websiteHref ? (
+                        <a
+                            className="btn btn-sm btn-outline-primary admin-action-icon-btn"
+                            href={websiteHref}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Xem website công ty"
+                            aria-label="Xem website công ty"
+                        >
+                            <Eye size={14} />
+                        </a>
+                    ) : (
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary admin-action-icon-btn"
+                            disabled
+                            title="Công ty chưa có website"
+                            aria-label="Công ty chưa có website"
+                        >
+                            <Eye size={14} />
+                        </button>
+                    )}
                     {status === 1 ? (
                         <button
                             type="button"
@@ -121,8 +151,8 @@ const AdminCompaniesPage = ({ companies, loading, canEdit, requestConfirm, onSav
                             <th style={{ width: 170 }}>Mã số thuế</th>
                             <th style={{ width: 140 }}>Tỉnh/TP</th>
                             <th style={{ width: 220 }}>Website</th>
-                            <th style={{ width: 150 }}>Trạng thái</th>
-                            <th style={{ width: 200 }}>Thao tác</th>
+                            <th style={{ width: 150 }} className="admin-status-col">Trạng thái</th>
+                            <th style={{ width: 240 }} className="admin-action-col">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>

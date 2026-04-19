@@ -59,6 +59,47 @@ const toInt = (v, def) => {
   return Number.isFinite(n) ? n : def;
 };
 
+const cvStoragePath = path.join(__dirname, '../public/cvs');
+const ONLINE_META_SUFFIX = '__online.json';
+const buildOnlineMetaFilename = (cvFilename) => `${cvFilename}${ONLINE_META_SUFFIX}`;
+const normalizeTemplateUsageKey = (value) => String(value || '').trim().toLowerCase();
+
+const collectTemplateUsageByKey = async () => {
+  const usageByKey = new Map();
+
+  let rows = [];
+  try {
+    rows = await dbAll('SELECT TepCV FROM HoSoCV WHERE TepCV IS NOT NULL AND TepCV <> ?', ['']);
+  } catch {
+    return usageByKey;
+  }
+
+  for (const row of rows) {
+    const rawFilename = String(row?.TepCV || '').trim();
+    if (!rawFilename) continue;
+
+    const filename = path.basename(rawFilename.replace(/\\/g, '/'));
+    if (!filename || !/\.html?$/i.test(filename)) continue;
+
+    const metaPath = path.join(cvStoragePath, buildOnlineMetaFilename(filename));
+    if (!fs.existsSync(metaPath)) continue;
+
+    let meta = null;
+    try {
+      meta = JSON.parse(String(fs.readFileSync(metaPath, 'utf8') || '{}'));
+    } catch {
+      continue;
+    }
+
+    const templateKey = normalizeTemplateUsageKey(meta?.templateKey);
+    if (!templateKey) continue;
+
+    usageByKey.set(templateKey, Number(usageByKey.get(templateKey) || 0) + 1);
+  }
+
+  return usageByKey;
+};
+
 const isMysql = /^mysql:\/\//i.test(process.env.DATABASE_URL || '');
 
 const AUDIT_REQUIRED_COLUMNS = [
@@ -1585,6 +1626,22 @@ router.get('/templates', async (req, res) => {
       [...whereParams, limit, offset]
     );
 
+    const usageByKey = await collectTemplateUsageByKey();
+    const templatesWithUsage = templates.map((template) => {
+      const slugKey = normalizeTemplateUsageKey(template?.Slug);
+      const idKey = normalizeTemplateUsageKey(template?.MaTemplateCV);
+      const usage = Math.max(
+        Number(slugKey ? usageByKey.get(slugKey) : 0) || 0,
+        Number(idKey ? usageByKey.get(idKey) : 0) || 0
+      );
+
+      return {
+        ...template,
+        LuotSuDung: usage,
+        SoLuotSuDung: usage
+      };
+    });
+
     const totalRow = await dbGet(
       `SELECT COUNT(*) AS c
        FROM CvTemplate
@@ -1592,7 +1649,7 @@ router.get('/templates', async (req, res) => {
       whereParams
     );
 
-    return res.json({ success: true, templates, total: Number(totalRow?.c || 0) });
+    return res.json({ success: true, templates: templatesWithUsage, total: Number(totalRow?.c || 0) });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }

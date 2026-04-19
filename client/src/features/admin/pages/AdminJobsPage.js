@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BriefcaseBusiness, Trash2 } from 'lucide-react';
+import { BriefcaseBusiness, ExternalLink, Trash2 } from 'lucide-react';
 
 const getStatusBadgeClass = (status) => {
     const normalized = String(status || '').trim();
@@ -12,6 +12,8 @@ const getStatusBadgeClass = (status) => {
 
 const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex }) => {
     const status = job.TrangThai || 'Nháp';
+    const jobId = job?.MaTin != null ? String(job.MaTin).trim() : '';
+    const publicJobUrl = jobId ? `/jobs/${encodeURIComponent(jobId)}` : '';
     const [deleting, setDeleting] = useState(false);
     const [err, setErr] = useState('');
 
@@ -40,11 +42,33 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
             <td className="fw-semibold">{job.TieuDe}</td>
             <td>{job.TenCongTy || '-'}</td>
             <td>{job.ThanhPho || '-'}</td>
-            <td>
+            <td className="admin-status-col">
                 <span className={`badge ${getStatusBadgeClass(status)}`}>{status}</span>
             </td>
-            <td>
-                <div className="d-flex flex-wrap gap-2">
+            <td className="admin-action-col">
+                <div className="admin-row-actions">
+                    {publicJobUrl ? (
+                        <a
+                            className="btn btn-sm btn-outline-primary admin-action-icon-btn"
+                            href={publicJobUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Xem tin đã đăng"
+                            aria-label="Xem tin đã đăng"
+                        >
+                            <ExternalLink size={14} />
+                        </a>
+                    ) : (
+                        <button
+                            type="button"
+                            className="btn btn-sm btn-outline-primary admin-action-icon-btn"
+                            disabled
+                            title="Không tìm thấy mã tin"
+                            aria-label="Không tìm thấy mã tin"
+                        >
+                            <ExternalLink size={14} />
+                        </button>
+                    )}
                     <button
                         type="button"
                         className="btn btn-sm btn-outline-danger admin-action-icon-btn"
@@ -79,8 +103,8 @@ const AdminJobsPage = ({ jobs, loading, canDelete, requestConfirm, onDeleteJob }
                             <th>Tiêu đề</th>
                             <th style={{ width: 200 }}>Công ty</th>
                             <th style={{ width: 140 }}>Tỉnh/TP</th>
-                            <th style={{ width: 170 }}>Trạng thái</th>
-                            <th style={{ width: 180 }}>Thao tác</th>
+                            <th style={{ width: 170 }} className="admin-status-col">Trạng thái</th>
+                            <th style={{ width: 220 }} className="admin-action-col">Thao tác</th>
                         </tr>
                     </thead>
                     <tbody>

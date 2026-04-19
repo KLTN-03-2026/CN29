@@ -440,6 +440,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 8px;
+    flex-shrink: 0;
 }
 
 .admin-header-dropdown-item {
@@ -828,6 +829,26 @@
     color: #1e293b;
     font-size: 0.9rem;
     vertical-align: middle;
+}
+
+.admin-module-card .table th.admin-status-col,
+.admin-module-card .table td.admin-status-col {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.admin-module-card .table th.admin-action-col,
+.admin-module-card .table td.admin-action-col {
+    text-align: center;
+    white-space: nowrap;
+}
+
+.admin-row-actions {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    flex-wrap: nowrap;
 }
 
 .admin-audit-filter-grid {
