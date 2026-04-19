@@ -1,10 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
+import { useNotification } from '../../../components/NotificationProvider';
 import SmartPagination from '../../../components/SmartPagination';
 
 const PAGE_SIZE = 10;
 
 const JobManagement = () => {
+    const { t } = useTranslation();
+    const { requestConfirm } = useNotification();
     const location = useLocation();
     const token = useMemo(() => localStorage.getItem('token') || '', []);
     const [jobs, setJobs] = useState([]);
@@ -22,6 +26,19 @@ const JobManagement = () => {
         const offset = (safeCurrentPage - 1) * PAGE_SIZE;
         return jobs.slice(offset, offset + PAGE_SIZE);
     }, [jobs, safeCurrentPage]);
+
+    const formatPostedDate = (value) => {
+        if (!value) return '-';
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) return String(value);
+        return date.toLocaleString('vi-VN', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
 
     const rangeFrom = totalJobs === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1;
     const rangeTo = totalJobs === 0 ? 0 : Math.min(safeCurrentPage * PAGE_SIZE, totalJobs);
@@ -64,7 +81,13 @@ const JobManagement = () => {
         const jobId = Number(job?.MaTin || 0);
         if (!jobId) return;
 
-        const confirmed = window.confirm(`Bạn có chắc muốn xóa tin "${job?.TieuDe || 'này'}"?`);
+        const confirmed = await requestConfirm({
+            type: 'warning',
+            title: t('employer.jobManagementPage.confirm.title'),
+            message: t('employer.jobManagementPage.confirm.deleteJob'),
+            confirmText: t('common.delete'),
+            cancelText: t('common.cancel')
+        });
         if (!confirmed) return;
 
         setDeletingJobId(jobId);
@@ -93,10 +116,10 @@ const JobManagement = () => {
     return (
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="mb-0 employer-page-title">Quản lý tin tuyển dụng</h2>
+                <h2 className="mb-0 employer-page-title">{t('employer.jobManagementPage.title')}</h2>
                 <Link to="/employer/jobs/create" className="btn btn-primary">
                     <i className="bi bi-plus-circle me-2"></i>
-                    Đăng tin mới
+                    {t('employer.jobManagementPage.createJob')}
                 </Link>
             </div>
 
@@ -115,22 +138,22 @@ const JobManagement = () => {
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
                     {loading ? (
-                        <p className="text-muted text-center py-5 mb-0">Đang tải...</p>
+                        <p className="text-muted text-center py-5 mb-0">{t('employer.jobManagementPage.loading')}</p>
                     ) : jobs.length === 0 ? (
                         <p className="text-muted text-center py-5 mb-0">
-                            Bạn chưa có tin tuyển dụng nào. <br />
-                            Hãy đăng tin đầu tiên để tìm kiếm ứng viên!
+                            {t('employer.jobManagementPage.emptyTitle')} <br />
+                            {t('employer.jobManagementPage.emptyHint')}
                         </p>
                     ) : (
                         <div className="table-responsive">
                             <table className="table align-middle mb-0">
                                 <thead>
                                     <tr>
-                                        <th>Tiêu đề</th>
-                                        <th>Địa điểm</th>
-                                        <th>Trạng thái</th>
-                                        <th>Ngày đăng</th>
-                                        <th className="text-end">Thao tác</th>
+                                        <th>{t('employer.jobManagementPage.table.title')}</th>
+                                        <th>{t('employer.jobManagementPage.table.location')}</th>
+                                        <th>{t('employer.jobManagementPage.table.status')}</th>
+                                        <th>{t('employer.jobManagementPage.table.postedDate')}</th>
+                                        <th className="text-end">{t('employer.jobManagementPage.table.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -143,30 +166,30 @@ const JobManagement = () => {
                                                     {j.TrangThai}
                                                 </span>
                                             </td>
-                                            <td>{j.NgayDang ? String(j.NgayDang) : '-'}</td>
+                                            <td>{formatPostedDate(j.NgayDang)}</td>
                                             <td className="text-end">
                                                 <div className="job-manage-row-actions">
                                                     <Link
                                                         to={`/employer/jobs/${j.MaTin}`}
                                                         className="btn btn-outline-secondary btn-sm job-manage-action-icon"
-                                                        title="Xem chi tiết"
-                                                        aria-label="Xem chi tiết"
+                                                        title={t('employer.jobManagementPage.buttons.viewDetails')}
+                                                        aria-label={t('employer.jobManagementPage.buttons.viewDetails')}
                                                     >
                                                         <i className="bi bi-eye"></i>
                                                     </Link>
                                                     <Link
                                                         to={`/employer/jobs/${j.MaTin}/edit`}
                                                         className="btn btn-outline-primary btn-sm job-manage-action-icon"
-                                                        title="Chỉnh sửa"
-                                                        aria-label="Chỉnh sửa"
+                                                        title={t('employer.jobManagementPage.buttons.edit')}
+                                                        aria-label={t('employer.jobManagementPage.buttons.edit')}
                                                     >
                                                         <i className="bi bi-pencil-square"></i>
                                                     </Link>
                                                     <button
                                                         type="button"
                                                         className="btn btn-outline-danger btn-sm job-manage-action-icon"
-                                                        title="Xóa tin"
-                                                        aria-label="Xóa tin"
+                                                        title={t('employer.jobManagementPage.buttons.delete')}
+                                                        aria-label={t('employer.jobManagementPage.buttons.delete')}
                                                         onClick={() => handleDeleteJob(j)}
                                                         disabled={deletingJobId === Number(j.MaTin)}
                                                     >

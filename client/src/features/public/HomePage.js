@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import HomeHero from './home/HomeHero';
@@ -10,23 +11,8 @@ import TrustBenefitsSection from './home/TrustBenefitsSection';
 import { buildIndustryLabels, buildLocationLabels } from './jobSearchOptions';
 import './home/HomePage.css';
 
-const COUNT_FORMAT = new Intl.NumberFormat('vi-VN');
-
-const QUICK_FILTER_OPTIONS = [
-  { key: 'remote', label: 'Remote' },
-  { key: 'fresher', label: 'Fresher' },
-  { key: 'parttime', label: 'Part-time' },
-  { key: 'fulltime', label: 'Full-time' },
-  { key: 'intern', label: 'Intern' }
-];
-
-const TOOLBAR_FILTER_OPTIONS = [
-  { key: 'latest', label: 'Mới nhất' },
-  { key: 'highSalary', label: 'Lương cao' },
-  { key: 'remote', label: 'Remote' },
-  { key: 'intern', label: 'Thực tập' },
-  { key: 'it', label: 'IT' }
-];
+const DEFAULT_NUMBER_LOCALE = 'vi-VN';
+const formatCount = (value, locale = DEFAULT_NUMBER_LOCALE) => new Intl.NumberFormat(locale).format(Number(value) || 0);
 
 const normalizeText = (value) => String(value || '').trim().toLowerCase();
 
@@ -58,39 +44,91 @@ const getSalaryUpperBound = (job) => {
   return to ?? from ?? 0;
 };
 
-const getSalaryText = (job) => {
+const resolveSalaryUnitLabel = (rawUnit, t) => {
+  const unit = String(rawUnit || '').trim().toLowerCase();
+  const normalizedUnit = unit
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (normalizedUnit.includes('thang') || normalizedUnit.includes('month')) {
+    return t('home.common.salaryUnit.month');
+  }
+
+  if (normalizedUnit.includes('ngay') || normalizedUnit.includes('day')) {
+    return t('home.common.salaryUnit.day');
+  }
+
+  if (normalizedUnit.includes('gio') || normalizedUnit.includes('hour')) {
+    return t('home.common.salaryUnit.hour');
+  }
+
+  return t('home.common.salaryUnit.job');
+};
+
+const getSalaryText = (job, { t, locale = DEFAULT_NUMBER_LOCALE } = {}) => {
+  const translate = typeof t === 'function' ? t : (key, options) => options?.defaultValue || key;
   const type = String(job?.KieuLuong || 'Thỏa thuận');
   const from = toNumber(job?.LuongTu);
   const to = toNumber(job?.LuongDen);
+  const salaryUnit = resolveSalaryUnitLabel(type, translate);
 
-  if (type === 'Thỏa thuận' || (from === null && to === null)) return 'Thỏa thuận';
+  if (type === 'Thỏa thuận' || (from === null && to === null)) {
+    return translate('home.common.salaryNegotiable', { defaultValue: 'Thỏa thuận' });
+  }
 
-  const salaryUnit = type.toLowerCase();
   if (from !== null && to !== null) {
-    return `${COUNT_FORMAT.format(from)} - ${COUNT_FORMAT.format(to)} VND/${salaryUnit}`;
+    return translate('home.common.salaryRange', {
+      from: formatCount(from, locale),
+      to: formatCount(to, locale),
+      unit: salaryUnit,
+      defaultValue: `${formatCount(from, locale)} - ${formatCount(to, locale)} VND/${salaryUnit}`
+    });
   }
+
   if (from !== null) {
-    return `Từ ${COUNT_FORMAT.format(from)} VND/${salaryUnit}`;
+    return translate('home.common.salaryFrom', {
+      amount: formatCount(from, locale),
+      unit: salaryUnit,
+      defaultValue: `Từ ${formatCount(from, locale)} VND/${salaryUnit}`
+    });
   }
+
   if (to !== null) {
-    return `Đến ${COUNT_FORMAT.format(to)} VND/${salaryUnit}`;
+    return translate('home.common.salaryTo', {
+      amount: formatCount(to, locale),
+      unit: salaryUnit,
+      defaultValue: `Đến ${formatCount(to, locale)} VND/${salaryUnit}`
+    });
   }
-  return 'Thỏa thuận';
+
+  return translate('home.common.salaryNegotiable', { defaultValue: 'Thỏa thuận' });
 };
 
-const getPostedLabel = (job) => {
+const getPostedLabel = (job, t) => {
+  const translate = typeof t === 'function' ? t : (key, options) => options?.defaultValue || key;
   const ts = getJobTimestamp(job);
-  if (!ts) return 'Vừa đăng';
+  if (!ts) return translate('home.common.justPosted', { defaultValue: 'Vừa đăng' });
   const diffMs = Date.now() - ts;
-  if (diffMs <= 0) return 'Vừa đăng';
+  if (diffMs <= 0) return translate('home.common.justPosted', { defaultValue: 'Vừa đăng' });
 
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (diffHours < 1) return 'Vừa đăng';
-  if (diffHours < 24) return `${diffHours} giờ trước`;
+  if (diffHours < 1) return translate('home.common.justPosted', { defaultValue: 'Vừa đăng' });
+  if (diffHours < 24) {
+    return translate('home.common.hoursAgo', {
+      count: diffHours,
+      defaultValue: `${diffHours} giờ trước`
+    });
+  }
 
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays <= 30) return `${diffDays} ngày trước`;
-  return 'Đã đăng lâu';
+  if (diffDays <= 30) {
+    return translate('home.common.daysAgo', {
+      count: diffDays,
+      defaultValue: `${diffDays} ngày trước`
+    });
+  }
+
+  return translate('home.common.postedLong', { defaultValue: 'Đã đăng lâu' });
 };
 
 const isRemoteJob = (job) => {
@@ -159,18 +197,20 @@ const matchQuickFilter = (job, quickKey) => {
   }
 };
 
-const getHighlightBadge = (job) => {
-  if (isRemoteJob(job)) return 'Remote';
-  if (isInternJob(job)) return 'Thực tập';
+const getHighlightBadge = (job, t) => {
+  const translate = typeof t === 'function' ? t : (key, options) => options?.defaultValue || key;
+
+  if (isRemoteJob(job)) return translate('home.common.badge.remote', { defaultValue: 'Remote' });
+  if (isInternJob(job)) return translate('home.common.badge.internship', { defaultValue: 'Thực tập' });
 
   const salary = getSalaryUpperBound(job);
-  if (salary >= 30000000) return 'Lương tốt';
+  if (salary >= 30000000) return translate('home.common.badge.goodSalary', { defaultValue: 'Lương tốt' });
 
   const timestamp = getJobTimestamp(job);
   const dayDiff = Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
-  if (dayDiff <= 2) return 'Mới';
+  if (dayDiff <= 2) return translate('home.common.badge.new', { defaultValue: 'Mới' });
 
-  if (String(job?.TrangThai || '').trim()) return 'Nổi bật';
+  if (String(job?.TrangThai || '').trim()) return translate('home.common.badge.featured', { defaultValue: 'Nổi bật' });
   return '';
 };
 
@@ -184,6 +224,7 @@ const withLatestOrder = (list) => {
 
 const HomePage = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { notify } = useNotification();
   const jobsSectionRef = useRef(null);
 
@@ -202,6 +243,26 @@ const HomePage = () => {
   const [quickFilter, setQuickFilter] = useState('');
   const [toolbarFilter, setToolbarFilter] = useState('latest');
 
+  const currentLocale = String(i18n.resolvedLanguage || i18n.language || 'vi').startsWith('en')
+    ? 'en-US'
+    : 'vi-VN';
+
+  const quickFilterOptions = useMemo(() => ([
+    { key: 'remote', label: t('home.filters.quick.remote') },
+    { key: 'fresher', label: t('home.filters.quick.fresher') },
+    { key: 'parttime', label: t('home.filters.quick.parttime') },
+    { key: 'fulltime', label: t('home.filters.quick.fulltime') },
+    { key: 'intern', label: t('home.filters.quick.intern') }
+  ]), [i18n.language, t]);
+
+  const toolbarFilterOptions = useMemo(() => ([
+    { key: 'latest', label: t('home.filters.toolbar.latest') },
+    { key: 'highSalary', label: t('home.filters.toolbar.highSalary') },
+    { key: 'remote', label: t('home.filters.toolbar.remote') },
+    { key: 'intern', label: t('home.filters.toolbar.intern') },
+    { key: 'it', label: t('home.filters.toolbar.it') }
+  ]), [i18n.language, t]);
+
   const savedSet = useMemo(() => new Set(savedIds.map((id) => String(id))), [savedIds]);
 
   useEffect(() => {
@@ -215,13 +276,13 @@ const HomePage = () => {
         const data = await response.json().catch(() => []);
 
         if (!response.ok) {
-          throw new Error('Không thể tải danh sách việc làm');
+          throw new Error(t('home.notifications.cannotLoadJobs'));
         }
 
         if (!cancelled) setJobs(Array.isArray(data) ? data : []);
       } catch (error) {
         if (!cancelled) {
-          setJobError(error.message || 'Không thể tải danh sách việc làm.');
+          setJobError(error.message || t('home.notifications.cannotLoadJobsGeneric'));
           setJobs([]);
         }
       } finally {
@@ -233,7 +294,7 @@ const HomePage = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -251,7 +312,7 @@ const HomePage = () => {
         });
         const data = await response.json().catch(() => []);
         if (!response.ok) {
-          throw new Error('Không tải được việc làm đã lưu');
+          throw new Error(t('home.notifications.cannotLoadSavedJobs'));
         }
         if (!cancelled) {
           setSavedIds(Array.isArray(data) ? data.map((item) => item.MaTin) : []);
@@ -265,7 +326,7 @@ const HomePage = () => {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -304,17 +365,17 @@ const HomePage = () => {
   }, [jobs, provinces]);
 
   const trustStats = useMemo(() => {
-    const openJobs = jobs.length > 0 ? `${COUNT_FORMAT.format(jobs.length)}+` : '1.200+';
+    const openJobs = jobs.length > 0 ? `${formatCount(jobs.length, currentLocale)}+` : '1.200+';
     const companyCount = new Set(jobs.map((job) => String(job?.TenCongTy || '').trim()).filter(Boolean)).size;
-    const companies = companyCount > 0 ? `${COUNT_FORMAT.format(companyCount)}+` : '350+';
+    const companies = companyCount > 0 ? `${formatCount(companyCount, currentLocale)}+` : '350+';
 
     return [
-      { label: 'Việc làm đang tuyển', value: openJobs },
-      { label: 'Công ty tuyển dụng', value: companies },
-      { label: 'Ứng viên hoạt động', value: '85.000+' },
-      { label: 'CV đã tạo', value: '120.000+' }
+      { label: t('home.stats.openJobs'), value: openJobs },
+      { label: t('home.stats.companies'), value: companies },
+      { label: t('home.stats.activeCandidates'), value: '85.000+' },
+      { label: t('home.stats.createdCvs'), value: '120.000+' }
     ];
-  }, [jobs]);
+  }, [currentLocale, jobs, t]);
 
   const searchedJobs = useMemo(() => {
     const keyword = normalizeText(searchForm.keyword);
@@ -406,7 +467,7 @@ const HomePage = () => {
   const toggleSaveJob = async (jobId) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      notify({ type: 'error', message: 'Bạn cần đăng nhập để lưu công việc.' });
+      notify({ type: 'error', message: t('home.notifications.loginToSave') });
       return;
     }
 
@@ -420,7 +481,7 @@ const HomePage = () => {
       });
       const data = await response.json().catch(() => null);
       if (!response.ok) {
-        throw new Error((data && data.error) || 'Không thể cập nhật lưu việc');
+        throw new Error((data && data.error) || t('home.notifications.cannotUpdateSaved'));
       }
 
       setSavedIds((prev) => {
@@ -432,10 +493,10 @@ const HomePage = () => {
 
       notify({
         type: 'success',
-        message: currentlySaved ? 'Đã bỏ lưu công việc.' : 'Đã lưu công việc.'
+        message: currentlySaved ? t('home.notifications.unsaved') : t('home.notifications.saved')
       });
     } catch (error) {
-      notify({ type: 'error', message: error.message || 'Không thể cập nhật lưu việc.' });
+      notify({ type: 'error', message: error.message || t('home.notifications.cannotUpdateSavedGeneric') });
     }
   };
 
@@ -445,7 +506,7 @@ const HomePage = () => {
         searchForm={searchForm}
         industries={industries}
         locations={locations}
-        quickFilters={QUICK_FILTER_OPTIONS}
+        quickFilters={quickFilterOptions}
         activeQuickFilter={quickFilter}
         trustStats={trustStats}
         onSearchFieldChange={handleSearchFieldChange}
@@ -461,16 +522,16 @@ const HomePage = () => {
             loading={loadingJobs}
             error={jobError}
             savedSet={savedSet}
-            toolbarOptions={TOOLBAR_FILTER_OPTIONS}
+            toolbarOptions={toolbarFilterOptions}
             activeToolbar={toolbarFilter}
             onToolbarChange={handleToolbarChange}
             onToggleSave={toggleSaveJob}
             onOpenJob={handleOpenJob}
             onApplyJob={handleApplyJob}
             onViewAllJobs={handleViewAllJobs}
-            formatSalary={getSalaryText}
-            getPostedLabel={getPostedLabel}
-            getHighlightBadge={getHighlightBadge}
+            formatSalary={(job) => getSalaryText(job, { t, locale: currentLocale })}
+            getPostedLabel={(job) => getPostedLabel(job, t)}
+            getHighlightBadge={(job) => getHighlightBadge(job, t)}
           />
         </div>
 

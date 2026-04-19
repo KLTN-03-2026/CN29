@@ -1,48 +1,31 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
-const BENEFITS = [
-  {
-    key: 'matching',
-    icon: 'bi-stars',
-    title: 'Gợi ý việc làm phù hợp',
-    description: 'Hệ thống ưu tiên hiển thị công việc phù hợp theo hồ sơ và nhu cầu tìm việc của bạn.'
-  },
-  {
-    key: 'cv',
-    icon: 'bi-file-earmark-richtext',
-    title: 'Hồ sơ CV dễ tạo',
-    description: 'Chọn mẫu CV chuyên nghiệp, chỉnh sửa nhanh và sẵn sàng ứng tuyển ngay.'
-  },
-  {
-    key: 'apply',
-    icon: 'bi-lightning-charge',
-    title: 'Ứng tuyển nhanh',
-    description: 'Lưu việc yêu thích, gửi hồ sơ chỉ với vài thao tác và theo dõi lịch sử ứng tuyển.'
-  },
-  {
-    key: 'tracking',
-    icon: 'bi-graph-up-arrow',
-    title: 'Theo dõi tiến trình',
-    description: 'Nắm rõ trạng thái hồ sơ để không bỏ lỡ phản hồi quan trọng từ nhà tuyển dụng.'
-  }
+const BENEFIT_DEFS = [
+  { key: 'matching', icon: 'bi-stars', titleKey: 'home.benefits.matchingTitle', descKey: 'home.benefits.matchingDesc' },
+  { key: 'cv', icon: 'bi-file-earmark-richtext', titleKey: 'home.benefits.cvTitle', descKey: 'home.benefits.cvDesc' },
+  { key: 'apply', icon: 'bi-lightning-charge', titleKey: 'home.benefits.applyTitle', descKey: 'home.benefits.applyDesc' },
+  { key: 'tracking', icon: 'bi-graph-up-arrow', titleKey: 'home.benefits.trackingTitle', descKey: 'home.benefits.trackingDesc' }
 ];
 
 const TrustBenefitsSection = () => {
+  const { t } = useTranslation();
+
   return (
     <section className="home-benefits-section">
       <div className="home-benefits-header">
-        <p className="home-section-eyebrow">Lợi ích cốt lõi</p>
-        <h2>Lý do nên tìm việc tại JobFinder</h2>
+        <p className="home-section-eyebrow">{t('home.benefits.eyebrow')}</p>
+        <h2>{t('home.benefits.title')}</h2>
       </div>
 
       <div className="home-benefits-grid">
-        {BENEFITS.map((benefit) => (
+        {BENEFIT_DEFS.map((benefit) => (
           <article key={benefit.key} className="home-benefit-card">
             <div className="home-benefit-icon">
               <i className={`bi ${benefit.icon}`}></i>
             </div>
-            <h3>{benefit.title}</h3>
-            <p>{benefit.description}</p>
+            <h3>{t(benefit.titleKey)}</h3>
+            <p>{t(benefit.descKey)}</p>
           </article>
         ))}
       </div>

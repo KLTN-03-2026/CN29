@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 const JobSearchBar = ({
   searchForm,
@@ -7,10 +8,12 @@ const JobSearchBar = ({
   onSearchFieldChange,
   onSearchSubmit
 }) => {
+  const { t } = useTranslation();
+
   return (
     <form className="home-search-box" onSubmit={onSearchSubmit}>
       <div className="home-search-field">
-        <label htmlFor="homeKeyword">Vị trí công việc</label>
+        <label htmlFor="homeKeyword">{t('home.search.jobTitleLabel')}</label>
         <div className="home-search-input-wrap">
           <i className="bi bi-search"></i>
           <input
@@ -18,13 +21,13 @@ const JobSearchBar = ({
             type="text"
             value={searchForm.keyword}
             onChange={(event) => onSearchFieldChange('keyword', event.target.value)}
-            placeholder="Ví dụ: Frontend Developer"
+            placeholder={t('home.search.keywordPlaceholder')}
           />
         </div>
       </div>
 
       <div className="home-search-field">
-        <label htmlFor="homeIndustry">Ngành nghề</label>
+        <label htmlFor="homeIndustry">{t('home.search.industryLabel')}</label>
         <div className="home-search-input-wrap">
           <i className="bi bi-briefcase"></i>
           <select
@@ -32,7 +35,7 @@ const JobSearchBar = ({
             value={searchForm.industry}
             onChange={(event) => onSearchFieldChange('industry', event.target.value)}
           >
-            <option value="">Tất cả ngành nghề</option>
+            <option value="">{t('home.search.allIndustries')}</option>
             {industries.map((industry) => (
               <option key={industry} value={industry}>{industry}</option>
             ))}
@@ -41,7 +44,7 @@ const JobSearchBar = ({
       </div>
 
       <div className="home-search-field">
-        <label htmlFor="homeLocation">Địa điểm</label>
+        <label htmlFor="homeLocation">{t('home.search.locationLabel')}</label>
         <div className="home-search-input-wrap">
           <i className="bi bi-geo-alt"></i>
           <select
@@ -49,7 +52,7 @@ const JobSearchBar = ({
             value={searchForm.location}
             onChange={(event) => onSearchFieldChange('location', event.target.value)}
           >
-            <option value="">Toàn quốc</option>
+            <option value="">{t('home.search.nationwide')}</option>
             {locations.map((location) => (
               <option key={location} value={location}>{location}</option>
             ))}
@@ -58,7 +61,7 @@ const JobSearchBar = ({
       </div>
 
       <button type="submit" className="home-search-submit">
-        Tìm việc ngay
+        {t('home.search.submit')}
       </button>
     </form>
   );

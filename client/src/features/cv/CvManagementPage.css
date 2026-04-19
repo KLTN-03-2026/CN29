@@ -376,6 +376,84 @@
   to { transform: rotate(360deg); }
 }
 
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-page {
+  background:
+    radial-gradient(circle at 9% 8%, rgba(48, 151, 227, 0.16), transparent 34%),
+    radial-gradient(circle at 92% 12%, rgba(31, 173, 183, 0.14), transparent 32%),
+    linear-gradient(180deg, #07111f 0%, #0b182a 48%, #0f1f34 100%);
+  color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-board,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-item,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-empty,
+:is(html.dark, html[data-bs-theme='dark']) .cv-action-icon,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-filter-row button,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-meta span {
+  background: #111f33;
+  border-color: #304a66;
+  box-shadow: 0 14px 28px rgba(2, 10, 20, 0.42);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-board-head h2,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-item h3,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-empty h3,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-stat-card strong {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-board-head p,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-empty p,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-stat-card span {
+  color: #9eb8d2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-board-actions input {
+  background: #0d1a2c;
+  border-color: #3a5676;
+  color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-board-actions input::placeholder {
+  color: #8aa5bf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-board-actions button:not(.cv-management-upload-btn) {
+  box-shadow: 0 10px 18px rgba(31, 120, 195, 0.3);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-filter-row button {
+  color: #bdd4ea;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-filter-row button.active {
+  color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-empty-icon {
+  background: rgba(99, 179, 237, 0.16);
+  color: rgba(192, 227, 255, 0.84);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-action-icon.view {
+  background: #193651;
+  border-color: #366c98;
+  color: #8bd6ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-action-icon.edit {
+  background: #3e3320;
+  border-color: #8b6f38;
+  color: #ffd88c;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-action-icon.delete {
+  background: #3d222d;
+  border-color: #885067;
+  color: #ffc3d4;
+}
+
 @media (max-width: 991px) {
   .cv-management-board-head {
     flex-direction: column;

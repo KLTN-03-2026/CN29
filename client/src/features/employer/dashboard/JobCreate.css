@@ -533,3 +533,238 @@
     border-radius: 14px;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-page {
+  background: radial-gradient(circle at 12% 8%, rgba(59, 130, 246, 0.16), transparent 32%),
+    radial-gradient(circle at 92% 12%, rgba(20, 184, 166, 0.16), transparent 28%),
+    linear-gradient(180deg, #03141f 0%, #071a2b 42%, #061727 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-shell {
+  background: rgba(10, 20, 39, 0.95);
+  border-color: rgba(96, 123, 153, 0.35);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-header {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(18, 32, 52, 0.95) 100%);
+  border-color: rgba(74, 112, 175, 0.3);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-header h2,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-label,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-section-title,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-section-title,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-rich-hint,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-modal-header h5 {
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card-body,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-extra-card,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-modal,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-modal-body,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-modal-footer,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-deadline-picker {
+  background: #081825;
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-control,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-select,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-section-heading-input,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-extra-title-input,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-trigger,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-deadline-input {
+  background: #0f1e34;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-control::placeholder,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-select::placeholder,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-section-heading-input::placeholder,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-extra-title-input::placeholder {
+  color: rgba(226, 236, 255, 0.55);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-control:hover,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-select:hover,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-trigger:hover,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-deadline-input:hover {
+  border-color: rgba(96, 165, 250, 0.55);
+  background: #10223c;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-control:focus,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-card .form-select:focus,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-deadline-input:focus {
+  border-color: rgba(96, 165, 250, 0.75);
+  box-shadow: 0 0 0 0.18rem rgba(96, 165, 250, 0.16);
+  background: #10223c;
+  color: #f8fbff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-menu {
+  background: #081828;
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-option,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-empty {
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-option.is-active,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-option:hover {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-toolbar .ck-button:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-toolbar .ck-dropdown__button:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-dropdown__panel .ck-button:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-tooltip .ck-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fbff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck-dropdown__panel {
+  background: #0c1a33;
+  border-color: rgba(148, 163, 184, 0.2);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck-dropdown__panel .ck-list__item,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck-dropdown__panel .ck-list__item * {
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck-dropdown__panel .ck-list__item:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck-dropdown__panel .ck-list__item.ck-on {
+  background: rgba(59, 130, 246, 0.14);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-deadline-chip {
+  background: #0f1e34;
+  border-color: rgba(148, 163, 184, 0.35);
+  color: #dbeafe;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-deadline-chip:hover {
+  background: #162c4f;
+  border-color: rgba(96, 165, 250, 0.4);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-rich-btn {
+  border-color: rgba(148, 163, 184, 0.45);
+  background: #0f1f3b;
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-rich-btn:hover {
+  border-color: rgba(96, 165, 250, 0.55);
+  background: #122544;
+  color: #bfdbfe;
+  box-shadow: 0 6px 12px rgba(59, 130, 246, 0.15);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-rich-btn.is-active {
+  border-color: rgba(59, 130, 246, 0.75);
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.18) 0%, rgba(29, 78, 216, 0.16) 100%);
+  color: #bfdbfe;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-rich-hint,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-helptext,
+:is(html.dark, html[data-bs-theme='dark']) .text-muted,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-section-title {
+  color: rgba(226, 236, 255, 0.82);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-modal-header {
+  background: #0b172a;
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-modal-footer {
+  background: #081824;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-close-btn {
+  background: #0f1f3e;
+  border-color: rgba(100, 116, 139, 0.35);
+  color: #dbeafe;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-back-btn,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-cancel-btn {
+  background: #0f1f3e;
+  color: #e2ecff;
+  border-color: rgba(148, 163, 184, 0.35);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-back-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .job-create-cancel-btn:hover {
+  background: #122544;
+  color: #dbeafe;
+  border-color: rgba(96, 165, 250, 0.55);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-submit-btn {
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.35);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-create-location-modal-backdrop {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-toolbar {
+  background: rgba(10, 20, 39, 0.96);
+  border-color: rgba(148, 163, 184, 0.15);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable {
+  background: #081827;
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable p,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable li,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable span,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable h1,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable h2,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable h3,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__main > .ck-editor__editable h4 {
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-toolbar .ck-button,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-toolbar .ck-dropdown__button {
+  color: #cbd5e1;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-dropdown__panel,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-balloon-panel,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-tooltip,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-contextual-balloon {
+  background: #081827;
+  color: #e2ecff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__editable a {
+  color: #7dd3fc;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__editable blockquote {
+  border-left-color: rgba(59, 130, 246, 0.35);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__editable table th,
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-editor__editable table td {
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgrte.job-create-career-editor .ck.ck-ui {
+  color: #e2ecff;
+}

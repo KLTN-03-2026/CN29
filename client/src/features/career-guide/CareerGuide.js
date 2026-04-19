@@ -1,14 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './CareerGuide.css';
 
 const TOPIC_FILTERS = [
-  { key: 'all', label: 'Tất cả chủ đề', keywords: [] },
-  { key: 'cv', label: 'CV & Hồ sơ', keywords: ['cv', 'hồ sơ', 'resume', 'portfolio'] },
-  { key: 'interview', label: 'Phỏng vấn', keywords: ['phỏng vấn', 'interview', 'câu hỏi'] },
-  { key: 'salary', label: 'Lương & đãi ngộ', keywords: ['lương', 'thưởng', 'đãi ngộ', 'offer'] },
-  { key: 'career', label: 'Định hướng nghề', keywords: ['career', 'lộ trình', 'phát triển', 'chuyển việc'] },
-  { key: 'skills', label: 'Kỹ năng làm việc', keywords: ['kỹ năng', 'giao tiếp', 'thuyết trình', 'teamwork'] }
+  { key: 'all', labelKey: 'careerGuide.topics.all', keywords: [] },
+  { key: 'cv', labelKey: 'careerGuide.topics.cvProfile', keywords: ['cv', 'hồ sơ', 'resume', 'portfolio'] },
+  { key: 'interview', labelKey: 'careerGuide.topics.interview', keywords: ['phỏng vấn', 'interview', 'câu hỏi'] },
+  { key: 'salary', labelKey: 'careerGuide.topics.salary', keywords: ['lương', 'thưởng', 'đãi ngộ', 'offer'] },
+  { key: 'career', labelKey: 'careerGuide.topics.careerPath', keywords: ['career', 'lộ trình', 'phát triển', 'chuyển việc'] },
+  { key: 'skills', labelKey: 'careerGuide.topics.workSkills', keywords: ['kỹ năng', 'giao tiếp', 'thuyết trình', 'teamwork'] }
 ];
 
 const normalizeRoleValue = (value) => String(value || '')
@@ -19,6 +20,8 @@ const normalizeRoleValue = (value) => String(value || '')
 
 function CareerGuide() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'vi-VN';
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -80,11 +83,11 @@ function CareerGuide() {
         setPosts(data.posts);
         setTotalPages(data.pagination.totalPages);
       } else {
-        setError('Không thể tải danh sách bài viết');
+        setError(t('careerGuide.errors.loadPosts'));
       }
     } catch (err) {
       console.error('Error fetching posts:', err);
-      setError('Lỗi khi tải danh sách bài viết');
+      setError(t('careerGuide.errors.fetchPosts'));
     } finally {
       setLoading(false);
     }
@@ -92,7 +95,7 @@ function CareerGuide() {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('vi-VN', {
+    return date.toLocaleDateString(currentLocale, {
       year: 'numeric',
       month: '2-digit',
       day: '2-digit'
@@ -119,10 +122,10 @@ function CareerGuide() {
 
   const getReadingTime = (content) => {
     const rawText = String(content || '').replace(/<[^>]*>/g, ' ').trim();
-    if (!rawText) return '1 phút đọc';
+    if (!rawText) return t('careerGuide.readingTime.minutes', { count: 1 });
     const words = rawText.split(/\s+/).filter(Boolean).length;
     const minutes = Math.max(1, Math.round(words / 220));
-    return `${minutes} phút đọc`;
+    return t('careerGuide.readingTime.minutes', { count: minutes });
   };
 
   const filteredPosts = useMemo(() => {
@@ -162,23 +165,23 @@ function CareerGuide() {
       <section className="cg-hero">
         <div className="cg-shell cg-hero-grid">
           <div className="cg-hero-content">
-            <p className="cg-hero-eyebrow">Blog nghề nghiệp JobFinder</p>
-            <h1>Bài viết hướng nghiệp</h1>
+            <p className="cg-hero-eyebrow">{t('careerGuide.hero.eyebrow')}</p>
+            <h1>{t('careerGuide.hero.title')}</h1>
             <p className="cg-hero-subtitle">
-              Cập nhật xu hướng tuyển dụng, chiến lược phỏng vấn và bí quyết xây dựng hồ sơ để bạn ứng tuyển hiệu quả hơn mỗi ngày.
+              {t('careerGuide.hero.subtitle')}
             </p>
 
             <div className="cg-search-wrap">
               <i className="bi bi-search"></i>
               <input
                 type="text"
-                placeholder="Tìm theo tiêu đề, nội dung hoặc kỹ năng..."
+                placeholder={t('careerGuide.search.placeholder')}
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
               />
             </div>
 
-            <div className="cg-topic-chips" role="group" aria-label="Bộ lọc chủ đề">
+            <div className="cg-topic-chips" role="group" aria-label={t('careerGuide.topics.ariaLabel')}>
               {TOPIC_FILTERS.map((topic) => (
                 <button
                   key={topic.key}
@@ -187,26 +190,26 @@ function CareerGuide() {
                   onClick={() => setActiveTopic(topic.key)}
                   aria-pressed={activeTopic === topic.key}
                 >
-                  {topic.label}
+                  {t(topic.labelKey)}
                 </button>
               ))}
             </div>
           </div>
 
-          <aside className="cg-hero-insight" aria-label="Tổng quan bài viết">
-            <h2>Toàn cảnh chuyên mục</h2>
+          <aside className="cg-hero-insight" aria-label={t('careerGuide.overview.ariaLabel')}>
+            <h2>{t('careerGuide.overview.title')}</h2>
             <ul>
               <li>
                 <strong>{posts.length}</strong>
-                <span>Bài viết trong trang hiện tại</span>
+                <span>{t('careerGuide.overview.postsInCurrentPage')}</span>
               </li>
               <li>
                 <strong>{avgViews}</strong>
-                <span>Lượt xem trung bình mỗi bài</span>
+                <span>{t('careerGuide.overview.avgViews')}</span>
               </li>
               <li>
                 <strong>{totalPages}</strong>
-                <span>Tổng số trang nội dung</span>
+                <span>{t('careerGuide.overview.totalPages')}</span>
               </li>
             </ul>
           </aside>
@@ -217,17 +220,17 @@ function CareerGuide() {
         {loading ? (
           <div className="cg-loading">
             <div className="spinner-border text-primary" role="status">
-              <span className="visually-hidden">Đang tải...</span>
+              <span className="visually-hidden">{t('careerGuide.states.loading')}</span>
             </div>
           </div>
         ) : error ? (
           <div className="alert alert-danger cg-alert">{error}</div>
         ) : (
           <div className="cg-layout">
-            <section className="cg-feed" aria-label="Danh sách bài viết">
+            <section className="cg-feed" aria-label={t('careerGuide.feed.ariaLabel')}>
               {featuredPost ? (
                 <article className="cg-featured-post">
-                  <span className="cg-featured-label">Bài nổi bật</span>
+                  <span className="cg-featured-label">{t('careerGuide.feed.featured')}</span>
 
                   {featuredPost.coverImage && (
                     <div className="cg-featured-cover-wrap">
@@ -240,64 +243,64 @@ function CareerGuide() {
                     </div>
                   )}
 
-                  <h2>
+                  <h2 data-i18n-skip="true">
                     <Link to={getPostPath(featuredPost)}>{featuredPost.title}</Link>
                   </h2>
 
-                  {featuredPost.category && <span className="cg-post-category">{featuredPost.category}</span>}
+                  {featuredPost.category && <span className="cg-post-category" data-i18n-skip="true">{featuredPost.category}</span>}
 
-                  <p>{getPostExcerpt(featuredPost, 220)}</p>
+                  <p data-i18n-skip="true">{getPostExcerpt(featuredPost, 220)}</p>
 
-                  <div className="cg-featured-meta">
-                    <span>
+                  <div className="cg-featured-meta" data-i18n-skip="true">
+                    <span data-i18n-skip="true">
                       <i className="bi bi-person-circle"></i>
-                      {featuredPost.authorName || 'Ẩn danh'}
+                      {featuredPost.authorName || t('careerGuide.meta.anonymous')}
                     </span>
-                    <span>
+                    <span data-i18n-skip="true">
                       <i className="bi bi-calendar3"></i>
                       {formatDate(featuredPost.createdAt)}
                     </span>
-                    <span>
+                    <span data-i18n-skip="true">
                       <i className="bi bi-eye"></i>
-                      {featuredPost.views || 0} lượt xem
+                      {t('careerGuide.meta.views', { count: featuredPost.views || 0 })}
                     </span>
-                    <span>
+                    <span data-i18n-skip="true">
                       <i className="bi bi-clock-history"></i>
                       {getReadingTime(featuredPost.content)}
                     </span>
                   </div>
 
                   <Link to={getPostPath(featuredPost)} className="cg-read-link">
-                    Đọc bài viết nổi bật
+                    {t('careerGuide.actions.readFeatured')}
                     <i className="bi bi-arrow-right"></i>
                   </Link>
                 </article>
               ) : (
                 <div className="cg-empty-state">
                   <i className="bi bi-inbox"></i>
-                  <p>Không tìm thấy bài viết nào</p>
+                  <p>{t('careerGuide.states.noPostsFound')}</p>
                 </div>
               )}
 
               <div className="cg-feed-toolbar">
                 <div className="cg-feed-count">
-                  <strong>{filteredPosts.length}</strong> bài viết phù hợp
-                  <span>Trang {currentPage}/{totalPages}</span>
+                  <strong>{filteredPosts.length}</strong> {t('careerGuide.feed.matchingPosts')}
+                  <span>{t('careerGuide.feed.pageInfo', { current: currentPage, total: totalPages })}</span>
                 </div>
-                <div className="cg-sort-group" role="group" aria-label="Sắp xếp bài viết">
+                <div className="cg-sort-group" role="group" aria-label={t('careerGuide.sort.ariaLabel')}>
                   <button
                     type="button"
                     className={`cg-sort-btn ${sortMode === 'latest' ? 'is-active' : ''}`}
                     onClick={() => setSortMode('latest')}
                   >
-                    Mới nhất
+                    {t('careerGuide.sort.latest')}
                   </button>
                   <button
                     type="button"
                     className={`cg-sort-btn ${sortMode === 'views' ? 'is-active' : ''}`}
                     onClick={() => setSortMode('views')}
                   >
-                    Xem nhiều
+                    {t('careerGuide.sort.mostViewed')}
                   </button>
                 </div>
               </div>
@@ -317,38 +320,38 @@ function CareerGuide() {
                         </div>
                       )}
 
-                      {post.category && <span className="cg-post-category">{post.category}</span>}
+                      {post.category && <span className="cg-post-category" data-i18n-skip="true">{post.category}</span>}
 
-                      <div className="cg-post-meta">
-                        <span>
+                      <div className="cg-post-meta" data-i18n-skip="true">
+                        <span data-i18n-skip="true">
                           <i className="bi bi-person-circle"></i>
-                          {post.authorName || 'Ẩn danh'}
+                          {post.authorName || t('careerGuide.meta.anonymous')}
                         </span>
-                        <span>
+                        <span data-i18n-skip="true">
                           <i className="bi bi-calendar3"></i>
                           {formatDate(post.createdAt)}
                         </span>
                       </div>
 
-                      <h3>
+                      <h3 data-i18n-skip="true">
                         <Link to={getPostPath(post)}>{post.title}</Link>
                       </h3>
 
-                      <p>{getPostExcerpt(post, 150)}</p>
+                      <p data-i18n-skip="true">{getPostExcerpt(post, 150)}</p>
 
-                      <div className="cg-post-footer">
-                        <span>
+                      <div className="cg-post-footer" data-i18n-skip="true">
+                        <span data-i18n-skip="true">
                           <i className="bi bi-eye"></i>
-                          {post.views || 0} lượt xem
+                          {t('careerGuide.meta.views', { count: post.views || 0 })}
                         </span>
-                        <span>
+                        <span data-i18n-skip="true">
                           <i className="bi bi-clock-history"></i>
                           {getReadingTime(post.content)}
                         </span>
                       </div>
 
                       <Link to={getPostPath(post)} className="cg-card-link">
-                        Xem chi tiết
+                        {t('careerGuide.actions.viewDetail')}
                         <i className="bi bi-arrow-right"></i>
                       </Link>
                     </article>
@@ -358,7 +361,7 @@ function CareerGuide() {
 
             {totalPages > 1 && (
               <div className="cg-pagination-wrapper">
-                <nav aria-label="Page navigation" className="cg-pagination-nav">
+                <nav aria-label={t('careerGuide.pagination.ariaLabel')} className="cg-pagination-nav">
                   <ul className="cg-pagination-list">
                     <li className={`cg-page-item ${currentPage === 1 ? 'disabled' : ''}`}>
                       <button
@@ -400,23 +403,23 @@ function CareerGuide() {
 
             </section>
 
-            <aside className="cg-sidebar" aria-label="Nội dung liên quan">
+            <aside className="cg-sidebar" aria-label={t('careerGuide.sidebar.ariaLabel')}>
               <div className="cg-sidebar-card">
-                <h3>Lộ trình tham khảo</h3>
+                <h3>{t('careerGuide.sidebar.roadmapTitle')}</h3>
                 <ul>
-                  <li>Hoàn thiện CV theo đúng vị trí ứng tuyển.</li>
-                  <li>Tối ưu LinkedIn và portfolio trước khi apply.</li>
-                  <li>Chuẩn bị bộ câu hỏi phỏng vấn theo chuyên môn.</li>
-                  <li>Đàm phán offer dựa trên dữ liệu thị trường.</li>
+                  <li>{t('careerGuide.sidebar.roadmapItem1')}</li>
+                  <li>{t('careerGuide.sidebar.roadmapItem2')}</li>
+                  <li>{t('careerGuide.sidebar.roadmapItem3')}</li>
+                  <li>{t('careerGuide.sidebar.roadmapItem4')}</li>
                 </ul>
               </div>
 
               <div className="cg-sidebar-card cg-sidebar-cta">
-                <h3>Khám phá việc làm ngay</h3>
-                <p>Áp dụng kiến thức trong cẩm nang để tìm việc phù hợp nhanh hơn.</p>
+                <h3>{t('careerGuide.sidebar.exploreJobsTitle')}</h3>
+                <p>{t('careerGuide.sidebar.exploreJobsDesc')}</p>
                 <div className="cg-sidebar-links">
-                  <Link to="/jobs">Xem danh sách việc làm</Link>
-                  <Link to="/create-cv">Tạo CV online</Link>
+                  <Link to="/jobs">{t('careerGuide.sidebar.viewJobs')}</Link>
+                  <Link to="/create-cv">{t('careerGuide.sidebar.createCvOnline')}</Link>
                 </div>
               </div>
 
@@ -428,7 +431,7 @@ function CareerGuide() {
                     onClick={() => navigate('/career-guide/create')}
                   >
                     <i className="bi bi-plus-circle"></i>
-                    Viết bài mới
+                    {t('careerGuide.actions.writePost')}
                   </button>
                   <button
                     type="button"
@@ -436,19 +439,19 @@ function CareerGuide() {
                     onClick={() => navigate('/career-guide/my-posts')}
                   >
                     <i className="bi bi-journal-text"></i>
-                    Quản lý bài đã đăng
+                    {t('careerGuide.actions.managePosts')}
                   </button>
                 </div>
               ) : user ? (
                 <div className="cg-sidebar-card cg-sidebar-auth">
-                  <h3>Quyền của bạn</h3>
-                  <p>Bạn có thể xem, bình luận và viết bài chia sẻ kinh nghiệm hướng nghiệp.</p>
+                  <h3>{t('careerGuide.sidebar.yourPermissionsTitle')}</h3>
+                  <p>{t('careerGuide.sidebar.yourPermissionsDesc')}</p>
                 </div>
               ) : (
                 <div className="cg-sidebar-card cg-sidebar-auth">
-                  <h3>Đăng nhập để viết bài</h3>
-                  <p>Bạn có thể chia sẻ kinh nghiệm nghề nghiệp với cộng đồng ứng viên.</p>
-                  <Link to="/login" className="cg-auth-link">Đăng nhập ngay</Link>
+                  <h3>{t('careerGuide.sidebar.loginToWriteTitle')}</h3>
+                  <p>{t('careerGuide.sidebar.loginToWriteDesc')}</p>
+                  <Link to="/login" className="cg-auth-link">{t('careerGuide.actions.loginNow')}</Link>
                 </div>
               )}
             </aside>
@@ -460,7 +463,7 @@ function CareerGuide() {
         <button
           className="cg-fab-create-post"
           onClick={() => navigate('/career-guide/create')}
-          title="Tạo bài viết mới"
+          title={t('careerGuide.actions.createNewPostTitle')}
         >
           <i className="bi bi-plus-lg"></i>
         </button>

@@ -813,6 +813,109 @@
   font-size: 0.92rem;
 }
 
+:is(html.dark, html[data-bs-theme='dark']) .home-page {
+  background: linear-gradient(180deg, #07111f 0%, #0a1728 42%, #0d1d31 100%);
+  color: #d7e7f9;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-hero {
+  background:
+    radial-gradient(circle at 88% 12%, rgba(45, 139, 226, 0.2), transparent 42%),
+    radial-gradient(circle at 6% 86%, rgba(36, 181, 214, 0.12), transparent 36%),
+    linear-gradient(180deg, #081325 0%, #0b1a2e 100%);
+  border-bottom-color: #1c304a;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-search-box,
+:is(html.dark, html[data-bs-theme='dark']) .home-trust-item,
+:is(html.dark, html[data-bs-theme='dark']) .home-jobs-section,
+:is(html.dark, html[data-bs-theme='dark']) .home-how-section,
+:is(html.dark, html[data-bs-theme='dark']) .home-benefits-section,
+:is(html.dark, html[data-bs-theme='dark']) .home-job-card,
+:is(html.dark, html[data-bs-theme='dark']) .home-job-logo-wrap,
+:is(html.dark, html[data-bs-theme='dark']) .home-how-card,
+:is(html.dark, html[data-bs-theme='dark']) .home-benefit-card {
+  background: #111f33;
+  border-color: #28415e;
+  box-shadow: 0 16px 34px rgba(3, 10, 18, 0.38);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-trust-value,
+:is(html.dark, html[data-bs-theme='dark']) .home-jobs-header h2,
+:is(html.dark, html[data-bs-theme='dark']) .home-how-header h2,
+:is(html.dark, html[data-bs-theme='dark']) .home-benefits-header h2,
+:is(html.dark, html[data-bs-theme='dark']) .home-job-title-btn,
+:is(html.dark, html[data-bs-theme='dark']) .home-how-card h3,
+:is(html.dark, html[data-bs-theme='dark']) .home-benefit-card h3 {
+  color: #e9f4ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-trust-label,
+:is(html.dark, html[data-bs-theme='dark']) .home-section-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .home-job-company,
+:is(html.dark, html[data-bs-theme='dark']) .home-job-time,
+:is(html.dark, html[data-bs-theme='dark']) .home-how-card p,
+:is(html.dark, html[data-bs-theme='dark']) .home-benefit-card p,
+:is(html.dark, html[data-bs-theme='dark']) .home-jobs-error,
+:is(html.dark, html[data-bs-theme='dark']) .home-jobs-empty,
+:is(html.dark, html[data-bs-theme='dark']) .home-jobs-loading {
+  color: #9fb4cb;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-search-field label,
+:is(html.dark, html[data-bs-theme='dark']) .home-section-eyebrow {
+  color: #b7ccdf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-search-input-wrap {
+  background: #0b1829;
+  border-color: #2b4563;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-search-input-wrap i,
+:is(html.dark, html[data-bs-theme='dark']) .home-search-input-wrap input,
+:is(html.dark, html[data-bs-theme='dark']) .home-search-input-wrap select {
+  color: #d8e7f7;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-search-input-wrap input::placeholder {
+  color: #90a9c3;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-quick-chip,
+:is(html.dark, html[data-bs-theme='dark']) .home-toolbar-chip,
+:is(html.dark, html[data-bs-theme='dark']) .home-save-btn,
+:is(html.dark, html[data-bs-theme='dark']) .home-view-all-btn {
+  background: #13253b;
+  border-color: #355474;
+  color: #cfe2f6;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-view-all-btn:hover {
+  background: #1f7eca;
+  border-color: #1f7eca;
+  color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-quick-chip.is-active,
+:is(html.dark, html[data-bs-theme='dark']) .home-toolbar-chip.is-active {
+  background: #1f7eca;
+  border-color: #1f7eca;
+  color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-job-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .home-job-badge {
+  background: #13253b;
+  border-color: #335271;
+  color: #b6d1ec;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .home-cv-cta {
+  border-color: #2a4562;
+  background: linear-gradient(120deg, #10233c 0%, #12436f 58%, #18658c 100%);
+}
+
 @media (max-width: 1100px) {
   .home-hero-showcase {
     grid-template-columns: 1fr;

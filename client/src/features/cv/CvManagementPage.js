@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
 import './CvManagementPage.css';
 
@@ -9,11 +10,11 @@ const toDateMs = (value) => {
   return Number.isFinite(ms) ? ms : 0;
 };
 
-const formatDate = (value) => {
+const formatDate = (value, locale = 'vi-VN') => {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleDateString('vi-VN');
+  return date.toLocaleDateString(locale);
 };
 
 const normalizeCv = (cv, index) => {
@@ -46,7 +47,9 @@ const normalizeCv = (cv, index) => {
 
 const CvManagementPage = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { notify, requestConfirm } = useNotification();
+  const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'vi-VN';
 
   const user = useMemo(() => {
     try {
@@ -106,13 +109,13 @@ const CvManagementPage = () => {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Không tải được danh sách CV');
+        throw new Error(data?.error || t('cvManagement.errors.loadList'));
       }
 
       setRawCvs(Array.isArray(data?.cvs) ? data.cvs : []);
     } catch (error) {
       setRawCvs([]);
-      notify({ type: 'error', message: error.message || 'Không tải được danh sách CV' });
+      notify({ type: 'error', message: error.message || t('cvManagement.errors.loadList') });
     } finally {
       setLoading(false);
     }
@@ -122,10 +125,10 @@ const CvManagementPage = () => {
     if (!userId || !cvId) return;
 
     const ok = await requestConfirm({
-      title: 'Xóa CV',
-      message: 'Bạn có chắc muốn xóa CV này không?',
-      confirmText: 'Xóa',
-      cancelText: 'Hủy',
+      title: t('cvManagement.actions.deleteCv'),
+      message: t('cvManagement.confirm.deleteMessage'),
+      confirmText: t('common.delete'),
+      cancelText: t('common.cancel'),
       type: 'warning'
     });
     if (!ok) return;
@@ -138,13 +141,13 @@ const CvManagementPage = () => {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Không thể xóa CV');
+        throw new Error(data?.error || t('cvManagement.errors.deleteCv'));
       }
 
       setRawCvs((prev) => prev.filter((item, index) => String(normalizeCv(item, index).id) !== String(cvId)));
-      notify({ type: 'success', message: 'Đã xóa CV thành công.' });
+      notify({ type: 'success', message: t('cvManagement.notifications.deleteSuccess') });
     } catch (error) {
-      notify({ type: 'error', message: error.message || 'Không thể xóa CV' });
+      notify({ type: 'error', message: error.message || t('cvManagement.errors.deleteCv') });
     } finally {
       setDeletingId('');
     }
@@ -152,7 +155,7 @@ const CvManagementPage = () => {
 
   const handleOpenFilePicker = () => {
     if (!userId) {
-      notify({ type: 'warning', message: 'Vui lòng đăng nhập để tải CV lên.' });
+      notify({ type: 'warning', message: t('cvManagement.notifications.loginToUpload') });
       return;
     }
 
@@ -180,14 +183,14 @@ const CvManagementPage = () => {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Không thể tải CV lên');
+        throw new Error(data?.error || t('cvManagement.errors.uploadCv'));
       }
 
-      notify({ type: 'success', message: 'Tải CV lên thành công.' });
+      notify({ type: 'success', message: t('cvManagement.notifications.uploadSuccess') });
       await loadCvs();
       setViewFilter('all');
     } catch (error) {
-      notify({ type: 'error', message: error.message || 'Không thể tải CV lên' });
+      notify({ type: 'error', message: error.message || t('cvManagement.errors.uploadCv') });
     } finally {
       setUploading(false);
     }
@@ -203,25 +206,25 @@ const CvManagementPage = () => {
       <div className="container cv-management-container">
         <section className="cv-management-hero">
           <div className="cv-management-hero-content">
-            <p className="cv-management-eyebrow">Không gian ứng viên</p>
-            <h1>Quản lý CV của bạn tại JobFinder</h1>
+            <p className="cv-management-eyebrow">{t('cvManagement.hero.eyebrow')}</p>
+            <h1>{t('cvManagement.hero.title')}</h1>
             <p>
-              Theo dõi các CV đã tạo, chỉnh sửa CV online nhanh chóng và tái sử dụng cho mọi cơ hội tuyển dụng.
+              {t('cvManagement.hero.description')}
             </p>
           </div>
 
           <div className="cv-management-stats">
             <div className="cv-management-stat-card">
               <strong>{stats.total}</strong>
-              <span>Tổng CV</span>
+              <span>{t('cvManagement.stats.total')}</span>
             </div>
             <div className="cv-management-stat-card">
               <strong>{stats.online}</strong>
-              <span>CV Online</span>
+              <span>{t('cvManagement.stats.online')}</span>
             </div>
             <div className="cv-management-stat-card">
               <strong>{stats.uploaded}</strong>
-              <span>CV tải lên</span>
+              <span>{t('cvManagement.stats.uploaded')}</span>
             </div>
           </div>
         </section>
@@ -229,8 +232,8 @@ const CvManagementPage = () => {
         <section className="cv-management-board">
           <div className="cv-management-board-head">
             <div>
-              <h2>Danh sách CV đã tạo</h2>
-              <p>Hiển thị CV online và tài liệu CV bạn đã lưu trên hệ thống.</p>
+              <h2>{t('cvManagement.board.title')}</h2>
+              <p>{t('cvManagement.board.subtitle')}</p>
             </div>
 
             <div className="cv-management-board-actions">
@@ -244,7 +247,7 @@ const CvManagementPage = () => {
 
               <input
                 type="text"
-                placeholder="Tìm theo tên CV..."
+                placeholder={t('cvManagement.searchPlaceholder')}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
               />
@@ -255,45 +258,45 @@ const CvManagementPage = () => {
                 disabled={!userId || uploading}
                 onClick={handleOpenFilePicker}
               >
-                {uploading ? 'Đang tải...' : 'Tải CV lên'}
+                {uploading ? t('cvManagement.actions.uploading') : t('cvManagement.actions.uploadCv')}
               </button>
 
-              <button type="button" onClick={() => navigate('/create-cv')}>Tạo CV mới</button>
+              <button type="button" onClick={() => navigate('/create-cv')}>{t('cvManagement.actions.createNewCv')}</button>
             </div>
           </div>
 
-          <div className="cv-management-filter-row" role="group" aria-label="Lọc CV">
+          <div className="cv-management-filter-row" role="group" aria-label={t('cvManagement.filters.ariaLabel')}>
             <button type="button" className={viewFilter === 'all' ? 'active' : ''} onClick={() => setViewFilter('all')}>
-              Tất cả
+              {t('cvManagement.filters.all')}
             </button>
             <button type="button" className={viewFilter === 'online' ? 'active' : ''} onClick={() => setViewFilter('online')}>
-              CV Online
+              {t('cvManagement.filters.online')}
             </button>
             <button type="button" className={viewFilter === 'uploaded' ? 'active' : ''} onClick={() => setViewFilter('uploaded')}>
-              CV tải lên
+              {t('cvManagement.filters.uploaded')}
             </button>
           </div>
 
           {!userId ? (
             <div className="cv-management-empty">
               <div className="cv-management-empty-icon"><i className="bi bi-lock"></i></div>
-              <h3>Bạn chưa đăng nhập</h3>
-              <p>Đăng nhập để xem và quản lý các CV đã tạo của bạn.</p>
-              <Link to="/login" className="cv-management-primary-btn">Đăng nhập ngay</Link>
+              <h3>{t('cvManagement.states.notLoggedInTitle')}</h3>
+              <p>{t('cvManagement.states.notLoggedInDesc')}</p>
+              <Link to="/login" className="cv-management-primary-btn">{t('cvManagement.actions.loginNow')}</Link>
             </div>
           ) : loading ? (
             <div className="cv-management-empty">
               <div className="cv-management-empty-icon"><i className="bi bi-hourglass-split"></i></div>
-              <h3>Đang tải danh sách CV</h3>
-              <p>Vui lòng đợi trong giây lát...</p>
+              <h3>{t('cvManagement.states.loadingTitle')}</h3>
+              <p>{t('cvManagement.states.loadingDesc')}</p>
             </div>
           ) : filteredCvs.length === 0 ? (
             <div className="cv-management-empty">
               <div className="cv-management-empty-icon"><i className="bi bi-file-earmark"></i></div>
-              <h3>Chưa có CV phù hợp</h3>
-              <p>Bạn có thể tạo CV mới từ thư viện mẫu để bắt đầu.</p>
+              <h3>{t('cvManagement.states.emptyTitle')}</h3>
+              <p>{t('cvManagement.states.emptyDesc')}</p>
               <button type="button" className="cv-management-primary-btn" onClick={() => navigate('/create-cv')}>
-                Đi đến Mẫu CV
+                {t('cvManagement.actions.goToTemplates')}
               </button>
             </div>
           ) : (
@@ -305,8 +308,8 @@ const CvManagementPage = () => {
                       <h3>{cv.name}</h3>
                       <div className="cv-management-meta">
                         <span>{cv.typeLabel}</span>
-                        <span>Cập nhật: {formatDate(cv.updatedAt || cv.uploadDate)}</span>
-                        {cv.status ? <span>Trạng thái: {cv.status}</span> : null}
+                        <span>{t('cvManagement.labels.updatedAt', { date: formatDate(cv.updatedAt || cv.uploadDate, currentLocale) })}</span>
+                        {cv.status ? <span>{t('cvManagement.labels.status', { status: cv.status })}</span> : null}
                       </div>
                     </div>
 
@@ -316,8 +319,8 @@ const CvManagementPage = () => {
                           type="button"
                           className="cv-action-icon view"
                           onClick={() => navigate(`/create-cv/online-editor?cvId=${encodeURIComponent(cv.id)}`)}
-                          title="Xem CV Online"
-                          aria-label={`Xem CV ${cv.name}`}
+                          title={t('cvManagement.actions.viewOnlineCv')}
+                          aria-label={t('cvManagement.actions.viewCvAria', { name: cv.name })}
                         >
                           <i className="bi bi-eye"></i>
                         </button>
@@ -327,8 +330,8 @@ const CvManagementPage = () => {
                           target="_blank"
                           rel="noreferrer"
                           className="cv-action-icon view"
-                          title="Xem CV"
-                          aria-label={`Xem CV ${cv.name}`}
+                          title={t('cvManagement.actions.viewCv')}
+                          aria-label={t('cvManagement.actions.viewCvAria', { name: cv.name })}
                         >
                           <i className="bi bi-eye"></i>
                         </a>
@@ -337,8 +340,8 @@ const CvManagementPage = () => {
                           type="button"
                           className="cv-action-icon view"
                           disabled
-                          title="Chưa có tệp"
-                          aria-label="Chưa có tệp"
+                          title={t('cvManagement.states.noFile')}
+                          aria-label={t('cvManagement.states.noFile')}
                         >
                           <i className="bi bi-eye-slash"></i>
                         </button>
@@ -349,8 +352,8 @@ const CvManagementPage = () => {
                         className="cv-action-icon edit"
                         disabled={!cv.isOnlineCv}
                         onClick={() => navigate(`/create-cv/online-editor?cvId=${encodeURIComponent(cv.id)}`)}
-                        title="Chỉnh sửa CV"
-                        aria-label={`Chỉnh sửa ${cv.name}`}
+                        title={t('cvManagement.actions.editCv')}
+                        aria-label={t('cvManagement.actions.editCvAria', { name: cv.name })}
                       >
                         <i className="bi bi-pencil-square"></i>
                       </button>
@@ -360,8 +363,8 @@ const CvManagementPage = () => {
                         className="cv-action-icon delete"
                         disabled={deletingId === String(cv.id)}
                         onClick={() => handleDelete(cv.id)}
-                        title={deletingId === String(cv.id) ? 'Đang xóa...' : 'Xóa CV'}
-                        aria-label={deletingId === String(cv.id) ? 'Đang xóa' : `Xóa ${cv.name}`}
+                        title={deletingId === String(cv.id) ? t('cvManagement.actions.deleting') : t('cvManagement.actions.deleteCv')}
+                        aria-label={deletingId === String(cv.id) ? t('cvManagement.actions.deleting') : t('cvManagement.actions.deleteCvAria', { name: cv.name })}
                       >
                         <i className={`bi ${deletingId === String(cv.id) ? 'bi-arrow-repeat' : 'bi-trash'}`}></i>
                       </button>

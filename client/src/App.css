@@ -1,8 +1,31 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: #f6f9fc;
+  color: #13273f;
+  transition: background-color 0.24s ease, color 0.24s ease;
+}
+
 .App {
   text-align: center;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) body {
+  background: #07111f;
+  color: #d7e7f9;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .App {
+  background: transparent;
+  color: #d7e7f9;
 }
 
 .AppMain {
@@ -319,14 +342,51 @@
   }
 }
 
-/* Top nav links: match hover behavior with the "Việc làm" dropdown */
-.navbar .navbar-nav > .nav-item > .nav-link {
-  transition: color 0.15s ease-in-out;
+/* Top nav links: richer hover/click feedback on desktop and mobile */
+.jf-main-navbar .navbar-nav > .nav-item > .nav-link,
+.jf-main-navbar .jf-nav-dropdown-toggle {
+  position: relative;
+  border-radius: 10px;
+  transition: color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
 }
 
-.navbar .navbar-nav > .nav-item > .nav-link:hover,
-.navbar .navbar-nav > .nav-item > .nav-link:focus {
-  color: #00C271;
+.jf-main-navbar .navbar-nav > .nav-item > .nav-link::after,
+.jf-main-navbar .jf-nav-dropdown-toggle::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 3px;
+  height: 2px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #19d08a 0%, #2b9fff 100%);
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.18s ease;
+  pointer-events: none;
+}
+
+.jf-main-navbar .navbar-nav > .nav-item > .nav-link:hover,
+.jf-main-navbar .navbar-nav > .nav-item > .nav-link:focus-visible,
+.jf-main-navbar .jf-nav-dropdown-toggle:hover,
+.jf-main-navbar .jf-nav-dropdown-toggle:focus-visible {
+  color: #00c271;
+  background: rgba(0, 194, 113, 0.1);
+  box-shadow: inset 0 0 0 1px rgba(0, 194, 113, 0.16);
+  transform: translateY(-1px);
+}
+
+.jf-main-navbar .navbar-nav > .nav-item > .nav-link:hover::after,
+.jf-main-navbar .navbar-nav > .nav-item > .nav-link:focus-visible::after,
+.jf-main-navbar .jf-nav-dropdown-toggle:hover::after,
+.jf-main-navbar .jf-nav-dropdown-toggle:focus-visible::after {
+  transform: scaleX(1);
+}
+
+.jf-main-navbar .navbar-nav > .nav-item > .nav-link:active,
+.jf-main-navbar .jf-nav-dropdown-toggle:active {
+  transform: scale(0.98);
+  background: rgba(0, 194, 113, 0.16);
 }
 
 .jf-user-chip {
@@ -1029,8 +1089,42 @@
   color: #64748b;
 }
 
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-page {
+  background: radial-gradient(circle at 6% 8%, rgba(59, 130, 246, 0.12), transparent 30%),
+    radial-gradient(circle at 92% 12%, rgba(16, 185, 129, 0.12), transparent 30%),
+    linear-gradient(180deg, #0b1120 0%, #0f172a 45%, #111827 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-hero {
+  background: linear-gradient(130deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.92));
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-pill {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-body .card {
+  background: rgba(15, 23, 42, 0.82);
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35) !important;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-rich-block {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-rich-block em {
+  color: #94a3b8;
+}
+
 .map-embed-wrapper {
-  border: 1px solid #d7e3f1;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: inset 0 1px 0 rgba(15, 23, 42, 0.04);
@@ -2139,6 +2233,141 @@
   box-shadow: 0 10px 18px rgba(31, 131, 205, 0.28);
 }
 
+:is(html.dark, html[data-bs-theme='dark']) .jf-job-search-page--modern {
+  background:
+    radial-gradient(circle at 8% 10%, rgba(48, 150, 228, 0.16), transparent 34%),
+    radial-gradient(circle at 91% 14%, rgba(50, 185, 204, 0.14), transparent 34%),
+    linear-gradient(180deg, #07111f 0%, #0b1728 46%, #0e1d31 100%);
+  color: #d7e7f9;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-modern-eyebrow,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-search-field label,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-filter-header p {
+  color: #9fc6e4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-modern-copy h1,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-filter-header h2,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-filter-group h3,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-results-header h2,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-title,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-salary,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-modern-stat strong {
+  color: #e7f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-modern-copy p,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-modern-stat span,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-results-breadcrumb,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-results-subline,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-company,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-time,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-radio-option,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-salary-unit,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-empty,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-results-header h2 span {
+  color: #9db8d2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-modern-search,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-modern-stat,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-filter-panel,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-results-header,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-card,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-logo {
+  background: #111f33;
+  border-color: #2e4660;
+  box-shadow: 0 16px 32px rgba(2, 10, 20, 0.44);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-filter-header {
+  background: linear-gradient(180deg, #13253a 0%, #111f33 100%);
+  border-color: #2f4761;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-filter-group {
+  border-color: #24384f;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-search-input-wrap,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-trigger,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-salary-range input,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-search-wrap input,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-field-select {
+  background: #0b1728;
+  border-color: #375371;
+  color: #d9e9f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-search-input-wrap i,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-trigger .bi,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-search-wrap i {
+  color: #8eb0ce;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-search-input-wrap input,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-search-wrap input,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-salary-range input,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-text {
+  color: #d9e9f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-search-input-wrap input::placeholder,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-search-wrap input::placeholder,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-salary-range input::placeholder {
+  color: #7f9dbb;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-menu,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-search-wrap,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-option {
+  background: #0f1d31;
+  border-color: #315070;
+  color: #d4e5f5;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-option {
+  border-bottom-color: #22384f;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-option:hover {
+  background: #162840;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-select-option.is-active {
+  background: #1f3a58;
+  color: #7bd0ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-badge,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-alert-btn,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-state-card,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-save-btn,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-reset-btn {
+  background: #13253b;
+  border-color: #355271;
+  color: #b9d4ec;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-reset-btn.is-active {
+  background: #174a75;
+  border-color: #2d80be;
+  color: #eaf6ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-empty-reset,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-title:hover {
+  color: #6fd0ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-save-btn.is-saved {
+  background: #3a1f2d;
+  border-color: #8f4d67;
+  color: #f7c8d9;
+}
+
 @media (max-width: 1199px) {
   .jf-jobs-modern-search {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2310,6 +2539,20 @@ html[data-bs-theme='dark'] .jf-main-navbar .nav-link,
 html[data-bs-theme='dark'] .jf-nav-dropdown-toggle,
 html[data-bs-theme='dark'] .jf-user-chip-info strong {
   color: #e2e8f0 !important;
+}
+
+html[data-bs-theme='dark'] .jf-main-navbar .navbar-nav > .nav-item > .nav-link::after,
+html[data-bs-theme='dark'] .jf-main-navbar .jf-nav-dropdown-toggle::after {
+  background: linear-gradient(90deg, #66f0bc 0%, #68b6ff 100%);
+}
+
+html[data-bs-theme='dark'] .jf-main-navbar .navbar-nav > .nav-item > .nav-link:hover,
+html[data-bs-theme='dark'] .jf-main-navbar .navbar-nav > .nav-item > .nav-link:focus-visible,
+html[data-bs-theme='dark'] .jf-main-navbar .jf-nav-dropdown-toggle:hover,
+html[data-bs-theme='dark'] .jf-main-navbar .jf-nav-dropdown-toggle:focus-visible {
+  color: #85f1c4 !important;
+  background: rgba(80, 220, 156, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(116, 241, 186, 0.24);
 }
 
 html[data-bs-theme='dark'] .jf-utility-btn {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { sanitizeCareerHtml } from '../../career-guide/richTextUtils';
 
 const formatCurrencyVnd = (value) => {
@@ -10,12 +11,26 @@ const formatCurrencyVnd = (value) => {
 };
 
 const JobDetail = () => {
+    const { t, i18n } = useTranslation();
     const { id } = useParams();
     const navigate = useNavigate();
     const token = useMemo(() => localStorage.getItem('token') || '', []);
     const [job, setJob] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+
+    const locale = i18n.resolvedLanguage?.startsWith('en') ? 'en-US' : 'vi-VN';
+
+    const formatDate = (value) => {
+        if (!value) return t('employer.jobDetailPage.noData');
+        const date = new Date(value);
+        if (!Number.isFinite(date.getTime())) return t('employer.jobDetailPage.noData');
+        return new Intl.DateTimeFormat(locale, {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        }).format(date);
+    };
 
     useEffect(() => {
         let cancelled = false;
@@ -27,98 +42,104 @@ const JobDetail = () => {
                     headers: token ? { Authorization: `Bearer ${token}` } : {}
                 });
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || 'Không tải được tin tuyển dụng');
+                if (!res.ok) throw new Error(data.error || t('employer.jobDetailPage.errorLoading'));
                 if (!cancelled) setJob(data);
             } catch (err) {
-                if (!cancelled) setError(err.message || 'Có lỗi xảy ra.');
+                if (!cancelled) setError(err.message || t('employer.jobDetailPage.errorLoading'));
             } finally {
                 if (!cancelled) setLoading(false);
             }
         };
         load();
         return () => { cancelled = true; };
-    }, [id, token]);
+    }, [id, token, t]);
 
     const renderRich = (html) => (
         <div
-            className="border rounded p-3 bg-light"
+            className="job-detail-rich-block"
             style={{ minHeight: 80 }}
-            dangerouslySetInnerHTML={{ __html: sanitizeCareerHtml(html || '') || '<em>Chưa cập nhật</em>' }}
+            dangerouslySetInnerHTML={{ __html: sanitizeCareerHtml(html || '') || `<em>${t('employer.jobDetailPage.noData')}</em>` }}
         />
     );
 
     return (
-        <div>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <button className="btn btn-link p-0 me-3" onClick={() => navigate(-1)}>
-                        ← Quay lại
-                    </button>
-                    <h2 className="mb-0 employer-page-title">Chi tiết tin tuyển dụng</h2>
-                </div>
-                <div className="d-flex gap-2">
-                    <Link to={`/employer/jobs/${id}/edit`} className="btn btn-primary">
-                        Chỉnh sửa
-                    </Link>
-                    <Link to="/employer/jobs" className="btn btn-outline-secondary">
-                        Danh sách tin
-                    </Link>
-                </div>
-            </div>
-
-            {error && <div className="alert alert-danger">{error}</div>}
-            {loading && <p className="text-muted">Đang tải...</p>}
-            {!loading && job && (
-                <div className="card border-0 shadow-sm">
-                    <div className="card-body">
-                        <div className="d-flex justify-content-between align-items-start mb-3">
-                            <div>
-                                <h4 className="mb-1">{job.TieuDe}</h4>
-                                <div className="text-muted">
-                                    {[job.DiaDiem, job.ThanhPho].filter(Boolean).join(', ') || 'Chưa cập nhật'}
-                                </div>
-                            </div>
-                            <span className={`badge ${job.TrangThai === 'Đã đăng' ? 'bg-success' : 'bg-secondary'}`}>
-                                {job.TrangThai}
-                            </span>
-                        </div>
-
-                        <div className="row g-3 mb-3">
-                            <div className="col-md-6">
-                                <strong>Kiểu lương:</strong> {job.KieuLuong || 'Chưa cập nhật'}
-                            </div>
-                            <div className="col-md-6">
-                                <strong>Hình thức:</strong> {job.HinhThuc || 'Chưa cập nhật'}
-                            </div>
-                            <div className="col-md-6">
-                                <strong>Lương từ:</strong> {formatCurrencyVnd(job.LuongTu)}
-                            </div>
-                            <div className="col-md-6">
-                                <strong>Lương đến:</strong> {formatCurrencyVnd(job.LuongDen)}
-                            </div>
-                            <div className="col-md-6">
-                                <strong>Ngày đăng:</strong> {job.NgayDang || 'Chưa cập nhật'}
-                            </div>
-                            <div className="col-md-6">
-                                <strong>Hạn nộp:</strong> {job.HanNopHoSo || 'Chưa cập nhật'}
-                            </div>
-                        </div>
-
-                        <div className="mb-3">
-                            <h6 className="fw-semibold">Mô tả</h6>
-                            {renderRich(job.MoTa)}
-                        </div>
-                        <div className="mb-3">
-                            <h6 className="fw-semibold">Yêu cầu</h6>
-                            {renderRich(job.YeuCau)}
-                        </div>
+        <div className="job-detail-page">
+            <div className="job-detail-hero">
+                <div className="job-detail-hero__content container">
+                    <div className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
                         <div>
-                            <h6 className="fw-semibold">Quyền lợi</h6>
-                            {renderRich(job.QuyenLoi)}
+                            <button className="btn btn-link p-0 mb-2" onClick={() => navigate(-1)}>
+                                {t('employer.jobDetailPage.backButton')}
+                            </button>
+                            <h2 className="job-detail-title mb-0">{t('employer.jobDetailPage.title')}</h2>
+                        </div>
+                        <div className="job-detail-actions d-flex gap-2">
+                            <Link to={`/employer/jobs/${id}/edit`} className="btn btn-primary">
+                                {t('employer.jobDetailPage.editButton')}
+                            </Link>
+                            <Link to="/employer/jobs" className="btn btn-outline-secondary">
+                                {t('employer.jobDetailPage.jobListButton')}
+                            </Link>
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+
+            <div className="job-detail-body container">
+                {error && <div className="alert alert-danger">{error}</div>}
+                {loading && <p className="text-muted">{t('employer.jobDetailPage.loading')}</p>}
+                {!loading && job && (
+                    <div className="card border-0 shadow-sm">
+                        <div className="card-body">
+                            <div className="d-flex justify-content-between align-items-start mb-3 flex-wrap gap-3">
+                                <div>
+                                    <h4 className="mb-1">{job.TieuDe}</h4>
+                                    <div className="text-muted">
+                                        {[job.DiaDiem, job.ThanhPho].filter(Boolean).join(', ') || t('employer.jobDetailPage.noData')}
+                                    </div>
+                                </div>
+                                <span className={`badge ${job.TrangThai === 'Published' || job.TrangThai === 'Đã đăng' ? 'bg-success' : 'bg-secondary'}`}>
+                                    {job.TrangThai || t('employer.jobDetailPage.noData')}
+                                </span>
+                            </div>
+
+                            <div className="row g-3 mb-3">
+                                <div className="col-md-6">
+                                    <strong>{t('employer.jobDetailPage.fields.salaryType')}:</strong> {job.KieuLuong || t('employer.jobDetailPage.noData')}
+                                </div>
+                                <div className="col-md-6">
+                                    <strong>{t('employer.jobDetailPage.fields.employmentType')}:</strong> {job.HinhThuc || t('employer.jobDetailPage.noData')}
+                                </div>
+                                <div className="col-md-6">
+                                    <strong>{t('employer.jobDetailPage.fields.salaryFrom')}:</strong> {formatCurrencyVnd(job.LuongTu) || t('employer.jobDetailPage.noData')}
+                                </div>
+                                <div className="col-md-6">
+                                    <strong>{t('employer.jobDetailPage.fields.salaryTo')}:</strong> {formatCurrencyVnd(job.LuongDen) || t('employer.jobDetailPage.noData')}
+                                </div>
+                                <div className="col-md-6">
+                                    <strong>{t('employer.jobDetailPage.fields.postedDate')}:</strong> {formatDate(job.NgayDang)}
+                                </div>
+                                <div className="col-md-6">
+                                    <strong>{t('employer.jobDetailPage.fields.deadline')}:</strong> {formatDate(job.HanNopHoSo)}
+                                </div>
+                            </div>
+
+                            <div className="mb-3">
+                                <h6 className="fw-semibold">{t('employer.jobDetailPage.fields.description')}</h6>
+                                {renderRich(job.MoTa)}
+                            </div>
+                            <div className="mb-3">
+                                <h6 className="fw-semibold">{t('employer.jobDetailPage.fields.requirements')}</h6>
+                                {renderRich(job.YeuCau)}
+                            </div>
+                            <div>
+                                <h6 className="fw-semibold">{t('employer.jobDetailPage.fields.benefits')}</h6>
+                                {renderRich(job.QuyenLoi)}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

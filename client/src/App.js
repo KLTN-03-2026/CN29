@@ -42,6 +42,7 @@ import PWAUpdatePrompt from './components/pwa/PWAUpdatePrompt';
 import AccountInstallPrompt from './components/pwa/AccountInstallPrompt';
 import FirebaseMessagingBridge from './components/FirebaseMessagingBridge';
 import MessageNotificationBridge from './components/MessageNotificationBridge';
+import I18nGlobalAutoTranslate from './components/I18nGlobalAutoTranslate';
 import { API_BASE } from './config/apiBase';
 import { DarkModeProvider } from './context/DarkModeContext';
 import './App.css';
@@ -173,6 +174,7 @@ function AppContent() {
 
   return (
     <div className="App">
+      <I18nGlobalAutoTranslate />
       {showPublicChrome && <Header />}
 
       <main className="AppMain">
@@ -250,7 +252,7 @@ function AppContent() {
             <Route path="jobs/:id" element={<JobDetail />} />
             <Route path="applications" element={<ApplicationManagement />} />
             <Route path="messages" element={<MessagesPage />} />
-            <Route path="notifications" element={<Navigate to="/employer" replace />} />
+            <Route path="notifications" element={<SupportCenterPage />} />
             <Route path="statistics" element={<Navigate to="/employer" replace />} />
             <Route path="company" element={<CompanyProfile />} />
             <Route path="account" element={<EmployerAccount />} />

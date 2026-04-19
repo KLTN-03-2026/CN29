@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { requestBrowserNotificationPermission } from '../../components/notificationUtils';
 import { useNotification } from '../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
@@ -26,10 +27,10 @@ const toTimestamp = (value) => {
   return Number.isNaN(date.getTime()) ? 0 : date.getTime();
 };
 
-const formatDateTime = (value) => {
-  if (!value) return 'Vừa xong';
+const formatDateTime = (value, t) => {
+  if (!value) return t('supportCenterPage.time.justNow');
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'Vừa xong';
+  if (Number.isNaN(date.getTime())) return t('supportCenterPage.time.justNow');
   return date.toLocaleString('vi-VN', {
     year: 'numeric',
     month: '2-digit',
@@ -39,17 +40,17 @@ const formatDateTime = (value) => {
   });
 };
 
-const FEED_TYPE_LABELS = {
-  message: 'Tin nhắn',
-  'application-received': 'Ứng tuyển',
-  'application-accepted': 'Đã nhận',
-  'application-update': 'Hồ sơ',
-  'application-review': 'Xem xét',
-  'application-offer': 'Đề nghị',
-  'application-rejected': 'Từ chối',
-  'interview-invite': 'Phỏng vấn',
-  'company-comment': 'Bình luận',
-  'company-rating': 'Đánh giá'
+const FEED_TYPE_TRANSLATION_KEYS = {
+  message: 'supportCenterPage.feedTypes.message',
+  'application-received': 'supportCenterPage.feedTypes.applicationReceived',
+  'application-accepted': 'supportCenterPage.feedTypes.applicationAccepted',
+  'application-update': 'supportCenterPage.feedTypes.applicationUpdate',
+  'application-review': 'supportCenterPage.feedTypes.applicationReview',
+  'application-offer': 'supportCenterPage.feedTypes.applicationOffer',
+  'application-rejected': 'supportCenterPage.feedTypes.applicationRejected',
+  'interview-invite': 'supportCenterPage.feedTypes.interviewInvite',
+  'company-comment': 'supportCenterPage.feedTypes.companyComment',
+  'company-rating': 'supportCenterPage.feedTypes.companyRating'
 };
 
 const trimText = (value, max = 180) => {
@@ -67,51 +68,51 @@ const normalizeRoleName = (user) => normalizeText(
   || ''
 );
 
-const resolveCandidateStatusMeta = (statusValue) => {
+const resolveCandidateStatusMeta = (statusValue, t) => {
   const normalized = normalizeText(statusValue);
   if (normalized === 'phong van') {
     return {
       type: 'interview-invite',
-      title: 'Bạn có lịch phỏng vấn mới',
-      label: FEED_TYPE_LABELS['interview-invite']
+      title: t('supportCenterPage.feed.titles.interviewInvite'),
+      label: buildFeedTypeLabel('interview-invite', t)
     };
   }
   if (normalized === 'da nhan') {
     return {
       type: 'application-accepted',
-      title: 'Đơn ứng tuyển đã được chấp nhận',
-      label: FEED_TYPE_LABELS['application-accepted']
+      title: t('supportCenterPage.feed.titles.applicationAccepted'),
+      label: buildFeedTypeLabel('application-accepted', t)
     };
   }
   if (normalized === 'dang xem xet') {
     return {
       type: 'application-review',
-      title: 'Nhà tuyển dụng đang xem xét hồ sơ',
-      label: FEED_TYPE_LABELS['application-review']
+      title: t('supportCenterPage.feed.titles.applicationReview'),
+      label: buildFeedTypeLabel('application-review', t)
     };
   }
   if (normalized === 'de nghi') {
     return {
       type: 'application-offer',
-      title: 'Bạn nhận được đề nghị mới',
-      label: FEED_TYPE_LABELS['application-offer']
+      title: t('supportCenterPage.feed.titles.applicationOffer'),
+      label: buildFeedTypeLabel('application-offer', t)
     };
   }
   if (normalized === 'tu choi') {
     return {
       type: 'application-rejected',
-      title: 'Đơn ứng tuyển đã bị từ chối',
-      label: FEED_TYPE_LABELS['application-rejected']
+      title: t('supportCenterPage.feed.titles.applicationRejected'),
+      label: buildFeedTypeLabel('application-rejected', t)
     };
   }
   return {
     type: 'application-update',
-    title: 'Hồ sơ ứng tuyển có cập nhật mới',
-    label: FEED_TYPE_LABELS['application-update']
+    title: t('supportCenterPage.feed.titles.applicationUpdate'),
+    label: buildFeedTypeLabel('application-update', t)
   };
 };
 
-const buildFeedTypeLabel = (type) => FEED_TYPE_LABELS[type] || 'Thông báo';
+const buildFeedTypeLabel = (type, t) => t(FEED_TYPE_TRANSLATION_KEYS[type] || 'supportCenterPage.feedTypes.default');
 
 const buildMessageLink = (normalizedRole) => {
   if (normalizedRole === 'nha tuyen dung') return '/employer/messages';
@@ -121,6 +122,7 @@ const buildMessageLink = (normalizedRole) => {
 
 const SupportCenterPage = () => {
   const API_BASE = CLIENT_API_BASE;
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const [currentUser, setCurrentUser] = useState(() => readStoredUser());
   const [token, setToken] = useState(() => String(localStorage.getItem('token') || '').trim());
@@ -258,7 +260,7 @@ const SupportCenterPage = () => {
         if (hasAccessDenied) {
           setPrivateFeedDenied(true);
           setNotificationFeed([]);
-          setFeedError('Tài khoản hiện tại không có quyền đọc hộp thông báo riêng trên trang này.');
+          setFeedError(t('supportCenterPage.empty.privateAccessDenied'));
           return;
         }
 
@@ -267,15 +269,22 @@ const SupportCenterPage = () => {
           .map((row, index) => ({
             id: `msg-${row?.userId || index}`,
             type: 'message',
-            typeLabel: buildFeedTypeLabel('message'),
+            typeLabel: buildFeedTypeLabel('message', t),
             title: Number(row?.unread || 0) > 0
-              ? `Bạn có ${Number(row?.unread || 0)} tin nhắn mới từ ${row?.name || 'Người dùng'}`
-              : `Tin nhắn mới từ ${row?.name || 'Người dùng'}`,
-            description: String(row?.lastMessage || 'Bạn có tin nhắn mới.').trim() || 'Bạn có tin nhắn mới.',
+              ? t('supportCenterPage.feed.messages.titleUnread', {
+                count: Number(row?.unread || 0),
+                name: row?.name || t('supportCenterPage.feed.defaults.user')
+              })
+              : t('supportCenterPage.feed.messages.title', {
+                name: row?.name || t('supportCenterPage.feed.defaults.user')
+              }),
+            description: t('supportCenterPage.feed.messages.description', {
+              name: row?.name || t('supportCenterPage.feed.defaults.user')
+            }),
             createdAt: row?.lastAt || '',
             timestamp: toTimestamp(row?.lastAt),
             badgeCount: Number(row?.unread || 0),
-            actionLabel: 'Mở hội thoại',
+            actionLabel: t('supportCenterPage.feed.actions.openConversation'),
             actionTo: messageLink
           }));
 
@@ -283,20 +292,24 @@ const SupportCenterPage = () => {
         const candidateApplicationNotifications = normalizedRole === 'ung vien'
           ? appRows
             .map((row, index) => {
-              const statusMeta = resolveCandidateStatusMeta(row?.TrangThai || row?.status);
+              const statusMeta = resolveCandidateStatusMeta(row?.TrangThai || row?.status, t);
               const statusText = String(row?.TrangThai || row?.status || '').trim();
-              const companyName = String(row?.TenCongTy || 'Nhà tuyển dụng').trim() || 'Nhà tuyển dụng';
-              const jobTitle = String(row?.TieuDe || 'vị trí đã ứng tuyển').trim() || 'vị trí đã ứng tuyển';
+              const companyName = String(row?.TenCongTy || t('supportCenterPage.feed.defaults.company')).trim() || t('supportCenterPage.feed.defaults.company');
+              const jobTitle = String(row?.TieuDe || t('supportCenterPage.feed.defaults.appliedPosition')).trim() || t('supportCenterPage.feed.defaults.appliedPosition');
               return {
                 id: `candidate-app-${row?.MaUngTuyen || row?.MaTin || index}`,
                 type: statusMeta.type,
                 typeLabel: statusMeta.label,
                 title: statusMeta.title,
-                description: `${companyName} cập nhật hồ sơ cho vị trí ${jobTitle}${statusText ? ` (${statusText})` : ''}.`,
+                description: t('supportCenterPage.feed.candidateApplication.description', {
+                  companyName,
+                  jobTitle,
+                  statusText: statusText ? ` (${statusText})` : ''
+                }),
                 createdAt: row?.NgayNop || '',
                 timestamp: toTimestamp(row?.NgayNop),
                 badgeCount: 0,
-                actionLabel: 'Xem chi tiết hồ sơ',
+                actionLabel: t('supportCenterPage.feed.actions.viewApplicationDetails'),
                 actionTo: '/jobs/applied'
               };
             })
@@ -311,13 +324,16 @@ const SupportCenterPage = () => {
               return {
                 id: `employer-app-${row?.MaUngTuyen || row?.MaTin || index}`,
                 type: 'application-received',
-                typeLabel: buildFeedTypeLabel('application-received'),
-                title: `Hồ sơ ứng tuyển mới cho ${jobTitle}`,
-                description: `${candidateName} vừa nộp hồ sơ${statusText ? ` (${statusText})` : ''}.`,
+                typeLabel: buildFeedTypeLabel('application-received', t),
+                title: t('supportCenterPage.feed.employerApplication.title', { jobTitle }),
+                description: t('supportCenterPage.feed.employerApplication.description', {
+                  candidateName,
+                  statusText: statusText ? ` (${statusText})` : ''
+                }),
                 createdAt: row?.NgayNop || '',
                 timestamp: toTimestamp(row?.NgayNop),
                 badgeCount: 0,
-                actionLabel: 'Xem hồ sơ',
+                actionLabel: t('supportCenterPage.feed.actions.viewApplicationDetails'),
                 actionTo: '/employer/applications'
               };
             })
@@ -330,13 +346,16 @@ const SupportCenterPage = () => {
             return {
               id: `company-comment-${row?.id || index}`,
               type: 'company-comment',
-              typeLabel: buildFeedTypeLabel('company-comment'),
-              title: 'Bình luận mới về công ty',
-              description: `${author}: ${trimText(row?.content || 'Có bình luận mới về công ty của bạn.', 160)}`,
+              typeLabel: buildFeedTypeLabel('company-comment', t),
+              title: t('supportCenterPage.feed.titles.companyComment'),
+              description: t('supportCenterPage.feed.companyComment.description', {
+                author,
+                content: trimText(row?.content || t('supportCenterPage.feed.companyComment.defaultText'), 160)
+              }),
               createdAt: row?.createdAt || '',
               timestamp: toTimestamp(row?.createdAt),
               badgeCount: 0,
-              actionLabel: 'Xem hồ sơ công ty',
+              actionLabel: t('supportCenterPage.feed.actions.viewCompanyProfile'),
               actionTo: '/employer/company'
             };
           })
@@ -350,13 +369,13 @@ const SupportCenterPage = () => {
             return {
               id: `company-rating-${row?.id || index}`,
               type: 'company-rating',
-              typeLabel: buildFeedTypeLabel('company-rating'),
-              title: `Công ty nhận thêm đánh giá ${stars > 0 ? `${stars}/5 sao` : 'mới'}`,
-              description: `${author} vừa gửi đánh giá cho công ty của bạn.`,
+              typeLabel: buildFeedTypeLabel('company-rating', t),
+              title: t('supportCenterPage.feed.titles.companyRating', { stars: stars > 0 ? `${stars}/5` : t('supportCenterPage.feed.titles.new') }),
+              description: t('supportCenterPage.feed.companyRating.description', { author }),
               createdAt: row?.createdAt || '',
               timestamp: toTimestamp(row?.createdAt),
               badgeCount: 0,
-              actionLabel: 'Xem hồ sơ công ty',
+              actionLabel: t('supportCenterPage.feed.actions.viewCompanyProfile'),
               actionTo: '/employer/company'
             };
           })
@@ -374,7 +393,7 @@ const SupportCenterPage = () => {
         setNotificationFeed(merged.slice(0, 80));
       } catch (error) {
         if (!cancelled) {
-          setFeedError(error?.message || 'Không thể tải danh sách thông báo.');
+          setFeedError(error?.message || t('supportCenterPage.feed.errors.loadFailed'));
           setNotificationFeed([]);
         }
       } finally {
@@ -426,12 +445,22 @@ const SupportCenterPage = () => {
     setPermissionState(result.permission);
 
     if (result.permission === 'granted') {
-      notify({ type: 'success', mode: 'toast', title: 'Đã bật thông báo', message: 'JobFinder sẽ hiển thị thông báo trên thiết bị của bạn.' });
+      notify({
+        type: 'success',
+        mode: 'toast',
+        title: t('supportCenterPage.notifications.enabledTitle'),
+        message: t('supportCenterPage.notifications.enabledMessage')
+      });
       return;
     }
 
     if (result.permission === 'denied') {
-      notify({ type: 'warning', mode: 'toast', title: 'Chưa bật được thông báo', message: 'Hãy cho phép thông báo trong cài đặt trình duyệt hoặc thiết bị.' });
+      notify({
+        type: 'warning',
+        mode: 'toast',
+        title: t('supportCenterPage.notifications.deniedTitle'),
+        message: t('supportCenterPage.notifications.deniedMessage')
+      });
     }
   };
 
@@ -439,11 +468,9 @@ const SupportCenterPage = () => {
     <div className="support-center-page">
       <section className="support-hero support-hero--single">
         <div className="support-hero-copy">
-          <span className="support-eyebrow">Thông báo</span>
-          <h1>Trung tâm thông báo kiểu job board hiện đại</h1>
-          <p>
-            Theo dõi toàn bộ thông báo trên JobFinder: tin nhắn, ứng tuyển, lịch phỏng vấn, đánh giá và bình luận công ty.
-          </p>
+          <span className="support-eyebrow">{t('supportCenterPage.hero.eyebrow')}</span>
+          <h1>{t('supportCenterPage.hero.title')}</h1>
+          <p>{t('supportCenterPage.hero.description')}</p>
           <div className="support-hero-actions">
             <button
               type="button"
@@ -452,7 +479,7 @@ const SupportCenterPage = () => {
               disabled={notificationsEnabled}
             >
               <i className="bi bi-bell me-2"></i>
-              {notificationsEnabled ? 'Thông báo đã bật' : 'Bật thông báo thiết bị'}
+              {notificationsEnabled ? t('supportCenterPage.buttons.enabledNotifications') : t('supportCenterPage.buttons.enableNotifications')}
             </button>
           </div>
         </div>
@@ -461,39 +488,39 @@ const SupportCenterPage = () => {
       <section className="support-content-grid support-content-grid--single">
         <div className="support-panel">
           <div className="support-panel-head">
-            <h2>Thông báo mới</h2>
-            <span>{notificationFeed.length} mục</span>
+            <h2>{t('supportCenterPage.panel.title')}</h2>
+            <span>{t('supportCenterPage.panel.itemsCount', { count: notificationFeed.length })}</span>
           </div>
 
-          {canReadPrivateNotifications && feedLoading ? <div className="support-state-inline">Đang tải thông báo...</div> : null}
+          {canReadPrivateNotifications && feedLoading ? <div className="support-state-inline">{t('supportCenterPage.feed.loading')}</div> : null}
           {canReadPrivateNotifications && feedError ? <div className="alert alert-danger mb-0">{feedError}</div> : null}
 
           {!isLoggedIn ? (
             <div className="support-empty-state">
-              <h3>Đăng nhập để xem thông báo cá nhân</h3>
-              <p>Trang này hiển thị thông báo theo tài khoản, bao gồm tin nhắn mới và trạng thái hồ sơ ứng tuyển.</p>
-              <Link to="/login" className="btn btn-primary">Đăng nhập</Link>
+              <h3>{t('supportCenterPage.empty.loginTitle')}</h3>
+              <p>{t('supportCenterPage.empty.loginDescription')}</p>
+              <Link to="/login" className="btn btn-primary">{t('supportCenterPage.empty.loginButton')}</Link>
             </div>
           ) : null}
 
           {isLoggedIn && !canReadPrivateNotifications ? (
             <div className="support-empty-state">
-              <h3>Thông báo cá nhân khả dụng cho ứng viên và nhà tuyển dụng</h3>
-              <p>Tài khoản hiện tại vẫn nhận được thông báo hệ thống trong ứng dụng, nhưng không có hộp thư ứng tuyển riêng trên màn hình này.</p>
+              <h3>{t('supportCenterPage.empty.noPrivateFeedTitle')}</h3>
+              <p>{t('supportCenterPage.empty.noPrivateFeedDescription')}</p>
             </div>
           ) : null}
 
           {isLoggedIn && canReadPrivateNotifications && privateFeedDenied ? (
             <div className="support-empty-state">
-              <h3>Không thể tải thông báo riêng</h3>
-              <p>Tài khoản hiện tại chưa có quyền đọc dữ liệu thông báo riêng ở máy chủ. Vui lòng liên hệ quản trị viên hoặc kiểm tra lại phiên đăng nhập.</p>
+              <h3>{t('supportCenterPage.empty.privateAccessDeniedTitle')}</h3>
+              <p>{t('supportCenterPage.empty.privateAccessDeniedDescription')}</p>
             </div>
           ) : null}
 
           {canReadPrivateNotifications && !privateFeedDenied && !feedLoading && !feedError && notificationFeed.length === 0 ? (
             <div className="support-empty-state">
-              <h3>Chưa có thông báo mới</h3>
-              <p>Khi có tin nhắn, cập nhật hồ sơ ứng tuyển, lịch phỏng vấn, đánh giá hoặc bình luận công ty, hệ thống sẽ hiển thị tại đây.</p>
+              <h3>{t('supportCenterPage.empty.noNotificationsTitle')}</h3>
+              <p>{t('supportCenterPage.empty.noNotificationsDescription')}</p>
             </div>
           ) : null}
 
@@ -503,9 +530,9 @@ const SupportCenterPage = () => {
                 <article key={item.id} className="support-feed-item">
                   <div className="support-feed-meta">
                     <span className={`support-feed-type ${item.type}`}>
-                      {item.typeLabel || buildFeedTypeLabel(item.type)}
+                      {item.typeLabel || buildFeedTypeLabel(item.type, t)}
                     </span>
-                    <span className="support-feed-time">{formatDateTime(item.createdAt)}</span>
+                    <span className="support-feed-time">{formatDateTime(item.createdAt, t)}</span>
                   </div>
                   <h3>{item.title}</h3>
                   <p>{item.description}</p>

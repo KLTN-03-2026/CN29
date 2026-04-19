@@ -1,11 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
-const STATUS_FILTERS = [
-    { key: 'all', label: 'Tất cả', icon: 'bi-collection' },
-    { key: 'viewed', label: 'Đã xem', icon: 'bi-eye' },
-    { key: 'contacted', label: 'Đã liên hệ', icon: 'bi-chat-dots' }
+const STATUS_FILTER_KEYS = [
+    { key: 'all', labelKey: 'employer.cvManagePage.filters.all', icon: 'bi-collection' },
+    { key: 'viewed', labelKey: 'employer.cvManagePage.filters.viewed', icon: 'bi-eye' },
+    { key: 'contacted', labelKey: 'employer.cvManagePage.filters.contacted', icon: 'bi-chat-dots' }
 ];
 
 const STATUS_VALUE_BY_FILTER = {
@@ -26,12 +27,18 @@ const normalizeCvStatus = (status) => {
 };
 
 const CVManage = () => {
+    const { t } = useTranslation();
     const API_BASE = CLIENT_API_BASE;
     const navigate = useNavigate();
     const [savedCVs, setSavedCVs] = useState([]);
     const [filter, setFilter] = useState('all');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+
+    const STATUS_FILTERS = useMemo(() => STATUS_FILTER_KEYS.map((item) => ({
+        ...item,
+        label: t(item.labelKey)
+    })), [t]);
 
     const token = localStorage.getItem('token');
     const authHeaders = useMemo(() => ({
@@ -43,7 +50,7 @@ const CVManage = () => {
         setLoading(true);
         setError('');
         if (!token) {
-            setError('Bạn cần đăng nhập.');
+            setError(t('employer.cvManagePage.errors.notLoggedIn'));
             setSavedCVs([]);
             setLoading(false);
             return;
@@ -52,7 +59,7 @@ const CVManage = () => {
         try {
             const res = await fetch(`${API_BASE}/api/cvs/saved`, { headers: authHeaders });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không tải được danh sách CV đã lưu');
+            if (!res.ok) throw new Error(data?.error || t('employer.cvManagePage.errors.noFile'));
             setSavedCVs(Array.isArray(data?.saved) ? data.saved : []);
         } catch (err) {
             setError(err?.message || 'Có lỗi xảy ra');
@@ -76,7 +83,7 @@ const CVManage = () => {
                 body: JSON.stringify({ status })
             });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không cập nhật được');
+            if (!res.ok) throw new Error(data?.error || t('common.error') || 'Unable to update status');
 
             setSavedCVs((prev) => prev.map((x) => (x.cvId === cvId ? { ...x, status } : x)));
             return true;
@@ -88,7 +95,7 @@ const CVManage = () => {
 
     const removeSavedCv = async (cvId) => {
         if (!token) return;
-        const confirmed = window.confirm('Bạn có chắc chắn muốn xóa CV này khỏi danh sách đã lưu?');
+        const confirmed = window.confirm(t('employer.cvManagePage.confirm.removeSavedCv'));
         if (!confirmed) return;
 
         try {
@@ -108,14 +115,14 @@ const CVManage = () => {
     const openCvPreview = async (cv) => {
         const fileUrl = String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim();
         if (!fileUrl) {
-            alert('Ứng viên chưa đính kèm file CV để xem.');
+            alert(t('employer.cvManagePage.errors.noFile'));
             return;
         }
 
         try {
             const response = await fetch(fileUrl, { method: 'HEAD' });
             if (!response.ok && response.status !== 405) {
-                alert('File CV không còn tồn tại trên hệ thống. Vui lòng liên hệ ứng viên để cập nhật CV mới.');
+                alert(t('employer.cvManagePage.errors.fileMissing'));
                 return;
             }
         } catch {
@@ -129,7 +136,7 @@ const CVManage = () => {
     const openMessageBox = async (cv) => {
         const candidateUserId = Number.parseInt(String(cv?.candidateUserId || ''), 10);
         if (!Number.isFinite(candidateUserId)) {
-            setError('Không xác định được ứng viên để nhắn tin.');
+            setError(t('employer.cvManagePage.errors.missingCandidate'));
             return;
         }
 
@@ -161,12 +168,12 @@ const CVManage = () => {
     return (
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="mb-0 employer-page-title">Quản lý CV</h2>
+                <h2 className="mb-0 employer-page-title">{t('employer.cvManagePage.title')}</h2>
             </div>
 
             <div className="card border-0 shadow-sm mb-3">
                 <div className="card-body">
-                    <div className="cv-manage-filter-wrap" role="tablist" aria-label="Lọc trạng thái CV">
+                    <div className="cv-manage-filter-wrap" role="tablist" aria-label={t('employer.cvManagePage.filterAriaLabel')}>
                         {STATUS_FILTERS.map((item) => {
                             const isActive = filter === item.key;
                             const count = counts[item.key] || 0;
@@ -197,7 +204,7 @@ const CVManage = () => {
                     {loading && (
                         <div className="text-center py-5">
                             <div className="spinner-border text-primary" role="status">
-                                <span className="visually-hidden">Loading...</span>
+                                <span className="visually-hidden">{t('employer.cvManagePage.loading')}</span>
                             </div>
                         </div>
                     )}
@@ -207,10 +214,10 @@ const CVManage = () => {
                             <i className="bi bi-file-earmark-x fs-1 text-muted"></i>
                             <p className="text-muted mt-3">
                                 {filter === 'all'
-                                    ? 'Bạn chưa lưu CV nào.'
-                                    : 'Không có CV ở trạng thái lọc hiện tại.'}
+                                    ? t('employer.cvManagePage.emptyAll')
+                                    : t('employer.cvManagePage.emptyFiltered')}
                                 <br />
-                                Hãy tìm kiếm và lưu CV ứng viên phù hợp.
+                                {t('employer.cvManagePage.emptyHint')}
                             </p>
                         </div>
                     ) : (
@@ -219,12 +226,12 @@ const CVManage = () => {
                                 <table className="table table-hover align-middle">
                                     <thead>
                                         <tr>
-                                            <th>Ứng viên</th>
-                                            <th>Email</th>
-                                            <th>Địa điểm</th>
-                                            <th>Kinh nghiệm</th>
-                                            <th>Trạng thái</th>
-                                            <th className="text-end">Action</th>
+                                            <th>{t('employer.cvManagePage.table.candidate')}</th>
+                                            <th>{t('employer.cvManagePage.table.email')}</th>
+                                            <th>{t('employer.cvManagePage.table.location')}</th>
+                                            <th>{t('employer.cvManagePage.table.experience')}</th>
+                                            <th>{t('employer.cvManagePage.table.status')}</th>
+                                            <th className="text-end">{t('employer.cvManagePage.table.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -246,8 +253,8 @@ const CVManage = () => {
                                                             <button
                                                                 type="button"
                                                                 className="btn btn-sm btn-outline-primary cv-manage-action-icon"
-                                                                title="Xem CV"
-                                                                aria-label="Xem CV"
+                                                                title={t('employer.cvManagePage.actions.viewCv')}
+                                                                aria-label={t('employer.cvManagePage.actions.viewCv')}
                                                                 onClick={() => openCvPreview(cv)}
                                                             >
                                                                 <i className="bi bi-eye"></i>
@@ -255,8 +262,8 @@ const CVManage = () => {
                                                             <button
                                                                 type="button"
                                                                 className="btn btn-sm btn-outline-info cv-manage-action-icon"
-                                                                title="Nhắn tin"
-                                                                aria-label="Nhắn tin"
+                                                                title={t('employer.cvManagePage.actions.message')}
+                                                                aria-label={t('employer.cvManagePage.actions.message')}
                                                                 onClick={() => openMessageBox(cv)}
                                                             >
                                                                 <i className="bi bi-chat-dots"></i>
@@ -264,8 +271,8 @@ const CVManage = () => {
                                                             <button
                                                                 type="button"
                                                                 className="btn btn-sm btn-outline-danger cv-manage-action-icon"
-                                                                title="Xóa khỏi đã lưu"
-                                                                aria-label="Xóa khỏi đã lưu"
+                                                                title={t('employer.cvManagePage.actions.removeSaved')}
+                                                                aria-label={t('employer.cvManagePage.actions.removeSaved')}
                                                                 onClick={() => removeSavedCv(cv.cvId)}
                                                             >
                                                                 <i className="bi bi-trash"></i>

@@ -880,6 +880,130 @@
   }
 }
 
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-page {
+  background:
+    radial-gradient(circle at 8% 10%, rgba(47, 155, 229, 0.14), transparent 36%),
+    radial-gradient(circle at 92% 14%, rgba(37, 171, 198, 0.12), transparent 36%),
+    linear-gradient(180deg, #07111f 0%, #0b1829 48%, #0e1e33 100%);
+  color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-breadcrumb ol {
+  color: #8ea8c2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-breadcrumb li + li::before {
+  color: #6f8daa;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-breadcrumb a {
+  color: #73cfff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-panel,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-header,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-card,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-list-item,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-pagination-summary,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-range-box,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-pagination-pages button,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-empty-state {
+  background: #111f33;
+  border-color: #2f4864;
+  box-shadow: 0 16px 34px rgba(2, 10, 20, 0.45);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-panel h3,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-header h1,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-card-body h3,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-list-content h3,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-content h3,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-empty-state h4 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-header-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-card-body p,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-list-content p,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-description,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-description.muted,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-empty-state p,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-pagination-pages .ellipsis,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-pagination-summary,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-range-box span,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-label {
+  color: #9eb7d1;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-filter-pill,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-sort-select,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-search-wrap,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-list-action.preview,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-btn.ghost,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-close {
+  background: #13253b;
+  border-color: #395676;
+  color: #c7ddf2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-sort-caret {
+  color: #9ab5ce;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-search-icon,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-search-input,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-sort-select {
+  color: #dbe9f7;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-search-input::placeholder {
+  color: #87a4c0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-filter-pill small {
+  color: #9eb8d2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-filter-pill:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-btn.ghost:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-close:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-list-action.preview:hover {
+  background: #18304c;
+  border-color: #4b6d92;
+  color: #e9f5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-thumb-shell,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-list-thumb-shell,
+:is(html.dark, html[data-bs-theme='dark']) .cv-grid-template-modal-preview,
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-thumb-empty {
+  background: #0d1a2c;
+  border-color: #304a66;
+  color: #9bb4cd;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-view-switch {
+  background: #13253b;
+  border-color: #3a5676;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-view-switch button {
+  color: #a8c0d8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-alert.error {
+  background: #3a1f29;
+  border-color: #7f3d52;
+  color: #ffd3df;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-gallery-pagination-pages button:disabled {
+  background: #101f32;
+  border-color: #2f4660;
+  color: #6f89a4;
+}
+
 @media (max-width: 1280px) {
   .cv-gallery-layout {
     grid-template-columns: 270px minmax(0, 1fr);

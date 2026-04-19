@@ -54,6 +54,7 @@ const RichBlock = ({ html }) => {
     return (
         <div
             className="job-detail-rich-block"
+            data-i18n-skip="true"
             dangerouslySetInnerHTML={{ __html: safeHtml || '<em>Chưa cập nhật</em>' }}
         />
     );
@@ -489,10 +490,10 @@ const JobPublicDetail = () => {
                                     <span className={`badge rounded-pill ${job.TrangThai === 'Đã đăng' ? 'bg-success' : 'bg-secondary'}`}>{job.TrangThai}</span>
                                 )}
                             </div>
-                            <h2 className="fw-bold mt-2 mb-1 job-detail-title">{job?.TieuDe || 'Chi tiết việc làm'}</h2>
+                            <h2 className="fw-bold mt-2 mb-1 job-detail-title" data-i18n-skip="true">{job?.TieuDe || 'Chi tiết việc làm'}</h2>
                             <div className="text-muted fw-semibold d-flex gap-3 flex-wrap">
-                                <span><i className="bi bi-building me-1"></i>{companyName}</span>
-                                <span><i className="bi bi-geo-alt me-1"></i>{displayAddress}</span>
+                                <span data-i18n-skip="true"><i className="bi bi-building me-1"></i>{companyName}</span>
+                                <span data-i18n-skip="true"><i className="bi bi-geo-alt me-1"></i>{displayAddress}</span>
                             </div>
                             <div className="d-flex gap-2 flex-wrap mt-3">
                                 <span className="job-detail-pill job-detail-pill--strong"><i className="bi bi-cash-coin me-1"></i>{salaryText || 'Thỏa thuận'}</span>
@@ -629,7 +630,7 @@ const JobPublicDetail = () => {
 
                                                 <div className="job-detail-company-fact">
                                                     <i className="bi bi-geo-alt"></i>
-                                                    <span>{companyLocation || displayAddress}</span>
+                                                    <span data-i18n-skip="true">{companyLocation || displayAddress}</span>
                                                 </div>
                                             </div>
 

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, Outlet, Link, useLocation } from 'react-router-dom';
+import { useNavigate, Outlet, Link, useLocation, matchPath } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
 import './EmployerLayout.css';
 
@@ -53,6 +54,7 @@ const withAvatarVersion = (url, version) => {
 const EmployerLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t, i18n } = useTranslation();
     const { requestConfirm } = useNotification();
     const [user, setUser] = useState(() => readStoredUser());
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -62,8 +64,8 @@ const EmployerLayout = () => {
     const avatarHydratedUserIdRef = useRef('');
 
     const userId = user?.id || user?.MaNguoiDung || user?.userId || user?.userID || null;
-    const displayName = user?.name || user?.HoTen || user?.hoTen || user?.fullName || user?.full_name || user?.email || 'Nhà tuyển dụng';
-    const roleLabel = user?.role || user?.VaiTro || user?.vaiTro || user?.LoaiNguoiDung || 'Nhà tuyển dụng';
+    const displayName = user?.name || user?.HoTen || user?.hoTen || user?.fullName || user?.full_name || user?.email || t('employer.layout.defaultDisplayName');
+    const roleLabel = user?.role || user?.VaiTro || user?.vaiTro || user?.LoaiNguoiDung || t('header.role.employer');
     const avatarRaw = String(
         user?.avatar
         || user?.avatarAbsoluteUrl
@@ -74,14 +76,21 @@ const EmployerLayout = () => {
         || ''
     ).trim();
     const avatarUrl = withAvatarVersion(avatarRaw, user?.avatarUpdatedAt);
+    const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
+    const isEnglish = normalizedLanguage.startsWith('en');
+
+    const handleToggleLanguage = (language) => {
+        if (!language || language === normalizedLanguage) return;
+        i18n.changeLanguage(language);
+    };
 
     const handleLogout = async () => {
         const confirmed = await requestConfirm({
             type: 'warning',
-            title: 'Xác nhận đăng xuất',
-            message: 'Bạn có chắc chắn muốn đăng xuất?',
-            confirmText: 'Đăng xuất',
-            cancelText: 'Ở lại'
+            title: t('employer.layout.confirmLogout.title'),
+            message: t('employer.layout.confirmLogout.message'),
+            confirmText: t('employer.layout.confirmLogout.confirm'),
+            cancelText: t('employer.layout.confirmLogout.cancel')
         });
         if (!confirmed) return;
 
@@ -190,15 +199,61 @@ const EmployerLayout = () => {
     };
 
     const menuItems = [
-        { path: '/employer', icon: 'bi-speedometer2', label: 'Dashboard', exact: true, subtitle: 'Tổng quan & báo cáo tuyển dụng' },
-        { path: '/employer/cv-search', icon: 'bi-search', label: 'Tìm kiếm CV', subtitle: 'Tìm ứng viên phù hợp' },
-        { path: '/employer/cv-manage', icon: 'bi-bookmark-check', label: 'Quản lý CV', subtitle: 'Danh sách CV đã lưu' },
-        { path: '/employer/jobs', icon: 'bi-briefcase', label: 'Quản lý tin tuyển dụng', subtitle: 'Đăng và theo dõi tin' },
-        { path: '/employer/notifications', icon: 'bi-bell', label: 'Thông báo', subtitle: 'Xem nhanh tại dashboard' },
-        { path: '/employer/applications', icon: 'bi-file-earmark-person', label: 'Quản lý hồ sơ ứng tuyển', subtitle: 'Duyệt hồ sơ ứng viên' },
-        { path: '/employer/messages', icon: 'bi-chat-dots', label: 'Tin nhắn tuyển dụng', subtitle: 'Trao đổi với ứng viên' },
-        { path: '/employer/company', icon: 'bi-building', label: 'Thông tin công ty', subtitle: 'Hồ sơ doanh nghiệp' },
-        { path: '/employer/account', icon: 'bi-person', label: 'Tài khoản', subtitle: 'Cập nhật hồ sơ cá nhân' }
+        {
+            path: '/employer',
+            icon: 'bi-speedometer2',
+            labelKey: 'employer.layout.menu.dashboard',
+            subtitleKey: 'employer.layout.menuSubtitle.dashboard',
+            exact: true
+        },
+        {
+            path: '/employer/cv-search',
+            icon: 'bi-search',
+            labelKey: 'employer.layout.menu.cvSearch',
+            subtitleKey: 'employer.layout.menuSubtitle.cvSearch'
+        },
+        {
+            path: '/employer/cv-manage',
+            icon: 'bi-bookmark-check',
+            labelKey: 'employer.layout.menu.cvManage',
+            subtitleKey: 'employer.layout.menuSubtitle.cvManage'
+        },
+        {
+            path: '/employer/jobs',
+            icon: 'bi-briefcase',
+            labelKey: 'employer.layout.menu.jobs',
+            subtitleKey: 'employer.layout.menuSubtitle.jobs'
+        },
+        {
+            path: '/employer/notifications',
+            icon: 'bi-bell',
+            labelKey: 'employer.layout.menu.notifications',
+            subtitleKey: 'employer.layout.menuSubtitle.notifications'
+        },
+        {
+            path: '/employer/applications',
+            icon: 'bi-file-earmark-person',
+            labelKey: 'employer.layout.menu.applications',
+            subtitleKey: 'employer.layout.menuSubtitle.applications'
+        },
+        {
+            path: '/employer/messages',
+            icon: 'bi-chat-dots',
+            labelKey: 'employer.layout.menu.messages',
+            subtitleKey: 'employer.layout.menuSubtitle.messages'
+        },
+        {
+            path: '/employer/company',
+            icon: 'bi-building',
+            labelKey: 'employer.layout.menu.company',
+            subtitleKey: 'employer.layout.menuSubtitle.company'
+        },
+        {
+            path: '/employer/account',
+            icon: 'bi-person',
+            labelKey: 'employer.layout.menu.account',
+            subtitleKey: 'employer.layout.menuSubtitle.account'
+        }
     ];
 
     const isActive = (menuPath, exact = false) => {
@@ -208,10 +263,14 @@ const EmployerLayout = () => {
         return location.pathname.startsWith(menuPath);
     };
 
-    const currentMenu = menuItems
-        .filter((item) => isActive(item.path, item.exact))
-        .sort((a, b) => b.path.length - a.path.length)[0] || menuItems[0];
-    const hidePageHeaderText = location.pathname === '/employer/account';
+    const currentMenu = menuItems.find((item) =>
+        matchPath({ path: item.path, end: item.exact || false }, location.pathname)
+    ) || menuItems[0];
+    const hidePageHeaderText =
+        location.pathname === '/employer/account' ||
+        location.pathname === '/employer/cv-search' ||
+        location.pathname === '/employer/cv-manage' ||
+        location.pathname.startsWith('/employer/jobs');
 
     const handleToggleSidebar = () => {
         if (window.matchMedia('(max-width: 991px)').matches) {
@@ -229,7 +288,7 @@ const EmployerLayout = () => {
                 type="button"
                 className={`employer-mobile-overlay ${mobileMenuOpen ? 'show' : ''}`}
                 onClick={closeMobileMenu}
-                aria-label="Đóng menu"
+                aria-label={t('employer.layout.aria.closeMenu')}
             />
 
             <aside className={`employer-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'mobile-open' : ''}`}>
@@ -249,16 +308,17 @@ const EmployerLayout = () => {
                 <nav className="employer-menu">
                     {menuItems.map((item) => {
                         const active = isActive(item.path, item.exact);
+                        const itemLabel = t(item.labelKey);
                         return (
                             <Link
                                 key={item.path}
                                 to={item.path}
                                 className={`employer-menu-item ${active ? 'active' : ''}`}
-                                title={item.label}
+                                title={itemLabel}
                                 onClick={closeMobileMenu}
                             >
                                 <i className={`bi ${item.icon}`}></i>
-                                {!sidebarCollapsed && <span>{item.label}</span>}
+                                {!sidebarCollapsed && <span>{itemLabel}</span>}
                             </Link>
                         );
                     })}
@@ -271,7 +331,7 @@ const EmployerLayout = () => {
                         onClick={handleLogout}
                     >
                         <i className="bi bi-box-arrow-right"></i>
-                        {!sidebarCollapsed && <span>Đăng xuất</span>}
+                        {!sidebarCollapsed && <span>{t('header.user.logout')}</span>}
                     </button>
                 </div>
             </aside>
@@ -283,22 +343,51 @@ const EmployerLayout = () => {
                             type="button"
                             className="employer-sidebar-toggle"
                             onClick={handleToggleSidebar}
-                            aria-label="Thu gọn menu"
+                            aria-label={t('employer.layout.aria.toggleMenu')}
                         >
                             <i className="bi bi-list"></i>
                         </button>
                         {!hidePageHeaderText ? (
                             <div>
-                                <h1 className="employer-header-title">{currentMenu?.label || 'Nhà tuyển dụng'}</h1>
-                                <p className="employer-header-subtitle">{currentMenu?.subtitle || 'Quản lý tuyển dụng'}</p>
+                                <h1 className="employer-header-title">{currentMenu?.labelKey ? t(currentMenu.labelKey) : t('employer.layout.defaultDisplayName')}</h1>
+                                <p className="employer-header-subtitle">{currentMenu?.subtitleKey ? t(currentMenu.subtitleKey) : t('employer.layout.defaultSubtitle')}</p>
                             </div>
                         ) : null}
                     </div>
 
                     <div className="employer-header-right">
-                        <Link to="/" className="employer-home-btn" title="Về trang chủ">
+                        <Link to="/" className="employer-home-btn" title={t('common.home')}>
                             <i className="bi bi-house-door"></i>
-                            <span>Trang chủ</span>
+                            <span>{t('common.home')}</span>
+                        </Link>
+                        <div className="employer-language-toggle" aria-label={t('common.languageSwitch')}>
+                            <button
+                                type="button"
+                                className={`employer-language-btn ${isEnglish ? 'is-active' : ''}`}
+                                onClick={() => handleToggleLanguage('en')}
+                                title={t('common.switchToEnglish')}
+                                aria-pressed={isEnglish}
+                            >
+                                EN
+                            </button>
+                            <button
+                                type="button"
+                                className={`employer-language-btn ${!isEnglish ? 'is-active' : ''}`}
+                                onClick={() => handleToggleLanguage('vi')}
+                                title={t('common.switchToVietnamese')}
+                                aria-pressed={!isEnglish}
+                            >
+                                VI
+                            </button>
+                        </div>
+                        <Link
+                            to="/employer/notifications"
+                            className="employer-notification-btn"
+                            title={t('header.user.notifications')}
+                            aria-label={t('header.user.notifications')}
+                        >
+                            <i className="bi bi-bell"></i>
+                            <span>{t('header.user.notifications')}</span>
                         </Link>
                         <div className="employer-header-user" ref={profileDropdownRef}>
                             <button
@@ -307,7 +396,7 @@ const EmployerLayout = () => {
                                 onClick={() => setShowProfileDropdown((prev) => !prev)}
                                 aria-haspopup="menu"
                                 aria-expanded={showProfileDropdown}
-                                aria-label="Mở menu tài khoản"
+                                aria-label={t('employer.layout.aria.openAccountMenu')}
                             >
                                 <div className="employer-user-pill-icon">
                                     {avatarUrl ? (
@@ -335,19 +424,19 @@ const EmployerLayout = () => {
                                 <div className="employer-user-menu" role="menu">
                                     <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer/account')}>
                                         <i className="bi bi-file-earmark-person"></i>
-                                        <span>Hồ sơ của tôi</span>
+                                        <span>{t('employer.layout.dropdown.profile')}</span>
                                     </button>
                                     <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer')}>
                                         <i className="bi bi-speedometer2"></i>
-                                        <span>Dashboard</span>
+                                        <span>{t('employer.layout.dropdown.dashboard')}</span>
                                     </button>
                                     <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer/jobs')}>
                                         <i className="bi bi-briefcase"></i>
-                                        <span>Quản lý tin tuyển dụng</span>
+                                        <span>{t('employer.layout.dropdown.jobs')}</span>
                                     </button>
-                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer')}>
+                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer/notifications')}>
                                         <i className="bi bi-bell"></i>
-                                        <span>Thông báo</span>
+                                        <span>{t('employer.layout.dropdown.notifications')}</span>
                                     </button>
                                     <button
                                         type="button"
@@ -358,7 +447,7 @@ const EmployerLayout = () => {
                                         }}
                                     >
                                         <i className="bi bi-box-arrow-right"></i>
-                                        <span>Đăng xuất</span>
+                                        <span>{t('employer.layout.dropdown.logout')}</span>
                                     </button>
                                 </div>
                             )}

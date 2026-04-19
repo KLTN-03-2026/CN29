@@ -1,25 +1,60 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import CareerRichTextEditor from '../../career-guide/components/CareerRichTextEditor';
 import CalendarDatePicker from '../../../components/date/CalendarDatePicker';
 import './JobCreate.css';
 
-const salaryTypes = ['Thỏa thuận', 'Tháng', 'Năm', 'Khoảng', 'Không xác định'];
-const employmentTypes = ['Toàn thời gian', 'Bán thời gian', 'Thực tập', 'Từ xa', 'Hợp đồng'];
-const statuses = ['Đã đăng', 'Nháp'];
-const experienceOptions = ['Không yêu cầu', 'Dưới 1 năm', '1 năm', '2 năm', '3 năm', '4 năm', '5 năm', 'Trên 5 năm'];
-const levelOptions = [
-    'Thực tập sinh',
-    'Nhân viên',
-    'Trưởng nhóm',
-    'Trưởng/Phó phòng',
-    'Quản lý / Giám sát',
-    'Trưởng chi nhánh',
-    'Phó giám đốc',
-    'Giám đốc'
+const salaryTypes = [
+    { value: 'Thỏa thuận', labelKey: 'employer.jobCreatePage.salaryTypes.negotiable' },
+    { value: 'Tháng', labelKey: 'employer.jobCreatePage.salaryTypes.monthly' },
+    { value: 'Năm', labelKey: 'employer.jobCreatePage.salaryTypes.yearly' },
+    { value: 'Khoảng', labelKey: 'employer.jobCreatePage.salaryTypes.range' },
+    { value: 'Không xác định', labelKey: 'employer.jobCreatePage.salaryTypes.unknown' }
 ];
-const jobFieldOptions = ['CNTT', 'Marketing', 'Bán hàng', 'Hành chính', 'Kỹ thuật', 'Tài chính', 'Sản xuất', 'Dịch vụ', 'Khác'];
+const employmentTypes = [
+    { value: 'Toàn thời gian', labelKey: 'employer.jobCreatePage.employmentTypes.fullTime' },
+    { value: 'Bán thời gian', labelKey: 'employer.jobCreatePage.employmentTypes.partTime' },
+    { value: 'Thực tập', labelKey: 'employer.jobCreatePage.employmentTypes.internship' },
+    { value: 'Từ xa', labelKey: 'employer.jobCreatePage.employmentTypes.remote' },
+    { value: 'Hợp đồng', labelKey: 'employer.jobCreatePage.employmentTypes.contract' }
+];
+const statuses = [
+    { value: 'Đã đăng', labelKey: 'employer.jobCreatePage.statuses.published' },
+    { value: 'Nháp', labelKey: 'employer.jobCreatePage.statuses.draft' }
+];
+const experienceOptions = [
+    { value: 'Không yêu cầu', labelKey: 'employer.jobCreatePage.experience.none' },
+    { value: 'Dưới 1 năm', labelKey: 'employer.jobCreatePage.experience.under1' },
+    { value: '1 năm', labelKey: 'employer.jobCreatePage.experience.oneYear' },
+    { value: '2 năm', labelKey: 'employer.jobCreatePage.experience.twoYears' },
+    { value: '3 năm', labelKey: 'employer.jobCreatePage.experience.threeYears' },
+    { value: '4 năm', labelKey: 'employer.jobCreatePage.experience.fourYears' },
+    { value: '5 năm', labelKey: 'employer.jobCreatePage.experience.fiveYears' },
+    { value: 'Trên 5 năm', labelKey: 'employer.jobCreatePage.experience.over5' }
+];
+const levelOptions = [
+    { value: 'Thực tập sinh', labelKey: 'employer.jobCreatePage.levels.intern' },
+    { value: 'Nhân viên', labelKey: 'employer.jobCreatePage.levels.staff' },
+    { value: 'Trưởng nhóm', labelKey: 'employer.jobCreatePage.levels.teamLead' },
+    { value: 'Trưởng/Phó phòng', labelKey: 'employer.jobCreatePage.levels.departmentLead' },
+    { value: 'Quản lý / Giám sát', labelKey: 'employer.jobCreatePage.levels.manager' },
+    { value: 'Trưởng chi nhánh', labelKey: 'employer.jobCreatePage.levels.branchLead' },
+    { value: 'Phó giám đốc', labelKey: 'employer.jobCreatePage.levels.viceDirector' },
+    { value: 'Giám đốc', labelKey: 'employer.jobCreatePage.levels.director' }
+];
+const jobFieldOptions = [
+    { value: 'CNTT', labelKey: 'employer.jobCreatePage.fields.it' },
+    { value: 'Marketing', labelKey: 'employer.jobCreatePage.fields.marketing' },
+    { value: 'Bán hàng', labelKey: 'employer.jobCreatePage.fields.sales' },
+    { value: 'Hành chính', labelKey: 'employer.jobCreatePage.fields.admin' },
+    { value: 'Kỹ thuật', labelKey: 'employer.jobCreatePage.fields.engineering' },
+    { value: 'Tài chính', labelKey: 'employer.jobCreatePage.fields.finance' },
+    { value: 'Sản xuất', labelKey: 'employer.jobCreatePage.fields.manufacturing' },
+    { value: 'Dịch vụ', labelKey: 'employer.jobCreatePage.fields.services' },
+    { value: 'Khác', labelKey: 'employer.jobCreatePage.fields.other' }
+];
 
 const normalizeProvinceEntry = (entry) => {
     if (!entry) return '';
@@ -69,27 +104,43 @@ const JobsStyleSelect = ({
     value,
     options,
     onChange,
-    placeholder = 'Chọn',
+    placeholder,
     searchable = false,
-    searchPlaceholder = 'Nhập để tìm...',
+    searchPlaceholder,
     locationMode = false,
     disabled = false,
-    emptyText = 'Không tìm thấy lựa chọn'
+    emptyText
 }) => {
+    const { t } = useTranslation();
     const rootRef = useRef(null);
     const searchInputRef = useRef(null);
+    const defaultPlaceholder = placeholder ?? t('employer.jobCreatePage.select.placeholder');
+    const defaultSearchPlaceholder = searchPlaceholder ?? t('employer.jobCreatePage.select.searchPlaceholder');
+    const defaultEmptyText = emptyText ?? t('employer.jobCreatePage.select.emptyText');
     const [isOpen, setIsOpen] = useState(false);
     const [query, setQuery] = useState('');
 
     const normalizedOptions = useMemo(() => {
         const source = Array.isArray(options) ? options : [];
-        return Array.from(new Set(source.map((item) => String(item || '').trim()).filter(Boolean)));
+        return source
+            .map((item) => {
+                if (!item) return null;
+                if (typeof item === 'string') {
+                    const value = String(item).trim();
+                    return value ? { value, label: value } : null;
+                }
+                const value = String(item.value ?? item.label ?? '').trim();
+                const label = String(item.label ?? item.value ?? '').trim();
+                return value ? { value, label } : null;
+            })
+            .filter(Boolean)
+            .filter((item, index, array) => array.findIndex((candidate) => candidate.value === item.value) === index);
     }, [options]);
 
     const visibleOptions = useMemo(() => {
         const keyword = String(query || '').trim().toLowerCase();
         if (!keyword) return normalizedOptions;
-        return normalizedOptions.filter((item) => item.toLowerCase().includes(keyword));
+        return normalizedOptions.filter((item) => item.label.toLowerCase().includes(keyword));
     }, [normalizedOptions, query]);
 
     useEffect(() => {
@@ -128,7 +179,7 @@ const JobsStyleSelect = ({
         return () => window.clearTimeout(id);
     }, [isOpen, searchable]);
 
-    const selectedLabel = value || placeholder;
+    const selectedLabel = normalizedOptions.find((item) => item.value === value)?.label || defaultPlaceholder;
 
     return (
         <div
@@ -163,26 +214,26 @@ const JobsStyleSelect = ({
                                 type="text"
                                 value={query}
                                 onChange={(event) => setQuery(event.target.value)}
-                                placeholder={searchPlaceholder}
+                                placeholder={defaultSearchPlaceholder}
                             />
                         </div>
                     ) : null}
 
                     <div className="jf-jobs-select-scroll">
                         {visibleOptions.length === 0 ? (
-                            <div className="jf-jobs-select-empty">{emptyText}</div>
+                            <div className="jf-jobs-select-empty">{defaultEmptyText}</div>
                         ) : (
                             visibleOptions.map((item) => (
                                 <button
-                                    key={item}
+                                    key={item.value}
                                     type="button"
-                                    className={`jf-jobs-select-option ${value === item ? 'is-active' : ''}`}
+                                    className={`jf-jobs-select-option ${value === item.value ? 'is-active' : ''}`}
                                     onClick={() => {
-                                        onChange(item);
+                                        onChange(item.value);
                                         setIsOpen(false);
                                     }}
                                 >
-                                    {item}
+                                    {item.label}
                                 </button>
                             ))
                         )}
@@ -194,6 +245,7 @@ const JobsStyleSelect = ({
 };
 
 const DeadlineDateField = ({ value, onChange, disabled = false }) => {
+    const { t } = useTranslation();
     const parsed = useMemo(() => parseIsoDateParts(value), [value]);
     const todayIso = useMemo(() => formatIsoDate(new Date()), []);
     const maxDateIso = useMemo(() => {
@@ -210,14 +262,14 @@ const DeadlineDateField = ({ value, onChange, disabled = false }) => {
 
     const displayValue = parsed
         ? `${pad2(parsed.day)}/${pad2(parsed.month)}/${parsed.year}`
-        : 'Chưa chọn hạn nộp hồ sơ';
+        : t('employer.jobCreatePage.deadline.noDeadline');
 
     return (
         <div className="job-create-deadline-picker">
             <CalendarDatePicker
                 value={value}
                 onChange={onChange}
-                placeholder="Chọn hạn nộp hồ sơ"
+                placeholder={t('employer.jobCreatePage.deadline.placeholder')}
                 disabled={disabled}
                 minDate={todayIso}
                 maxDate={maxDateIso}
@@ -232,7 +284,7 @@ const DeadlineDateField = ({ value, onChange, disabled = false }) => {
                     onClick={() => setQuickDate(7)}
                     disabled={disabled}
                 >
-                    +7 ngày
+                    {t('employer.jobCreatePage.deadline.quick7')}
                 </button>
                 <button
                     type="button"
@@ -240,7 +292,7 @@ const DeadlineDateField = ({ value, onChange, disabled = false }) => {
                     onClick={() => setQuickDate(30)}
                     disabled={disabled}
                 >
-                    +30 ngày
+                    {t('employer.jobCreatePage.deadline.quick30')}
                 </button>
                 <button
                     type="button"
@@ -250,7 +302,7 @@ const DeadlineDateField = ({ value, onChange, disabled = false }) => {
                     }}
                     disabled={disabled}
                 >
-                    Xóa
+                    {t('employer.jobCreatePage.deadline.clear')}
                 </button>
             </div>
 
@@ -355,11 +407,37 @@ const parseExtraSectionsPayload = (rawValue) => {
 };
 
 const JobCreate = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const { id: jobId } = useParams();
     const token = useMemo(() => localStorage.getItem('token') || '', []);
     const isEdit = Boolean(jobId);
     const extraSectionIdRef = useRef(1);
+
+    const salaryTypeOptions = useMemo(
+        () => salaryTypes.map((item) => ({ value: item.value, label: t(item.labelKey) })),
+        [t]
+    );
+    const employmentTypeOptions = useMemo(
+        () => employmentTypes.map((item) => ({ value: item.value, label: t(item.labelKey) })),
+        [t]
+    );
+    const statusOptions = useMemo(
+        () => statuses.map((item) => ({ value: item.value, label: t(item.labelKey) })),
+        [t]
+    );
+    const experienceLabelOptions = useMemo(
+        () => experienceOptions.map((item) => ({ value: item.value, label: t(item.labelKey) })),
+        [t]
+    );
+    const levelLabelOptions = useMemo(
+        () => levelOptions.map((item) => ({ value: item.value, label: t(item.labelKey) })),
+        [t]
+    );
+    const jobFieldLabelOptions = useMemo(
+        () => jobFieldOptions.map((item) => ({ value: item.value, label: t(item.labelKey) })),
+        [t]
+    );
 
     const [form, setForm] = useState({
         title: '',
@@ -386,9 +464,9 @@ const JobCreate = () => {
         benefits: ''
     });
     const [editorTitles, setEditorTitles] = useState({
-        description: 'Mô tả công việc',
-        requirements: 'Yêu cầu',
-        benefits: 'Quyền lợi'
+        description: t('employer.jobCreatePage.sectionTitles.description'),
+        requirements: t('employer.jobCreatePage.sectionTitles.requirements'),
+        benefits: t('employer.jobCreatePage.sectionTitles.benefits')
     });
     const [extraSections, setExtraSections] = useState([]);
     const [showLocationModal, setShowLocationModal] = useState(false);
@@ -497,7 +575,7 @@ const JobCreate = () => {
                     }
                 });
                 const data = await res.json().catch(() => ({}));
-                if (!res.ok) throw new Error(data.error || 'Không tải được tin tuyển dụng');
+                if (!res.ok) throw new Error(data.error || t('employer.jobCreatePage.errors.loadJob'));
 
                 if (cancelled) return;
                 setForm({
@@ -560,7 +638,7 @@ const JobCreate = () => {
 
                 setExtraSections(nextExtraSections);
             } catch (err) {
-                if (!cancelled) setError(err.message || 'Có lỗi khi tải tin.');
+                if (!cancelled) setError(err.message || t('employer.jobCreatePage.errors.loadJob'));
             } finally {
                 if (!cancelled) setLoadingJob(false);
             }
@@ -590,9 +668,9 @@ const JobCreate = () => {
             }));
 
             const payloadSectionTitles = {
-                description: normalizeHeading(editorTitles.description, 'Mô tả công việc'),
-                requirements: normalizeHeading(editorTitles.requirements, 'Yêu cầu'),
-                benefits: normalizeHeading(editorTitles.benefits, 'Quyền lợi')
+                description: normalizeHeading(editorTitles.description, t('employer.jobCreatePage.sectionTitles.description')),
+                requirements: normalizeHeading(editorTitles.requirements, t('employer.jobCreatePage.sectionTitles.requirements')),
+                benefits: normalizeHeading(editorTitles.benefits, t('employer.jobCreatePage.sectionTitles.benefits'))
             };
 
             const res = await fetch(isEdit ? `/jobs/${jobId}` : '/jobs', {
@@ -618,16 +696,16 @@ const JobCreate = () => {
 
             const data = await res.json().catch(() => ({}));
             if (!res.ok) {
-                throw new Error(data.error || 'Đăng tin thất bại.');
+                throw new Error(data.error || t('employer.jobCreatePage.errors.submitFailure'));
             }
 
             navigate('/employer/jobs', {
                 state: {
-                    flash: isEdit ? 'Cập nhật tin tuyển dụng thành công!' : 'Đăng tin tuyển dụng thành công!'
+                    flash: isEdit ? t('employer.jobCreatePage.notifications.updateSuccess') : t('employer.jobCreatePage.notifications.createSuccess')
                 }
             });
         } catch (err) {
-            setError(err.message || 'Có lỗi xảy ra.');
+            setError(err.message || t('employer.jobCreatePage.errors.generic'));
         } finally {
             setSubmitting(false);
         }
@@ -639,11 +717,11 @@ const JobCreate = () => {
         setError('');
 
         if (!form.title.trim()) {
-            setError('Vui lòng nhập tiêu đề tin tuyển dụng.');
+            setError(t('employer.jobCreatePage.errors.titleRequired'));
             return;
         }
         if (!token) {
-            setError('Bạn chưa đăng nhập hoặc phiên đăng nhập đã hết hạn.');
+            setError(t('employer.jobCreatePage.errors.loginRequired'));
             return;
         }
 
@@ -658,12 +736,12 @@ const JobCreate = () => {
         const cityText = String(form.city || '').trim();
 
         if (!locationText) {
-            setLocationModalError('Vui lòng nhập địa điểm làm việc.');
+            setLocationModalError(t('employer.jobCreatePage.locationModal.errors.locationRequired'));
             return;
         }
 
         if (!cityText) {
-            setLocationModalError('Vui lòng chọn tỉnh/thành phố.');
+            setLocationModalError(t('employer.jobCreatePage.locationModal.errors.cityRequired'));
             return;
         }
 
@@ -677,14 +755,14 @@ const JobCreate = () => {
             <div className="job-create-shell">
                 <div className="d-flex justify-content-between align-items-center mb-4 job-create-header">
                     <div>
-                        <h2 className="mb-0 employer-page-title">{isEdit ? 'Chỉnh sửa tin tuyển dụng' : 'Đăng tin tuyển dụng'}</h2>
+                        <h2 className="mb-0 employer-page-title">{isEdit ? t('employer.jobCreatePage.titleEdit') : t('employer.jobCreatePage.titleCreate')}</h2>
                     </div>
                     <button
                         type="button"
                         className="btn job-create-back-btn"
                         onClick={() => navigate('/employer/jobs')}
                     >
-                        Quay lại
+                        {t('employer.jobCreatePage.buttons.back')}
                     </button>
                 </div>
 
@@ -697,18 +775,18 @@ const JobCreate = () => {
                     )}
 
                     {loadingJob && (
-                        <p className="text-muted">Đang tải tin tuyển dụng...</p>
+                        <p className="text-muted">{t('employer.jobCreatePage.loadingJob')}</p>
                     )}
 
                     <form onSubmit={handleSubmit}>
                         <div className="row g-3">
                             <div className="col-12">
-                                <label className="form-label">Tiêu đề *</label>
+                                <label className="form-label">{t('employer.jobCreatePage.labels.title')}</label>
                                 <input
                                     className="form-control"
                                     value={form.title}
                                     onChange={setField('title')}
-                                    placeholder="VD: Nhân viên Kinh doanh, Backend Developer..."
+                                    placeholder={t('employer.jobCreatePage.placeholders.title')}
                                 />
                             </div>
 
@@ -717,13 +795,13 @@ const JobCreate = () => {
                                     className="form-control job-create-section-heading-input"
                                     value={editorTitles.description}
                                     onChange={setEditorTitle('description')}
-                                    placeholder="Mô tả công việc"
+                                    placeholder={t('employer.jobCreatePage.placeholders.descriptionSection')}
                                     disabled={submitting || loadingJob}
                                 />
                                 <CareerRichTextEditor
                                     value={richValues.description}
                                     onChange={setRichField('description')}
-                                    placeholder="Nhập mô tả công việc..."
+                                    placeholder={t('employer.jobCreatePage.placeholders.descriptionEditor')}
                                     minHeight={180}
                                     toolbarMode="word-basic"
                                     className="job-create-career-editor"
@@ -735,13 +813,13 @@ const JobCreate = () => {
                                     className="form-control job-create-section-heading-input"
                                     value={editorTitles.requirements}
                                     onChange={setEditorTitle('requirements')}
-                                    placeholder="Yêu cầu"
+                                    placeholder={t('employer.jobCreatePage.placeholders.requirementsSection')}
                                     disabled={submitting || loadingJob}
                                 />
                                 <CareerRichTextEditor
                                     value={richValues.requirements}
                                     onChange={setRichField('requirements')}
-                                    placeholder="Nhập yêu cầu ứng viên..."
+                                    placeholder={t('employer.jobCreatePage.placeholders.requirementsEditor')}
                                     minHeight={180}
                                     toolbarMode="word-basic"
                                     className="job-create-career-editor"
@@ -753,13 +831,13 @@ const JobCreate = () => {
                                     className="form-control job-create-section-heading-input"
                                     value={editorTitles.benefits}
                                     onChange={setEditorTitle('benefits')}
-                                    placeholder="Quyền lợi"
+                                    placeholder={t('employer.jobCreatePage.placeholders.benefitsSection')}
                                     disabled={submitting || loadingJob}
                                 />
                                 <CareerRichTextEditor
                                     value={richValues.benefits}
                                     onChange={setRichField('benefits')}
-                                    placeholder="Nhập quyền lợi..."
+                                    placeholder={t('employer.jobCreatePage.placeholders.benefitsEditor')}
                                     minHeight={170}
                                     toolbarMode="word-basic"
                                     className="job-create-career-editor"
@@ -787,7 +865,7 @@ const JobCreate = () => {
                                                         className="form-control job-create-extra-title-input"
                                                         value={section.title}
                                                         onChange={(event) => updateExtraSection(section.id, 'title', event.target.value)}
-                                                        placeholder="Tên mục..."
+                                                        placeholder={t('employer.jobCreatePage.placeholders.extraSectionTitle')}
                                                         disabled={submitting || loadingJob}
                                                     />
                                                 </div>
@@ -795,7 +873,7 @@ const JobCreate = () => {
                                                 <CareerRichTextEditor
                                                     value={section.content}
                                                     onChange={(html) => updateExtraSection(section.id, 'content', html)}
-                                                    placeholder="Nhập nội dung..."
+                                                    placeholder={t('employer.jobCreatePage.placeholders.extraSectionEditor')}
                                                     minHeight={160}
                                                     toolbarMode="word-basic"
                                                     className="job-create-career-editor"
@@ -811,7 +889,7 @@ const JobCreate = () => {
                                             onClick={addExtraSection}
                                             disabled={submitting || loadingJob}
                                         >
-                                            + Thêm mục
+                                            {t('employer.jobCreatePage.buttons.addSection')}
                                         </button>
                                     </div>
                                 </div>
@@ -824,14 +902,14 @@ const JobCreate = () => {
                                     onClick={() => navigate('/employer/jobs')}
                                     disabled={submitting}
                                 >
-                                    Hủy
+                                    {t('employer.jobCreatePage.buttons.cancel')}
                                 </button>
                                 <button
                                     type="submit"
                                     className="btn job-create-submit-btn"
                                     disabled={submitting || loadingJob}
                                 >
-                                    {submitting ? (isEdit ? 'Đang lưu...' : 'Đang đăng...') : (isEdit ? 'Lưu thay đổi' : 'Đăng tin')}
+                                    {submitting ? (isEdit ? t('employer.jobCreatePage.buttons.savingEdit') : t('employer.jobCreatePage.buttons.savingCreate')) : (isEdit ? t('employer.jobCreatePage.buttons.saveChanges') : t('employer.jobCreatePage.buttons.createJob'))}
                                 </button>
                             </div>
                         </div>
@@ -857,15 +935,21 @@ const JobCreate = () => {
                     >
                         <div className="job-create-location-modal-header">
                             <div>
-                                <h5 id="job-create-location-modal-title" className="mb-1">Thông tin trước khi đăng tin</h5>
-                                <p className="mb-0 text-muted small">Hoàn tất địa điểm, mức lương và tiêu chí tuyển dụng trước khi {isEdit ? 'lưu thay đổi' : 'đăng tin'}.</p>
+                                <h5 id="job-create-location-modal-title" className="mb-1">
+                                    {t('employer.jobCreatePage.locationModal.title')}
+                                </h5>
+                                <p className="mb-0 text-muted small">
+                                    {isEdit
+                                        ? t('employer.jobCreatePage.locationModal.description.edit')
+                                        : t('employer.jobCreatePage.locationModal.description.create')}
+                                </p>
                             </div>
                             <button
                                 type="button"
                                 className="btn job-create-location-close-btn"
                                 onClick={() => setShowLocationModal(false)}
                                 disabled={submitting}
-                                aria-label="Đóng modal"
+                                aria-label={t('employer.jobCreatePage.locationModal.closeAria')}
                             >
                                 <i className="bi bi-x-lg"></i>
                             </button>
@@ -879,30 +963,30 @@ const JobCreate = () => {
                             ) : null}
 
                             <div className="job-create-modal-section">
-                                <h6 className="job-create-location-section-title">Địa điểm làm việc</h6>
+                                <h6 className="job-create-location-section-title">{t('employer.jobCreatePage.locationModal.sections.location')}</h6>
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-6">
-                                        <label className="form-label">Địa điểm</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.location')}</label>
                                         <input
                                             className="form-control"
                                             value={form.location}
                                             onChange={setField('location')}
-                                            placeholder="VD: Quận 1, 123 Nguyễn Huệ..."
+                                            placeholder={t('employer.jobCreatePage.placeholders.location')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-6">
-                                        <label className="form-label">Thành phố</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.city')}</label>
                                         <JobsStyleSelect
                                             value={form.city}
                                             options={provinces}
                                             onChange={setField('city')}
-                                            placeholder={loadingProvinces ? 'Đang tải tỉnh/thành...' : 'Chọn tỉnh/thành'}
+                                            placeholder={loadingProvinces ? t('employer.jobCreatePage.placeholders.loadingProvinces') : t('employer.jobCreatePage.placeholders.selectProvince')}
                                             searchable
-                                            searchPlaceholder="Nhập để tìm tỉnh/thành"
+                                            searchPlaceholder={t('employer.jobCreatePage.placeholders.searchProvince')}
                                             locationMode
-                                            emptyText="Không tìm thấy tỉnh/thành phù hợp"
+                                            emptyText={t('employer.jobCreatePage.placeholders.noProvinceFound')}
                                             disabled={loadingProvinces || submitting || loadingJob}
                                         />
                                     </div>
@@ -910,47 +994,50 @@ const JobCreate = () => {
                             </div>
 
                             <div className="job-create-modal-section">
-                                <h6 className="job-create-location-section-title">Mức lương</h6>
+                                <h6 className="job-create-location-section-title">{t('employer.jobCreatePage.locationModal.sections.salary')}</h6>
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-3">
-                                        <label className="form-label">Lương từ</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.salaryFrom')}</label>
                                         <input
                                             className="form-control"
                                             inputMode="numeric"
                                             value={salaryDisplayValue(form.salaryFrom)}
                                             onChange={setSalaryField('salaryFrom')}
-                                            placeholder={salaryCurrency === 'USD' ? 'VD: 1.000' : 'VD: 10.000.000'}
+                                            placeholder={salaryCurrency === 'USD' ? t('employer.jobCreatePage.placeholders.salaryFromUsd') : t('employer.jobCreatePage.placeholders.salaryFromVnd')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-3">
-                                        <label className="form-label">Lương đến</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.salaryTo')}</label>
                                         <input
                                             className="form-control"
                                             inputMode="numeric"
                                             value={salaryDisplayValue(form.salaryTo)}
                                             onChange={setSalaryField('salaryTo')}
-                                            placeholder={salaryCurrency === 'USD' ? 'VD: 2.000' : 'VD: 30.000.000'}
+                                            placeholder={salaryCurrency === 'USD' ? t('employer.jobCreatePage.placeholders.salaryToUsd') : t('employer.jobCreatePage.placeholders.salaryToVnd')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-2">
-                                        <label className="form-label">Tiền tệ</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.currency')}</label>
                                         <JobsStyleSelect
                                             value={salaryCurrency}
-                                            options={['VND', 'USD']}
+                                            options={[
+                                                { value: 'VND', label: t('employer.jobCreatePage.currencies.vnd') },
+                                                { value: 'USD', label: t('employer.jobCreatePage.currencies.usd') }
+                                            ]}
                                             onChange={setSalaryCurrency}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-4">
-                                        <label className="form-label">Kiểu lương</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.salaryType')}</label>
                                         <JobsStyleSelect
                                             value={form.salaryType}
-                                            options={salaryTypes}
+                                            options={salaryTypeOptions}
                                             onChange={setField('salaryType')}
                                             disabled={submitting || loadingJob}
                                         />
@@ -959,37 +1046,37 @@ const JobCreate = () => {
                             </div>
 
                             <div className="job-create-modal-section">
-                                <h6 className="job-create-location-section-title">Tiêu chí tuyển dụng</h6>
+                                <h6 className="job-create-location-section-title">{t('employer.jobCreatePage.locationModal.sections.criteria')}</h6>
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-4">
-                                        <label className="form-label">Kinh nghiệm</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.experience')}</label>
                                         <JobsStyleSelect
                                             value={form.experience}
-                                            options={experienceOptions}
+                                            options={experienceLabelOptions}
                                             onChange={setField('experience')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-4">
-                                        <label className="form-label">Cấp bậc</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.level')}</label>
                                         <JobsStyleSelect
                                             value={form.level}
-                                            options={levelOptions}
+                                            options={levelLabelOptions}
                                             onChange={setField('level')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-4">
-                                        <label className="form-label">Lĩnh vực công việc</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.jobField')}</label>
                                         <JobsStyleSelect
                                             value={form.jobField}
-                                            options={jobFieldOptions}
+                                            options={jobFieldLabelOptions}
                                             onChange={setField('jobField')}
                                             searchable
-                                            searchPlaceholder="Nhập để tìm lĩnh vực"
-                                            emptyText="Không tìm thấy lĩnh vực phù hợp"
+                                            searchPlaceholder={t('employer.jobCreatePage.placeholders.searchJobField')}
+                                            emptyText={t('employer.jobCreatePage.placeholders.noJobFieldFound')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
@@ -997,30 +1084,30 @@ const JobCreate = () => {
                             </div>
 
                             <div className="job-create-modal-section">
-                                <h6 className="job-create-location-section-title">Thiết lập đăng tin</h6>
+                                <h6 className="job-create-location-section-title">{t('employer.jobCreatePage.locationModal.sections.postingSettings')}</h6>
                                 <div className="row g-3 align-items-end">
                                     <div className="col-md-4">
-                                        <label className="form-label">Hình thức</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.employmentType')}</label>
                                         <JobsStyleSelect
                                             value={form.employmentType}
-                                            options={employmentTypes}
+                                            options={employmentTypeOptions}
                                             onChange={setField('employmentType')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-4">
-                                        <label className="form-label">Trạng thái</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.status')}</label>
                                         <JobsStyleSelect
                                             value={form.status}
-                                            options={statuses}
+                                            options={statusOptions}
                                             onChange={setField('status')}
                                             disabled={submitting || loadingJob}
                                         />
                                     </div>
 
                                     <div className="col-md-4">
-                                        <label className="form-label">Hạn nộp hồ sơ</label>
+                                        <label className="form-label">{t('employer.jobCreatePage.labels.deadline')}</label>
                                         <DeadlineDateField
                                             value={form.deadline}
                                             onChange={setField('deadline')}
@@ -1038,7 +1125,7 @@ const JobCreate = () => {
                                 onClick={() => setShowLocationModal(false)}
                                 disabled={submitting}
                             >
-                                Đóng
+                                {t('common.close')}
                             </button>
                             <button
                                 type="button"
@@ -1046,7 +1133,9 @@ const JobCreate = () => {
                                 onClick={handleConfirmLocationSubmit}
                                 disabled={submitting || loadingJob}
                             >
-                                {submitting ? (isEdit ? 'Đang lưu...' : 'Đang đăng...') : (isEdit ? 'Xác nhận & Lưu thay đổi' : 'Xác nhận & Đăng tin')}
+                                {submitting
+                                    ? (isEdit ? t('employer.jobCreatePage.buttons.savingEdit') : t('employer.jobCreatePage.buttons.savingCreate'))
+                                    : (isEdit ? t('employer.jobCreatePage.buttons.confirmSaveChanges') : t('employer.jobCreatePage.buttons.confirmPublish'))}
                             </button>
                         </div>
                     </div>

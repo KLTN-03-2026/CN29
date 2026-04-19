@@ -319,6 +319,7 @@ function CareerGuideDetail() {
 
           <div 
             className="post-detail-content"
+            data-i18n-skip="true"
             dangerouslySetInnerHTML={{ __html: sanitizeCareerHtml(post.content) }}
           />
         </article>

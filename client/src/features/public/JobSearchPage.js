@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import { buildIndustryEntries, buildLocationEntries } from './jobSearchOptions';
 
-const fmtVnd = new Intl.NumberFormat('vi-VN');
+const formatCount = (value, locale = 'vi-VN') => new Intl.NumberFormat(locale).format(Number(value) || 0);
 
 const EXPERIENCE_OPTIONS = [
   'Tất cả',
@@ -43,18 +44,89 @@ const SALARY_OPTIONS = [
 
 const WORKING_FORM_OPTIONS = ['Tất cả', 'Toàn thời gian', 'Bán thời gian', 'Thực tập', 'Khác'];
 
-const formatSalary = (job) => {
+const OPTION_LABEL_KEYS = {
+  'Tất cả': 'jobSearch.options.all',
+  'Dưới 1 năm': 'jobSearch.options.expUnder1Year',
+  '1 năm': 'jobSearch.options.exp1Year',
+  '2 năm': 'jobSearch.options.exp2Years',
+  '3 năm': 'jobSearch.options.exp3Years',
+  '4 năm': 'jobSearch.options.exp4Years',
+  '5 năm': 'jobSearch.options.exp5Years',
+  'Trên 5 năm': 'jobSearch.options.expOver5Years',
+  'Không yêu cầu': 'jobSearch.options.notRequired',
+  'Nhân viên': 'jobSearch.options.levelStaff',
+  'Trưởng nhóm': 'jobSearch.options.levelTeamLead',
+  'Trưởng/Phó phòng': 'jobSearch.options.levelDepartmentLead',
+  'Quản lý / Giám sát': 'jobSearch.options.levelManager',
+  'Trưởng chi nhánh': 'jobSearch.options.levelBranchLead',
+  'Phó giám đốc': 'jobSearch.options.levelViceDirector',
+  'Giám đốc': 'jobSearch.options.levelDirector',
+  'Thực tập sinh': 'jobSearch.options.levelIntern',
+  '10 - 15 triệu': 'jobSearch.options.salary10to15',
+  '15 - 20 triệu': 'jobSearch.options.salary15to20',
+  '20 - 25 triệu': 'jobSearch.options.salary20to25',
+  '25 - 30 triệu': 'jobSearch.options.salary25to30',
+  '30 - 50 triệu': 'jobSearch.options.salary30to50',
+  'Trên 50 triệu': 'jobSearch.options.salaryOver50',
+  'Thỏa thuận': 'jobSearch.options.negotiable',
+  'Toàn thời gian': 'jobSearch.options.fullTime',
+  'Bán thời gian': 'jobSearch.options.partTime',
+  'Thực tập': 'jobSearch.options.internship',
+  'Khác': 'jobSearch.options.other',
+  'Tất cả lĩnh vực': 'jobSearch.options.allFields',
+  'Tất cả ngành nghề': 'jobSearch.search.allIndustries',
+  'Toàn quốc': 'jobSearch.search.nationwide'
+};
+
+const translateOptionLabel = (value, t) => {
+  const key = OPTION_LABEL_KEYS[String(value || '').trim()];
+  if (!key) return String(value || '');
+  return t(key, { defaultValue: String(value || '') });
+};
+
+const resolveSalaryUnitLabel = (rawUnit, t) => {
+  const unit = String(rawUnit || '').trim().toLowerCase();
+  const normalized = unit
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (normalized.includes('thang') || normalized.includes('month')) return t('jobSearch.salary.unit.month');
+  if (normalized.includes('ngay') || normalized.includes('day')) return t('jobSearch.salary.unit.day');
+  if (normalized.includes('gio') || normalized.includes('hour')) return t('jobSearch.salary.unit.hour');
+  return t('jobSearch.salary.unit.job');
+};
+
+const formatSalary = (job, t, locale = 'vi-VN') => {
   const type = job.KieuLuong || 'Thỏa thuận';
   const from = job.LuongTu == null ? null : Number(job.LuongTu);
   const to = job.LuongDen == null ? null : Number(job.LuongDen);
+  const salaryUnit = resolveSalaryUnitLabel(type, t);
 
-  if (type === 'Thỏa thuận' || (from == null && to == null)) return 'Thỏa thuận';
-  const unit = String(type).toLowerCase();
+  if (type === 'Thỏa thuận' || (from == null && to == null)) return t('jobSearch.salary.negotiable');
 
-  if (Number.isFinite(from) && Number.isFinite(to)) return `${fmtVnd.format(from)} - ${fmtVnd.format(to)} VND/${unit}`;
-  if (Number.isFinite(from)) return `Từ ${fmtVnd.format(from)} VND/${unit}`;
-  if (Number.isFinite(to)) return `Đến ${fmtVnd.format(to)} VND/${unit}`;
-  return 'Thỏa thuận';
+  if (Number.isFinite(from) && Number.isFinite(to)) {
+    return t('jobSearch.salary.range', {
+      from: formatCount(from, locale),
+      to: formatCount(to, locale),
+      unit: salaryUnit
+    });
+  }
+
+  if (Number.isFinite(from)) {
+    return t('jobSearch.salary.from', {
+      amount: formatCount(from, locale),
+      unit: salaryUnit
+    });
+  }
+
+  if (Number.isFinite(to)) {
+    return t('jobSearch.salary.to', {
+      amount: formatCount(to, locale),
+      unit: salaryUnit
+    });
+  }
+
+  return t('jobSearch.salary.negotiable');
 };
 
 const ADV_DEFAULTS = {
@@ -141,45 +213,47 @@ const getProvinceLabel = (item) => {
   return item?.TenTinh || item?.name || '';
 };
 
-const getPostedLabel = (job) => {
+const getPostedLabel = (job, t) => {
   const dateSource = job?.NgayDang || job?.NgayTao || job?.createdAt;
   const timestamp = Date.parse(dateSource || '');
 
-  if (!Number.isFinite(timestamp)) return 'Đăng gần đây';
+  if (!Number.isFinite(timestamp)) return t('jobSearch.time.postedRecently');
 
   const diffMs = Date.now() - timestamp;
-  if (diffMs <= 0) return 'Vừa đăng';
+  if (diffMs <= 0) return t('jobSearch.time.justPosted');
 
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  if (diffHours < 1) return 'Vừa đăng';
-  if (diffHours < 24) return `${diffHours} giờ trước`;
+  if (diffHours < 1) return t('jobSearch.time.justPosted');
+  if (diffHours < 24) return t('jobSearch.time.hoursAgo', { count: diffHours });
 
   const diffDays = Math.floor(diffHours / 24);
-  if (diffDays <= 30) return `${diffDays} ngày trước`;
-  return 'Đã đăng lâu';
+  if (diffDays <= 30) return t('jobSearch.time.daysAgo', { count: diffDays });
+  return t('jobSearch.time.postedLongAgo');
 };
 
-const getNumericSalaryText = (job) => {
+const getNumericSalaryText = (job, t, locale = 'vi-VN') => {
   const from = toNumber(job.LuongTu);
   const to = toNumber(job.LuongDen);
 
-  if (from != null && to != null) return `${fmtVnd.format(from)} - ${fmtVnd.format(to)}`;
-  if (from != null) return `Từ ${fmtVnd.format(from)}`;
-  if (to != null) return `Đến ${fmtVnd.format(to)}`;
-  return 'Thỏa thuận';
+  if (from != null && to != null) return `${formatCount(from, locale)} - ${formatCount(to, locale)}`;
+  if (from != null) return t('jobSearch.salary.shortFrom', { amount: formatCount(from, locale) });
+  if (to != null) return t('jobSearch.salary.shortTo', { amount: formatCount(to, locale) });
+  return t('jobSearch.salary.negotiable');
 };
 
-const getCardBadge = (job) => {
+const getCardBadge = (job, t) => {
   const salaryTop = toNumber(job?.LuongDen) ?? toNumber(job?.LuongTu) ?? 0;
-  if (salaryTop >= 30000000) return 'Lương tốt';
+  if (salaryTop >= 30000000) return t('jobSearch.badges.goodSalary');
 
-  if (String(job?.TrangThai || '').trim()) return 'Nổi bật';
+  if (String(job?.TrangThai || '').trim()) return t('jobSearch.badges.featured');
   return '';
 };
 
 const JobSearchPage = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { notify } = useNotification();
+  const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'vi-VN';
 
   const API_BASE = CLIENT_API_BASE;
 
@@ -230,13 +304,13 @@ const JobSearchPage = () => {
         const data = await response.json().catch(() => []);
 
         if (!response.ok) {
-          throw new Error('Không tải được danh sách việc làm');
+          throw new Error(t('jobSearch.errors.loadJobs'));
         }
 
         if (!cancelled) setJobs(Array.isArray(data) ? data : []);
       } catch (loadError) {
         if (!cancelled) {
-          setError(loadError.message || 'Không tải được danh sách việc làm');
+          setError(loadError.message || t('jobSearch.errors.loadJobs'));
           setJobs([]);
         }
       } finally {
@@ -248,7 +322,7 @@ const JobSearchPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [API_BASE]);
+  }, [API_BASE, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -265,7 +339,7 @@ const JobSearchPage = () => {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await response.json().catch(() => []);
-        if (!response.ok) throw new Error('Không tải được việc làm đã lưu');
+        if (!response.ok) throw new Error(t('jobSearch.errors.loadSavedJobs'));
 
         if (!cancelled) {
           setSavedIds(Array.isArray(data) ? data.map((item) => item.MaTin) : []);
@@ -279,7 +353,7 @@ const JobSearchPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [API_BASE]);
+  }, [API_BASE, t]);
 
   useEffect(() => {
     let cancelled = false;
@@ -447,15 +521,15 @@ const JobSearchPage = () => {
   }, [expAdv, levelAdv, salaryAdv, salaryFrom, salaryTo, companyField, jobField, workingForm]);
 
   const currentDateLabel = useMemo(() => {
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, '0');
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const year = now.getFullYear();
-    return `${day}/${month}/${year}`;
-  }, []);
+    return new Intl.DateTimeFormat(currentLocale, {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    }).format(new Date());
+  }, [currentLocale]);
 
-  const selectedIndustryLabel = selectedCategory || 'Tất cả ngành nghề';
-  const selectedLocationLabel = selectedProvince || 'Toàn quốc';
+  const selectedIndustryLabel = selectedCategory || t('jobSearch.search.allIndustries');
+  const selectedLocationLabel = selectedProvince || t('jobSearch.search.nationwide');
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -480,7 +554,7 @@ const JobSearchPage = () => {
   const handleToggleSave = async (jobId) => {
     const token = localStorage.getItem('token');
     if (!token) {
-      notify({ type: 'error', message: 'Bạn cần đăng nhập để lưu công việc.' });
+      notify({ type: 'error', message: t('jobSearch.notifications.loginRequiredToSave') });
       return;
     }
 
@@ -494,7 +568,7 @@ const JobSearchPage = () => {
       });
 
       const data = await response.json().catch(() => null);
-      if (!response.ok) throw new Error((data && data.error) || 'Không thể cập nhật lưu việc');
+      if (!response.ok) throw new Error((data && data.error) || t('jobSearch.errors.updateSavedJob'));
 
       setSavedIds((prev) => {
         const next = new Set(prev.map((item) => String(item)));
@@ -503,9 +577,12 @@ const JobSearchPage = () => {
         return Array.from(next);
       });
 
-      notify({ type: 'success', message: isSaved ? 'Đã bỏ lưu công việc.' : 'Đã lưu công việc.' });
+      notify({
+        type: 'success',
+        message: isSaved ? t('jobSearch.notifications.unsavedJob') : t('jobSearch.notifications.savedJob')
+      });
     } catch (toggleError) {
-      notify({ type: 'error', message: toggleError.message || 'Không thể cập nhật lưu việc.' });
+      notify({ type: 'error', message: toggleError.message || t('jobSearch.errors.updateSavedJob') });
     }
   };
 
@@ -514,23 +591,22 @@ const JobSearchPage = () => {
       <section className="jf-jobs-modern-hero">
         <div className="container jf-jobs-modern-container">
           <div className="jf-jobs-modern-copy">
-            <p className="jf-jobs-modern-eyebrow">Nền tảng tuyển dụng hiện đại</p>
-            <h1>Tìm kiếm công việc phù hợp và ứng tuyển nhanh hơn</h1>
+            <p className="jf-jobs-modern-eyebrow">{t('jobSearch.hero.eyebrow')}</p>
+            <h1>{t('jobSearch.hero.title')}</h1>
             <p>
-              Giao diện được tối ưu cho việc lọc theo ngành nghề, địa điểm và mức lương,
-              giúp bạn tiếp cận đúng cơ hội chỉ trong vài giây.
+              {t('jobSearch.hero.description')}
             </p>
           </div>
 
           <form className="jf-jobs-modern-search" onSubmit={handleSearchSubmit}>
             <div className="jf-jobs-search-field jf-jobs-search-field--keyword">
-              <label htmlFor="jobs-keyword">Vị trí công việc</label>
+              <label htmlFor="jobs-keyword">{t('jobSearch.search.keywordLabel')}</label>
               <div className="jf-jobs-search-input-wrap">
                 <i className="bi bi-search"></i>
                 <input
                   id="jobs-keyword"
                   type="text"
-                  placeholder="Ví dụ: Frontend Developer"
+                  placeholder={t('jobSearch.search.keywordPlaceholder')}
                   value={keyword}
                   onChange={(event) => setKeyword(event.target.value)}
                 />
@@ -538,7 +614,7 @@ const JobSearchPage = () => {
             </div>
 
             <div className="jf-jobs-search-field" ref={industryRef}>
-              <label>Ngành nghề</label>
+              <label>{t('jobSearch.search.industryLabel')}</label>
               <div className={`jf-jobs-select ${isIndustryOpen ? 'is-open' : ''}`}>
                 <button
                   type="button"
@@ -555,7 +631,7 @@ const JobSearchPage = () => {
                 </button>
 
                 {isIndustryOpen ? (
-                  <div className="jf-jobs-select-menu" role="listbox" aria-label="Chọn ngành nghề">
+                  <div className="jf-jobs-select-menu" role="listbox" aria-label={t('jobSearch.search.selectIndustry')}>
                     {industryEntries.map((entry) => (
                       <button
                         key={entry.label}
@@ -566,7 +642,7 @@ const JobSearchPage = () => {
                           setIsIndustryOpen(false);
                         }}
                       >
-                        {entry.label}
+                        {translateOptionLabel(entry.label, t)}
                       </button>
                     ))}
                   </div>
@@ -575,7 +651,7 @@ const JobSearchPage = () => {
             </div>
 
             <div className="jf-jobs-search-field" ref={locationRef}>
-              <label>Địa điểm</label>
+              <label>{t('jobSearch.search.locationLabel')}</label>
               <div className={`jf-jobs-select ${isLocationOpen ? 'is-open' : ''}`}>
                 <button
                   type="button"
@@ -593,13 +669,13 @@ const JobSearchPage = () => {
                 </button>
 
                 {isLocationOpen ? (
-                  <div className="jf-jobs-select-menu jf-jobs-select-menu--location" role="listbox" aria-label="Chọn địa điểm">
+                  <div className="jf-jobs-select-menu jf-jobs-select-menu--location" role="listbox" aria-label={t('jobSearch.search.selectLocation')}>
                     <div className="jf-jobs-select-search-wrap">
                       <i className="bi bi-search"></i>
                       <input
                         ref={locationSearchInputRef}
                         type="text"
-                        placeholder="Nhập để tìm địa điểm"
+                        placeholder={t('jobSearch.search.locationSearchPlaceholder')}
                         value={locationQuery}
                         onChange={(event) => setLocationQuery(event.target.value)}
                       />
@@ -607,7 +683,7 @@ const JobSearchPage = () => {
 
                     <div className="jf-jobs-select-scroll">
                       {visibleLocationEntries.length === 0 ? (
-                        <div className="jf-jobs-select-empty">Không tìm thấy địa điểm phù hợp</div>
+                        <div className="jf-jobs-select-empty">{t('jobSearch.search.noLocationFound')}</div>
                       ) : (
                         visibleLocationEntries.map((entry) => (
                           <button
@@ -619,7 +695,7 @@ const JobSearchPage = () => {
                               setIsLocationOpen(false);
                             }}
                           >
-                            {entry.label}
+                            {translateOptionLabel(entry.label, t)}
                           </button>
                         ))
                       )}
@@ -630,22 +706,22 @@ const JobSearchPage = () => {
             </div>
 
             <button type="submit" className="jf-jobs-search-submit">
-              Tìm kiếm
+              {t('jobSearch.search.submit')}
             </button>
           </form>
 
           <div className="jf-jobs-modern-stats">
             <div className="jf-jobs-modern-stat">
-              <strong>{filteredJobs.length.toLocaleString('vi-VN')}+</strong>
-              <span>Việc làm phù hợp</span>
+              <strong>{formatCount(filteredJobs.length, currentLocale)}+</strong>
+              <span>{t('jobSearch.stats.matchedJobs')}</span>
             </div>
             <div className="jf-jobs-modern-stat">
-              <strong>{companyCount.toLocaleString('vi-VN')}+</strong>
-              <span>Doanh nghiệp tuyển dụng</span>
+              <strong>{formatCount(companyCount, currentLocale)}+</strong>
+              <span>{t('jobSearch.stats.hiringCompanies')}</span>
             </div>
             <div className="jf-jobs-modern-stat">
-              <strong>{jobs.length.toLocaleString('vi-VN')}+</strong>
-              <span>Tin tuyển dụng mới</span>
+              <strong>{formatCount(jobs.length, currentLocale)}+</strong>
+              <span>{t('jobSearch.stats.newJobs')}</span>
             </div>
           </div>
         </div>
@@ -659,14 +735,14 @@ const JobSearchPage = () => {
             <div className="jf-jobs-filter-panel">
               <div className="jf-jobs-filter-header">
                 <div>
-                  <p>Bộ lọc nâng cao</p>
-                  <h2>Tinh chỉnh tìm kiếm</h2>
+                  <p>{t('jobSearch.filters.advanced')}</p>
+                  <h2>{t('jobSearch.filters.refineSearch')}</h2>
                 </div>
                 <i className="bi bi-funnel"></i>
               </div>
 
               <div className="jf-jobs-filter-group">
-                <h3>Kinh nghiệm</h3>
+                <h3>{t('jobSearch.filters.experience')}</h3>
                 <div className="jf-jobs-radio-list">
                   {EXPERIENCE_OPTIONS.map((option) => (
                     <label key={option} className="jf-jobs-radio-option">
@@ -676,14 +752,14 @@ const JobSearchPage = () => {
                         checked={expAdv === option}
                         onChange={() => setExpAdv(option)}
                       />
-                      <span>{option}</span>
+                      <span>{translateOptionLabel(option, t)}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div className="jf-jobs-filter-group">
-                <h3>Cấp bậc</h3>
+                <h3>{t('jobSearch.filters.level')}</h3>
                 <div className="jf-jobs-radio-list">
                   {LEVEL_OPTIONS.map((option) => (
                     <label key={option} className="jf-jobs-radio-option">
@@ -693,14 +769,14 @@ const JobSearchPage = () => {
                         checked={levelAdv === option}
                         onChange={() => setLevelAdv(option)}
                       />
-                      <span>{option}</span>
+                      <span>{translateOptionLabel(option, t)}</span>
                     </label>
                   ))}
                 </div>
               </div>
 
               <div className="jf-jobs-filter-group">
-                <h3>Mức lương</h3>
+                <h3>{t('jobSearch.filters.salary')}</h3>
                 <div className="jf-jobs-radio-list">
                   {SALARY_OPTIONS.map((option) => (
                     <label key={option} className="jf-jobs-radio-option">
@@ -710,7 +786,7 @@ const JobSearchPage = () => {
                         checked={salaryAdv === option}
                         onChange={() => setSalaryAdv(option)}
                       />
-                      <span>{option}</span>
+                      <span>{translateOptionLabel(option, t)}</span>
                     </label>
                   ))}
                 </div>
@@ -719,23 +795,23 @@ const JobSearchPage = () => {
                   <input
                     type="number"
                     className="jf-jobs-salary-input jf-jobs-salary-input--from"
-                    placeholder="Từ"
+                    placeholder={t('jobSearch.filters.salaryFrom')}
                     value={salaryFrom}
                     onChange={(event) => setSalaryFrom(event.target.value)}
                   />
                   <input
                     type="number"
                     className="jf-jobs-salary-input jf-jobs-salary-input--to"
-                    placeholder="Đến"
+                    placeholder={t('jobSearch.filters.salaryTo')}
                     value={salaryTo}
                     onChange={(event) => setSalaryTo(event.target.value)}
                   />
-                  <span className="jf-jobs-salary-unit">triệu</span>
+                  <span className="jf-jobs-salary-unit">{t('jobSearch.filters.millionUnit')}</span>
                 </div>
               </div>
 
               <div className="jf-jobs-filter-group">
-                <h3>Lĩnh vực công ty</h3>
+                <h3>{t('jobSearch.filters.companyField')}</h3>
                 <div className={`jf-jobs-select jf-jobs-select--filter ${isCompanyFieldOpen ? 'is-open' : ''}`} ref={companyFieldRef}>
                   <button
                     type="button"
@@ -749,12 +825,12 @@ const JobSearchPage = () => {
                     aria-haspopup="listbox"
                     aria-expanded={isCompanyFieldOpen}
                   >
-                    <span className="jf-jobs-select-text">{companyField}</span>
+                    <span className="jf-jobs-select-text">{translateOptionLabel(companyField, t)}</span>
                     <i className="bi bi-chevron-down"></i>
                   </button>
 
                   {isCompanyFieldOpen ? (
-                    <div className="jf-jobs-select-menu" role="listbox" aria-label="Chọn lĩnh vực công ty">
+                    <div className="jf-jobs-select-menu" role="listbox" aria-label={t('jobSearch.filters.selectCompanyField')}>
                       <div className="jf-jobs-select-scroll">
                         {fieldOptions.map((option) => (
                           <button
@@ -766,7 +842,7 @@ const JobSearchPage = () => {
                               setIsCompanyFieldOpen(false);
                             }}
                           >
-                            {option}
+                            {translateOptionLabel(option, t)}
                           </button>
                         ))}
                       </div>
@@ -776,7 +852,7 @@ const JobSearchPage = () => {
               </div>
 
               <div className="jf-jobs-filter-group">
-                <h3>Lĩnh vực công việc</h3>
+                <h3>{t('jobSearch.filters.jobField')}</h3>
                 <div className={`jf-jobs-select jf-jobs-select--filter ${isJobFieldOpen ? 'is-open' : ''}`} ref={jobFieldRef}>
                   <button
                     type="button"
@@ -790,12 +866,12 @@ const JobSearchPage = () => {
                     aria-haspopup="listbox"
                     aria-expanded={isJobFieldOpen}
                   >
-                    <span className="jf-jobs-select-text">{jobField}</span>
+                    <span className="jf-jobs-select-text">{translateOptionLabel(jobField, t)}</span>
                     <i className="bi bi-chevron-down"></i>
                   </button>
 
                   {isJobFieldOpen ? (
-                    <div className="jf-jobs-select-menu" role="listbox" aria-label="Chọn lĩnh vực công việc">
+                    <div className="jf-jobs-select-menu" role="listbox" aria-label={t('jobSearch.filters.selectJobField')}>
                       <div className="jf-jobs-select-scroll">
                         {fieldOptions.map((option) => (
                           <button
@@ -807,7 +883,7 @@ const JobSearchPage = () => {
                               setIsJobFieldOpen(false);
                             }}
                           >
-                            {option}
+                            {translateOptionLabel(option, t)}
                           </button>
                         ))}
                       </div>
@@ -817,7 +893,7 @@ const JobSearchPage = () => {
               </div>
 
               <div className="jf-jobs-filter-group">
-                <h3>Hình thức làm việc</h3>
+                <h3>{t('jobSearch.filters.workingForm')}</h3>
                 <div className="jf-jobs-radio-list">
                   {WORKING_FORM_OPTIONS.map((option) => (
                     <label key={option} className="jf-jobs-radio-option">
@@ -827,7 +903,7 @@ const JobSearchPage = () => {
                         checked={workingForm === option}
                         onChange={() => setWorkingForm(option)}
                       />
-                      <span>{option}</span>
+                      <span>{translateOptionLabel(option, t)}</span>
                     </label>
                   ))}
                 </div>
@@ -839,7 +915,7 @@ const JobSearchPage = () => {
                 onClick={resetAdvancedFilters}
                 disabled={!isAdvancedDirty}
               >
-                Xóa bộ lọc
+                {t('jobSearch.filters.clear')}
               </button>
             </div>
           </aside>
@@ -847,31 +923,33 @@ const JobSearchPage = () => {
           <section className="col-lg-9" ref={jobsListRef}>
             <div className="jf-jobs-results-header">
               <div>
-                <p className="jf-jobs-results-breadcrumb">Trang chủ › Tuyển dụng</p>
+                <p className="jf-jobs-results-breadcrumb">{t('jobSearch.results.breadcrumb')}</p>
                 <h2>
-                  {sortedJobs.length.toLocaleString('vi-VN')} việc làm phù hợp
-                  <span> Cập nhật {currentDateLabel}</span>
+                  {t('jobSearch.results.matchCount', {
+                    count: formatCount(sortedJobs.length, currentLocale)
+                  })}
+                  <span> {t('jobSearch.results.updatedAt', { date: currentDateLabel })}</span>
                 </h2>
                 <p className="jf-jobs-results-subline">
-                  Kết quả hiển thị theo từ khóa, ngành nghề, địa điểm và bộ lọc nâng cao của bạn.
+                  {t('jobSearch.results.subtitle')}
                 </p>
               </div>
 
               <button type="button" className="jf-jobs-alert-btn" disabled>
                 <i className="bi bi-bell"></i>
-                Tạo thông báo việc làm
+                {t('jobSearch.results.createAlert')}
               </button>
             </div>
 
             {loading ? (
-              <div className="jf-jobs-state-card">Đang tải danh sách việc làm...</div>
+              <div className="jf-jobs-state-card">{t('jobSearch.states.loading')}</div>
             ) : sortedJobs.length === 0 ? (
               <div className="jf-jobs-state-card">
-                Không có việc làm phù hợp với bộ lọc hiện tại.
+                {t('jobSearch.states.empty')}
                 {jobs.length > 0 ? (
                   <div className="mt-2">
                     <button type="button" className="jf-jobs-empty-reset" onClick={resetAdvancedFilters}>
-                      Xóa lọc để xem toàn bộ công việc
+                      {t('jobSearch.states.clearToSeeAll')}
                     </button>
                   </div>
                 ) : null}
@@ -880,7 +958,7 @@ const JobSearchPage = () => {
               <div className="jf-jobs-results-list">
                 {sortedJobs.map((job) => {
                   const isSaved = savedSet.has(String(job.MaTin));
-                  const badge = getCardBadge(job);
+                  const badge = getCardBadge(job, t);
 
                   return (
                     <article key={job.MaTin} className="jf-jobs-result-card">
@@ -888,7 +966,7 @@ const JobSearchPage = () => {
                         <div className="jf-jobs-result-logo">
                           <img
                             src={job.Logo || '/images/logo.png'}
-                            alt={job.TenCongTy || 'Logo'}
+                            alt={job.TenCongTy || t('jobSearch.cards.logoAlt')}
                             onError={(event) => {
                               event.currentTarget.onerror = null;
                               event.currentTarget.src = '/images/logo.png';
@@ -903,33 +981,33 @@ const JobSearchPage = () => {
                               className="jf-jobs-result-title"
                               onClick={() => navigate(`/jobs/${job.MaTin}`)}
                             >
-                              {job.TieuDe || 'Chưa có tiêu đề'}
+                              {job.TieuDe || t('jobSearch.cards.noTitle')}
                             </button>
                             {badge ? <span className="jf-jobs-result-badge">{badge}</span> : null}
                           </div>
 
-                          <div className="jf-jobs-result-company">{job.TenCongTy || 'Nhà tuyển dụng'}</div>
+                          <div className="jf-jobs-result-company">{job.TenCongTy || t('jobSearch.cards.employer')}</div>
 
                           <div className="jf-jobs-result-meta">
-                            <span><i className="bi bi-geo-alt"></i>{job.ThanhPho || job.DiaDiem || 'Toàn quốc'}</span>
-                            <span><i className="bi bi-briefcase"></i>{job.HinhThuc || 'Toàn thời gian'}</span>
-                            <span><i className="bi bi-person-workspace"></i>{job.KinhNghiem || 'Không yêu cầu'}</span>
-                            <span><i className="bi bi-cash-coin"></i>{formatSalary(job)}</span>
+                            <span><i className="bi bi-geo-alt"></i>{job.ThanhPho || job.DiaDiem || t('jobSearch.search.nationwide')}</span>
+                            <span><i className="bi bi-briefcase"></i>{job.HinhThuc || t('jobSearch.options.fullTime')}</span>
+                            <span><i className="bi bi-person-workspace"></i>{job.KinhNghiem || t('jobSearch.options.notRequired')}</span>
+                            <span><i className="bi bi-cash-coin"></i>{formatSalary(job, t, currentLocale)}</span>
                           </div>
                         </div>
                       </div>
 
                       <div className="jf-jobs-result-side">
-                        <span className="jf-jobs-result-time">{getPostedLabel(job)}</span>
-                        <div className="jf-jobs-result-salary">{getNumericSalaryText(job)}</div>
+                        <span className="jf-jobs-result-time">{getPostedLabel(job, t)}</span>
+                        <div className="jf-jobs-result-salary">{getNumericSalaryText(job, t, currentLocale)}</div>
 
                         <div className="jf-jobs-result-actions">
                           <button
                             type="button"
                             className={`jf-jobs-save-btn ${isSaved ? 'is-saved' : ''}`}
                             onClick={() => handleToggleSave(job.MaTin)}
-                            title={isSaved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'}
-                            aria-label={isSaved ? 'Bỏ lưu việc làm' : 'Lưu việc làm'}
+                            title={isSaved ? t('jobSearch.actions.unsave') : t('jobSearch.actions.save')}
+                            aria-label={isSaved ? t('jobSearch.actions.unsave') : t('jobSearch.actions.save')}
                           >
                             <i className={`bi ${isSaved ? 'bi-heart-fill' : 'bi-heart'}`}></i>
                           </button>
@@ -939,7 +1017,7 @@ const JobSearchPage = () => {
                             className="jf-jobs-apply-btn"
                             onClick={() => navigate(`/jobs/${job.MaTin}`)}
                           >
-                            Ứng tuyển
+                            {t('jobSearch.actions.apply')}
                           </button>
                         </div>
                       </div>

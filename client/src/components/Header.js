@@ -238,7 +238,7 @@ const Header = () => {
                                 aria-label={t('common.languageSwitch')}
                             >
                                 <i className="bi bi-translate" aria-hidden="true"></i>
-                                <span>{isEnglish ? 'VI' : 'EN'}</span>
+                                <span>{isEnglish ? 'EN' : 'VI'}</span>
                             </button>
 
                             <button
@@ -249,7 +249,6 @@ const Header = () => {
                                 aria-label={t('common.toggleDarkMode')}
                             >
                                 <i className={`bi ${isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`} aria-hidden="true"></i>
-                                <span>{isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark')}</span>
                             </button>
                         </div>
 
@@ -356,16 +355,6 @@ const Header = () => {
                                             <i className="bi bi-bell text-primary"></i>
                                             <span>{t('header.user.notifications')}</span>
                                         </Link>
-                                    </li>
-                                    <li className="jf-user-dropdown-row">
-                                        <button
-                                            type="button"
-                                            className="dropdown-item jf-user-dropdown-item"
-                                            onClick={toggleDarkMode}
-                                        >
-                                            <i className={`bi ${isDarkMode ? 'bi-sun-fill text-primary' : 'bi-moon-stars text-primary'}`}></i>
-                                            <span>{isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark')}</span>
-                                        </button>
                                     </li>
                                     <li><hr className="dropdown-divider" /></li>
                                     <li className="jf-user-dropdown-row jf-user-dropdown-row-last">

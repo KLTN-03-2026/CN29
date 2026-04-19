@@ -313,6 +313,59 @@
     display: inline-flex;
     align-items: center;
     gap: 0.58rem;
+    flex-wrap: wrap;
+}
+
+.employer-language-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.18rem;
+    border: 1px solid var(--employer-border);
+    border-radius: 999px;
+    background: #ffffff;
+}
+
+.employer-language-btn,
+.employer-notification-btn {
+    border: 1px solid var(--employer-border);
+    border-radius: 12px;
+    background: #ffffff;
+    color: #0f172a;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    padding: 0.5rem 0.78rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.employer-language-btn {
+    min-width: 40px;
+    padding: 0.42rem 0.68rem;
+    border-radius: 999px;
+    background: transparent;
+}
+
+.employer-language-btn.is-active {
+    background: #1d4ed8;
+    border-color: #1d4ed8;
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(29, 78, 216, 0.24);
+}
+
+.employer-language-btn:hover,
+.employer-notification-btn:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+}
+
+.employer-notification-btn i {
+    font-size: 0.98rem;
 }
 
 .employer-home-btn {
@@ -1229,6 +1282,274 @@
     font-size: 0.92rem;
     line-height: 1.55;
     white-space: pre-wrap;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-layout {
+    --employer-bg: #07121f;
+    --employer-border: #2f4864;
+    --employer-text: #e8f3ff;
+    --employer-muted: #9eb8d2;
+    --employer-primary: #59abff;
+    --employer-primary-soft: #11243b;
+    --employer-success: #34d399;
+    --employer-danger-soft: #3a212c;
+    background:
+        radial-gradient(circle at 10% 8%, rgba(60, 151, 231, 0.14), transparent 36%),
+        radial-gradient(circle at 92% 12%, rgba(36, 171, 199, 0.12), transparent 35%),
+        linear-gradient(180deg, #07121f 0%, #0b1829 50%, #0f2034 100%);
+    color: #d9e9f9;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-mobile-overlay {
+    background: rgba(2, 8, 18, 0.66);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-sidebar,
+:is(html.dark, html[data-bs-theme='dark']) .employer-header,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-menu,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .card,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .modal-content,
+:is(html.dark, html[data-bs-theme='dark']) .employer-profile-card,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-summary,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-item,
+:is(html.dark, html[data-bs-theme='dark']) .employer-settings-install,
+:is(html.dark, html[data-bs-theme='dark']) .employer-password-modal {
+    background: #111f33;
+    border-color: #304a66 !important;
+    box-shadow: 0 16px 32px rgba(2, 10, 20, 0.45);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-sidebar-brand,
+:is(html.dark, html[data-bs-theme='dark']) .employer-sidebar-user {
+    background: linear-gradient(180deg, #13253b 0%, #172d47 100%);
+    border-color: #355271;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-sidebar-logo {
+    background: #0d1a2c;
+    border-color: #2f4864;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-sidebar-brand span,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-info h6,
+:is(html.dark, html[data-bs-theme='dark']) .employer-header-title,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-pill-copy strong,
+:is(html.dark, html[data-bs-theme='dark']) .main-content h2,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .employer-page-title,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .card h3,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .card h4,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .card h5,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .card h6,
+:is(html.dark, html[data-bs-theme='dark']) .employer-profile-section-title,
+:is(html.dark, html[data-bs-theme='dark']) .employer-avatar-content h6,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-title,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-item-head h6 {
+    color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-info small,
+:is(html.dark, html[data-bs-theme='dark']) .employer-header-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-pill-copy small,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-pill-chevron,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .text-muted,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .card p,
+:is(html.dark, html[data-bs-theme='dark']) .employer-profile-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-meta,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-item-head p,
+:is(html.dark, html[data-bs-theme='dark']) .employer-avatar-content p,
+:is(html.dark, html[data-bs-theme='dark']) .employer-avatar-file,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-content,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-loading,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-empty {
+    color: #9eb8d2 !important;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-menu-item,
+:is(html.dark, html[data-bs-theme='dark']) .employer-menu-item i,
+:is(html.dark, html[data-bs-theme='dark']) .employer-home-btn,
+:is(html.dark, html[data-bs-theme='dark']) .employer-language-toggle,
+:is(html.dark, html[data-bs-theme='dark']) .employer-language-btn,
+:is(html.dark, html[data-bs-theme='dark']) .employer-notification-btn,
+:is(html.dark, html[data-bs-theme='dark']) .employer-sidebar-toggle,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-pill,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-menu-item,
+:is(html.dark, html[data-bs-theme='dark']) .employer-logout-btn,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-secondary,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-primary,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-success,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-info,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-warning,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-danger,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-manage-filter-btn,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .app-manage-filter-btn,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-manage-filter-count,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .app-manage-filter-count,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-manage-status-pill,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .app-manage-status-pill,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .badge,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .jf-jobs-select-trigger,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .jf-jobs-select-menu,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .jf-jobs-select-search-wrap,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .jf-jobs-select-option,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .jf-jobs-select-empty,
+:is(html.dark, html[data-bs-theme='dark']) .employer-avatar-panel,
+:is(html.dark, html[data-bs-theme='dark']) .employer-password-visibility-btn,
+:is(html.dark, html[data-bs-theme='dark']) .employer-profile-divider,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-empty,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .card .card-header {
+    background: #13253b;
+    border-color: #395676;
+    color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-menu-item:hover,
+:is(html.dark, html[data-bs-theme='dark']) .employer-home-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .employer-language-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .employer-notification-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .employer-sidebar-toggle:hover,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-pill:hover,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-pill.is-open,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-menu-item:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-secondary:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-primary:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-success:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-info:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-outline-warning:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .jf-jobs-select-option:hover {
+    background: #18304c;
+    border-color: #4c6f94;
+    color: #ecf7ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-menu-item.active {
+    background: linear-gradient(135deg, #194472 0%, #255488 100%);
+    color: #e9f5ff;
+    box-shadow: inset 0 0 0 1px rgba(116, 182, 255, 0.32);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-menu-item.active i {
+    color: #93d8ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-logout-btn {
+    background: #3a212c;
+    border: 1px solid #7a4e61;
+    color: #ffc6d7;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-logout-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-menu-item.danger:hover {
+    background: #4b2835;
+    border-color: #946079;
+    color: #ffdce7;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-menu-item i,
+:is(html.dark, html[data-bs-theme='dark']) .employer-user-pill-icon,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-manage-filter-icon,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .app-manage-filter-icon,
+:is(html.dark, html[data-bs-theme='dark']) .employer-company-review-avatar {
+    background: #1b3f60;
+    color: #8fd7ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-manage-filter-wrap,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .app-manage-filter-wrap {
+    background: linear-gradient(180deg, #122238 0%, #162a43 100%);
+    border-color: #355270;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-manage-filter-btn.active,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .app-manage-filter-btn.active,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-primary,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-success,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-info,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-warning {
+    background: linear-gradient(135deg, #1d77bf 0%, #2366a0 100%);
+    border-color: #1d77bf;
+    color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-primary:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-success:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-info:hover,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .btn-warning:hover {
+    background: linear-gradient(135deg, #2b88d2 0%, #2c75b1 100%);
+    border-color: #2b88d2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .table {
+    --bs-table-striped-bg: #12233a;
+    color: #d9e9f9;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .table > thead th {
+    color: #9fb9d3;
+    border-bottom-color: #36506d;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .table > tbody td {
+    border-color: #2c455f;
+    color: #d9e9f9;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .form-control,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .form-select {
+    background: #0d1a2c;
+    border-color: #3a5676;
+    color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .form-control::placeholder,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .form-select::placeholder {
+    color: #87a4c0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .form-control:focus,
+:is(html.dark, html[data-bs-theme='dark']) .main-content .form-select:focus {
+    border-color: #4f93c8;
+    box-shadow: 0 0 0 0.16rem rgba(94, 175, 242, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .progress {
+    background: #0f1f32;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-language-toggle {
+    background: #13253b;
+    border-color: #395676;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-language-btn {
+    background: transparent;
+    border-color: transparent;
+    color: #c7ddf2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-language-btn.is-active {
+    background: #1d77bf;
+    border-color: #1d77bf;
+    color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-notification-btn {
+    background: #13253b;
+    border-color: #395676;
+    color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-notification-btn:hover {
+    background: #18304c;
+    border-color: #4c6f94;
+    color: #ecf7ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .employer-overview-page .employer-overview-stat-card,
+:is(html.dark, html[data-bs-theme='dark']) .employer-overview-page .employer-overview-report-card,
+:is(html.dark, html[data-bs-theme='dark']) .employer-overview-page .employer-overview-activity-card,
+:is(html.dark, html[data-bs-theme='dark']) .employer-overview-page .employer-overview-notification-card {
+    background: #111f33;
 }
 
 @media (max-width: 991px) {

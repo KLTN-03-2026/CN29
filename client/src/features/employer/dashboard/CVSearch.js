@@ -1,14 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
-
-const EXPERIENCE_ENTRIES = [
-    { value: '', label: 'Tất cả' },
-    { value: '0-1', label: 'Dưới 1 năm' },
-    { value: '1-3', label: '1-3 năm' },
-    { value: '3-5', label: '3-5 năm' },
-    { value: '5+', label: 'Trên 5 năm' }
-];
 
 const getProvinceLabel = (item) => {
     if (typeof item === 'string') return item;
@@ -16,8 +9,17 @@ const getProvinceLabel = (item) => {
 };
 
 const CVSearch = () => {
+    const { t, i18n } = useTranslation('translation');
     const API_BASE = CLIENT_API_BASE;
     const navigate = useNavigate();
+
+    const EXPERIENCE_ENTRIES = useMemo(() => [
+        { value: '', label: t('employer.cvSearchPage.filters.experience.all') },
+        { value: '0-1', label: t('employer.cvSearchPage.filters.experience.under1') },
+        { value: '1-3', label: t('employer.cvSearchPage.filters.experience.1to3') },
+        { value: '3-5', label: t('employer.cvSearchPage.filters.experience.3to5') },
+        { value: '5+', label: t('employer.cvSearchPage.filters.experience.over5') }
+    ], [t, i18n.language]);
 
     const [searchParams, setSearchParams] = useState({
         keyword: '',
@@ -173,10 +175,10 @@ const CVSearch = () => {
 
         const unique = [...new Set([...provinces, ...fromResults])];
         return [
-            { value: '', label: 'Tất cả' },
+            { value: '', label: t('employer.cvSearchPage.filters.location.all') },
             ...unique.map((item) => ({ value: item, label: item }))
         ];
-    }, [provinces, searchResults]);
+    }, [provinces, searchResults, t, i18n.language]);
 
     const visibleCityEntries = useMemo(() => {
         const query = String(cityQuery || '').trim().toLowerCase();
@@ -185,8 +187,8 @@ const CVSearch = () => {
         return cityEntries.filter((entry) => entry.value === '' || String(entry.label).toLowerCase().includes(query));
     }, [cityEntries, cityQuery]);
 
-    const selectedCityLabel = searchParams.city || (loadingProvinces ? 'Đang tải...' : 'Tất cả');
-    const selectedExperienceLabel = EXPERIENCE_ENTRIES.find((entry) => entry.value === searchParams.experience)?.label || 'Tất cả';
+    const selectedCityLabel = searchParams.city || (loadingProvinces ? t('employer.cvSearchPage.filters.location.loading') : t('employer.cvSearchPage.filters.location.all'));
+    const selectedExperienceLabel = EXPERIENCE_ENTRIES.find((entry) => entry.value === searchParams.experience)?.label || t('employer.cvSearchPage.filters.experience.all');
 
     const updateSearchParam = (name, value) => {
         setSearchParams((prev) => ({
@@ -212,11 +214,11 @@ const CVSearch = () => {
             const res = await fetch(`${API_BASE}/api/cvs/search?${params.toString()}`);
             const data = await res.json().catch(() => null);
 
-            if (!res.ok) throw new Error(data?.error || 'Không tìm được CV');
+            if (!res.ok) throw new Error(data?.error || t('employer.cvSearchPage.errors.searchFailed'));
 
             setSearchResults(data?.results || []);
         } catch (err) {
-            setError(err?.message || 'Có lỗi xảy ra');
+            setError(err?.message || t('employer.cvSearchPage.errors.generic'));
             setSearchResults([]);
         } finally {
             setLoading(false);
@@ -226,7 +228,7 @@ const CVSearch = () => {
     const saveCv = async (cvId) => {
         const token = localStorage.getItem('token');
         if (!token) {
-            setError('Bạn cần đăng nhập.');
+            setError(t('employer.cvSearchPage.errors.needSignIn'));
             return;
         }
 
@@ -250,10 +252,10 @@ const CVSearch = () => {
                 body: JSON.stringify({ cvId })
             });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không lưu được CV');
+            if (!res.ok) throw new Error(data?.error || t('employer.cvSearchPage.errors.generic'));
             markCvAsSaved(cvId);
         } catch (err) {
-            alert(err?.message || 'Có lỗi xảy ra');
+            alert(err?.message || t('employer.cvSearchPage.errors.generic'));
         } finally {
             setSavingCvIds((prev) => {
                 const next = new Set(prev);
@@ -266,14 +268,14 @@ const CVSearch = () => {
     const openCvPreview = async (cv) => {
         const fileUrl = String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim();
         if (!fileUrl) {
-            alert('Ứng viên chưa đính kèm file CV để xem.');
+            alert(t('employer.cvSearchPage.errors.noFileAttachment'));
             return;
         }
 
         try {
             const response = await fetch(fileUrl, { method: 'HEAD' });
             if (!response.ok && response.status !== 405) {
-                alert('File CV không còn tồn tại trên hệ thống. Vui lòng liên hệ ứng viên để cập nhật CV mới.');
+                alert(t('employer.cvSearchPage.errors.fileMissing'));
                 return;
             }
         } catch {
@@ -285,15 +287,15 @@ const CVSearch = () => {
 
     const hasCvAttachment = (cv) => Boolean(String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim());
     const getCvPreviewHint = (cv) => {
-        if (hasCvAttachment(cv)) return 'Mở file CV đính kèm';
-        if (String(cv?.cvFileName || '').trim()) return 'File CV không còn tồn tại trên hệ thống';
-        return 'Ứng viên chưa đính kèm file CV';
+        if (hasCvAttachment(cv)) return t('employer.cvSearchPage.hint.hasAttachment');
+        if (String(cv?.cvFileName || '').trim()) return t('employer.cvSearchPage.hint.fileMissing');
+        return t('employer.cvSearchPage.hint.noAttachment');
     };
 
     const openMessageBox = (cv) => {
         const candidateUserId = Number.parseInt(String(cv?.candidateUserId || ''), 10);
         if (!Number.isFinite(candidateUserId)) {
-            setError('Không xác định được ứng viên để nhắn tin.');
+            setError(t('employer.cvSearchPage.errors.noCandidate'));
             return;
         }
 
@@ -315,26 +317,26 @@ const CVSearch = () => {
 
     return (
         <div>
-            <h2 className="mb-4 employer-page-title">Tìm kiếm CV ứng viên</h2>
+            <h2 className="mb-4 employer-page-title">{t('employer.cvSearchPage.title')}</h2>
 
             <div className="card border-0 shadow-sm mb-4">
                 <div className="card-body">
                     <form onSubmit={handleSearch}>
                         <div className="row g-3">
                             <div className="col-md-6">
-                                <label className="form-label">Từ khóa</label>
+                                <label className="form-label">{t('employer.cvSearchPage.form.keywordLabel')}</label>
                                 <input
                                     type="text"
                                     className="form-control"
                                     name="keyword"
-                                    placeholder="Vị trí, kỹ năng, kinh nghiệm..."
+                                    placeholder={t('employer.cvSearchPage.form.keywordPlaceholder')}
                                     value={searchParams.keyword}
                                     onChange={handleChange}
                                 />
                             </div>
                             <div className="col-md-3">
                                 <div className="jf-jobs-search-field" ref={cityRef}>
-                                    <label>Địa điểm</label>
+                                    <label>{t('employer.cvSearchPage.form.locationLabel')}</label>
                                     <div className={`jf-jobs-select ${isCityOpen ? 'is-open' : ''}`}>
                                         <button
                                             type="button"
@@ -352,13 +354,13 @@ const CVSearch = () => {
                                         </button>
 
                                         {isCityOpen ? (
-                                            <div className="jf-jobs-select-menu jf-jobs-select-menu--location" role="listbox" aria-label="Chọn địa điểm">
+                                            <div className="jf-jobs-select-menu jf-jobs-select-menu--location" role="listbox" aria-label={t('employer.cvSearchPage.aria.locationListbox')}>
                                                 <div className="jf-jobs-select-search-wrap">
                                                     <i className="bi bi-search"></i>
                                                     <input
                                                         ref={citySearchInputRef}
                                                         type="text"
-                                                        placeholder="Nhập để tìm tỉnh/thành"
+                                                        placeholder={t('employer.cvSearchPage.filters.location.searchPlaceholder')}
                                                         value={cityQuery}
                                                         onChange={(event) => setCityQuery(event.target.value)}
                                                     />
@@ -366,7 +368,7 @@ const CVSearch = () => {
 
                                                 <div className="jf-jobs-select-scroll">
                                                     {visibleCityEntries.length === 0 ? (
-                                                        <div className="jf-jobs-select-empty">Không tìm thấy tỉnh/thành phù hợp</div>
+                                                        <div className="jf-jobs-select-empty">{t('employer.cvSearchPage.filters.location.noResults')}</div>
                                                     ) : (
                                                         visibleCityEntries.map((entry) => (
                                                             <button
@@ -390,7 +392,7 @@ const CVSearch = () => {
                             </div>
                             <div className="col-md-3">
                                 <div className="jf-jobs-search-field" ref={experienceRef}>
-                                    <label>Kinh nghiệm</label>
+                                    <label>{t('employer.cvSearchPage.form.experienceLabel')}</label>
                                     <div className={`jf-jobs-select ${isExperienceOpen ? 'is-open' : ''}`}>
                                         <button
                                             type="button"
@@ -407,7 +409,7 @@ const CVSearch = () => {
                                         </button>
 
                                         {isExperienceOpen ? (
-                                            <div className="jf-jobs-select-menu" role="listbox" aria-label="Chọn kinh nghiệm">
+                                            <div className="jf-jobs-select-menu" role="listbox" aria-label={t('employer.cvSearchPage.aria.experienceListbox')}>
                                                 {EXPERIENCE_ENTRIES.map((entry) => (
                                                     <button
                                                         key={entry.value || 'all'}
@@ -429,7 +431,7 @@ const CVSearch = () => {
                             <div className="col-md-12 d-flex justify-content-end">
                                 <button type="submit" className="jf-jobs-search-submit px-4">
                                     <i className="bi bi-search me-2"></i>
-                                    Tìm kiếm
+                                    {t('employer.cvSearchPage.form.searchButton')}
                                 </button>
                             </div>
                         </div>
@@ -444,9 +446,9 @@ const CVSearch = () => {
                     {loading && (
                         <div className="text-center py-5">
                             <div className="spinner-border text-primary" role="status">
-                                <span className="visually-hidden">Đang tìm kiếm...</span>
+                                <span className="visually-hidden">{t('employer.cvSearchPage.loadingSearch')}</span>
                             </div>
-                            <p className="mt-2">Đang tìm kiếm CV...</p>
+                            <p className="mt-2">{t('employer.cvSearchPage.searchingResults')}</p>
                         </div>
                     )}
 
@@ -454,7 +456,7 @@ const CVSearch = () => {
                         <div className="text-center py-5">
                             <i className="bi bi-search fs-1 text-muted"></i>
                             <p className="text-muted mt-3">
-                                Nhập từ khóa và tiêu chí để tìm kiếm CV ứng viên
+                                {t('employer.cvSearchPage.beforeSearchHint')}
                             </p>
                         </div>
                     )}
@@ -462,14 +464,14 @@ const CVSearch = () => {
                     {!loading && searched && searchResults.length === 0 && (
                         <div className="text-center py-5">
                             <i className="bi bi-inbox fs-1 text-muted"></i>
-                            <p className="text-muted mt-3">Không tìm thấy CV phù hợp</p>
+                            <p className="text-muted mt-3">{t('employer.cvSearchPage.noResults')}</p>
                         </div>
                     )}
 
                     {!loading && searchResults.length > 0 && (
                         <div>
                             <div className="mb-3">
-                                <h5>Tìm thấy {searchResults.length} CV</h5>
+                                <h5>{t('employer.cvSearchPage.foundResults', { count: searchResults.length })}</h5>
                             </div>
                             <div className="row g-3">
                                 {searchResults.map((cv, idx) => {
@@ -535,7 +537,7 @@ const CVSearch = () => {
 
                                                     <div className="d-flex justify-content-between align-items-center">
                                                         <small className="text-muted">
-                                                            Cập nhật: {cv.updatedAt ? new Date(cv.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}
+                                                            {t('employer.cvSearchPage.results.updatedAt')} {cv.updatedAt ? new Date(cv.updatedAt).toLocaleDateString('vi-VN') : 'N/A'}
                                                         </small>
                                                         <div className="d-flex gap-2">
                                                             <button
@@ -545,7 +547,7 @@ const CVSearch = () => {
                                                                 title={getCvPreviewHint(cv)}
                                                             >
                                                                 <i className="bi bi-file-earmark-text me-1"></i>
-                                                                Xem CV
+                                                                {t('employer.cvSearchPage.actions.viewCv')}
                                                             </button>
                                                             <button
                                                                 className={`btn btn-sm cv-search-save-btn ${isSaved ? 'btn-success is-saved' : 'btn-outline-primary'}`}
@@ -553,14 +555,14 @@ const CVSearch = () => {
                                                                 disabled={isSaved || isSaving || !Number.isFinite(parsedCvId)}
                                                             >
                                                                 <i className={`bi ${isSaved ? 'bi-bookmark-check-fill' : 'bi-bookmark-plus'} me-1`}></i>
-                                                                {isSaved ? 'Đã lưu' : (isSaving ? 'Đang lưu...' : 'Lưu CV')}
+                                                                {isSaved ? t('employer.cvSearchPage.actions.saved') : (isSaving ? t('employer.cvSearchPage.actions.saving') : t('employer.cvSearchPage.actions.saveCv'))}
                                                             </button>
                                                             <button
                                                                 className="btn btn-sm btn-primary"
                                                                 onClick={() => openMessageBox(cv)}
                                                             >
                                                                 <i className="bi bi-chat-dots me-1"></i>
-                                                                Nhắn tin
+                                                                {t('employer.cvSearchPage.actions.message')}
                                                             </button>
                                                         </div>
                                                     </div>

@@ -5,7 +5,12 @@
     "switchToVietnamese": "Chuyển sang tiếng Việt",
     "toggleDarkMode": "Đổi giao diện",
     "switchToDark": "Chuyển sang giao diện tối",
-    "switchToLight": "Chuyển sang giao diện sáng"
+    "switchToLight": "Chuyển sang giao diện sáng",
+    "home": "Trang chủ",
+    "success": "Thành công",
+    "close": "Đóng",
+    "delete": "Xóa",
+    "cancel": "Hủy"
   },
   "header": {
     "nav": {
@@ -150,6 +155,934 @@
         "progressHeader": "Tỉ lệ (%)",
         "noPopular": "Chưa có dữ liệu"
       }
+    }
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Nền tảng tìm việc đáng tin cậy",
+      "title": "Tìm đúng việc phù hợp với bạn trong vài giây",
+      "subtitle": "Khám phá cơ hội mới, lọc theo nhu cầu và ứng tuyển nhanh với một giao diện trực quan ngay khi vừa truy cập.",
+      "ctaFindJobs": "Bắt đầu tìm việc ngay",
+      "ctaCreateProfile": "Tạo hồ sơ nổi bật",
+      "highlightAria": "Lợi ích chính",
+      "highlightTitle": "03 bước rõ ràng",
+      "highlightStep1": "Tạo hồ sơ chuyên nghiệp",
+      "highlightStep2": "Lọc công việc đúng nhu cầu",
+      "highlightStep3": "Ứng tuyển và theo dõi dễ dàng"
+    },
+    "search": {
+      "jobTitleLabel": "Vị trí công việc",
+      "keywordPlaceholder": "Ví dụ: Frontend Developer",
+      "industryLabel": "Ngành nghề",
+      "allIndustries": "Tất cả ngành nghề",
+      "locationLabel": "Địa điểm",
+      "nationwide": "Toàn quốc",
+      "submit": "Tìm việc ngay"
+    },
+    "filters": {
+      "quick": {
+        "aria": "Bộ lọc nhanh việc làm",
+        "remote": "Remote",
+        "fresher": "Fresher",
+        "parttime": "Part-time",
+        "fulltime": "Full-time",
+        "intern": "Intern"
+      },
+      "toolbar": {
+        "aria": "Lọc nhanh danh sách việc làm",
+        "latest": "Mới nhất",
+        "highSalary": "Lương cao",
+        "remote": "Remote",
+        "intern": "Thực tập",
+        "it": "IT"
+      }
+    },
+    "stats": {
+      "openJobs": "Việc làm đang tuyển",
+      "companies": "Công ty tuyển dụng",
+      "activeCandidates": "Ứng viên hoạt động",
+      "createdCvs": "CV đã tạo"
+    },
+    "latest": {
+      "eyebrow": "Việc làm dành cho bạn",
+      "title": "Việc làm mới và phù hợp",
+      "syncing": "Đang đồng bộ dữ liệu việc làm...",
+      "subtitleWithCount": "{{count}} cơ hội đang chờ bạn khám phá.",
+      "viewAll": "Xem tất cả việc làm",
+      "loading": "Đang tải danh sách việc làm...",
+      "empty": "Chưa có việc làm phù hợp với bộ lọc hiện tại.",
+      "logoAltFallback": "Logo nhà tuyển dụng",
+      "untitled": "Chưa có tiêu đề",
+      "companyFallback": "Nhà tuyển dụng",
+      "locationNationwide": "Toàn quốc",
+      "fullTimeFallback": "Toàn thời gian",
+      "noExperience": "Không yêu cầu",
+      "saveJob": "Lưu việc làm",
+      "unsaveJob": "Bỏ lưu việc làm",
+      "apply": "Ứng tuyển"
+    },
+    "cta": {
+      "eyebrow": "Tăng tỷ lệ được gọi phỏng vấn",
+      "title": "Tạo CV và hoàn thiện hồ sơ ngay hôm nay",
+      "subtitle": "Tối ưu hồ sơ của bạn để nhận gợi ý việc làm phù hợp hơn và gây ấn tượng tốt hơn với nhà tuyển dụng.",
+      "createNow": "Tạo CV ngay",
+      "chooseTemplate": "Chọn mẫu CV"
+    },
+    "how": {
+      "eyebrow": "Quy trình rõ ràng",
+      "title": "Quy trình tìm việc đơn giản",
+      "stepLabel": "Bước {{index}}",
+      "stepProfileTitle": "Tạo hồ sơ",
+      "stepProfileDesc": "Cập nhật thông tin cá nhân, kinh nghiệm và kỹ năng để hồ sơ nổi bật hơn.",
+      "stepSearchTitle": "Tìm việc phù hợp",
+      "stepSearchDesc": "Lọc theo ngành nghề, địa điểm, mức lương và hình thức làm việc trong vài giây.",
+      "stepApplyTitle": "Ứng tuyển nhanh",
+      "stepApplyDesc": "Nộp CV trực tiếp, theo dõi trạng thái ứng tuyển và phản hồi từ nhà tuyển dụng."
+    },
+    "benefits": {
+      "eyebrow": "Lợi ích cốt lõi",
+      "title": "Lý do nên tìm việc tại JobFinder",
+      "matchingTitle": "Gợi ý việc làm phù hợp",
+      "matchingDesc": "Hệ thống ưu tiên hiển thị công việc phù hợp theo hồ sơ và nhu cầu tìm việc của bạn.",
+      "cvTitle": "Hồ sơ CV dễ tạo",
+      "cvDesc": "Chọn mẫu CV chuyên nghiệp, chỉnh sửa nhanh và sẵn sàng ứng tuyển ngay.",
+      "applyTitle": "Ứng tuyển nhanh",
+      "applyDesc": "Lưu việc yêu thích, gửi hồ sơ chỉ với vài thao tác và theo dõi lịch sử ứng tuyển.",
+      "trackingTitle": "Theo dõi tiến trình",
+      "trackingDesc": "Nắm rõ trạng thái hồ sơ để không bỏ lỡ phản hồi quan trọng từ nhà tuyển dụng."
+    },
+    "common": {
+      "salaryNegotiable": "Thỏa thuận",
+      "salaryRange": "{{from}} - {{to}} VND/{{unit}}",
+      "salaryFrom": "Từ {{amount}} VND/{{unit}}",
+      "salaryTo": "Đến {{amount}} VND/{{unit}}",
+      "salaryUnit": {
+        "month": "tháng",
+        "day": "ngày",
+        "hour": "giờ",
+        "job": "việc"
+      },
+      "justPosted": "Vừa đăng",
+      "hoursAgo": "{{count}} giờ trước",
+      "daysAgo": "{{count}} ngày trước",
+      "postedLong": "Đã đăng lâu",
+      "badge": {
+        "remote": "Remote",
+        "internship": "Thực tập",
+        "goodSalary": "Lương tốt",
+        "new": "Mới",
+        "featured": "Nổi bật"
+      }
+    },
+    "notifications": {
+      "loginToSave": "Bạn cần đăng nhập để lưu công việc.",
+      "saved": "Đã lưu công việc.",
+      "unsaved": "Đã bỏ lưu công việc.",
+      "cannotLoadJobs": "Không thể tải danh sách việc làm",
+      "cannotLoadJobsGeneric": "Không thể tải danh sách việc làm.",
+      "cannotLoadSavedJobs": "Không tải được việc làm đã lưu",
+      "cannotUpdateSaved": "Không thể cập nhật lưu việc",
+      "cannotUpdateSavedGeneric": "Không thể cập nhật lưu việc."
+    }
+  },
+  "jobSearch": {
+    "errors": {
+      "loadJobs": "Không tải được danh sách việc làm",
+      "loadSavedJobs": "Không tải được việc làm đã lưu",
+      "updateSavedJob": "Không thể cập nhật lưu việc"
+    },
+    "notifications": {
+      "loginRequiredToSave": "Bạn cần đăng nhập để lưu công việc.",
+      "savedJob": "Đã lưu công việc.",
+      "unsavedJob": "Đã bỏ lưu công việc."
+    },
+    "hero": {
+      "eyebrow": "Nền tảng tuyển dụng hiện đại",
+      "title": "Tìm kiếm công việc phù hợp và ứng tuyển nhanh hơn",
+      "description": "Giao diện được tối ưu cho việc lọc theo ngành nghề, địa điểm và mức lương, giúp bạn tiếp cận đúng cơ hội chỉ trong vài giây."
+    },
+    "search": {
+      "keywordLabel": "Vị trí công việc",
+      "keywordPlaceholder": "Ví dụ: Frontend Developer",
+      "industryLabel": "Ngành nghề",
+      "locationLabel": "Địa điểm",
+      "selectIndustry": "Chọn ngành nghề",
+      "selectLocation": "Chọn địa điểm",
+      "locationSearchPlaceholder": "Nhập để tìm địa điểm",
+      "noLocationFound": "Không tìm thấy địa điểm phù hợp",
+      "submit": "Tìm kiếm",
+      "allIndustries": "Tất cả ngành nghề",
+      "nationwide": "Toàn quốc"
+    },
+    "stats": {
+      "matchedJobs": "Việc làm phù hợp",
+      "hiringCompanies": "Doanh nghiệp tuyển dụng",
+      "newJobs": "Tin tuyển dụng mới"
+    },
+    "filters": {
+      "advanced": "Bộ lọc nâng cao",
+      "refineSearch": "Tinh chỉnh tìm kiếm",
+      "experience": "Kinh nghiệm",
+      "level": "Cấp bậc",
+      "salary": "Mức lương",
+      "salaryFrom": "Từ",
+      "salaryTo": "Đến",
+      "millionUnit": "triệu",
+      "companyField": "Lĩnh vực công ty",
+      "selectCompanyField": "Chọn lĩnh vực công ty",
+      "jobField": "Lĩnh vực công việc",
+      "selectJobField": "Chọn lĩnh vực công việc",
+      "workingForm": "Hình thức làm việc",
+      "clear": "Xóa bộ lọc"
+    },
+    "results": {
+      "breadcrumb": "Trang chủ › Tuyển dụng",
+      "matchCount": "{{count}} việc làm phù hợp",
+      "updatedAt": "Cập nhật {{date}}",
+      "subtitle": "Kết quả hiển thị theo từ khóa, ngành nghề, địa điểm và bộ lọc nâng cao của bạn.",
+      "createAlert": "Tạo thông báo việc làm"
+    },
+    "states": {
+      "loading": "Đang tải danh sách việc làm...",
+      "empty": "Không có việc làm phù hợp với bộ lọc hiện tại.",
+      "clearToSeeAll": "Xóa lọc để xem toàn bộ công việc"
+    },
+    "cards": {
+      "logoAlt": "Logo",
+      "noTitle": "Chưa có tiêu đề",
+      "employer": "Nhà tuyển dụng"
+    },
+    "actions": {
+      "save": "Lưu việc làm",
+      "unsave": "Bỏ lưu việc làm",
+      "apply": "Ứng tuyển"
+    },
+    "options": {
+      "all": "Tất cả",
+      "expUnder1Year": "Dưới 1 năm",
+      "exp1Year": "1 năm",
+      "exp2Years": "2 năm",
+      "exp3Years": "3 năm",
+      "exp4Years": "4 năm",
+      "exp5Years": "5 năm",
+      "expOver5Years": "Trên 5 năm",
+      "notRequired": "Không yêu cầu",
+      "levelStaff": "Nhân viên",
+      "levelTeamLead": "Trưởng nhóm",
+      "levelDepartmentLead": "Trưởng/Phó phòng",
+      "levelManager": "Quản lý / Giám sát",
+      "levelBranchLead": "Trưởng chi nhánh",
+      "levelViceDirector": "Phó giám đốc",
+      "levelDirector": "Giám đốc",
+      "levelIntern": "Thực tập sinh",
+      "salary10to15": "10 - 15 triệu",
+      "salary15to20": "15 - 20 triệu",
+      "salary20to25": "20 - 25 triệu",
+      "salary25to30": "25 - 30 triệu",
+      "salary30to50": "30 - 50 triệu",
+      "salaryOver50": "Trên 50 triệu",
+      "negotiable": "Thỏa thuận",
+      "fullTime": "Toàn thời gian",
+      "partTime": "Bán thời gian",
+      "internship": "Thực tập",
+      "other": "Khác",
+      "allFields": "Tất cả lĩnh vực"
+    },
+    "salary": {
+      "negotiable": "Thỏa thuận",
+      "range": "{{from}} - {{to}} VND/{{unit}}",
+      "from": "Từ {{amount}} VND/{{unit}}",
+      "to": "Đến {{amount}} VND/{{unit}}",
+      "shortFrom": "Từ {{amount}}",
+      "shortTo": "Đến {{amount}}",
+      "unit": {
+        "month": "tháng",
+        "day": "ngày",
+        "hour": "giờ",
+        "job": "việc"
+      }
+    },
+    "time": {
+      "postedRecently": "Đăng gần đây",
+      "justPosted": "Vừa đăng",
+      "hoursAgo": "{{count}} giờ trước",
+      "daysAgo": "{{count}} ngày trước",
+      "postedLongAgo": "Đã đăng lâu"
+    },
+    "badges": {
+      "goodSalary": "Lương tốt",
+      "featured": "Nổi bật"
+    }
+  },
+  "cvBuilder": {
+    "title": "Kho Mẫu CV Chuyên Nghiệp",
+    "searchPlaceholder": "Tìm kiếm mẫu CV...",
+    "labels": {
+      "cvTemplate": "Mẫu CV",
+      "cvTemplates": "Mẫu CV",
+      "cvStyle": "Phong cách CV"
+    },
+    "categories": {
+      "all": "Tất cả",
+      "professional": "CV chuyên nghiệp",
+      "creative": "CV sáng tạo",
+      "minimal": "CV tối giản",
+      "modern": "CV hiện đại"
+    },
+    "sort": {
+      "popular": "Phổ biến nhất",
+      "newest": "Mới nhất",
+      "used": "Dùng nhiều nhất"
+    },
+    "actions": {
+      "preview": "Xem CV",
+      "use": "Sử dụng",
+      "previewAria": "Xem CV {{name}}",
+      "useAria": "Sử dụng {{name}}",
+      "previewAndUse": "Xem và sử dụng mẫu CV",
+      "livePreview": "Xem trực tiếp",
+      "useTemplate": "Sử dụng mẫu",
+      "viewGrid": "Hiển thị dạng lưới",
+      "viewList": "Hiển thị dạng danh sách"
+    },
+    "subtitle": {
+      "available": "Khám phá các mẫu CV hiện đại, tối ưu cho tuyển dụng.",
+      "empty": "Hiện chưa có template CV khả dụng."
+    },
+    "states": {
+      "emptyHtml": "Template chưa có nội dung HTML.",
+      "quickStartDescription": "Mẫu CV tối ưu để bạn bắt đầu chỉnh sửa nhanh.",
+      "loadingTemplates": "Đang tải template CV...",
+      "noMatchingTemplate": "Chưa có mẫu phù hợp",
+      "tryOtherFilters": "Không tìm thấy template phù hợp với bộ lọc hiện tại. Hãy thử đổi từ khóa hoặc phong cách CV."
+    },
+    "errors": {
+      "loadTemplates": "Không tải được danh sách template"
+    },
+    "notifications": {
+      "noPreviewData": "Mẫu này chưa có dữ liệu xem trước.",
+      "selectedTemplate": "Đã chọn mẫu {{name}} để bắt đầu chỉnh sửa."
+    }
+  },
+  "cvManagement": {
+    "hero": {
+      "eyebrow": "Không gian ứng viên",
+      "title": "Quản lý CV của bạn tại JobFinder",
+      "description": "Theo dõi các CV đã tạo, chỉnh sửa CV online nhanh chóng và tái sử dụng cho mọi cơ hội tuyển dụng."
+    },
+    "stats": {
+      "total": "Tổng CV",
+      "online": "CV Online",
+      "uploaded": "CV tải lên"
+    },
+    "board": {
+      "title": "Danh sách CV đã tạo",
+      "subtitle": "Hiển thị CV online và tài liệu CV bạn đã lưu trên hệ thống."
+    },
+    "searchPlaceholder": "Tìm theo tên CV...",
+    "filters": {
+      "ariaLabel": "Lọc CV",
+      "all": "Tất cả",
+      "online": "CV Online",
+      "uploaded": "CV tải lên"
+    },
+    "labels": {
+      "updatedAt": "Cập nhật: {{date}}",
+      "status": "Trạng thái: {{status}}"
+    },
+    "actions": {
+      "uploading": "Đang tải...",
+      "uploadCv": "Tải CV lên",
+      "createNewCv": "Tạo CV mới",
+      "goToTemplates": "Đi đến Mẫu CV",
+      "loginNow": "Đăng nhập ngay",
+      "viewOnlineCv": "Xem CV Online",
+      "viewCv": "Xem CV",
+      "viewCvAria": "Xem CV {{name}}",
+      "editCv": "Chỉnh sửa CV",
+      "editCvAria": "Chỉnh sửa {{name}}",
+      "deleteCv": "Xóa CV",
+      "deleteCvAria": "Xóa {{name}}",
+      "deleting": "Đang xóa..."
+    },
+    "confirm": {
+      "deleteMessage": "Bạn có chắc muốn xóa CV này không?"
+    },
+    "states": {
+      "notLoggedInTitle": "Bạn chưa đăng nhập",
+      "notLoggedInDesc": "Đăng nhập để xem và quản lý các CV đã tạo của bạn.",
+      "loadingTitle": "Đang tải danh sách CV",
+      "loadingDesc": "Vui lòng đợi trong giây lát...",
+      "emptyTitle": "Chưa có CV phù hợp",
+      "emptyDesc": "Bạn có thể tạo CV mới từ thư viện mẫu để bắt đầu.",
+      "noFile": "Chưa có tệp"
+    },
+    "errors": {
+      "loadList": "Không tải được danh sách CV",
+      "uploadCv": "Không thể tải CV lên",
+      "deleteCv": "Không thể xóa CV"
+    },
+    "notifications": {
+      "loginToUpload": "Vui lòng đăng nhập để tải CV lên.",
+      "uploadSuccess": "Tải CV lên thành công.",
+      "deleteSuccess": "Đã xóa CV thành công."
+    }
+  },
+  "careerGuide": {
+    "errors": {
+      "loadPosts": "Không thể tải danh sách bài viết",
+      "fetchPosts": "Lỗi khi tải danh sách bài viết"
+    },
+    "hero": {
+      "eyebrow": "Blog nghề nghiệp JobFinder",
+      "title": "Bài viết hướng nghiệp",
+      "subtitle": "Cập nhật xu hướng tuyển dụng, chiến lược phỏng vấn và bí quyết xây dựng hồ sơ để bạn ứng tuyển hiệu quả hơn mỗi ngày."
+    },
+    "search": {
+      "placeholder": "Tìm theo tiêu đề, nội dung hoặc kỹ năng..."
+    },
+    "topics": {
+      "ariaLabel": "Bộ lọc chủ đề",
+      "all": "Tất cả chủ đề",
+      "cvProfile": "CV & Hồ sơ",
+      "interview": "Phỏng vấn",
+      "salary": "Lương & đãi ngộ",
+      "careerPath": "Định hướng nghề",
+      "workSkills": "Kỹ năng làm việc"
+    },
+    "overview": {
+      "ariaLabel": "Tổng quan bài viết",
+      "title": "Toàn cảnh chuyên mục",
+      "postsInCurrentPage": "Bài viết trong trang hiện tại",
+      "avgViews": "Lượt xem trung bình mỗi bài",
+      "totalPages": "Tổng số trang nội dung"
+    },
+    "feed": {
+      "ariaLabel": "Danh sách bài viết",
+      "featured": "Bài nổi bật",
+      "matchingPosts": "bài viết phù hợp",
+      "pageInfo": "Trang {{current}}/{{total}}"
+    },
+    "sort": {
+      "ariaLabel": "Sắp xếp bài viết",
+      "latest": "Mới nhất",
+      "mostViewed": "Xem nhiều"
+    },
+    "meta": {
+      "anonymous": "Ẩn danh",
+      "views": "{{count}} lượt xem"
+    },
+    "readingTime": {
+      "minutes": "{{count}} phút đọc"
+    },
+    "states": {
+      "loading": "Đang tải...",
+      "noPostsFound": "Không tìm thấy bài viết nào"
+    },
+    "actions": {
+      "readFeatured": "Đọc bài viết nổi bật",
+      "viewDetail": "Xem chi tiết",
+      "writePost": "Viết bài mới",
+      "managePosts": "Quản lý bài đã đăng",
+      "loginNow": "Đăng nhập ngay",
+      "createNewPostTitle": "Tạo bài viết mới"
+    },
+    "pagination": {
+      "ariaLabel": "Điều hướng trang"
+    },
+    "sidebar": {
+      "ariaLabel": "Nội dung liên quan",
+      "roadmapTitle": "Lộ trình tham khảo",
+      "roadmapItem1": "Hoàn thiện CV theo đúng vị trí ứng tuyển.",
+      "roadmapItem2": "Tối ưu LinkedIn và portfolio trước khi apply.",
+      "roadmapItem3": "Chuẩn bị bộ câu hỏi phỏng vấn theo chuyên môn.",
+      "roadmapItem4": "Đàm phán offer dựa trên dữ liệu thị trường.",
+      "exploreJobsTitle": "Khám phá việc làm ngay",
+      "exploreJobsDesc": "Áp dụng kiến thức trong cẩm nang để tìm việc phù hợp nhanh hơn.",
+      "viewJobs": "Xem danh sách việc làm",
+      "createCvOnline": "Tạo CV online",
+      "yourPermissionsTitle": "Quyền của bạn",
+      "yourPermissionsDesc": "Bạn có thể xem, bình luận và viết bài chia sẻ kinh nghiệm hướng nghiệp.",
+      "loginToWriteTitle": "Đăng nhập để viết bài",
+      "loginToWriteDesc": "Bạn có thể chia sẻ kinh nghiệm nghề nghiệp với cộng đồng ứng viên."
+    }
+  },
+  "employer": {
+    "layout": {
+      "defaultDisplayName": "Nhà tuyển dụng",
+      "defaultSubtitle": "Quản lý tuyển dụng",
+      "confirmLogout": {
+        "title": "Xác nhận đăng xuất",
+        "message": "Bạn có chắc chắn muốn đăng xuất?",
+        "confirm": "Đăng xuất",
+        "cancel": "Ở lại"
+      },
+      "menu": {
+        "dashboard": "Dashboard",
+        "cvSearch": "Tìm kiếm CV",
+        "cvManage": "Quản lý CV",
+        "jobs": "Quản lý tin tuyển dụng",
+        "notifications": "Thông báo",
+        "applications": "Quản lý hồ sơ ứng tuyển",
+        "messages": "Tin nhắn",
+        "company": "Thông tin công ty",
+        "account": "Tài khoản"
+      },
+      "menuSubtitle": {
+        "dashboard": "Tổng quan & báo cáo tuyển dụng",
+        "cvSearch": "Tìm ứng viên phù hợp",
+        "cvManage": "Danh sách CV đã lưu",
+        "jobs": "Đăng và theo dõi tin",
+        "notifications": "Xem nhanh tại dashboard",
+        "applications": "Duyệt hồ sơ ứng viên",
+        "messages": "Hộp thư",
+        "company": "Hồ sơ doanh nghiệp",
+        "account": "Cập nhật hồ sơ cá nhân"
+      },
+      "dropdown": {
+        "profile": "Hồ sơ của tôi",
+        "dashboard": "Dashboard",
+        "jobs": "Quản lý tin tuyển dụng",
+        "notifications": "Thông báo",
+        "logout": "Đăng xuất"
+      },
+      "aria": {
+        "closeMenu": "Đóng menu",
+        "toggleMenu": "Thu gọn menu",
+        "openAccountMenu": "Mở menu tài khoản"
+      }
+    },
+    "overview": {
+      "title": "Dashboard",
+      "subtitle": "Tổng quan dashboard và báo cáo hiệu quả tuyển dụng.",
+      "actions": {
+        "createJob": "Tạo tin mới",
+        "manage": "Quản lý",
+        "viewApplications": "Xem hồ sơ",
+        "viewReports": "Xem báo cáo",
+        "manageCv": "Quản lý CV"
+      },
+      "stats": {
+        "jobs": "Tin tuyển dụng",
+        "applications": "Hồ sơ ứng tuyển",
+        "views": "Lượt xem tin",
+        "savedCv": "CV đã lưu"
+      },
+      "reports": {
+        "title": "Thống kê & báo cáo",
+        "subtitle": "Hiệu quả lượt xem và ứng tuyển theo từng tin",
+        "loading": "Đang tải dữ liệu...",
+        "empty": "Chưa có dữ liệu thống kê.",
+        "fallbackJobTitle": "Tin tuyển dụng",
+        "columns": {
+          "job": "Tin tuyển dụng",
+          "views": "Lượt xem",
+          "chart": "Biểu đồ",
+          "applications": "Ứng tuyển"
+        }
+      },
+      "activity": {
+        "title": "Hoạt động gần đây",
+        "empty": "Chưa có hoạt động nào"
+      },
+      "notifications": {
+        "title": "Thông báo",
+        "empty": "Không có thông báo mới"
+      },
+      "status": {
+        "published": "Đã đăng",
+        "draft": "Nháp",
+        "closed": "Đã đóng"
+      },
+      "errors": {
+        "loadStats": "Không tải được thống kê",
+        "loadReports": "Không tải được dữ liệu báo cáo",
+        "genericReport": "Có lỗi khi tải báo cáo."
+      }
+    },
+    "cvManagePage": {
+      "title": "Quản lý CV",
+      "filterAriaLabel": "Lọc CV đã lưu",
+      "filters": {
+        "all": "Tất cả",
+        "viewed": "Đã xem",
+        "contacted": "Đã liên hệ"
+      },
+      "emptyAll": "Bạn chưa lưu CV nào.",
+      "emptyFiltered": "Không có CV phù hợp với bộ lọc hiện tại.",
+      "emptyHint": "Tìm ứng viên phù hợp và lưu CV của họ.",
+      "table": {
+        "candidate": "Ứng viên",
+        "email": "Email",
+        "location": "Địa điểm",
+        "experience": "Kinh nghiệm",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "viewCv": "Xem CV",
+        "message": "Nhắn tin",
+        "removeSaved": "Xóa khỏi đã lưu"
+      },
+      "confirm": {
+        "removeSavedCv": "Bạn có chắc muốn xóa CV này khỏi danh sách đã lưu?"
+      },
+      "errors": {
+        "notLoggedIn": "Bạn cần đăng nhập.",
+        "noFile": "Chưa có tệp CV.",
+        "missingCandidate": "Không xác định được ứng viên để nhắn tin.",
+        "fileMissing": "Tệp CV không còn tồn tại. Vui lòng yêu cầu ứng viên cập nhật lại."
+      },
+      "loading": "Đang tải..."
+    },
+    "cvSearchPage": {
+      "title": "Tìm kiếm CV ứng viên",
+      "form": {
+        "keywordLabel": "Từ khóa",
+        "keywordPlaceholder": "Vị trí, kỹ năng, kinh nghiệm...",
+        "locationLabel": "Địa điểm",
+        "experienceLabel": "Kinh nghiệm",
+        "searchButton": "Tìm kiếm"
+      },
+      "filters": {
+        "location": {
+          "all": "Tất cả",
+          "loading": "Đang tải...",
+          "searchPlaceholder": "Nhập để tìm tỉnh/thành",
+          "noResults": "Không tìm thấy tỉnh/thành phù hợp"
+        },
+        "experience": {
+          "ariaLabel": "Chọn kinh nghiệm",
+          "all": "Tất cả",
+          "under1": "Dưới 1 năm",
+          "1to3": "1-3 năm",
+          "3to5": "3-5 năm",
+          "over5": "Trên 5 năm"
+        }
+      },
+      "loadingProvinces": "Đang tải danh sách tỉnh/thành...",
+      "loadingSearch": "Đang tìm...",
+      "searchingResults": "Đang tìm kiếm CV...",
+      "beforeSearchHint": "Nhập từ khóa và tiêu chí để tìm kiếm CV ứng viên",
+      "noResults": "Không tìm thấy CV phù hợp",
+      "foundResults": "Tìm thấy {{count}} CV",
+      "results": {
+        "updatedAt": "Cập nhật:"
+      },
+      "actions": {
+        "viewCv": "Xem CV",
+        "saveCv": "Lưu CV",
+        "saved": "Đã lưu",
+        "saving": "Đang lưu...",
+        "message": "Nhắn tin"
+      },
+      "errors": {
+        "needSignIn": "Bạn cần đăng nhập.",
+        "searchFailed": "Không tìm được CV",
+        "generic": "Có lỗi xảy ra",
+        "noFileAttachment": "Ứng viên chưa đính kèm file CV.",
+        "fileMissing": "File CV không còn tồn tại. Yêu cầu ứng viên cập nhật lại.",
+        "noCandidate": "Không xác định được ứng viên để nhắn tin."
+      },
+      "hint": {
+        "hasAttachment": "Mở file CV đính kèm",
+        "fileMissing": "File CV không còn tồn tại trên hệ thống",
+        "noAttachment": "Ứng viên chưa đính kèm file CV"
+      },
+      "aria": {
+        "locationListbox": "Chọn địa điểm",
+        "experienceListbox": "Chọn kinh nghiệm"
+      }
+    },
+    "jobDetailPage": {
+      "title": "Chi tiết tin tuyển dụng",
+      "backButton": "← Quay lại",
+      "editButton": "Chỉnh sửa",
+      "jobListButton": "Danh sách tin",
+      "loading": "Đang tải...",
+      "errorLoading": "Không tải được tin tuyển dụng.",
+      "noData": "Chưa cập nhật",
+      "fields": {
+        "salaryType": "Kiểu lương",
+        "employmentType": "Hình thức",
+        "salaryFrom": "Lương từ",
+        "salaryTo": "Lương đến",
+        "postedDate": "Ngày đăng",
+        "deadline": "Hạn nộp",
+        "description": "Mô tả",
+        "requirements": "Yêu cầu",
+        "benefits": "Quyền lợi"
+      }
+    },
+    "jobManagementPage": {
+      "title": "Quản lý tin tuyển dụng",
+      "createJob": "Đăng tin mới",
+      "loading": "Đang tải...",
+      "emptyTitle": "Bạn chưa có tin tuyển dụng nào.",
+      "emptyHint": "Hãy đăng tin đầu tiên để bắt đầu tìm kiếm ứng viên.",
+      "table": {
+        "title": "Tiêu đề",
+        "location": "Địa điểm",
+        "status": "Trạng thái",
+        "postedDate": "Ngày đăng",
+        "actions": "Thao tác"
+      },
+      "buttons": {
+        "viewDetails": "Xem chi tiết",
+        "edit": "Chỉnh sửa",
+        "delete": "Xóa",
+        "createJob": "Đăng tin mới"
+      },
+      "confirm": {
+        "title": "Xác nhận xóa",
+        "deleteJob": "Bạn có chắc muốn xóa tin tuyển dụng này?"
+      }
+    },
+    "jobCreatePage": {
+      "titleCreate": "Đăng tin tuyển dụng",
+      "titleEdit": "Chỉnh sửa tin tuyển dụng",
+      "labels": {
+        "title": "Tiêu đề công việc",
+        "location": "Địa điểm làm việc",
+        "city": "Tỉnh/thành phố",
+        "salaryFrom": "Lương từ",
+        "salaryTo": "Lương đến",
+        "currency": "Đơn vị",
+        "salaryType": "Loại lương",
+        "experience": "Kinh nghiệm",
+        "level": "Cấp bậc",
+        "jobField": "Ngành nghề",
+        "employmentType": "Hình thức làm việc",
+        "status": "Trạng thái",
+        "deadline": "Hạn nộp hồ sơ"
+      },
+      "placeholders": {
+        "title": "Nhập tiêu đề công việc",
+        "descriptionSection": "Tiêu đề phần mô tả công việc",
+        "descriptionEditor": "Nhập mô tả công việc...",
+        "requirementsSection": "Tiêu đề phần yêu cầu",
+        "requirementsEditor": "Nhập yêu cầu...",
+        "benefitsSection": "Tiêu đề phần quyền lợi",
+        "benefitsEditor": "Nhập quyền lợi...",
+        "extraSectionTitle": "Tiêu đề phần bổ sung",
+        "extraSectionEditor": "Nhập nội dung...",
+        "loadingProvinces": "Đang tải tỉnh/thành phố...",
+        "selectProvince": "Chọn tỉnh/thành phố",
+        "searchProvince": "Tìm kiếm tỉnh/thành phố",
+        "noProvinceFound": "Không tìm thấy tỉnh/thành phố phù hợp",
+        "searchJobField": "Tìm kiếm ngành nghề",
+        "noJobFieldFound": "Không tìm thấy ngành nghề phù hợp",
+        "location": "VD: Quận 1, 123 Nguyễn Huệ...",
+        "salaryFromUsd": "VD: 1,000",
+        "salaryFromVnd": "VD: 10,000,000",
+        "salaryToUsd": "VD: 2,000",
+        "salaryToVnd": "VD: 30,000,000"
+      },
+      "buttons": {
+        "back": "Quay lại",
+        "cancel": "Hủy",
+        "savingEdit": "Đang lưu...",
+        "savingCreate": "Đang đăng...",
+        "saveChanges": "Lưu thay đổi",
+        "createJob": "Đăng tin",
+        "addSection": "Thêm phần",
+        "confirmSaveChanges": "Xác nhận & Lưu thay đổi",
+        "confirmPublish": "Xác nhận & Đăng tin"
+      },
+      "loadingJob": "Đang tải tin tuyển dụng...",
+      "currencies": {
+        "vnd": "VND",
+        "usd": "USD"
+      },
+      "salaryTypes": {
+        "negotiable": "Thỏa thuận",
+        "monthly": "Tháng",
+        "yearly": "Năm",
+        "range": "Khoảng",
+        "unknown": "Không xác định"
+      },
+      "employmentTypes": {
+        "fullTime": "Toàn thời gian",
+        "partTime": "Bán thời gian",
+        "internship": "Thực tập",
+        "remote": "Từ xa",
+        "contract": "Hợp đồng"
+      },
+      "statuses": {
+        "published": "Đã đăng",
+        "draft": "Nháp"
+      },
+      "experience": {
+        "none": "Không yêu cầu",
+        "under1": "Dưới 1 năm",
+        "oneYear": "1 năm",
+        "twoYears": "2 năm",
+        "threeYears": "3 năm",
+        "fourYears": "4 năm",
+        "fiveYears": "5 năm",
+        "over5": "Trên 5 năm"
+      },
+      "levels": {
+        "intern": "Thực tập sinh",
+        "staff": "Nhân viên",
+        "teamLead": "Trưởng nhóm",
+        "departmentLead": "Trưởng/Phó phòng",
+        "manager": "Quản lý / Giám sát",
+        "branchLead": "Trưởng chi nhánh",
+        "viceDirector": "Phó giám đốc",
+        "director": "Giám đốc"
+      },
+      "fields": {
+        "it": "CNTT",
+        "marketing": "Marketing",
+        "sales": "Bán hàng",
+        "admin": "Hành chính",
+        "engineering": "Kỹ thuật",
+        "finance": "Tài chính",
+        "manufacturing": "Sản xuất",
+        "services": "Dịch vụ",
+        "other": "Khác"
+      },
+      "sectionTitles": {
+        "description": "Mô tả công việc",
+        "requirements": "Yêu cầu",
+        "benefits": "Quyền lợi"
+      },
+      "select": {
+        "placeholder": "Chọn",
+        "searchPlaceholder": "Tìm kiếm...",
+        "emptyText": "Không có lựa chọn phù hợp"
+      },
+      "deadline": {
+        "placeholder": "Chọn hạn nộp hồ sơ",
+        "noDeadline": "Chưa chọn hạn nộp hồ sơ",
+        "quick7": "+7 ngày",
+        "quick30": "+30 ngày",
+        "clear": "Xóa"
+      },
+      "locationModal": {
+        "title": "Danh sách kiểm tra đăng tin",
+        "description": {
+          "edit": "Hoàn tất địa điểm, mức lương và tiêu chí tuyển dụng trước khi lưu thay đổi.",
+          "create": "Hoàn tất địa điểm, mức lương và tiêu chí tuyển dụng trước khi đăng tin."
+        },
+        "closeAria": "Đóng modal địa điểm",
+        "sections": {
+          "location": "Địa điểm làm việc",
+          "salary": "Mức lương",
+          "criteria": "Tiêu chí tuyển dụng",
+          "postingSettings": "Thiết lập đăng tin"
+        },
+        "errors": {
+          "locationRequired": "Vui lòng nhập địa điểm làm việc.",
+          "cityRequired": "Vui lòng chọn tỉnh/thành phố."
+        }
+      },
+      "errors": {
+        "loadJob": "Không thể tải chi tiết tin tuyển dụng.",
+        "submitFailure": "Không thể gửi tin tuyển dụng.",
+        "titleRequired": "Vui lòng nhập tiêu đề công việc.",
+        "loginRequired": "Vui lòng đăng nhập để tiếp tục.",
+        "generic": "Đã xảy ra lỗi. Vui lòng thử lại."
+      },
+      "notifications": {
+        "updateSuccess": "Cập nhật tin tuyển dụng thành công!",
+        "createSuccess": "Đăng tin tuyển dụng thành công!"
+      }
+    }
+  },
+  "supportCenterPage": {
+    "hero": {
+      "eyebrow": "Thông báo",
+      "title": "Trung tâm thông báo kiểu job board hiện đại",
+      "description": "Theo dõi toàn bộ thông báo trên JobFinder: tin nhắn, ứng tuyển, lịch phỏng vấn, đánh giá và bình luận công ty."
+    },
+    "buttons": {
+      "enableNotifications": "Bật thông báo thiết bị",
+      "enabledNotifications": "Đã bật thông báo"
+    },
+    "panel": {
+      "title": "Thông báo mới",
+      "itemsCount": "{{count}} mục"
+    },
+    "feed": {
+      "loading": "Đang tải thông báo...",
+      "errors": {
+        "loadFailed": "Không thể tải nhãn thông báo."
+      },
+      "messages": {
+        "title": "Tin nhắn mới từ {{name}}",
+        "titleUnread": "Bạn có {{count}} tin nhắn mới từ {{name}}",
+        "description": "Bạn có tin nhắn mới từ {{name}}."
+      },
+      "candidateApplication": {
+        "description": "{{companyName}} cập nhật hồ sơ cho vị trí {{jobTitle}}{{statusText}}."
+      },
+      "employerApplication": {
+        "title": "Hồ sơ ứng tuyển mới cho {{jobTitle}}",
+        "description": "{{candidateName}} vừa nộp hồ sơ{{statusText}}."
+      },
+      "companyComment": {
+        "description": "{{author}}: {{content}}",
+        "defaultText": "Có bình luận mới về công ty của bạn."
+      },
+      "companyRating": {
+        "description": "{{author}} vừa gửi đánh giá mới cho công ty của bạn."
+      },
+      "actions": {
+        "openConversation": "Mở hội thoại",
+        "viewApplicationDetails": "Xem chi tiết hồ sơ",
+        "viewCompanyProfile": "Xem hồ sơ công ty"
+      },
+      "defaults": {
+        "user": "Người dùng",
+        "company": "Nhà tuyển dụng",
+        "appliedPosition": "vị trí đã ứng tuyển"
+      },
+      "titles": {
+        "interviewInvite": "Bạn có lịch phỏng vấn mới",
+        "applicationAccepted": "Đơn ứng tuyển của bạn đã được chấp nhận",
+        "applicationReview": "Đơn ứng tuyển của bạn đang được xem xét",
+        "applicationOffer": "Bạn nhận được đề nghị mới",
+        "applicationRejected": "Đơn ứng tuyển của bạn đã bị từ chối",
+        "applicationUpdate": "Hồ sơ ứng tuyển của bạn có cập nhật mới",
+        "companyComment": "Có bình luận mới về công ty của bạn",
+        "companyRating": "Có đánh giá mới về công ty",
+        "new": "mới"
+      }
+    },
+    "feedTypes": {
+      "message": "Tin nhắn",
+      "applicationReceived": "Ứng tuyển",
+      "applicationAccepted": "Đã nhận",
+      "applicationUpdate": "Hồ sơ",
+      "applicationReview": "Xem xét",
+      "applicationOffer": "Đề nghị",
+      "applicationRejected": "Từ chối",
+      "interviewInvite": "Phỏng vấn",
+      "companyComment": "Bình luận",
+      "companyRating": "Đánh giá",
+      "default": "Thông báo"
+    },
+    "empty": {
+      "loginTitle": "Đăng nhập để xem thông báo cá nhân",
+      "loginDescription": "Trang này hiển thị thông báo theo tài khoản, bao gồm tin nhắn mới và trạng thái hồ sơ ứng tuyển.",
+      "loginButton": "Đăng nhập",
+      "noPrivateFeedTitle": "Thông báo cá nhân khả dụng cho ứng viên và nhà tuyển dụng",
+      "noPrivateFeedDescription": "Tài khoản hiện tại vẫn nhận được thông báo hệ thống, nhưng không có hộp thư ứng tuyển riêng trên màn hình này.",
+      "privateAccessDeniedTitle": "Không thể tải thông báo riêng",
+      "privateAccessDeniedDescription": "Tài khoản hiện tại chưa có quyền đọc dữ liệu thông báo riêng trên máy chủ. Vui lòng liên hệ quản trị viên hoặc kiểm tra lại phiên đăng nhập.",
+      "noNotificationsTitle": "Chưa có thông báo mới",
+      "noNotificationsDescription": "Khi có tin nhắn, cập nhật hồ sơ ứng tuyển, lịch phỏng vấn, đánh giá hoặc bình luận, hệ thống sẽ hiển thị tại đây."
+    },
+    "time": {
+      "justNow": "Vừa xong"
+    },
+    "notifications": {
+      "enabledTitle": "Đã bật thông báo",
+      "enabledMessage": "JobFinder sẽ hiển thị thông báo trên thiết bị của bạn.",
+      "deniedTitle": "Chưa bật được thông báo",
+      "deniedMessage": "Hãy cho phép thông báo trong cài đặt trình duyệt hoặc thiết bị."
     }
   }
 }

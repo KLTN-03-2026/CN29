@@ -5,7 +5,12 @@
     "switchToVietnamese": "Switch to Vietnamese",
     "toggleDarkMode": "Toggle theme",
     "switchToDark": "Switch to dark mode",
-    "switchToLight": "Switch to light mode"
+    "switchToLight": "Switch to light mode",
+    "home": "Home",
+    "success": "Success",
+    "close": "Close",
+    "delete": "Delete",
+    "cancel": "Cancel"
   },
   "header": {
     "nav": {
@@ -150,6 +155,934 @@
         "progressHeader": "Rate (%)",
         "noPopular": "No data"
       }
+    }
+  },
+  "home": {
+    "hero": {
+      "eyebrow": "Trusted job platform",
+      "title": "Find the right job for you in seconds",
+      "subtitle": "Discover new opportunities, filter by your needs, and apply quickly with an intuitive interface from the moment you arrive.",
+      "ctaFindJobs": "Start job search now",
+      "ctaCreateProfile": "Build a standout profile",
+      "highlightAria": "Key benefits",
+      "highlightTitle": "3 clear steps",
+      "highlightStep1": "Create a professional profile",
+      "highlightStep2": "Filter jobs by your needs",
+      "highlightStep3": "Apply and track easily"
+    },
+    "search": {
+      "jobTitleLabel": "Job title",
+      "keywordPlaceholder": "Example: Frontend Developer",
+      "industryLabel": "Industry",
+      "allIndustries": "All industries",
+      "locationLabel": "Location",
+      "nationwide": "Nationwide",
+      "submit": "Find jobs now"
+    },
+    "filters": {
+      "quick": {
+        "aria": "Quick job filters",
+        "remote": "Remote",
+        "fresher": "Fresher",
+        "parttime": "Part-time",
+        "fulltime": "Full-time",
+        "intern": "Intern"
+      },
+      "toolbar": {
+        "aria": "Quick job list filters",
+        "latest": "Latest",
+        "highSalary": "High salary",
+        "remote": "Remote",
+        "intern": "Internship",
+        "it": "IT"
+      }
+    },
+    "stats": {
+      "openJobs": "Open jobs",
+      "companies": "Hiring companies",
+      "activeCandidates": "Active candidates",
+      "createdCvs": "CVs created"
+    },
+    "latest": {
+      "eyebrow": "Jobs for you",
+      "title": "Latest and relevant jobs",
+      "syncing": "Syncing job data...",
+      "subtitleWithCount": "{{count}} opportunities are waiting for you.",
+      "viewAll": "View all jobs",
+      "loading": "Loading job listings...",
+      "empty": "No jobs match your current filters.",
+      "logoAltFallback": "Employer logo",
+      "untitled": "Untitled job",
+      "companyFallback": "Employer",
+      "locationNationwide": "Nationwide",
+      "fullTimeFallback": "Full-time",
+      "noExperience": "No experience required",
+      "saveJob": "Save job",
+      "unsaveJob": "Unsave job",
+      "apply": "Apply"
+    },
+    "cta": {
+      "eyebrow": "Increase your interview call rate",
+      "title": "Create your CV and complete your profile today",
+      "subtitle": "Optimize your profile to receive better job recommendations and make a stronger impression on employers.",
+      "createNow": "Create CV now",
+      "chooseTemplate": "Choose CV template"
+    },
+    "how": {
+      "eyebrow": "Clear process",
+      "title": "Simple job-search process",
+      "stepLabel": "Step {{index}}",
+      "stepProfileTitle": "Create profile",
+      "stepProfileDesc": "Update your personal info, experience, and skills to make your profile stand out.",
+      "stepSearchTitle": "Find matching jobs",
+      "stepSearchDesc": "Filter by industry, location, salary, and work type in seconds.",
+      "stepApplyTitle": "Apply quickly",
+      "stepApplyDesc": "Submit CV directly, track application status, and get employer feedback."
+    },
+    "benefits": {
+      "eyebrow": "Core benefits",
+      "title": "Why find jobs on JobFinder",
+      "matchingTitle": "Smart job matching",
+      "matchingDesc": "The system prioritizes jobs that best match your profile and job-seeking needs.",
+      "cvTitle": "Easy CV building",
+      "cvDesc": "Choose professional CV templates, edit quickly, and be ready to apply right away.",
+      "applyTitle": "Fast applications",
+      "applyDesc": "Save favorite jobs, submit applications in a few clicks, and track your history.",
+      "trackingTitle": "Progress tracking",
+      "trackingDesc": "Stay on top of your application status and never miss important employer responses."
+    },
+    "common": {
+      "salaryNegotiable": "Negotiable",
+      "salaryRange": "{{from}} - {{to}} VND/{{unit}}",
+      "salaryFrom": "From {{amount}} VND/{{unit}}",
+      "salaryTo": "Up to {{amount}} VND/{{unit}}",
+      "salaryUnit": {
+        "month": "month",
+        "day": "day",
+        "hour": "hour",
+        "job": "job"
+      },
+      "justPosted": "Just posted",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "postedLong": "Posted earlier",
+      "badge": {
+        "remote": "Remote",
+        "internship": "Internship",
+        "goodSalary": "Good salary",
+        "new": "New",
+        "featured": "Featured"
+      }
+    },
+    "notifications": {
+      "loginToSave": "You need to sign in to save this job.",
+      "saved": "Job saved successfully.",
+      "unsaved": "Job removed from saved list.",
+      "cannotLoadJobs": "Unable to load job listings",
+      "cannotLoadJobsGeneric": "Unable to load job listings.",
+      "cannotLoadSavedJobs": "Unable to load saved jobs",
+      "cannotUpdateSaved": "Unable to update saved job state",
+      "cannotUpdateSavedGeneric": "Unable to update saved job state."
+    }
+  },
+  "jobSearch": {
+    "errors": {
+      "loadJobs": "Unable to load job listings",
+      "loadSavedJobs": "Unable to load saved jobs",
+      "updateSavedJob": "Unable to update saved jobs"
+    },
+    "notifications": {
+      "loginRequiredToSave": "You need to sign in to save jobs.",
+      "savedJob": "Job saved successfully.",
+      "unsavedJob": "Job removed from saved list."
+    },
+    "hero": {
+      "eyebrow": "Modern hiring platform",
+      "title": "Find matching jobs and apply faster",
+      "description": "The interface is optimized for filtering by industry, location, and salary, helping you reach the right opportunities in seconds."
+    },
+    "search": {
+      "keywordLabel": "Job title",
+      "keywordPlaceholder": "Example: Frontend Developer",
+      "industryLabel": "Industry",
+      "locationLabel": "Location",
+      "selectIndustry": "Select industry",
+      "selectLocation": "Select location",
+      "locationSearchPlaceholder": "Type to search location",
+      "noLocationFound": "No matching location found",
+      "submit": "Search",
+      "allIndustries": "All industries",
+      "nationwide": "Nationwide"
+    },
+    "stats": {
+      "matchedJobs": "Matching jobs",
+      "hiringCompanies": "Hiring companies",
+      "newJobs": "New job postings"
+    },
+    "filters": {
+      "advanced": "Advanced filters",
+      "refineSearch": "Refine search",
+      "experience": "Experience",
+      "level": "Level",
+      "salary": "Salary",
+      "salaryFrom": "From",
+      "salaryTo": "To",
+      "millionUnit": "million",
+      "companyField": "Company field",
+      "selectCompanyField": "Select company field",
+      "jobField": "Job field",
+      "selectJobField": "Select job field",
+      "workingForm": "Work type",
+      "clear": "Clear filters"
+    },
+    "results": {
+      "breadcrumb": "Home › Recruitment",
+      "matchCount": "{{count}} matching jobs",
+      "updatedAt": "Updated {{date}}",
+      "subtitle": "Results are shown based on your keyword, industry, location, and advanced filters.",
+      "createAlert": "Create job alert"
+    },
+    "states": {
+      "loading": "Loading job listings...",
+      "empty": "No jobs match your current filters.",
+      "clearToSeeAll": "Clear filters to view all jobs"
+    },
+    "cards": {
+      "logoAlt": "Logo",
+      "noTitle": "Untitled",
+      "employer": "Employer"
+    },
+    "actions": {
+      "save": "Save job",
+      "unsave": "Unsave job",
+      "apply": "Apply"
+    },
+    "options": {
+      "all": "All",
+      "expUnder1Year": "Under 1 year",
+      "exp1Year": "1 year",
+      "exp2Years": "2 years",
+      "exp3Years": "3 years",
+      "exp4Years": "4 years",
+      "exp5Years": "5 years",
+      "expOver5Years": "Over 5 years",
+      "notRequired": "Not required",
+      "levelStaff": "Staff",
+      "levelTeamLead": "Team lead",
+      "levelDepartmentLead": "Department lead",
+      "levelManager": "Manager / Supervisor",
+      "levelBranchLead": "Branch manager",
+      "levelViceDirector": "Vice director",
+      "levelDirector": "Director",
+      "levelIntern": "Intern",
+      "salary10to15": "10 - 15 million",
+      "salary15to20": "15 - 20 million",
+      "salary20to25": "20 - 25 million",
+      "salary25to30": "25 - 30 million",
+      "salary30to50": "30 - 50 million",
+      "salaryOver50": "Over 50 million",
+      "negotiable": "Negotiable",
+      "fullTime": "Full-time",
+      "partTime": "Part-time",
+      "internship": "Internship",
+      "other": "Other",
+      "allFields": "All fields"
+    },
+    "salary": {
+      "negotiable": "Negotiable",
+      "range": "{{from}} - {{to}} VND/{{unit}}",
+      "from": "From {{amount}} VND/{{unit}}",
+      "to": "Up to {{amount}} VND/{{unit}}",
+      "shortFrom": "From {{amount}}",
+      "shortTo": "Up to {{amount}}",
+      "unit": {
+        "month": "month",
+        "day": "day",
+        "hour": "hour",
+        "job": "job"
+      }
+    },
+    "time": {
+      "postedRecently": "Posted recently",
+      "justPosted": "Just posted",
+      "hoursAgo": "{{count}} hours ago",
+      "daysAgo": "{{count}} days ago",
+      "postedLongAgo": "Posted earlier"
+    },
+    "badges": {
+      "goodSalary": "Good salary",
+      "featured": "Featured"
+    }
+  },
+  "cvBuilder": {
+    "title": "Professional CV Template Library",
+    "searchPlaceholder": "Search CV templates...",
+    "labels": {
+      "cvTemplate": "CV template",
+      "cvTemplates": "CV Templates",
+      "cvStyle": "CV style"
+    },
+    "categories": {
+      "all": "All",
+      "professional": "Professional CV",
+      "creative": "Creative CV",
+      "minimal": "Minimal CV",
+      "modern": "Modern CV"
+    },
+    "sort": {
+      "popular": "Most popular",
+      "newest": "Newest",
+      "used": "Most used"
+    },
+    "actions": {
+      "preview": "Preview",
+      "use": "Use",
+      "previewAria": "Preview CV {{name}}",
+      "useAria": "Use {{name}}",
+      "previewAndUse": "Preview and use CV template",
+      "livePreview": "Live preview",
+      "useTemplate": "Use template",
+      "viewGrid": "Show grid view",
+      "viewList": "Show list view"
+    },
+    "subtitle": {
+      "available": "Explore modern CV templates optimized for hiring.",
+      "empty": "No CV templates are available right now."
+    },
+    "states": {
+      "emptyHtml": "This template has no HTML content yet.",
+      "quickStartDescription": "A fast-start CV template to begin editing quickly.",
+      "loadingTemplates": "Loading CV templates...",
+      "noMatchingTemplate": "No matching templates",
+      "tryOtherFilters": "No templates match your current filters. Try another keyword or style."
+    },
+    "errors": {
+      "loadTemplates": "Unable to load templates"
+    },
+    "notifications": {
+      "noPreviewData": "This template has no preview data yet.",
+      "selectedTemplate": "Template {{name}} selected. Start editing now."
+    }
+  },
+  "cvManagement": {
+    "hero": {
+      "eyebrow": "Candidate workspace",
+      "title": "Manage your CVs on JobFinder",
+      "description": "Track created CVs, edit online CVs quickly, and reuse them for every opportunity."
+    },
+    "stats": {
+      "total": "Total CVs",
+      "online": "Online CVs",
+      "uploaded": "Uploaded CVs"
+    },
+    "board": {
+      "title": "Created CV list",
+      "subtitle": "Shows online CVs and document CVs you saved in the system."
+    },
+    "searchPlaceholder": "Search by CV name...",
+    "filters": {
+      "ariaLabel": "Filter CVs",
+      "all": "All",
+      "online": "Online CV",
+      "uploaded": "Uploaded CV"
+    },
+    "labels": {
+      "updatedAt": "Updated: {{date}}",
+      "status": "Status: {{status}}"
+    },
+    "actions": {
+      "uploading": "Uploading...",
+      "uploadCv": "Upload CV",
+      "createNewCv": "Create new CV",
+      "goToTemplates": "Go to CV templates",
+      "loginNow": "Login now",
+      "viewOnlineCv": "View online CV",
+      "viewCv": "View CV",
+      "viewCvAria": "View CV {{name}}",
+      "editCv": "Edit CV",
+      "editCvAria": "Edit {{name}}",
+      "deleteCv": "Delete CV",
+      "deleteCvAria": "Delete {{name}}",
+      "deleting": "Deleting..."
+    },
+    "confirm": {
+      "deleteMessage": "Are you sure you want to delete this CV?"
+    },
+    "states": {
+      "notLoggedInTitle": "You are not logged in",
+      "notLoggedInDesc": "Log in to view and manage your created CVs.",
+      "loadingTitle": "Loading CV list",
+      "loadingDesc": "Please wait a moment...",
+      "emptyTitle": "No matching CV",
+      "emptyDesc": "You can create a new CV from the template library to get started.",
+      "noFile": "No file available"
+    },
+    "errors": {
+      "loadList": "Unable to load CV list",
+      "uploadCv": "Unable to upload CV",
+      "deleteCv": "Unable to delete CV"
+    },
+    "notifications": {
+      "loginToUpload": "Please log in to upload CV.",
+      "uploadSuccess": "CV uploaded successfully.",
+      "deleteSuccess": "CV deleted successfully."
+    }
+  },
+  "careerGuide": {
+    "errors": {
+      "loadPosts": "Unable to load post list",
+      "fetchPosts": "Error while loading posts"
+    },
+    "hero": {
+      "eyebrow": "JobFinder career blog",
+      "title": "Career guide articles",
+      "subtitle": "Stay updated on hiring trends, interview strategies, and profile-building tips to apply more effectively every day."
+    },
+    "search": {
+      "placeholder": "Search by title, content, or skills..."
+    },
+    "topics": {
+      "ariaLabel": "Topic filters",
+      "all": "All topics",
+      "cvProfile": "CV & Profile",
+      "interview": "Interview",
+      "salary": "Salary & benefits",
+      "careerPath": "Career direction",
+      "workSkills": "Work skills"
+    },
+    "overview": {
+      "ariaLabel": "Post overview",
+      "title": "Category overview",
+      "postsInCurrentPage": "Posts on current page",
+      "avgViews": "Average views per post",
+      "totalPages": "Total content pages"
+    },
+    "feed": {
+      "ariaLabel": "Post list",
+      "featured": "Featured post",
+      "matchingPosts": "matching posts",
+      "pageInfo": "Page {{current}}/{{total}}"
+    },
+    "sort": {
+      "ariaLabel": "Sort posts",
+      "latest": "Latest",
+      "mostViewed": "Most viewed"
+    },
+    "meta": {
+      "anonymous": "Anonymous",
+      "views": "{{count}} views"
+    },
+    "readingTime": {
+      "minutes": "{{count}} min read"
+    },
+    "states": {
+      "loading": "Loading...",
+      "noPostsFound": "No posts found"
+    },
+    "actions": {
+      "readFeatured": "Read featured post",
+      "viewDetail": "View details",
+      "writePost": "Write new post",
+      "managePosts": "Manage published posts",
+      "loginNow": "Login now",
+      "createNewPostTitle": "Create new post"
+    },
+    "pagination": {
+      "ariaLabel": "Page navigation"
+    },
+    "sidebar": {
+      "ariaLabel": "Related content",
+      "roadmapTitle": "Suggested roadmap",
+      "roadmapItem1": "Complete your CV for the target position.",
+      "roadmapItem2": "Optimize LinkedIn and portfolio before applying.",
+      "roadmapItem3": "Prepare interview question sets for your specialization.",
+      "roadmapItem4": "Negotiate offers based on market data.",
+      "exploreJobsTitle": "Explore jobs now",
+      "exploreJobsDesc": "Apply guidebook insights to find suitable jobs faster.",
+      "viewJobs": "View job listings",
+      "createCvOnline": "Create online CV",
+      "yourPermissionsTitle": "Your permissions",
+      "yourPermissionsDesc": "You can view, comment, and share career experience posts.",
+      "loginToWriteTitle": "Login to write posts",
+      "loginToWriteDesc": "Share your career experience with the candidate community."
+    }
+  },
+  "employer": {
+    "layout": {
+      "defaultDisplayName": "Employer",
+      "defaultSubtitle": "Recruitment management",
+      "confirmLogout": {
+        "title": "Confirm logout",
+        "message": "Are you sure you want to log out?",
+        "confirm": "Log out",
+        "cancel": "Stay"
+      },
+      "menu": {
+        "dashboard": "Dashboard",
+        "cvSearch": "CV Search",
+        "cvManage": "CV Management",
+        "jobs": "Manage job postings",
+        "notifications": "Notifications",
+        "applications": "Application management",
+        "messages": "Messages",
+        "company": "Company profile",
+        "account": "Account"
+      },
+      "menuSubtitle": {
+        "dashboard": "Overview & hiring reports",
+        "cvSearch": "Find suitable candidates",
+        "cvManage": "Saved CV list",
+        "jobs": "Publish and track job posts",
+        "notifications": "Quick view on dashboard",
+        "applications": "Review candidate applications",
+        "messages": "Inbox conversations",
+        "company": "Business profile",
+        "account": "Update personal profile"
+      },
+      "dropdown": {
+        "profile": "My profile",
+        "dashboard": "Dashboard",
+        "jobs": "Manage job postings",
+        "notifications": "Notifications",
+        "logout": "Log out"
+      },
+      "aria": {
+        "closeMenu": "Close menu",
+        "toggleMenu": "Toggle menu",
+        "openAccountMenu": "Open account menu"
+      }
+    },
+    "overview": {
+      "title": "Dashboard",
+      "subtitle": "Dashboard overview and recruitment performance reports.",
+      "actions": {
+        "createJob": "Create new post",
+        "manage": "Manage",
+        "viewApplications": "View applications",
+        "viewReports": "View reports",
+        "manageCv": "Manage CV"
+      },
+      "stats": {
+        "jobs": "Job posts",
+        "applications": "Applications",
+        "views": "Post views",
+        "savedCv": "Saved CVs"
+      },
+      "reports": {
+        "title": "Statistics & reports",
+        "subtitle": "View and application performance by post",
+        "loading": "Loading data...",
+        "empty": "No statistics available yet.",
+        "fallbackJobTitle": "Job post",
+        "columns": {
+          "job": "Job post",
+          "views": "Views",
+          "chart": "Chart",
+          "applications": "Applications"
+        }
+      },
+      "activity": {
+        "title": "Recent activity",
+        "empty": "No activity yet"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "empty": "No new notifications"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft",
+        "closed": "Closed"
+      },
+      "errors": {
+        "loadStats": "Unable to load statistics",
+        "loadReports": "Unable to load report data",
+        "genericReport": "Error while loading report."
+      }
+    },
+    "cvManagePage": {
+      "title": "CV Management",
+      "filterAriaLabel": "Filter saved CVs",
+      "filters": {
+        "all": "All",
+        "viewed": "Viewed",
+        "contacted": "Contacted"
+      },
+      "emptyAll": "You haven't saved any CVs yet.",
+      "emptyFiltered": "No CVs match the current filter.",
+      "emptyHint": "Search for suitable candidates and save their CVs.",
+      "table": {
+        "candidate": "Candidate",
+        "email": "Email",
+        "location": "Location",
+        "experience": "Experience",
+        "status": "Status",
+        "actions": "Action"
+      },
+      "actions": {
+        "viewCv": "View CV",
+        "message": "Message",
+        "removeSaved": "Remove from saved"
+      },
+      "confirm": {
+        "removeSavedCv": "Are you sure you want to remove this CV from saved list?"
+      },
+      "errors": {
+        "notLoggedIn": "You need to sign in.",
+        "noFile": "No CV file available.",
+        "missingCandidate": "Unable to identify the candidate for messaging.",
+        "fileMissing": "The CV file is not available. Ask the candidate to update it."
+      },
+      "loading": "Loading..."
+    },
+    "cvSearchPage": {
+      "title": "Search candidate CVs",
+      "form": {
+        "keywordLabel": "Keyword",
+        "keywordPlaceholder": "Position, skills, experience...",
+        "locationLabel": "Location",
+        "experienceLabel": "Experience",
+        "searchButton": "Search"
+      },
+      "filters": {
+        "location": {
+          "all": "All",
+          "loading": "Loading...",
+          "searchPlaceholder": "Type to search city/province",
+          "noResults": "No matching city or province"
+        },
+        "experience": {
+          "ariaLabel": "Select experience",
+          "all": "All",
+          "under1": "Under 1 year",
+          "1to3": "1-3 years",
+          "3to5": "3-5 years",
+          "over5": "Over 5 years"
+        }
+      },
+      "loadingProvinces": "Loading provinces...",
+      "loadingSearch": "Searching...",
+      "searchingResults": "Searching CVs...",
+      "beforeSearchHint": "Enter keywords and filters to search candidate CVs",
+      "noResults": "No matching CVs found",
+      "foundResults": "Found {{count}} CVs",
+      "results": {
+        "updatedAt": "Updated:"
+      },
+      "actions": {
+        "viewCv": "View CV",
+        "saveCv": "Save CV",
+        "saved": "Saved",
+        "saving": "Saving...",
+        "message": "Message"
+      },
+      "errors": {
+        "needSignIn": "You need to sign in.",
+        "searchFailed": "Unable to find CVs",
+        "generic": "An error occurred",
+        "noFileAttachment": "This candidate has not attached a CV file.",
+        "fileMissing": "The CV file is not available. Ask the candidate to update it.",
+        "noCandidate": "Unable to identify the candidate to message."
+      },
+      "hint": {
+        "hasAttachment": "Open attached CV file",
+        "fileMissing": "CV file no longer exists on the system",
+        "noAttachment": "Candidate has not attached a CV file"
+      },
+      "aria": {
+        "locationListbox": "Choose location",
+        "experienceListbox": "Choose experience"
+      }
+    },
+    "jobDetailPage": {
+      "title": "Job details",
+      "backButton": "← Back",
+      "editButton": "Edit",
+      "jobListButton": "Job listings",
+      "loading": "Loading...",
+      "errorLoading": "Unable to load the job listing.",
+      "noData": "Not updated",
+      "fields": {
+        "salaryType": "Salary type",
+        "employmentType": "Employment type",
+        "salaryFrom": "Salary from",
+        "salaryTo": "Salary to",
+        "postedDate": "Posted date",
+        "deadline": "Application deadline",
+        "description": "Description",
+        "requirements": "Requirements",
+        "benefits": "Benefits"
+      }
+    },
+    "jobManagementPage": {
+      "title": "Job Management",
+      "createJob": "Post new job",
+      "loading": "Loading...",
+      "emptyTitle": "You don't have any job posts yet.",
+      "emptyHint": "Create your first job post to start connecting with candidates.",
+      "table": {
+        "title": "Title",
+        "location": "Location",
+        "status": "Status",
+        "postedDate": "Posted date",
+        "actions": "Actions"
+      },
+      "buttons": {
+        "viewDetails": "View details",
+        "edit": "Edit",
+        "delete": "Delete",
+        "createJob": "Post new job"
+      },
+      "confirm": {
+        "title": "Confirm delete",
+        "deleteJob": "Are you sure you want to delete this job post?"
+      }
+    },
+    "jobCreatePage": {
+      "titleCreate": "Create job post",
+      "titleEdit": "Edit job post",
+      "labels": {
+        "title": "Job title",
+        "location": "Work location",
+        "city": "City/province",
+        "salaryFrom": "Salary from",
+        "salaryTo": "Salary to",
+        "currency": "Currency",
+        "salaryType": "Salary type",
+        "experience": "Experience",
+        "level": "Level",
+        "jobField": "Job field",
+        "employmentType": "Employment type",
+        "status": "Status",
+        "deadline": "Application deadline"
+      },
+      "placeholders": {
+        "title": "Enter the job title",
+        "descriptionSection": "Section title for job description",
+        "descriptionEditor": "Enter the job description...",
+        "requirementsSection": "Section title for requirements",
+        "requirementsEditor": "Enter the requirements...",
+        "benefitsSection": "Section title for benefits",
+        "benefitsEditor": "Enter the benefits...",
+        "extraSectionTitle": "Extra section title",
+        "extraSectionEditor": "Enter content...",
+        "loadingProvinces": "Loading provinces...",
+        "selectProvince": "Select a city/province",
+        "searchProvince": "Search city/province",
+        "noProvinceFound": "No matching province found",
+        "searchJobField": "Search job field",
+        "noJobFieldFound": "No matching job field found",
+        "location": "E.g. District 1, 123 Nguyen Hue...",
+        "salaryFromUsd": "E.g. 1,000",
+        "salaryFromVnd": "E.g. 10,000,000",
+        "salaryToUsd": "E.g. 2,000",
+        "salaryToVnd": "E.g. 30,000,000"
+      },
+      "buttons": {
+        "back": "Back",
+        "cancel": "Cancel",
+        "savingEdit": "Saving...",
+        "savingCreate": "Posting...",
+        "saveChanges": "Save changes",
+        "createJob": "Publish job",
+        "addSection": "Add section",
+        "confirmSaveChanges": "Confirm & save changes",
+        "confirmPublish": "Confirm & publish"
+      },
+      "loadingJob": "Loading job details...",
+      "currencies": {
+        "vnd": "VND",
+        "usd": "USD"
+      },
+      "salaryTypes": {
+        "negotiable": "Negotiable",
+        "monthly": "Monthly",
+        "yearly": "Yearly",
+        "range": "Range",
+        "unknown": "Unknown"
+      },
+      "employmentTypes": {
+        "fullTime": "Full-time",
+        "partTime": "Part-time",
+        "internship": "Internship",
+        "remote": "Remote",
+        "contract": "Contract"
+      },
+      "statuses": {
+        "published": "Published",
+        "draft": "Draft"
+      },
+      "experience": {
+        "none": "No experience",
+        "under1": "Under 1 year",
+        "oneYear": "1 year",
+        "twoYears": "2 years",
+        "threeYears": "3 years",
+        "fourYears": "4 years",
+        "fiveYears": "5 years",
+        "over5": "Over 5 years"
+      },
+      "levels": {
+        "intern": "Intern",
+        "staff": "Staff",
+        "teamLead": "Team lead",
+        "departmentLead": "Department head",
+        "manager": "Manager",
+        "branchLead": "Branch leader",
+        "viceDirector": "Vice director",
+        "director": "Director"
+      },
+      "fields": {
+        "it": "IT",
+        "marketing": "Marketing",
+        "sales": "Sales",
+        "admin": "Administration",
+        "engineering": "Engineering",
+        "finance": "Finance",
+        "manufacturing": "Manufacturing",
+        "services": "Services",
+        "other": "Other"
+      },
+      "sectionTitles": {
+        "description": "Job description",
+        "requirements": "Requirements",
+        "benefits": "Benefits"
+      },
+      "select": {
+        "placeholder": "Choose",
+        "searchPlaceholder": "Search...",
+        "emptyText": "No options found"
+      },
+      "deadline": {
+        "placeholder": "Select deadline",
+        "noDeadline": "No deadline selected",
+        "quick7": "+7 days",
+        "quick30": "+30 days",
+        "clear": "Clear"
+      },
+      "locationModal": {
+        "title": "Job post checklist",
+        "description": {
+          "edit": "Complete location, salary and criteria before saving changes.",
+          "create": "Complete location, salary and criteria before publishing the job."
+        },
+        "closeAria": "Close location modal",
+        "sections": {
+          "location": "Work location",
+          "salary": "Salary",
+          "criteria": "Hiring criteria",
+          "postingSettings": "Post settings"
+        },
+        "errors": {
+          "locationRequired": "Please enter the work location.",
+          "cityRequired": "Please choose a city/province."
+        }
+      },
+      "errors": {
+        "loadJob": "Unable to load job details.",
+        "submitFailure": "Unable to submit the job post.",
+        "titleRequired": "Please enter the job title.",
+        "loginRequired": "Please sign in to continue.",
+        "generic": "An error occurred. Please try again."
+      },
+      "notifications": {
+        "updateSuccess": "Job post updated successfully!",
+        "createSuccess": "Job post published successfully!"
+      }
+    }
+  },
+  "supportCenterPage": {
+    "hero": {
+      "eyebrow": "Notifications",
+      "title": "Modern job-board notification center",
+      "description": "Track all your JobFinder notifications in one place: messages, applications, interviews, ratings, and company comments."
+    },
+    "buttons": {
+      "enableNotifications": "Enable device notifications",
+      "enabledNotifications": "Notifications enabled"
+    },
+    "panel": {
+      "title": "Latest notifications",
+      "itemsCount": "{{count}} items"
+    },
+    "feed": {
+      "loading": "Loading notifications...",
+      "errors": {
+        "loadFailed": "Unable to load notification feed."
+      },
+      "messages": {
+        "title": "New message from {{name}}",
+        "titleUnread": "You have {{count}} new messages from {{name}}",
+        "description": "You have a new message from {{name}}."
+      },
+      "candidateApplication": {
+        "description": "{{companyName}} updated your application for {{jobTitle}}{{statusText}}."
+      },
+      "employerApplication": {
+        "title": "New application for {{jobTitle}}",
+        "description": "{{candidateName}} submitted an application{{statusText}}."
+      },
+      "companyComment": {
+        "description": "{{author}}: {{content}}",
+        "defaultText": "There is a new comment about your company."
+      },
+      "companyRating": {
+        "description": "{{author}} has sent a new review for your company."
+      },
+      "actions": {
+        "openConversation": "Open conversation",
+        "viewApplicationDetails": "View application details",
+        "viewCompanyProfile": "View company profile"
+      },
+      "defaults": {
+        "user": "User",
+        "company": "Employer",
+        "appliedPosition": "applied position"
+      },
+      "titles": {
+        "interviewInvite": "You have a new interview invitation",
+        "applicationAccepted": "Your application has been accepted",
+        "applicationReview": "Your application is under review",
+        "applicationOffer": "You have received an offer",
+        "applicationRejected": "Your application was rejected",
+        "applicationUpdate": "Your application has been updated",
+        "companyComment": "New comment about your company",
+        "companyRating": "New company rating",
+        "new": "new"
+      }
+    },
+    "feedTypes": {
+      "message": "Message",
+      "applicationReceived": "Application",
+      "applicationAccepted": "Accepted",
+      "applicationUpdate": "Update",
+      "applicationReview": "Review",
+      "applicationOffer": "Offer",
+      "applicationRejected": "Rejected",
+      "interviewInvite": "Interview",
+      "companyComment": "Comment",
+      "companyRating": "Rating",
+      "default": "Notification"
+    },
+    "empty": {
+      "loginTitle": "Log in to see personal notifications",
+      "loginDescription": "This page shows account-specific alerts including messages and application status updates.",
+      "loginButton": "Sign in",
+      "noPrivateFeedTitle": "Private notifications are available for employers and candidates",
+      "noPrivateFeedDescription": "Your account still receives system notifications, but the private application inbox is not available on this screen.",
+      "privateAccessDeniedTitle": "Unable to load private notifications",
+      "privateAccessDeniedDescription": "Your account does not have permission to read private notifications from the server. Please contact an administrator or verify your session.",
+      "noNotificationsTitle": "No notifications yet",
+      "noNotificationsDescription": "New messages, application updates, interviews, ratings or comments will appear here."
+    },
+    "time": {
+      "justNow": "Just now"
+    },
+    "notifications": {
+      "enabledTitle": "Notifications enabled",
+      "enabledMessage": "JobFinder will show notifications on your device.",
+      "deniedTitle": "Notifications not enabled",
+      "deniedMessage": "Please allow notifications in your browser or device settings."
     }
   }
 }

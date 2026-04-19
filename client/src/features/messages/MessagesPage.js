@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import './MessagesPage.css';
 
@@ -29,6 +30,7 @@ const MessagesPage = () => {
 
   const token = String(localStorage.getItem('token') || '').trim();
   const user = useMemo(() => parseUserFromStorage(), []);
+  const { t } = useTranslation();
   const currentUserId = user?.id || user?.MaNguoiDung || user?.userId || null;
 
   const [inbox, setInbox] = useState([]);
@@ -283,8 +285,7 @@ const MessagesPage = () => {
     <div className="messages-page">
       <div className="messages-page-header">
         <div>
-          <h2 className="mb-1 employer-page-title">Tin nhắn tuyển dụng</h2>
-          <p className="mb-0 text-muted">Trao đổi trực tiếp giữa nhà tuyển dụng và ứng viên.</p>
+          <h2 className="mb-1 employer-page-title">{t('employer.layout.menu.messages')}</h2>
         </div>
         <Link className="btn btn-outline-primary" to="/employer/cv-search">
           <i className="bi bi-search me-2"></i>

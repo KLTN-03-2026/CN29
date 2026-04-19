@@ -1,8 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const EmployerOverview = () => {
+    const { t, i18n } = useTranslation();
+    const currentLocale = i18n.resolvedLanguage || i18n.language || 'vi';
+
     const [stats, setStats] = useState({
         jobs: 0,
         applications: 0,
@@ -30,7 +34,7 @@ const EmployerOverview = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không tải được thống kê');
+            if (!res.ok) throw new Error(data?.error || t('employer.overview.errors.loadStats'));
 
             const s = data?.stats || {};
             setStats({
@@ -60,7 +64,7 @@ const EmployerOverview = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không tải được dữ liệu báo cáo');
+            if (!res.ok) throw new Error(data?.error || t('employer.overview.errors.loadReports'));
 
             const summary = data?.summary || {};
             setStats((prev) => ({
@@ -71,7 +75,7 @@ const EmployerOverview = () => {
             }));
             setReportJobs(Array.isArray(data?.jobs) ? data.jobs : []);
         } catch (error) {
-            setReportError(error?.message || 'Có lỗi khi tải báo cáo.');
+            setReportError(error?.message || t('employer.overview.errors.genericReport'));
             setReportJobs([]);
         } finally {
             setReportLoading(false);
@@ -94,73 +98,87 @@ const EmployerOverview = () => {
         reportSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
 
+    const formatCount = (value) => new Intl.NumberFormat(currentLocale).format(Number(value || 0));
+
+    const translateJobStatus = (status) => {
+        const raw = String(status || '').trim();
+        if (!raw) return '';
+
+        const normalized = raw.toLowerCase();
+        if (normalized === 'đã đăng' || normalized === 'published') return t('employer.overview.status.published');
+        if (normalized === 'nháp' || normalized === 'draft') return t('employer.overview.status.draft');
+        if (normalized === 'đã đóng' || normalized === 'closed') return t('employer.overview.status.closed');
+
+        return raw;
+    };
+
     return (
-        <div>
-            <div className="d-flex justify-content-between align-items-center mb-4">
+        <div className="employer-overview-page">
+            <div className="d-flex justify-content-between align-items-center mb-4 employer-overview-hero">
                 <div>
-                    <h2 className="mb-1 employer-page-title">Dashboard</h2>
-                    <p className="text-muted mb-0">Tổng quan dashboard và báo cáo hiệu quả tuyển dụng.</p>
+                    <h2 className="mb-1 employer-page-title">{t('employer.overview.title')}</h2>
+                    <p className="text-muted mb-0">{t('employer.overview.subtitle')}</p>
                 </div>
                 <Link to="/employer/jobs/create" className="btn btn-primary">
                     <i className="bi bi-plus-circle me-2"></i>
-                    Tạo tin mới
+                    {t('employer.overview.actions.createJob')}
                 </Link>
             </div>
             
             {/* Statistics Cards */}
             <div className="row g-4 mb-4">
                 <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
+                    <div className="card border-0 shadow-sm h-100 employer-overview-stat-card employer-overview-stat-card--jobs">
                         <div className="card-body text-center">
                             <div className="text-primary mb-3">
                                 <i className="bi bi-briefcase fs-1"></i>
                             </div>
-                            <h3 className="mb-1">{stats.jobs}</h3>
-                            <p className="text-muted mb-2">Tin tuyển dụng</p>
+                            <h3 className="mb-1">{formatCount(stats.jobs)}</h3>
+                            <p className="text-muted mb-2">{t('employer.overview.stats.jobs')}</p>
                             <Link to="/employer/jobs" className="btn btn-sm btn-outline-primary">
-                                Quản lý
+                                {t('employer.overview.actions.manage')}
                             </Link>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
+                    <div className="card border-0 shadow-sm h-100 employer-overview-stat-card employer-overview-stat-card--applications">
                         <div className="card-body text-center">
                             <div className="text-success mb-3">
                                 <i className="bi bi-file-earmark-text fs-1"></i>
                             </div>
-                            <h3 className="mb-1">{stats.applications}</h3>
-                            <p className="text-muted mb-2">Hồ sơ ứng tuyển</p>
+                            <h3 className="mb-1">{formatCount(stats.applications)}</h3>
+                            <p className="text-muted mb-2">{t('employer.overview.stats.applications')}</p>
                             <Link to="/employer/applications" className="btn btn-sm btn-outline-success">
-                                Xem hồ sơ
+                                {t('employer.overview.actions.viewApplications')}
                             </Link>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
+                    <div className="card border-0 shadow-sm h-100 employer-overview-stat-card employer-overview-stat-card--views">
                         <div className="card-body text-center">
                             <div className="text-info mb-3">
                                 <i className="bi bi-eye fs-1"></i>
                             </div>
-                            <h3 className="mb-1">{stats.views}</h3>
-                            <p className="text-muted mb-2">Lượt xem tin</p>
+                            <h3 className="mb-1">{formatCount(stats.views)}</h3>
+                            <p className="text-muted mb-2">{t('employer.overview.stats.views')}</p>
                             <button type="button" className="btn btn-sm btn-outline-info" onClick={handleScrollToReports}>
-                                Xem báo cáo
+                                {t('employer.overview.actions.viewReports')}
                             </button>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
-                    <div className="card border-0 shadow-sm h-100">
+                    <div className="card border-0 shadow-sm h-100 employer-overview-stat-card employer-overview-stat-card--saved">
                         <div className="card-body text-center">
                             <div className="text-warning mb-3">
                                 <i className="bi bi-people fs-1"></i>
                             </div>
-                            <h3 className="mb-1">{stats.savedCandidates}</h3>
-                            <p className="text-muted mb-2">CV đã lưu</p>
+                            <h3 className="mb-1">{formatCount(stats.savedCandidates)}</h3>
+                            <p className="text-muted mb-2">{t('employer.overview.stats.savedCv')}</p>
                             <Link to="/employer/cv-manage" className="btn btn-sm btn-outline-warning">
-                                Quản lý CV
+                                {t('employer.overview.actions.manageCv')}
                             </Link>
                         </div>
                     </div>
@@ -170,33 +188,33 @@ const EmployerOverview = () => {
             {/* Reports (merged from Statistics page) */}
             <div id="employer-dashboard-reports" className="row g-4 mb-4">
                 <div className="col-12">
-                    <div className="card border-0 shadow-sm">
+                    <div className="card border-0 shadow-sm employer-overview-report-card">
                         <div className="card-header bg-white border-0 py-3 d-flex align-items-center justify-content-between">
                             <h5 className="mb-0">
                                 <i className="bi bi-graph-up-arrow me-2"></i>
-                                Thống kê & báo cáo
+                                {t('employer.overview.reports.title')}
                             </h5>
-                            <small className="text-muted">Hiệu quả lượt xem và ứng tuyển theo từng tin</small>
+                            <small className="text-muted">{t('employer.overview.reports.subtitle')}</small>
                         </div>
                         <div className="card-body">
                             {reportLoading && (
-                                <p className="text-muted text-center py-5 mb-0">Đang tải dữ liệu...</p>
+                                <p className="text-muted text-center py-5 mb-0">{t('employer.overview.reports.loading')}</p>
                             )}
                             {!reportLoading && reportError && (
                                 <p className="text-danger text-center py-4 mb-0">{reportError}</p>
                             )}
                             {!reportLoading && !reportError && reportJobs.length === 0 && (
-                                <p className="text-muted text-center py-5 mb-0">Chưa có dữ liệu thống kê.</p>
+                                <p className="text-muted text-center py-5 mb-0">{t('employer.overview.reports.empty')}</p>
                             )}
                             {!reportLoading && !reportError && reportJobs.length > 0 && (
                                 <div className="table-responsive">
                                     <table className="table align-middle mb-0">
                                         <thead>
                                             <tr>
-                                                <th>Tin tuyển dụng</th>
-                                                <th style={{ width: 140 }} className="text-end">Lượt xem</th>
-                                                <th style={{ width: 170 }}>Biểu đồ</th>
-                                                <th style={{ width: 160 }} className="text-end">Ứng tuyển</th>
+                                                <th>{t('employer.overview.reports.columns.job')}</th>
+                                                <th style={{ width: 140 }} className="text-end">{t('employer.overview.reports.columns.views')}</th>
+                                                <th style={{ width: 170 }}>{t('employer.overview.reports.columns.chart')}</th>
+                                                <th style={{ width: 160 }} className="text-end">{t('employer.overview.reports.columns.applications')}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -208,10 +226,10 @@ const EmployerOverview = () => {
                                                 return (
                                                     <tr key={job?.id || `${job?.title || 'job'}-${views}-${applications}`}>
                                                         <td>
-                                                            <div className="fw-semibold">{job?.title || 'Tin tuyển dụng'}</div>
-                                                            <div className="text-muted small">{job?.status || ''}</div>
+                                                            <div className="fw-semibold">{job?.title || t('employer.overview.reports.fallbackJobTitle')}</div>
+                                                            <div className="text-muted small">{translateJobStatus(job?.status)}</div>
                                                         </td>
-                                                        <td className="text-end">{views}</td>
+                                                        <td className="text-end">{formatCount(views)}</td>
                                                         <td>
                                                             <div className="progress" style={{ height: 10 }}>
                                                                 <div
@@ -224,7 +242,7 @@ const EmployerOverview = () => {
                                                                 />
                                                             </div>
                                                         </td>
-                                                        <td className="text-end">{applications}</td>
+                                                        <td className="text-end">{formatCount(applications)}</td>
                                                     </tr>
                                                 );
                                             })}
@@ -240,18 +258,18 @@ const EmployerOverview = () => {
             {/* Activity & Notifications */}
             <div className="row g-4">
                 <div className="col-md-8">
-                    <div className="card border-0 shadow-sm">
+                    <div className="card border-0 shadow-sm employer-overview-activity-card">
                         <div className="card-header bg-white border-0 py-3">
                             <h5 className="mb-0">
                                 <i className="bi bi-clock-history me-2"></i>
-                                Hoạt động gần đây
+                                {t('employer.overview.activity.title')}
                             </h5>
                         </div>
                         <div className="card-body">
                             {activities.length === 0 ? (
                                 <div className="text-center py-5">
                                     <i className="bi bi-inbox fs-1 text-muted"></i>
-                                    <p className="text-muted mt-3">Chưa có hoạt động nào</p>
+                                    <p className="text-muted mt-3">{t('employer.overview.activity.empty')}</p>
                                 </div>
                             ) : (
                                 <div className="list-group list-group-flush">
@@ -266,17 +284,17 @@ const EmployerOverview = () => {
                     </div>
                 </div>
                 <div className="col-md-4">
-                    <div className="card border-0 shadow-sm">
+                    <div className="card border-0 shadow-sm employer-overview-notification-card">
                         <div className="card-header bg-white border-0 py-3">
                             <h5 className="mb-0">
                                 <i className="bi bi-bell me-2"></i>
-                                Thông báo
+                                {t('employer.overview.notifications.title')}
                             </h5>
                         </div>
                         <div className="card-body">
                             <div className="text-center py-4">
                                 <i className="bi bi-bell-slash fs-1 text-muted"></i>
-                                <p className="text-muted mt-3 mb-0">Không có thông báo mới</p>
+                                <p className="text-muted mt-3 mb-0">{t('employer.overview.notifications.empty')}</p>
                             </div>
                         </div>
                     </div>

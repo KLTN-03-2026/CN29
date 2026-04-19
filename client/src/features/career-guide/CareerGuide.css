@@ -679,6 +679,117 @@
   filter: brightness(1.04);
 }
 
+:is(html.dark, html[data-bs-theme='dark']) .career-guide-page {
+  --cg-border: #304a66;
+  --cg-card: #111f33;
+  --cg-text: #e8f3ff;
+  --cg-muted: #9eb8d2;
+  background:
+    radial-gradient(circle at 8% 8%, rgba(49, 153, 229, 0.15), transparent 34%),
+    radial-gradient(circle at 92% 14%, rgba(37, 171, 198, 0.12), transparent 36%),
+    linear-gradient(180deg, #07111f 0%, #0b182a 48%, #0f2034 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-content {
+  background:
+    linear-gradient(155deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 46%, rgba(255, 255, 255, 0.1) 100%),
+    linear-gradient(130deg, #0a2541 0%, #0f3c64 58%, #16618c 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-insight,
+:is(html.dark, html[data-bs-theme='dark']) .cg-featured-post,
+:is(html.dark, html[data-bs-theme='dark']) .cg-post-card,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sidebar-card,
+:is(html.dark, html[data-bs-theme='dark']) .cg-empty-state,
+:is(html.dark, html[data-bs-theme='dark']) .cg-page-link,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sort-btn,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sidebar-links a,
+:is(html.dark, html[data-bs-theme='dark']) .cg-auth-link,
+:is(html.dark, html[data-bs-theme='dark']) .cg-manage-post-btn {
+  background: #111f33;
+  border-color: #304a66;
+  box-shadow: 0 14px 28px rgba(2, 10, 20, 0.42);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-insight li {
+  background: #13253b;
+  border-color: #355271;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-content h1,
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-insight h2,
+:is(html.dark, html[data-bs-theme='dark']) .cg-featured-post h2 a,
+:is(html.dark, html[data-bs-theme='dark']) .cg-post-card h3 a,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sidebar-card h3,
+:is(html.dark, html[data-bs-theme='dark']) .cg-feed-count strong,
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-insight strong {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .cg-featured-post p,
+:is(html.dark, html[data-bs-theme='dark']) .cg-post-card p,
+:is(html.dark, html[data-bs-theme='dark']) .cg-post-meta,
+:is(html.dark, html[data-bs-theme='dark']) .cg-post-footer,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sidebar-card p,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sidebar-card ul,
+:is(html.dark, html[data-bs-theme='dark']) .cg-feed-count,
+:is(html.dark, html[data-bs-theme='dark']) .cg-hero-insight span,
+:is(html.dark, html[data-bs-theme='dark']) .cg-empty-state {
+  color: #9eb8d2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-search-wrap {
+  background: #0d1a2c;
+  border-color: #3a5676;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-search-wrap i,
+:is(html.dark, html[data-bs-theme='dark']) .cg-search-wrap input {
+  color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-search-wrap input::placeholder {
+  color: #87a4c0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-topic-chip,
+:is(html.dark, html[data-bs-theme='dark']) .cg-post-category {
+  background: #13253b;
+  border-color: #3a5676;
+  color: #bcd4ea;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-topic-chip.is-active,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sort-btn.is-active,
+:is(html.dark, html[data-bs-theme='dark']) .cg-page-item.active .cg-page-link {
+  background: #1d77bf;
+  border-color: #1d77bf;
+  color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-topic-chip:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cg-sort-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cg-page-link:hover:not(:disabled),
+:is(html.dark, html[data-bs-theme='dark']) .cg-sidebar-links a:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cg-auth-link:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cg-manage-post-btn:hover {
+  background: #18304c;
+  border-color: #4b6d92;
+  color: #e9f5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-featured-label {
+  background: #173652;
+  color: #86d7ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cg-card-link,
+:is(html.dark, html[data-bs-theme='dark']) .cg-featured-post h2 a:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cg-post-card h3 a:hover {
+  color: #7ad3ff;
+}
+
 @keyframes cgFadeInUp {
   from {
     opacity: 0;

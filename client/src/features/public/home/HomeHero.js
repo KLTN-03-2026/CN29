@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import JobSearchBar from './JobSearchBar';
 import JobQuickFilters from './JobQuickFilters';
 
@@ -14,29 +15,31 @@ const HomeHero = ({
   onSearchSubmit,
   onQuickFilterChange
 }) => {
+  const { t } = useTranslation();
+
   return (
     <section className="home-hero">
       <div className="home-hero-inner">
         <div className="home-hero-showcase">
           <div className="home-hero-copy">
-            <p className="home-hero-eyebrow">Nền tảng tìm việc đáng tin cậy</p>
-            <h1>Tìm đúng việc phù hợp với bạn trong vài giây</h1>
+            <p className="home-hero-eyebrow">{t('home.hero.eyebrow')}</p>
+            <h1>{t('home.hero.title')}</h1>
             <p>
-              Khám phá cơ hội mới, lọc theo nhu cầu và ứng tuyển nhanh với một giao diện trực quan ngay khi vừa truy cập.
+              {t('home.hero.subtitle')}
             </p>
 
             <div className="home-hero-cta">
-              <Link to="/jobs" className="home-hero-primary-btn">Bắt đầu tìm việc ngay</Link>
-              <Link to="/create-cv" className="home-hero-secondary-btn">Tạo hồ sơ nổi bật</Link>
+              <Link to="/jobs" className="home-hero-primary-btn">{t('home.hero.ctaFindJobs')}</Link>
+              <Link to="/create-cv" className="home-hero-secondary-btn">{t('home.hero.ctaCreateProfile')}</Link>
             </div>
           </div>
 
-          <aside className="home-hero-highlight" aria-label="Lợi ích chính">
-            <p>03 bước rõ ràng</p>
+          <aside className="home-hero-highlight" aria-label={t('home.hero.highlightAria')}>
+            <p>{t('home.hero.highlightTitle')}</p>
             <ul>
-              <li>Tạo hồ sơ chuyên nghiệp</li>
-              <li>Lọc công việc đúng nhu cầu</li>
-              <li>Ứng tuyển và theo dõi dễ dàng</li>
+              <li>{t('home.hero.highlightStep1')}</li>
+              <li>{t('home.hero.highlightStep2')}</li>
+              <li>{t('home.hero.highlightStep3')}</li>
             </ul>
           </aside>
         </div>

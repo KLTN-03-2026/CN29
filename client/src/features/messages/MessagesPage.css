@@ -19,6 +19,92 @@
   box-shadow: 0 18px 32px rgba(15, 23, 42, 0.08) !important;
 }
 
+:is(html.dark, html[data-bs-theme='dark']) .messages-shell {
+  border-color: rgba(148, 163, 184, 0.22) !important;
+  background: #0f172a;
+  box-shadow: 0 18px 32px rgba(15, 23, 42, 0.35) !important;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-col,
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-col {
+  background: #111827;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-head,
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-head,
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-input {
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-head small,
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-head small,
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-head h5,
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-head h5,
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-head strong,
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-head strong,
+:is(html.dark, html[data-bs-theme='dark']) .messages-time,
+:is(html.dark, html[data-bs-theme='dark']) .messages-empty {
+  color: #cbd5e1;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-loading {
+  color: #e2e8f0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-item {
+  background: #111827;
+  border-color: rgba(148, 163, 184, 0.15);
+  color: #e2e8f0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-item:hover {
+  border-color: rgba(96, 165, 250, 0.4);
+  background: #1f2937;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-item.active {
+  border-color: #60a5fa;
+  background: #1e293b;
+  box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.25);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-item p,
+:is(html.dark, html[data-bs-theme='dark']) .messages-inbox-item small {
+  color: #cbd5e1;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-row.other .messages-bubble {
+  background: #1f2937;
+  border-color: rgba(148, 163, 184, 0.18);
+  color: #e2e8f0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-row.mine .messages-bubble {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-body {
+  background:
+    radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.08), transparent 36%),
+    radial-gradient(circle at 90% 15%, rgba(56, 189, 248, 0.05), transparent 36%),
+    #020617;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-input .form-control {
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  color: #e2e8f0;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-input .form-control:focus {
+  background: #111827;
+  color: #f8fafc;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .messages-thread-input {
+  border-top-color: rgba(148, 163, 184, 0.22);
+}
+
 .messages-layout {
   min-height: 560px;
 }
