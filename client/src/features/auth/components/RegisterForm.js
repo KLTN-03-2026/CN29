@@ -55,10 +55,10 @@ const RegisterForm = ({ onSuccess }) => {
     month: '',
     year: ''
   });
-  const [birthdayOpen, setBirthdayOpen] = useState(false);
+  const [openBirthdayPart, setOpenBirthdayPart] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const birthdayPickerRef = useRef(null);
+  const birthdayDropdownRef = useRef(null);
   const currentYear = new Date().getFullYear();
 
   const yearOptions = useMemo(
@@ -114,25 +114,36 @@ const RegisterForm = ({ onSuccess }) => {
     });
   };
 
-  const birthdayDisplayValue = useMemo(() => {
-    const day = birthdayParts.day ? pad2(birthdayParts.day) : t('authPages.registerForm.birthday.dayPlaceholder');
-    const month = birthdayParts.month ? pad2(birthdayParts.month) : t('authPages.registerForm.birthday.monthPlaceholder');
-    const year = birthdayParts.year || t('authPages.registerForm.birthday.yearPlaceholder');
-    return `${day} / ${month} / ${year}`;
-  }, [birthdayParts.day, birthdayParts.month, birthdayParts.year, t]);
+  const selectedMonthLabel = useMemo(() => {
+    const monthNumber = Number(birthdayParts.month || 0);
+    if (!monthNumber) return '';
+    const found = monthOptions.find((item) => Number(item.value) === monthNumber);
+    return found?.label || '';
+  }, [birthdayParts.month, monthOptions]);
+
+  const isBirthdayPartOpen = (part) => openBirthdayPart === part;
+
+  const toggleBirthdayPart = (part) => {
+    setOpenBirthdayPart((prev) => (prev === part ? '' : part));
+  };
+
+  const selectBirthdayPart = (part, value) => {
+    handleBirthdayPartChange(part, value);
+    setOpenBirthdayPart('');
+  };
 
   useEffect(() => {
-    if (!birthdayOpen) return undefined;
+    if (!openBirthdayPart) return undefined;
 
     const handlePointerDown = (event) => {
-      if (birthdayPickerRef.current && !birthdayPickerRef.current.contains(event.target)) {
-        setBirthdayOpen(false);
+      if (birthdayDropdownRef.current && !birthdayDropdownRef.current.contains(event.target)) {
+        setOpenBirthdayPart('');
       }
     };
 
     const handleKeyDown = (event) => {
       if (event.key === 'Escape') {
-        setBirthdayOpen(false);
+        setOpenBirthdayPart('');
       }
     };
 
@@ -145,7 +156,7 @@ const RegisterForm = ({ onSuccess }) => {
       document.removeEventListener('touchstart', handlePointerDown, true);
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [birthdayOpen]);
+  }, [openBirthdayPart]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -159,7 +170,7 @@ const RegisterForm = ({ onSuccess }) => {
       : '';
     const birthday = parseIsoDate(birthdayIso);
     if (!birthday) {
-      setBirthdayOpen(true);
+      setOpenBirthdayPart('day');
       setLoading(false);
       setError(t('authPages.registerForm.errors.invalidBirthday'));
       return;
@@ -320,86 +331,110 @@ const RegisterForm = ({ onSuccess }) => {
 
       <div className="auth-field">
         <label className="auth-field-label">{t('authPages.registerForm.labels.birthday')}</label>
-        <div className="auth-birthday-picker" ref={birthdayPickerRef}>
-          <button
-            id="registerBirthdayTrigger"
-            type="button"
-            className={`auth-input auth-birthday-trigger ${birthdayOpen ? 'is-open' : ''}`}
-            onClick={() => setBirthdayOpen((prev) => !prev)}
-            aria-haspopup="dialog"
-            aria-expanded={birthdayOpen}
-            aria-label={t('authPages.registerForm.aria.selectBirthday')}
-          >
-            <span className={birthdayParts.day && birthdayParts.month && birthdayParts.year ? '' : 'is-placeholder'}>
-              {birthdayDisplayValue}
-            </span>
-            <i className={`bi ${birthdayOpen ? 'bi-chevron-up' : 'bi-calendar3'}`} aria-hidden="true"></i>
-          </button>
-
-          {birthdayOpen && (
-            <div className="auth-birthday-menu" role="dialog" aria-label={t('authPages.registerForm.aria.selectBirthday')}>
-              <div className="auth-birthday-menu-head">
-                <div>
-                  <div className="auth-birthday-menu-title">{t('authPages.registerForm.birthday.menuTitle')}</div>
-                  <div className="auth-birthday-menu-subtitle">{t('authPages.registerForm.birthday.menuSubtitle')}</div>
-                </div>
-                <button type="button" className="auth-birthday-menu-close" onClick={() => setBirthdayOpen(false)}>
-                  {t('authPages.registerForm.common.close')}
-                </button>
+        <div className="auth-birthday-select-grid" ref={birthdayDropdownRef}>
+          <div className={`auth-birthday-select ${isBirthdayPartOpen('day') ? 'is-open' : ''}`}>
+            <button
+              type="button"
+              className={`auth-input auth-birthday-select-trigger ${isBirthdayPartOpen('day') ? 'is-open' : ''}`}
+              onClick={() => toggleBirthdayPart('day')}
+              aria-haspopup="listbox"
+              aria-expanded={isBirthdayPartOpen('day')}
+              aria-label={t('authPages.registerForm.aria.selectBirthdayDay')}
+            >
+              <span className={birthdayParts.day ? '' : 'is-placeholder'}>
+                {birthdayParts.day ? pad2(birthdayParts.day) : t('authPages.registerForm.birthday.dayPlaceholder')}
+              </span>
+              <i className={`bi ${isBirthdayPartOpen('day') ? 'bi-chevron-up' : 'bi-chevron-down'}`} aria-hidden="true"></i>
+            </button>
+            {isBirthdayPartOpen('day') && (
+              <div className="auth-birthday-select-menu" role="listbox" aria-label={t('authPages.registerForm.aria.selectBirthdayDay')}>
+                {dayOptions.map((option) => {
+                  const selected = String(birthdayParts.day) === String(option);
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`auth-birthday-select-option ${selected ? 'is-selected' : ''}`}
+                      onClick={() => selectBirthdayPart('day', option)}
+                      aria-pressed={selected}
+                    >
+                      {pad2(option)}
+                    </button>
+                  );
+                })}
               </div>
+            )}
+          </div>
 
-              <div className="auth-birthday-grid">
-                {[
-                  {
-                    key: 'day',
-                    label: t('authPages.registerForm.birthday.dayPlaceholder'),
-                    options: dayOptions,
-                    getValue: (option) => option,
-                    getLabel: (option) => pad2(option)
-                  },
-                  {
-                    key: 'month',
-                    label: t('authPages.registerForm.birthday.monthPlaceholder'),
-                    options: monthOptions,
-                    getValue: (option) => option.value,
-                    getLabel: (option) => option.label
-                  },
-                  {
-                    key: 'year',
-                    label: t('authPages.registerForm.birthday.yearPlaceholder'),
-                    options: yearOptions,
-                    getValue: (option) => option,
-                    getLabel: (option) => option
-                  }
-                ].map((column) => (
-                  <div key={column.key} className="auth-birthday-column">
-                    <div className="auth-birthday-column-title">{column.label}</div>
-                    <div className="auth-birthday-options" role="listbox" aria-label={column.label}>
-                      {column.options.map((option) => {
-                        const optionValue = column.getValue(option);
-                        const selected = String(birthdayParts[column.key]) === String(optionValue);
-
-                        return (
-                          <button
-                            key={optionValue}
-                            type="button"
-                            className={`auth-birthday-option ${selected ? 'is-selected' : ''}`}
-                            onClick={() => handleBirthdayPartChange(column.key, optionValue)}
-                            aria-pressed={selected}
-                          >
-                            {column.getLabel(option)}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+          <div className={`auth-birthday-select ${isBirthdayPartOpen('month') ? 'is-open' : ''}`}>
+            <button
+              type="button"
+              className={`auth-input auth-birthday-select-trigger ${isBirthdayPartOpen('month') ? 'is-open' : ''}`}
+              onClick={() => toggleBirthdayPart('month')}
+              aria-haspopup="listbox"
+              aria-expanded={isBirthdayPartOpen('month')}
+              aria-label={t('authPages.registerForm.aria.selectBirthdayMonth')}
+            >
+              <span className={birthdayParts.month ? '' : 'is-placeholder'}>
+                {birthdayParts.month ? selectedMonthLabel : t('authPages.registerForm.birthday.monthPlaceholder')}
+              </span>
+              <i className={`bi ${isBirthdayPartOpen('month') ? 'bi-chevron-up' : 'bi-chevron-down'}`} aria-hidden="true"></i>
+            </button>
+            {isBirthdayPartOpen('month') && (
+              <div className="auth-birthday-select-menu" role="listbox" aria-label={t('authPages.registerForm.aria.selectBirthdayMonth')}>
+                {monthOptions.map((option) => {
+                  const selected = String(birthdayParts.month) === String(option.value);
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      className={`auth-birthday-select-option ${selected ? 'is-selected' : ''}`}
+                      onClick={() => selectBirthdayPart('month', option.value)}
+                      aria-pressed={selected}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
               </div>
+            )}
+          </div>
 
-              <div className="auth-birthday-hint">{t('authPages.registerForm.birthday.ageHint')}</div>
-            </div>
-          )}
+          <div className={`auth-birthday-select ${isBirthdayPartOpen('year') ? 'is-open' : ''}`}>
+            <button
+              type="button"
+              className={`auth-input auth-birthday-select-trigger ${isBirthdayPartOpen('year') ? 'is-open' : ''}`}
+              onClick={() => toggleBirthdayPart('year')}
+              aria-haspopup="listbox"
+              aria-expanded={isBirthdayPartOpen('year')}
+              aria-label={t('authPages.registerForm.aria.selectBirthdayYear')}
+            >
+              <span className={birthdayParts.year ? '' : 'is-placeholder'}>
+                {birthdayParts.year || t('authPages.registerForm.birthday.yearPlaceholder')}
+              </span>
+              <i className={`bi ${isBirthdayPartOpen('year') ? 'bi-chevron-up' : 'bi-chevron-down'}`} aria-hidden="true"></i>
+            </button>
+            {isBirthdayPartOpen('year') && (
+              <div className="auth-birthday-select-menu" role="listbox" aria-label={t('authPages.registerForm.aria.selectBirthdayYear')}>
+                {yearOptions.map((option) => {
+                  const selected = String(birthdayParts.year) === String(option);
+                  return (
+                    <button
+                      key={option}
+                      type="button"
+                      className={`auth-birthday-select-option ${selected ? 'is-selected' : ''}`}
+                      onClick={() => selectBirthdayPart('year', option)}
+                      aria-pressed={selected}
+                    >
+                      {option}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
+        <div className="auth-birthday-hint">{t('authPages.registerForm.birthday.ageHint')}</div>
       </div>
 
       <div className="auth-field">

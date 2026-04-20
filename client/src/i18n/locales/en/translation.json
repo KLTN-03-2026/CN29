@@ -1668,6 +1668,7 @@
       "processing": "Processing...",
       "messages": {
         "otpSent": "OTP has been sent to your email.",
+        "otpResent": "A new OTP has been resent. Please check your email.",
         "otpVerified": "OTP verified successfully.",
         "resetPasswordSuccess": "Password reset successful."
       },
@@ -1795,6 +1796,9 @@
       },
       "aria": {
         "selectBirthday": "Select birthday",
+        "selectBirthdayDay": "Select day",
+        "selectBirthdayMonth": "Select month",
+        "selectBirthdayYear": "Select year",
         "showPassword": "Show password",
         "hidePassword": "Hide password"
       },

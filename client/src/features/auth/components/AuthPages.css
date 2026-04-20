@@ -188,11 +188,11 @@
   gap: 10px;
 }
 
-.auth-birthday-picker {
+.auth-birthday-select {
   position: relative;
 }
 
-.auth-birthday-trigger {
+.auth-birthday-select-trigger {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -201,7 +201,7 @@
   text-align: left;
 }
 
-.auth-birthday-trigger span {
+.auth-birthday-select-trigger span {
   min-width: 0;
   flex: 1;
   overflow: hidden;
@@ -209,109 +209,41 @@
   white-space: nowrap;
 }
 
-.auth-birthday-trigger span.is-placeholder {
+.auth-birthday-select-trigger span.is-placeholder {
   color: #7995b1;
   font-weight: 500;
 }
 
-.auth-birthday-trigger i {
+.auth-birthday-select-trigger i {
   color: #6d86a1;
   flex: 0 0 auto;
 }
 
-.auth-birthday-trigger.is-open {
+.auth-birthday-select-trigger.is-open {
   border-color: #3697e7;
   box-shadow: 0 0 0 4px rgba(78, 168, 240, 0.18);
   background: #ffffff;
 }
 
-.auth-birthday-menu {
+.auth-birthday-select-menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + 8px);
   left: 0;
-  width: min(100%, 560px);
-  min-width: 320px;
-  padding: 14px;
-  border: 1px solid #d7e3f1;
-  border-radius: 18px;
-  background: #ffffff;
-  box-shadow: 0 22px 52px rgba(15, 23, 42, 0.18);
-  z-index: 3000;
-}
-
-.auth-birthday-menu-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.auth-birthday-menu-title {
-  font-family: 'Sora', 'Manrope', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #102845;
-}
-
-.auth-birthday-menu-subtitle {
-  margin-top: 4px;
-  color: #5c748b;
-  font-size: 0.86rem;
-  line-height: 1.45;
-}
-
-.auth-birthday-menu-close {
-  flex: 0 0 auto;
-  height: 34px;
-  border-radius: 999px;
-  border: 1px solid #d1def0;
-  background: #f8fbff;
-  color: #21435f;
-  font-weight: 700;
-  padding: 0 12px;
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
-.auth-birthday-menu-close:hover {
-  border-color: #b7cbe5;
-  background: #eff6ff;
-  color: #163654;
-}
-
-.auth-birthday-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-}
-
-.auth-birthday-column {
-  padding: 10px;
-  border: 1px solid #d8e3ef;
-  border-radius: 14px;
-  background: linear-gradient(180deg, #f8fbff 0%, #ffffff 100%);
-}
-
-.auth-birthday-column-title {
-  margin-bottom: 8px;
-  color: #4d6377;
-  font-size: 0.79rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.auth-birthday-options {
-  display: grid;
-  gap: 6px;
-  max-height: 228px;
+  right: 0;
+  max-height: 232px;
   overflow: auto;
-  padding-right: 2px;
+  padding: 6px;
+  border: 1px solid #d2e3f3;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.16);
+  z-index: 3200;
 }
 
-.auth-birthday-option {
+.auth-birthday-select-option {
+  width: 100%;
   height: 36px;
-  border-radius: 10px;
+  border-radius: 9px;
   border: 1px solid transparent;
   background: #f8fbff;
   color: #163654;
@@ -322,12 +254,12 @@
   transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
 }
 
-.auth-birthday-option:hover {
+.auth-birthday-select-option:hover {
   background: #edf4ff;
   border-color: #cfe0f5;
 }
 
-.auth-birthday-option.is-selected {
+.auth-birthday-select-option.is-selected {
   background: #e8f0ff;
   border-color: #48a7ef;
   color: #1d4ed8;
@@ -335,14 +267,10 @@
 }
 
 .auth-birthday-hint {
-  margin-top: 10px;
+  margin-top: 8px;
   color: #6a8097;
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.auth-birthday-grid {
-  margin-top: 2px;
+  font-size: 0.8rem;
+  line-height: 1.4;
 }
 
 .auth-field {
@@ -865,8 +793,8 @@
     width: 100%;
   }
 
-  .auth-birthday-menu {
-    width: min(100%, 520px);
+  .auth-birthday-select-menu {
+    max-height: 200px;
   }
 }
 
@@ -889,18 +817,8 @@
     font-size: 1.44rem;
   }
 
-  .auth-birthday-menu {
-    width: 100%;
-    min-width: 0;
-    padding: 12px;
-  }
-
-  .auth-birthday-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .auth-birthday-options {
-    max-height: 160px;
+  .auth-birthday-select-menu {
+    max-height: 180px;
   }
 
   .auth-main {

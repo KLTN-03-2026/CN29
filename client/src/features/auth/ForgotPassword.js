@@ -55,10 +55,14 @@ const ForgotPassword = ({ onClose, inline = false }) => {
 
             const data = await res.json().catch(() => null);
             if (!res.ok) {
-                throw new Error(data?.error || t('authPages.forgotPassword.errors.sendOtpFailed'));
+                throw new Error(data?.error || 'send-otp-failed');
             }
 
-            setMessage(data?.message || t('authPages.forgotPassword.messages.otpSent'));
+            setMessage(
+                keepCurrentStep
+                    ? t('authPages.forgotPassword.messages.otpResent')
+                    : t('authPages.forgotPassword.messages.otpSent')
+            );
             setResendTimer(60);
 
             if (!keepCurrentStep) {
@@ -70,7 +74,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                 setStep(2);
             }
         } catch (e) {
-            setError(e.message || t('authPages.forgotPassword.errors.sendOtpFailed'));
+            setError(t('authPages.forgotPassword.errors.sendOtpFailed'));
         } finally {
             setLoading(false);
         }
@@ -98,13 +102,13 @@ const ForgotPassword = ({ onClose, inline = false }) => {
 
             const data = await res.json().catch(() => null);
             if (!res.ok) {
-                throw new Error(data?.error || t('authPages.forgotPassword.errors.invalidOtp'));
+                throw new Error(data?.error || 'invalid-otp');
             }
 
-            setMessage(data?.message || t('authPages.forgotPassword.messages.otpVerified'));
+            setMessage(t('authPages.forgotPassword.messages.otpVerified'));
             setStep(3);
         } catch (e) {
-            setError(e.message || t('authPages.forgotPassword.errors.invalidOtp'));
+            setError(t('authPages.forgotPassword.errors.invalidOtp'));
         } finally {
             setLoading(false);
         }
@@ -154,27 +158,31 @@ const ForgotPassword = ({ onClose, inline = false }) => {
 
             const data = await res.json().catch(() => null);
             if (!res.ok) {
-                throw new Error(data?.error || t('authPages.forgotPassword.errors.resetPasswordFailed'));
+                throw new Error(data?.error || 'reset-password-failed');
             }
 
-            setMessage(data?.message || t('authPages.forgotPassword.messages.resetPasswordSuccess'));
+            setMessage(t('authPages.forgotPassword.messages.resetPasswordSuccess'));
             setNewPassword('');
             setConfirmPassword('');
             setShowNewPassword(false);
             setShowConfirmPassword(false);
             setStep(4);
         } catch (e) {
-            setError(e.message || t('authPages.forgotPassword.errors.resetPasswordFailed'));
+            setError(t('authPages.forgotPassword.errors.resetPasswordFailed'));
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        if (resendTimer <= 0) return;
-        const t = setTimeout(() => setResendTimer(resendTimer - 1), 1000);
-        return () => clearTimeout(t);
-    }, [resendTimer]);
+        if (resendTimer <= 0) return undefined;
+
+        const intervalId = window.setInterval(() => {
+            setResendTimer((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+
+        return () => window.clearInterval(intervalId);
+    }, [resendTimer > 0]);
 
     const handleResend = async () => {
         if (resendTimer > 0 || loading) return;
@@ -229,7 +237,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                         onKeyDown={handleKeyDownEmail}
                         autoComplete="email"
                     />
-                    <button className="btn btn-primary w-100" onClick={() => sendOtp()} disabled={loading || !validateEmail(normalizedEmail)}>
+                    <button className="forgot-btn forgot-btn-primary w-100" onClick={() => sendOtp()} disabled={loading || !validateEmail(normalizedEmail)}>
                         {loading ? t('authPages.forgotPassword.sending') : t('authPages.forgotPassword.sendOtp')}
                     </button>
                 </>
@@ -241,7 +249,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                     <p className="forgot-help-text">{t('authPages.forgotPassword.step2.hint', { email: normalizedEmail })}</p>
                     <input
                         type="text"
-                        className="form-control mb-2"
+                        className="form-control forgot-otp-input mb-2"
                         placeholder={t('authPages.forgotPassword.placeholders.otp')}
                         value={otp}
                         onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
@@ -251,12 +259,22 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                         maxLength={6}
                     />
                     <div className="forgot-action-row">
-                        <button className="btn btn-outline-secondary" style={{ flex: 1 }} onClick={handleResend} disabled={resendTimer > 0 || loading}>
+                        <button
+                            type="button"
+                            className="forgot-btn forgot-btn-secondary forgot-btn-resend"
+                            onClick={handleResend}
+                            disabled={resendTimer > 0 || loading}
+                        >
                             {resendTimer > 0
                                 ? t('authPages.forgotPassword.step2.resendWithTimer', { seconds: resendTimer })
                                 : t('authPages.forgotPassword.step2.resend')}
                         </button>
-                        <button className="btn btn-success" style={{ flex: 2 }} onClick={verifyOtp} disabled={loading || !OTP_REGEX.test(String(otp || '').trim())}>
+                        <button
+                            type="button"
+                            className="forgot-btn forgot-btn-success forgot-btn-verify"
+                            onClick={verifyOtp}
+                            disabled={loading || !OTP_REGEX.test(String(otp || '').trim())}
+                        >
                             {loading ? t('authPages.forgotPassword.verifying') : t('authPages.forgotPassword.step2.verifyOtp')}
                         </button>
                     </div>
@@ -313,7 +331,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                             <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                         </button>
                     </div>
-                    <button className="btn btn-success w-100" onClick={resetPassword} disabled={loading || !newPassword || !confirmPassword}>
+                    <button className="forgot-btn forgot-btn-success w-100" onClick={resetPassword} disabled={loading || !newPassword || !confirmPassword}>
                         {loading ? t('authPages.forgotPassword.processing') : t('authPages.forgotPassword.step3.resetPassword')}
                     </button>
                 </>
@@ -322,7 +340,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
             {step === 4 && (
                 <>
                     <p>{t('authPages.forgotPassword.step4.successDescription')}</p>
-                    <button className="btn btn-primary w-100" onClick={closePanel}>{t('authPages.forgotPassword.step4.loginNow')}</button>
+                    <button className="forgot-btn forgot-btn-primary w-100" onClick={closePanel}>{t('authPages.forgotPassword.step4.loginNow')}</button>
                 </>
             )}
         </>

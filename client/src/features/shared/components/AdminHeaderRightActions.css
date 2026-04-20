@@ -199,6 +199,20 @@
     background: rgba(153, 27, 27, 0.45);
 }
 
+@media (max-width: 991px) {
+    .admin-header-user {
+        gap: 0.45rem;
+    }
+
+    .admin-header-home-btn {
+        padding: 0.5rem 0.62rem;
+    }
+
+    .admin-header-home-btn span {
+        display: none;
+    }
+}
+
 @media (max-width: 767px) {
     .admin-header-user-info {
         display: none;
