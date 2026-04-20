@@ -2,43 +2,44 @@
 .online-cv-editor-page {
   background: linear-gradient(135deg, #f5f7fa 0%, #e8ecf1 100%);
   min-height: 100vh;
+  transition: background-color 0.24s ease, color 0.24s ease;
 }
 
 .cv-editor-header {
   background: white;
-  border-radius: 16px;
-  padding: 24px 28px;
+  border-radius: 14px;
+  padding: 16px 20px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 
 .cv-editor-header h3 {
   color: #1a202c;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 8px 0;
+  margin: 0 0 4px 0;
   letter-spacing: -0.5px;
 }
 
 .cv-editor-header .text-muted {
   color: #64748b;
-  font-size: 15px;
+  font-size: 14px;
   margin: 0;
 }
 
 .cv-editor-actions {
   display: flex;
-  gap: 14px;
+  gap: 10px;
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .cv-editor-actions .btn {
-  border-radius: 14px;
+  border-radius: 12px;
   font-weight: 800;
-  min-height: 52px;
-  padding: 0 24px;
-  font-size: 1rem;
+  min-height: 46px;
+  padding: 0 18px;
+  font-size: 0.95rem;
   letter-spacing: 0.01em;
   transition: all 0.2s ease, box-shadow 0.2s ease;
   border: none;
@@ -197,7 +198,7 @@
 }
 
 .cv-editor-preview-header {
-  padding: 20px 24px;
+  padding: 14px 18px;
   border-bottom: 2px solid #f1f5f9;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   display: flex;
@@ -211,14 +212,14 @@
 }
 
 .cv-editor-preview-header .fw-semibold {
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
   color: #1e293b;
   margin: 0;
 }
 
 .cv-editor-preview-body {
-  padding: 20px;
+  padding: 14px;
   background: #f8fafc;
   display: flex;
   justify-content: center;
@@ -226,8 +227,8 @@
 
 .cv-editor-preview-iframe {
   width: min(100%, 980px);
-  height: calc(100vh - 280px);
-  min-height: 800px;
+  height: calc(100vh - 235px);
+  min-height: 690px;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   background: white;
@@ -330,12 +331,12 @@
   }
 
   .cv-editor-preview-iframe {
-    height: 600px;
-    min-height: 600px;
+    height: 560px;
+    min-height: 560px;
   }
 
   .cv-editor-header {
-    padding: 20px;
+    padding: 14px 16px;
   }
 
   .cv-editor-actions {
@@ -349,7 +350,7 @@
 
 @media (max-width: 575.98px) {
   .cv-editor-header h3 {
-    font-size: 24px;
+    font-size: 20px;
   }
   
   .cv-editor-actions {
@@ -369,6 +370,98 @@
   .cv-editor-avatar-modal-tools .btn {
     width: 100%;
   }
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .online-cv-editor-page {
+  background:
+    radial-gradient(circle at 8% 10%, rgba(59, 130, 246, 0.16), transparent 38%),
+    radial-gradient(circle at 90% 6%, rgba(20, 184, 166, 0.12), transparent 34%),
+    linear-gradient(150deg, #060f1c 0%, #0b1728 46%, #102235 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-header,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-form-card,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-preview-card,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-loading,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-avatar-modal {
+  background: #111f33;
+  border-color: #2d455f;
+  box-shadow: 0 18px 36px rgba(2, 10, 20, 0.45);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-header h3,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-label,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-preview-header .fw-semibold,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-avatar-modal-header h5 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-header .text-muted,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-hint,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-loading {
+  color: #9db6cf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-preview-header {
+  background: linear-gradient(135deg, #13253b 0%, #0f2238 100%);
+  border-bottom-color: #27415d;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-preview-body {
+  background: #0e1a2b;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-preview-iframe {
+  border-color: #2e4b6a;
+  background: #0a1627;
+  box-shadow: 0 16px 30px rgba(2, 10, 20, 0.42);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-actions .btn-outline-secondary,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-actions .btn-outline-primary {
+  background: #162a41;
+  color: #d9ebff;
+  border-color: #3d5d80;
+  box-shadow: none;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-actions .btn-outline-secondary:hover,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-actions .btn-outline-primary:hover {
+  background: #1c3450;
+  border-color: #53779f;
+  color: #eff7ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-actions .btn-success {
+  background: linear-gradient(135deg, #0c9e72 0%, #0a8a64 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-input,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-select,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-textarea,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-avatar-modal .form-control {
+  background: #0e1d30;
+  border-color: #375474;
+  color: #e2edf8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-input:focus,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-select:focus,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-textarea:focus,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-avatar-modal .form-control:focus {
+  border-color: #5d8cb9;
+  box-shadow: 0 0 0 3px rgba(93, 140, 185, 0.2);
+  background: #102338;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-avatar-modal-header,
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-avatar-modal-footer {
+  border-color: #2f4864;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-editor-avatar-modal-preview {
+  background: #0f2238;
+  border-color: #35516f;
 }
 
 /* Smooth Animations */

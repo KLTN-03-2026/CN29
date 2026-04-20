@@ -139,3 +139,39 @@
     padding-bottom: 2px;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-arrow,
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-pages button,
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-range,
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-range-input {
+  background: #12243a;
+  border-color: #3a5979;
+  color: #dce9f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-arrow:disabled,
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-pages button:disabled {
+  color: #7f94aa;
+  border-color: #334a63;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-range span,
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-range-separator,
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-ellipsis {
+  color: #9fb4cb;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-range strong {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-range-button:hover:not(:disabled) {
+  background: #18304b;
+  border-color: #567da4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .smart-pagination-pages button.active {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #ffffff;
+}

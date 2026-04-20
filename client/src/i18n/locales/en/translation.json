@@ -11,6 +11,8 @@
     "close": "Close",
     "delete": "Delete",
     "cancel": "Cancel",
+    "search": "Search",
+    "clearFilters": "Clear filters",
     "notAvailable": "N/A",
     "requestFailed": "Request failed ({{status}})"
   },
@@ -157,6 +159,353 @@
         "progressHeader": "Rate (%)",
         "noPopular": "No data"
       }
+    },
+    "jobsPage": {
+      "title": "Job moderation",
+      "confirmDeleteTitle": "Confirm delete",
+      "confirmDeleteMessage": "Are you sure you want to delete this job post?",
+      "errorFallback": "Unknown error",
+      "columns": {
+        "id": "ID",
+        "title": "Title",
+        "company": "Company",
+        "city": "City",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "viewPostedJob": "View published job",
+        "missingJobId": "Job ID not found",
+        "deleteJob": "Delete job post"
+      },
+      "status": {
+        "posted": "Published",
+        "closed": "Closed",
+        "archived": "Archived",
+        "draft": "Draft",
+        "unknown": "Unknown"
+      },
+      "empty": "No data available"
+    },
+    "reportsPage": {
+      "title": "Reports",
+      "confirmDeleteTitle": "Delete report",
+      "confirmDeleteMessage": "Are you sure you want to delete report #{{id}}? This action cannot be undone.",
+      "confirmDeleteMessageSimple": "Are you sure you want to delete report #{{id}}?",
+      "approveError": "Unable to approve report",
+      "empty": "No data available",
+      "columns": {
+        "id": "ID",
+        "reporter": "Reporter",
+        "targetType": "Target type",
+        "target": "Target",
+        "reason": "Reason",
+        "detail": "Detail",
+        "status": "Status",
+        "reportedAt": "Reported at",
+        "actions": "Actions"
+      },
+      "actions": {
+        "approve": "Approve",
+        "deleteReport": "Delete report"
+      },
+      "status": {
+        "unprocessed": "Unprocessed",
+        "pending": "Pending",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "targetTypeLabels": {
+        "job": "Job post",
+        "company": "Company",
+        "user": "User",
+        "post": "Post",
+        "comment": "Comment"
+      },
+      "modal": {
+        "title": "Approve report #{{id}}",
+        "reporterCode": "Reporter code",
+        "reporterEmail": "Reporter email",
+        "targetCode": "Target code",
+        "detailTitle": "Report details",
+        "noDetail": "No detailed description.",
+        "hideTargetContent": "Hide target content",
+        "lockTarget": "Lock target",
+        "processing": "Processing..."
+      }
+    },
+    "notificationsPage": {
+      "eyebrow": "Admin panel",
+      "title": "System notifications",
+      "description": "This area centralizes important admin signals: system notifications, operational status, and quick access to areas that need attention.",
+      "openCenter": "Open notification center",
+      "quickLinksTitle": "Quick links",
+      "quickLinksDescription": "Jump directly to frequently used admin areas.",
+      "links": {
+        "dashboard": "Dashboard",
+        "reports": "Reports",
+        "users": "Users"
+      },
+      "items": {
+        "messages": {
+          "title": "New messages from candidates",
+          "description": "When a candidate sends a message, the system pushes in-app toasts and device notifications if permission is enabled."
+        },
+        "alerts": {
+          "title": "Admin alerts",
+          "description": "Monitor reports, CV templates, and system activity from the admin dashboard."
+        },
+        "pwa": {
+          "title": "PWA status",
+          "description": "The application is ready for mobile installation and supports browser notifications."
+        }
+      }
+    },
+    "templatesPage": {
+      "list": {
+        "title": "CV template list",
+        "createButton": "Create template",
+        "searchPlaceholder": "Search by name or slug...",
+        "noDescription": "No description",
+        "empty": "No templates found",
+        "loading": "Loading templates...",
+        "columns": {
+          "templateName": "Template name",
+          "updatedAt": "Updated",
+          "actions": "Actions"
+        },
+        "actions": {
+          "edit": "Edit template",
+          "preview": "Preview template",
+          "delete": "Delete template"
+        }
+      },
+      "create": {
+        "newTitle": "Create new CV template",
+        "editTitle": "Edit template #{{id}}",
+        "allTemplatesButton": "All templates",
+        "loadingDetail": "Loading template details...",
+        "tabs": {
+          "basic": "Basic info",
+          "html": "HTML & Design",
+          "preview": "Preview"
+        },
+        "fields": {
+          "name": "Template name",
+          "slug": "Slug (URL)",
+          "status": "Status",
+          "style": "CV style",
+          "description": "Description",
+          "thumbnailUrl": "Thumbnail URL",
+          "htmlContent": "HTML Content"
+        },
+        "placeholders": {
+          "name": "Example: Professional navy CV",
+          "slug": "professional-navy-cv",
+          "description": "Short description of this CV template"
+        },
+        "slugHint": "Slug is generated automatically from template name.",
+        "status": {
+          "active": "Active",
+          "inactive": "Inactive"
+        },
+        "uploadingImage": "Uploading image...",
+        "uploadImage": "Upload image",
+        "removeThumbnail": "Remove thumbnail",
+        "thumbnailHint": "Select a thumbnail image directly from your device.",
+        "editCode": "Edit code",
+        "quickPreview": "Quick preview",
+        "savingUpdating": "Updating...",
+        "savingCreating": "Creating...",
+        "submitUpdate": "Update template",
+        "submitCreate": "Create template"
+      },
+      "styleOptions": {
+        "professional": "Professional",
+        "creative": "Creative",
+        "minimal": "Minimal",
+        "modern": "Modern"
+      },
+      "preview": {
+        "defaultTitle": "Template preview",
+        "quickTitle": "Quick Preview",
+        "tabTitle": "Template Preview",
+        "modalFrameTitle": "Template Modal Preview",
+        "modalTitle": "Preview",
+        "thumbnailAlt": "Template thumbnail",
+        "emptyQuick": "Enter HTML content to preview.",
+        "emptyTab": "No HTML content to preview yet.",
+        "emptyModal": "This template does not have HTML content yet."
+      },
+      "confirm": {
+        "deleteTitle": "Delete template",
+        "deleteMessage": "Are you sure you want to delete template \"{{name}}\"?",
+        "deleteButton": "Delete"
+      },
+      "messages": {
+        "sessionExpired": "Your session has expired. Please sign in again.",
+        "requestFailed": "Unable to process request",
+        "loadListFailed": "Unable to load template list",
+        "loadDetailFailed": "Unable to load template details",
+        "openPreviewFailed": "Unable to open preview",
+        "deleteSuccess": "Template deleted successfully.",
+        "deleteFailed": "Unable to delete template",
+        "thumbnailImageOnly": "Only image files are accepted for thumbnail.",
+        "thumbnailSizeLimit": "Thumbnail image must be smaller than 2MB.",
+        "missingAuthToken": "Missing auth token. Please sign in again.",
+        "thumbnailUploadFailed": "Unable to upload thumbnail.",
+        "thumbnailUrlInvalid": "Server returned an invalid thumbnail URL.",
+        "thumbnailUploadSuccess": "Thumbnail uploaded successfully.",
+        "nameRequired": "Template name is required.",
+        "slugInvalid": "Invalid slug.",
+        "htmlRequired": "HTML content is required.",
+        "updateSuccess": "Template updated successfully.",
+        "createSuccess": "Template created successfully.",
+        "saveFailed": "Unable to save template"
+      }
+    },
+    "careerGuidePostsPage": {
+      "title": "Career guide posts management",
+      "sampleBadge": "Sample",
+      "empty": "No data available",
+      "columns": {
+        "title": "Title",
+        "author": "Author",
+        "authorType": "Author type",
+        "createdAt": "Created at",
+        "updatedAt": "Updated at",
+        "views": "Views",
+        "actions": "Actions"
+      },
+      "authorType": {
+        "candidate": "Candidate",
+        "employer": "Employer",
+        "admin": "Administrator"
+      },
+      "actions": {
+        "openPost": "Open post link",
+        "delete": "Delete post",
+        "deleteDisabledSample": "Sample posts cannot be deleted"
+      },
+      "confirm": {
+        "deleteTitle": "Delete career guide post",
+        "deleteMessage": "Are you sure you want to delete post #{{id}}? This action cannot be undone.",
+        "deleteButton": "Delete"
+      },
+      "messages": {
+        "deleteFailed": "Unable to delete career guide post"
+      }
+    },
+    "auditLogsPage": {
+      "title": "Admin audit logs",
+      "meta": {
+        "total": "Total records",
+        "page": "Page"
+      },
+      "columns": {
+        "actor": "Actor",
+        "action": "Action",
+        "object": "Object",
+        "timestamp": "Timestamp",
+        "actions": "Actions"
+      },
+      "actions": {
+        "delete": "Delete audit log"
+      },
+      "fallback": {
+        "userWithId": "User #{{id}}",
+        "system": "System",
+        "object": "Object"
+      },
+      "messages": {
+        "loadFailed": "Unable to load admin audit logs",
+        "exportLoadFailed": "Unable to load data for Excel export.",
+        "exportEmpty": "No audit-log data available for Excel export.",
+        "exportFailed": "Unable to export audit-log Excel file.",
+        "deleteFailed": "Unable to delete audit log"
+      },
+      "confirm": {
+        "deleteMessage": "Are you sure you want to delete audit log #{{id}}?"
+      },
+      "empty": "No matching logs",
+      "export": {
+        "downloadButton": "Download Excel",
+        "exporting": "Exporting...",
+        "sheetName": "Admin audit logs",
+        "title": "JOBFINDER - ADMIN AUDIT LOGS",
+        "exportedAt": "Exported at: {{value}}",
+        "totalNote": "Total records: {{total}} | Data source: JobFinder Admin",
+        "footer": "This report was exported from JobFinder. Please do not edit original data during reconciliation.",
+        "columns": {
+          "no": "No.",
+          "id": "ID",
+          "actor": "Actor",
+          "email": "Email",
+          "action": "Action",
+          "object": "Object",
+          "timestamp": "Timestamp"
+        }
+      }
+    },
+    "profilePage": {
+      "roles": {
+        "superAdmin": "Super administrator",
+        "admin": "Administrator"
+      },
+      "messages": {
+        "missingAccount": "Admin account not found. Please sign in again.",
+        "loadFailed": "Unable to load admin profile.",
+        "editFirst": "Click \"Edit profile\" before changing avatar.",
+        "avatarTypeInvalid": "Avatar only accepts JPG, PNG, or WEBP.",
+        "avatarTooLarge": "Avatar size must be 5MB or less.",
+        "avatarUploadFailed": "Unable to upload avatar.",
+        "avatarUploadSuccess": "Admin avatar updated successfully.",
+        "saveFailed": "Unable to save admin profile.",
+        "saveSuccess": "Admin profile saved successfully.",
+        "loadingProfile": "Loading profile information..."
+      },
+      "avatar": {
+        "hint": "JPG/PNG/WEBP image, maximum 5MB.",
+        "selectImage": "Choose image",
+        "uploading": "Uploading...",
+        "updateAvatar": "Update avatar",
+        "clearSelection": "Clear selection"
+      },
+      "info": {
+        "email": "Email",
+        "role": "Role",
+        "createdAt": "Account created",
+        "updatedAt": "Last updated",
+        "phone": "Phone",
+        "city": "City",
+        "address": "Address",
+        "status": "Status",
+        "active": "Active",
+        "noData": "No data available"
+      },
+      "form": {
+        "title": "Admin profile",
+        "subtitle": "This information appears in the admin account chip and dropdown.",
+        "editButton": "Edit profile",
+        "cancelButton": "Cancel editing",
+        "saving": "Saving...",
+        "saveButton": "Save admin profile",
+        "editHint": "Click \"Edit profile\" to update information.",
+        "fields": {
+          "fullName": "Full name",
+          "email": "Email",
+          "phone": "Phone",
+          "city": "City",
+          "address": "Address",
+          "position": "Position",
+          "personalLink": "Personal link / Website"
+        }
+      },
+      "settings": {
+        "kicker": "Application",
+        "title": "JobFinder settings",
+        "subtitle": "Install the app for quicker access and more stable behavior on weak networks."
+      }
     }
   },
   "home": {
@@ -179,6 +528,9 @@
       "allIndustries": "All industries",
       "locationLabel": "Location",
       "nationwide": "Nationwide",
+      "searchIndustryPlaceholder": "Type to filter industries",
+      "searchLocationPlaceholder": "Type to filter locations",
+      "noOptionFound": "No matching option found",
       "submit": "Find jobs now"
     },
     "filters": {

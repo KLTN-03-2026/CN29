@@ -45,6 +45,73 @@
 
 .jf-notify-dialog-confirm {
   width: min(640px, 95vw);
+  position: relative;
+  isolation: isolate;
+  --jf-confirm-bg: linear-gradient(180deg, #fffdf9 0%, #ffffff 100%);
+  --jf-confirm-border: rgba(237, 177, 84, 0.4);
+  --jf-confirm-shadow: rgba(140, 96, 23, 0.22);
+  --jf-confirm-topbar: linear-gradient(90deg, #d89a3b 0%, #f0c15b 100%);
+  --jf-confirm-icon-bg: #fff4df;
+  --jf-confirm-icon-color: #a86a0e;
+  background: var(--jf-confirm-bg);
+  border-color: var(--jf-confirm-border);
+  box-shadow: 0 34px 64px var(--jf-confirm-shadow);
+}
+
+.jf-notify-dialog-confirm .jf-notify-topbar {
+  height: 10px;
+  background: var(--jf-confirm-topbar);
+}
+
+.jf-notify-dialog-confirm .jf-notify-icon-wrap {
+  width: 58px;
+  height: 58px;
+  border-radius: 18px;
+  background: var(--jf-confirm-icon-bg);
+  color: var(--jf-confirm-icon-color);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65);
+}
+
+.jf-notify-dialog-confirm .jf-notify-copy h4 {
+  color: #6f4a12;
+}
+
+.jf-notify-dialog-confirm .jf-notify-copy p {
+  color: #6e5940;
+}
+
+.jf-notify-dialog-confirm.jf-notify-intent-delete {
+  --jf-confirm-bg: linear-gradient(180deg, #fff7f8 0%, #ffffff 100%);
+  --jf-confirm-border: rgba(225, 85, 85, 0.45);
+  --jf-confirm-shadow: rgba(140, 35, 54, 0.24);
+  --jf-confirm-topbar: linear-gradient(90deg, #d33f52 0%, #ef6b4d 100%);
+  --jf-confirm-icon-bg: #ffe8ee;
+  --jf-confirm-icon-color: #b4233a;
+}
+
+.jf-notify-dialog-confirm.jf-notify-intent-delete .jf-notify-copy h4 {
+  color: #7f2032;
+}
+
+.jf-notify-dialog-confirm.jf-notify-intent-delete .jf-notify-copy p {
+  color: #8b3447;
+}
+
+.jf-notify-dialog-confirm.jf-notify-intent-logout {
+  --jf-confirm-bg: linear-gradient(180deg, #f6fbff 0%, #ffffff 100%);
+  --jf-confirm-border: rgba(70, 131, 186, 0.42);
+  --jf-confirm-shadow: rgba(28, 76, 123, 0.22);
+  --jf-confirm-topbar: linear-gradient(90deg, #2262a1 0%, #3f94d3 100%);
+  --jf-confirm-icon-bg: #e6f2ff;
+  --jf-confirm-icon-color: #1f5f98;
+}
+
+.jf-notify-dialog-confirm.jf-notify-intent-logout .jf-notify-copy h4 {
+  color: #1a4d7d;
+}
+
+.jf-notify-dialog-confirm.jf-notify-intent-logout .jf-notify-copy p {
+  color: #2f5577;
 }
 
 .jf-notify-topbar {
@@ -186,6 +253,72 @@
 .jf-notify-btn-warning {
   background: linear-gradient(135deg, #ec9f2c 0%, #ebbe3e 100%);
   color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog {
+  background: #112136;
+  border-color: #345171;
+  box-shadow: 0 30px 62px rgba(2, 10, 20, 0.56);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-copy h4 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-copy p {
+  color: #a6bfd7;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-btn-ghost {
+  background: #162a42;
+  border-color: #3c5b7e;
+  color: #d5e8fb;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm {
+  --jf-confirm-bg: linear-gradient(180deg, #1a2d44 0%, #13253a 100%);
+  --jf-confirm-border: rgba(255, 192, 87, 0.42);
+  --jf-confirm-shadow: rgba(2, 10, 20, 0.66);
+  --jf-confirm-icon-bg: #2f3d27;
+  --jf-confirm-icon-color: #f8d16f;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm .jf-notify-copy h4 {
+  color: #ffd787;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm .jf-notify-copy p {
+  color: #d0c4a6;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm.jf-notify-intent-delete {
+  --jf-confirm-bg: linear-gradient(180deg, #3d202a 0%, #2d1720 100%);
+  --jf-confirm-border: rgba(229, 122, 141, 0.5);
+  --jf-confirm-icon-bg: #4b2230;
+  --jf-confirm-icon-color: #ff9eb4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm.jf-notify-intent-delete .jf-notify-copy h4 {
+  color: #ffc6d3;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm.jf-notify-intent-delete .jf-notify-copy p {
+  color: #f1b8c6;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm.jf-notify-intent-logout {
+  --jf-confirm-bg: linear-gradient(180deg, #16293f 0%, #122236 100%);
+  --jf-confirm-border: rgba(107, 176, 239, 0.46);
+  --jf-confirm-icon-bg: #1f3752;
+  --jf-confirm-icon-color: #86cdfd;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm.jf-notify-intent-logout .jf-notify-copy h4 {
+  color: #bfe5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .jf-notify-dialog-confirm.jf-notify-intent-logout .jf-notify-copy p {
+  color: #9fc9ea;
 }
 
 @media (max-width: 767.98px) {

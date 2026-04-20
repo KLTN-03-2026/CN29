@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronDown, House, Languages, ShieldCheck } from 'lucide-react';
+import { ChevronDown, House, Moon, ShieldCheck, Sun } from 'lucide-react';
 import './AdminHeaderRightActions.css';
 
 const renderItemIcon = (icon) => {
@@ -13,10 +13,18 @@ const renderItemIcon = (icon) => {
 };
 
 const AdminHeaderRightActions = ({
-    isEnglish,
-    onToggleLanguage,
-    languageToggleTitle,
+    activeLanguage,
+    onChangeLanguage,
     languageAriaLabel,
+    activeTheme,
+    onChangeTheme,
+    themeAriaLabel,
+    languageVietnameseLabel = 'VI',
+    languageEnglishLabel = 'EN',
+    languageVietnameseTitle,
+    languageEnglishTitle,
+    lightThemeTitle,
+    darkThemeTitle,
     onGoHome,
     homeLabel,
     profileMenuOpen,
@@ -28,18 +36,58 @@ const AdminHeaderRightActions = ({
     onAvatarError,
     menuItems = []
 }) => {
+    const normalizedLanguage = String(activeLanguage || 'vi').toLowerCase();
+    const isEnglish = normalizedLanguage.startsWith('en');
+    const normalizedTheme = String(activeTheme || 'light').toLowerCase();
+    const isDarkTheme = normalizedTheme === 'dark';
+
     return (
         <div className="admin-header-user">
-            <button
-                type="button"
-                className="admin-header-home-btn"
-                onClick={onToggleLanguage}
-                title={languageToggleTitle}
-                aria-label={languageAriaLabel}
-            >
-                <Languages size={16} />
-                <span>{isEnglish ? 'VI' : 'EN'}</span>
-            </button>
+            <div className="admin-header-segmented admin-header-language-group" role="group" aria-label={languageAriaLabel}>
+                <button
+                    type="button"
+                    className={`admin-header-segmented-btn ${!isEnglish ? 'active' : ''}`}
+                    onClick={() => onChangeLanguage('vi')}
+                    title={languageVietnameseTitle}
+                    aria-label={languageVietnameseTitle}
+                    aria-pressed={!isEnglish}
+                >
+                    <span>{languageVietnameseLabel}</span>
+                </button>
+                <button
+                    type="button"
+                    className={`admin-header-segmented-btn ${isEnglish ? 'active' : ''}`}
+                    onClick={() => onChangeLanguage('en')}
+                    title={languageEnglishTitle}
+                    aria-label={languageEnglishTitle}
+                    aria-pressed={isEnglish}
+                >
+                    <span>{languageEnglishLabel}</span>
+                </button>
+            </div>
+
+            <div className="admin-header-segmented admin-header-theme-group" role="group" aria-label={themeAriaLabel}>
+                <button
+                    type="button"
+                    className={`admin-header-segmented-btn ${!isDarkTheme ? 'active' : ''}`}
+                    onClick={() => onChangeTheme('light')}
+                    title={lightThemeTitle}
+                    aria-label={lightThemeTitle}
+                    aria-pressed={!isDarkTheme}
+                >
+                    <Sun size={15} />
+                </button>
+                <button
+                    type="button"
+                    className={`admin-header-segmented-btn ${isDarkTheme ? 'active' : ''}`}
+                    onClick={() => onChangeTheme('dark')}
+                    title={darkThemeTitle}
+                    aria-label={darkThemeTitle}
+                    aria-pressed={isDarkTheme}
+                >
+                    <Moon size={15} />
+                </button>
+            </div>
 
             <button
                 type="button"

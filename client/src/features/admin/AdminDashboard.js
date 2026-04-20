@@ -151,14 +151,16 @@ const menuItems = [
 const SIDEBAR_LOGO_URL = 'https://i.postimg.cc/nhWfcVvh/logo.png';
 
 const resolvePageTitleKey = (pathname) => {
-    if (pathname.startsWith('/admin/profile')) return 'admin.pageTitle.profile';
-    if (pathname.startsWith('/admin/usersmanament')) return 'admin.pageTitle.users';
-    if (pathname.startsWith('/admin/jobs')) return 'admin.pageTitle.jobs';
-    if (pathname.startsWith('/admin/companies')) return 'admin.pageTitle.companies';
-    if (pathname.startsWith('/admin/templates')) return 'admin.pageTitle.templates';
-    if (pathname.startsWith('/admin/reports')) return 'admin.pageTitle.reports';
-    if (pathname.startsWith('/admin/career-guide-posts')) return 'admin.pageTitle.careerGuidePosts';
-    if (pathname.startsWith('/admin/audit-logs')) return 'admin.pageTitle.auditLogs';
+    const normalizedPath = String(pathname || '').trim().toLowerCase();
+
+    if (normalizedPath.includes('/career-guide-posts')) return 'admin.pageTitle.careerGuidePosts';
+    if (normalizedPath.includes('/audit-logs')) return 'admin.pageTitle.auditLogs';
+    if (normalizedPath.includes('/templates')) return 'admin.pageTitle.templates';
+    if (normalizedPath.includes('/usersmanament')) return 'admin.pageTitle.users';
+    if (normalizedPath.includes('/companies')) return 'admin.pageTitle.companies';
+    if (normalizedPath.includes('/jobs')) return 'admin.pageTitle.jobs';
+    if (normalizedPath.includes('/reports')) return 'admin.pageTitle.reports';
+    if (normalizedPath.includes('/profile')) return 'admin.pageTitle.profile';
     return 'admin.pageTitle.dashboard';
 };
 
@@ -166,7 +168,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { t, i18n } = useTranslation();
-    const { isDarkMode, toggleDarkMode } = useDarkMode();
+    const { isDarkMode, setTheme, toggleDarkMode } = useDarkMode();
 
     const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
     const isEnglish = normalizedLanguage.startsWith('en');
@@ -628,8 +630,17 @@ const AdminDashboard = () => {
         navigate(path);
     };
 
-    const handleToggleLanguage = () => {
-        i18n.changeLanguage(isEnglish ? 'vi' : 'en');
+    const handleChangeLanguage = (language) => {
+        const targetLanguage = String(language || '').trim().toLowerCase();
+        if (!targetLanguage) return;
+        if (normalizedLanguage.startsWith(targetLanguage)) return;
+        i18n.changeLanguage(targetLanguage);
+    };
+
+    const handleChangeTheme = (nextTheme) => {
+        const normalizedTheme = String(nextTheme || '').trim().toLowerCase();
+        if (normalizedTheme !== 'dark' && normalizedTheme !== 'light') return;
+        setTheme(normalizedTheme);
     };
 
     const handleProfileMenuThemeToggle = () => {
@@ -687,7 +698,7 @@ const AdminDashboard = () => {
             <button
                 type="button"
                 className={`admin-mobile-overlay ${mobileMenuOpen ? 'show' : ''}`}
-                aria-label="Đóng menu"
+                aria-label={t('common.close')}
                 onClick={() => setMobileMenuOpen(false)}
             />
 
@@ -793,10 +804,16 @@ const AdminDashboard = () => {
                     title={t(resolvePageTitleKey(location.pathname))}
                     rightContent={(
                         <AdminHeaderRightActions
-                            isEnglish={isEnglish}
-                            onToggleLanguage={handleToggleLanguage}
-                            languageToggleTitle={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
+                            activeLanguage={isEnglish ? 'en' : 'vi'}
+                            onChangeLanguage={handleChangeLanguage}
                             languageAriaLabel={t('common.languageSwitch')}
+                            activeTheme={isDarkMode ? 'dark' : 'light'}
+                            onChangeTheme={handleChangeTheme}
+                            themeAriaLabel={t('common.toggleDarkMode')}
+                            languageVietnameseTitle={t('common.switchToVietnamese')}
+                            languageEnglishTitle={t('common.switchToEnglish')}
+                            lightThemeTitle={t('common.switchToLight')}
+                            darkThemeTitle={t('common.switchToDark')}
                             onGoHome={() => navigate('/')}
                             homeLabel={t('admin.actions.home')}
                             profileMenuOpen={profileMenuOpen}

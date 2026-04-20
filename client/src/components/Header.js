@@ -3,6 +3,18 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from './NotificationProvider';
 import { useDarkMode } from '../context/DarkModeContext';
+import {
+    Bell,
+    BookOpen,
+    BriefcaseBusiness,
+    CheckCircle2,
+    ChevronDown,
+    ChevronUp,
+    LayoutDashboard,
+    LogOut,
+    Mail,
+    UserRound
+} from 'lucide-react';
 
 const readStoredUser = () => {
     try {
@@ -39,21 +51,32 @@ const Header = () => {
     const location = useLocation();
     const { t, i18n } = useTranslation();
     const { requestConfirm } = useNotification();
-    const { isDarkMode, toggleDarkMode } = useDarkMode();
+    const { isDarkMode, setTheme } = useDarkMode();
     const [currentUser, setCurrentUser] = useState(() => readStoredUser());
     const [showJobManagement, setShowJobManagement] = useState(false);
     const [showMobileJobsMenu, setShowMobileJobsMenu] = useState(false);
 
     const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
     const isEnglish = normalizedLanguage.startsWith('en');
+    const isVietnamese = normalizedLanguage.startsWith('vi');
 
-    const handleToggleLanguage = () => {
-        i18n.changeLanguage(isEnglish ? 'vi' : 'en');
+    const handleChangeLanguage = (language) => {
+        const targetLanguage = String(language || '').trim().toLowerCase();
+        if (!targetLanguage) return;
+        if (normalizedLanguage.startsWith(targetLanguage)) return;
+        i18n.changeLanguage(targetLanguage);
+    };
+
+    const handleChangeTheme = (nextTheme) => {
+        const normalizedTheme = String(nextTheme || '').trim().toLowerCase();
+        if (normalizedTheme !== 'dark' && normalizedTheme !== 'light') return;
+        setTheme(normalizedTheme);
     };
 
     const handleLogout = async () => {
         const confirmed = await requestConfirm({
             type: 'warning',
+            intent: 'logout',
             title: t('header.confirmLogout.title'),
             message: t('header.confirmLogout.message'),
             confirmText: t('header.confirmLogout.confirm'),
@@ -163,7 +186,7 @@ const Header = () => {
                 <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label={t('header.aria.toggleNavigation')}>
                     <span className="navbar-toggler-icon"></span>
                 </button>
-                <div className="collapse navbar-collapse justify-content-between jf-main-navbar__collapse" id="mainNavbar">
+                <div className="collapse navbar-collapse d-lg-flex justify-content-between jf-main-navbar__collapse" id="mainNavbar">
                     <ul className="navbar-nav align-items-lg-center gap-lg-4 mb-3 mb-lg-0 jf-main-navbar__menu">
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/" onClick={collapseMobileNavbar}>{t('header.nav.home')}</Link>
@@ -178,38 +201,32 @@ const Header = () => {
                             >
                                 {t('header.nav.jobs')} <i className="bi bi-chevron-down small jf-nav-chevron"></i>
                             </button>
-                            <ul className={`dropdown-menu jf-nav-dropdown-menu p-0 ${showMobileJobsMenu ? 'is-open' : ''}`} style={{ minWidth: 280, borderRadius: 12 }}>
-                                <li className="px-3 pt-3 pb-2 text-uppercase text-secondary" style={{ fontSize: 12, letterSpacing: 1 }}>
+                            <ul className={`dropdown-menu jf-nav-dropdown-menu p-0 ${showMobileJobsMenu ? 'is-open' : ''}`}>
+                                <li className="jf-jobs-menu-head">
                                     {t('header.jobsMenu.title')}
                                 </li>
-                                <li className="px-2 pb-2">
-                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs" onClick={collapseMobileNavbar}>
+                                <li className={`jf-jobs-menu-grid ${isEmployer ? 'is-employer' : 'is-candidate'}`}>
+                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs" onClick={collapseMobileNavbar}>
                                         <i className="bi bi-search fs-5 text-primary"></i>
                                         <span className="fw-semibold">{t('header.jobsMenu.findJobs')}</span>
                                     </Link>
-                                </li>
-                                {!isEmployer && (
-                                    <>
-                                        <li className="px-2 pb-2">
-                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/saved" onClick={collapseMobileNavbar}>
+                                    {!isEmployer && (
+                                        <>
+                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/saved" onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-bookmark fs-5 text-primary"></i>
                                                 <span className="fw-semibold">{t('header.jobsMenu.savedJobs')}</span>
                                             </Link>
-                                        </li>
-                                        <li className="px-2 pb-2">
-                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/applied" onClick={collapseMobileNavbar}>
+                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/applied" onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-file-earmark-check fs-5 text-primary"></i>
                                                 <span className="fw-semibold">{t('header.jobsMenu.appliedJobs')}</span>
                                             </Link>
-                                        </li>
-                                        <li className="px-2 pb-3">
-                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2" to="/jobs/matching" onClick={collapseMobileNavbar}>
+                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/matching" onClick={collapseMobileNavbar}>
                                                 <i className="bi bi-hand-thumbs-up fs-5 text-primary"></i>
                                                 <span className="fw-semibold">{t('header.jobsMenu.matchingJobs')}</span>
                                             </Link>
-                                        </li>
-                                    </>
-                                )}
+                                        </>
+                                    )}
+                                </li>
                             </ul>
                         </li>
                         <li className="nav-item">
@@ -230,39 +247,65 @@ const Header = () => {
                     </ul>
                     <div className="d-flex align-items-center gap-3 jf-main-navbar__actions">
                         <div className="d-flex align-items-center gap-2 jf-utility-actions">
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary btn-sm jf-utility-btn"
-                                onClick={handleToggleLanguage}
-                                title={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
-                                aria-label={t('common.languageSwitch')}
-                            >
-                                <i className="bi bi-translate" aria-hidden="true"></i>
-                                <span>{isEnglish ? 'EN' : 'VI'}</span>
-                            </button>
+                            <div className="jf-utility-group" role="group" aria-label={t('common.languageSwitch')}>
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm jf-utility-btn ${isVietnamese ? 'is-active' : ''}`}
+                                    onClick={() => handleChangeLanguage('vi')}
+                                    title={t('common.switchToVietnamese')}
+                                    aria-label={t('common.switchToVietnamese')}
+                                    aria-pressed={isVietnamese}
+                                >
+                                    <span>VI</span>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm jf-utility-btn ${isEnglish ? 'is-active' : ''}`}
+                                    onClick={() => handleChangeLanguage('en')}
+                                    title={t('common.switchToEnglish')}
+                                    aria-label={t('common.switchToEnglish')}
+                                    aria-pressed={isEnglish}
+                                >
+                                    <span>EN</span>
+                                </button>
+                            </div>
 
-                            <button
-                                type="button"
-                                className="btn btn-outline-secondary btn-sm jf-utility-btn"
-                                onClick={toggleDarkMode}
-                                title={isDarkMode ? t('common.switchToLight') : t('common.switchToDark')}
-                                aria-label={t('common.toggleDarkMode')}
-                            >
-                                <i className={`bi ${isDarkMode ? 'bi-sun-fill' : 'bi-moon-stars-fill'}`} aria-hidden="true"></i>
-                            </button>
+                            <div className="jf-utility-group jf-utility-group-theme" role="group" aria-label={t('common.toggleDarkMode')}>
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm jf-utility-btn ${!isDarkMode ? 'is-active' : ''}`}
+                                    onClick={() => handleChangeTheme('light')}
+                                    title={t('common.switchToLight')}
+                                    aria-label={t('common.switchToLight')}
+                                    aria-pressed={!isDarkMode}
+                                >
+                                    <i className="bi bi-sun-fill" aria-hidden="true"></i>
+                                </button>
+                                <button
+                                    type="button"
+                                    className={`btn btn-sm jf-utility-btn ${isDarkMode ? 'is-active' : ''}`}
+                                    onClick={() => handleChangeTheme('dark')}
+                                    title={t('common.switchToDark')}
+                                    aria-label={t('common.switchToDark')}
+                                    aria-pressed={isDarkMode}
+                                >
+                                    <i className="bi bi-moon-stars-fill" aria-hidden="true"></i>
+                                </button>
+                            </div>
                         </div>
 
                         {!user ? (
-                            <>
+                            <div className="jf-main-navbar__auth-actions">
                                 <Link className="btn btn-outline-primary fw-semibold fs-6 px-4 py-1" to="/login" onClick={collapseMobileNavbar}>
                                     {t('header.auth.login')}
                                 </Link>
                                 <Link className="btn btn-primary fw-semibold fs-6 px-4 py-1" to="/register" onClick={collapseMobileNavbar}>
                                     {t('header.auth.register')}
                                 </Link>
-                            </>
+                            </div>
                         ) : (
-                            <div className="dropdown">
+                            <div className="jf-main-navbar__user-actions">
+                                <div className="dropdown">
                                 <button
                                     className="jf-user-chip"
                                     type="button"
@@ -289,20 +332,20 @@ const Header = () => {
                                         <strong>{profileTitle}</strong>
                                         <small>{roleLabel}</small>
                                     </span>
-                                    <i className="bi bi-chevron-down jf-user-chip-chevron" aria-hidden="true"></i>
+                                    <ChevronDown size={14} className="jf-user-chip-chevron" aria-hidden="true" />
                                 </button>
                                 <ul className="dropdown-menu dropdown-menu-end jf-user-dropdown-menu" aria-labelledby="dropdownUser">
                                     {/* Menu items */}
                                     <li className="jf-user-dropdown-row">
                                         <Link className="dropdown-item jf-user-dropdown-item" to={profileLink} onClick={collapseMobileNavbar}>
-                                            <i className="bi bi-file-earmark-person text-primary"></i>
+                                            <UserRound size={16} className="jf-user-dropdown-icon" aria-hidden="true" />
                                             <span>{t('header.user.profile')}</span>
                                         </Link>
                                     </li>
                                     {dashboardLink && (
                                         <li className="jf-user-dropdown-row">
                                             <Link className="dropdown-item jf-user-dropdown-item" to={dashboardLink} onClick={collapseMobileNavbar}>
-                                                <i className="bi bi-speedometer2 text-primary"></i>
+                                                <LayoutDashboard size={16} className="jf-user-dropdown-icon" aria-hidden="true" />
                                                 <span>{t('header.user.dashboard')}</span>
                                             </Link>
                                         </li>
@@ -310,7 +353,7 @@ const Header = () => {
                                     {messagingLink && (
                                         <li className="jf-user-dropdown-row">
                                             <Link className="dropdown-item jf-user-dropdown-item" to={messagingLink} onClick={collapseMobileNavbar}>
-                                                <i className="bi bi-chat-dots text-primary"></i>
+                                                <Mail size={16} className="jf-user-dropdown-icon" aria-hidden="true" />
                                                 <span>{t('header.user.messages')}</span>
                                             </Link>
                                         </li>
@@ -318,7 +361,7 @@ const Header = () => {
                                     {!isAdmin && (isEmployer ? (
                                         <li className="jf-user-dropdown-row">
                                             <Link className="dropdown-item jf-user-dropdown-item" to="/employer/jobs" onClick={collapseMobileNavbar}>
-                                                <i className="bi bi-briefcase text-primary"></i>
+                                                <BriefcaseBusiness size={16} className="jf-user-dropdown-icon" aria-hidden="true" />
                                                 <span>{t('header.user.manageEmployerJobs')}</span>
                                             </Link>
                                         </li>
@@ -327,22 +370,24 @@ const Header = () => {
                                             <div className="dropdown-item jf-user-dropdown-item jf-user-dropdown-toggle"
                                                 onClick={e => { e.stopPropagation(); setShowJobManagement(!showJobManagement); }}>
                                                 <div className="d-flex align-items-center gap-2">
-                                                    <i className="bi bi-briefcase text-primary"></i>
+                                                    <BriefcaseBusiness size={16} className="jf-user-dropdown-icon" aria-hidden="true" />
                                                     <span>{t('header.user.manageJobs')}</span>
                                                 </div>
-                                                <i className={`bi bi-chevron-${showJobManagement ? 'up' : 'down'}`}></i>
+                                                {showJobManagement
+                                                    ? <ChevronUp size={15} aria-hidden="true" />
+                                                    : <ChevronDown size={15} aria-hidden="true" />}
                                             </div>
                                             {showJobManagement && (
                                                 <ul className="list-unstyled jf-user-submenu-list">
                                                     <li>
                                                         <Link className="jf-user-submenu-link" to="/jobs/applied" onClick={collapseMobileNavbar}>
-                                                            <i className="bi bi-file-earmark-check text-primary"></i>
+                                                            <CheckCircle2 size={14} className="jf-user-dropdown-icon" aria-hidden="true" />
                                                             <span>{t('header.jobsMenu.appliedJobs')}</span>
                                                         </Link>
                                                     </li>
                                                     <li>
                                                         <Link className="jf-user-submenu-link" to="/jobs/saved" onClick={collapseMobileNavbar}>
-                                                            <i className="bi bi-bookmark text-primary"></i>
+                                                            <BookOpen size={14} className="jf-user-dropdown-icon" aria-hidden="true" />
                                                             <span>{t('header.jobsMenu.savedJobs')}</span>
                                                         </Link>
                                                     </li>
@@ -352,7 +397,7 @@ const Header = () => {
                                     ))}
                                     <li className="jf-user-dropdown-row">
                                         <Link className="dropdown-item jf-user-dropdown-item" to="/support" onClick={collapseMobileNavbar}>
-                                            <i className="bi bi-bell text-primary"></i>
+                                            <Bell size={16} className="jf-user-dropdown-icon" aria-hidden="true" />
                                             <span>{t('header.user.notifications')}</span>
                                         </Link>
                                     </li>
@@ -360,10 +405,14 @@ const Header = () => {
                                     <li className="jf-user-dropdown-row jf-user-dropdown-row-last">
                                         <button className="btn btn-link text-decoration-none jf-user-logout-btn"
                                                 onClick={handleLogout}>
-                                            {t('header.user.logout')}
+                                            <span className="d-inline-flex align-items-center justify-content-center gap-2">
+                                                <LogOut size={16} aria-hidden="true" />
+                                                <span>{t('header.user.logout')}</span>
+                                            </span>
                                         </button>
                                     </li>
                                 </ul>
+                                </div>
                             </div>
                         )}
                     </div>

@@ -203,3 +203,57 @@
     justify-content: center;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .career-guide-my-posts-page {
+  background:
+    radial-gradient(circle at 12% 9%, rgba(37, 99, 235, 0.2), transparent 34%),
+    radial-gradient(circle at 88% 12%, rgba(20, 184, 166, 0.14), transparent 36%),
+    linear-gradient(170deg, #06111f 0%, #0c1b2d 46%, #12263a 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-header,
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-card {
+  border-color: #355274;
+  background: #112136;
+  box-shadow: 0 16px 34px rgba(2, 10, 20, 0.42);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-eyebrow {
+  border-color: #3f607f;
+  background: #18314c;
+  color: #cfe5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-header h1,
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-empty h2,
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-title {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-header p,
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-empty,
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-excerpt,
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-pagination,
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-table thead th {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-table thead th {
+  border-bottom-color: #2f4762;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-table tbody tr {
+  border-bottom-color: #2a3f58;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-status-published {
+  color: #9ce7c8;
+  background: #173f33;
+  border-color: #2d7c63;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgmp-status-draft {
+  color: #f6d18a;
+  background: #352b1a;
+  border-color: #5d4a2a;
+}

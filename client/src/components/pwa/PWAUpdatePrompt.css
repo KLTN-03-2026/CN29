@@ -60,3 +60,22 @@
     flex-direction: column;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .pwa-update-prompt {
+  border-color: #355274;
+  background: #102036;
+  box-shadow: 0 16px 30px rgba(2, 10, 20, 0.56);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .pwa-update-prompt__content {
+  color: #e4eef9;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .pwa-update-prompt__content span {
+  color: #9db7cf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .pwa-update-prompt__actions .is-secondary {
+  background: #17314c;
+  color: #d0e4f8;
+}

@@ -69,7 +69,7 @@ const EmployerLayout = () => {
     const location = useLocation();
     const { t, i18n } = useTranslation();
     const { requestConfirm } = useNotification();
-    const { isDarkMode, toggleDarkMode } = useDarkMode();
+    const { isDarkMode, setTheme, toggleDarkMode } = useDarkMode();
     const [user, setUser] = useState(() => readStoredUser());
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -93,14 +93,23 @@ const EmployerLayout = () => {
     const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
     const isEnglish = normalizedLanguage.startsWith('en');
 
-    const handleToggleLanguage = (language) => {
-        if (!language || language === normalizedLanguage) return;
-        i18n.changeLanguage(language);
+    const handleChangeLanguage = (language) => {
+        const targetLanguage = String(language || '').trim().toLowerCase();
+        if (!targetLanguage) return;
+        if (normalizedLanguage.startsWith(targetLanguage)) return;
+        i18n.changeLanguage(targetLanguage);
+    };
+
+    const handleChangeTheme = (nextTheme) => {
+        const normalizedTheme = String(nextTheme || '').trim().toLowerCase();
+        if (normalizedTheme !== 'dark' && normalizedTheme !== 'light') return;
+        setTheme(normalizedTheme);
     };
 
     const handleLogout = async () => {
         const confirmed = await requestConfirm({
             type: 'warning',
+            intent: 'logout',
             title: t('employer.layout.confirmLogout.title'),
             message: t('employer.layout.confirmLogout.message'),
             confirmText: t('employer.layout.confirmLogout.confirm'),
@@ -394,10 +403,16 @@ const EmployerLayout = () => {
                     toggleIcon={<Menu size={20} />}
                     rightContent={(
                         <AdminHeaderRightActions
-                            isEnglish={isEnglish}
-                            onToggleLanguage={() => handleToggleLanguage(isEnglish ? 'vi' : 'en')}
-                            languageToggleTitle={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
+                            activeLanguage={isEnglish ? 'en' : 'vi'}
+                            onChangeLanguage={handleChangeLanguage}
                             languageAriaLabel={t('common.languageSwitch')}
+                            activeTheme={isDarkMode ? 'dark' : 'light'}
+                            onChangeTheme={handleChangeTheme}
+                            themeAriaLabel={t('common.toggleDarkMode')}
+                            languageVietnameseTitle={t('common.switchToVietnamese')}
+                            languageEnglishTitle={t('common.switchToEnglish')}
+                            lightThemeTitle={t('common.switchToLight')}
+                            darkThemeTitle={t('common.switchToDark')}
                             onGoHome={() => navigate('/')}
                             homeLabel={t('common.home')}
                             profileMenuOpen={showProfileDropdown}

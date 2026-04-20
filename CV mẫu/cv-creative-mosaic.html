@@ -200,6 +200,80 @@
       color: #94a3b8;
     }
   </style>
+<style class="no-print">
+    .editor-section { position: relative; overflow: visible; }
+    .section-tools {
+        position: absolute;
+        left: 10px;
+        top: -12px;
+        z-index: 9;
+        display: none;
+        align-items: center;
+        gap: 4px;
+        padding: 2px;
+        border-radius: 999px;
+        background: rgba(248, 250, 252, 0.96);
+        border: 1px solid #d8e0ec;
+        box-shadow: 0 4px 10px rgba(26, 38, 56, 0.16);
+    }
+    .editor-section:hover > .section-tools,
+    .editor-section:focus-within > .section-tools {
+        display: inline-flex;
+    }
+    .tool-btn {
+        border: none;
+        width: 22px;
+        height: 22px;
+        padding: 0;
+        border-radius: 6px;
+        color: #fff;
+        font-size: 13px;
+        line-height: 1;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+    }
+    .tool-btn:hover {
+        filter: brightness(1.05);
+        transform: translateY(-1px);
+    }
+    .tool-btn.add { background: #16a34a; }
+    .tool-btn.up,
+    .tool-btn.down { background: #64748b; }
+    .tool-btn.remove { background: #dc2626; }
+    .section-item-add-btn {
+        position: absolute;
+        right: 10px;
+        top: -12px;
+        z-index: 9;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #9fd0fc;
+        background: #ebf5ff;
+        color: #1b6db6;
+        font-size: 11px;
+        font-weight: 700;
+        border-radius: 999px;
+        padding: 4px 9px;
+        cursor: pointer;
+        white-space: nowrap;
+        line-height: 1;
+    }
+    .editor-section:hover .section-item-add-btn,
+    .editor-section:focus-within .section-item-add-btn {
+        display: inline-flex;
+    }
+    .section-item-add-btn:hover {
+        background: #dceeff;
+    }
+    @media print {
+        .no-print { display: none !important; }
+    }
+</style>
+
 </head>
 <body>
   <article class="canvas">
@@ -219,7 +293,13 @@
 
     <div class="grid">
       <aside class="left">
-        <section class="card">
+        <section class="card editor-section">
+<div class="section-tools no-print">
+    <button class="tool-btn add" onclick="(function(btn){ let s=btn.closest('.editor-section'); let cl=s.cloneNode(true); cl.removeAttribute('id'); cl.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); s.parentNode.insertBefore(cl, s.nextSibling); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); })(this)" title="Thêm section">+</button>
+    <button class="tool-btn up" onclick="(function(btn){ let s=btn.closest('.editor-section'); let p=s.previousElementSibling; if(p && p.classList.contains('editor-section')) s.parentNode.insertBefore(s, p); })(this)" title="Di chuyển lên">↑</button>
+    <button class="tool-btn down" onclick="(function(btn){ let s=btn.closest('.editor-section'); let n=s.nextElementSibling; if(n && n.classList.contains('editor-section')) s.parentNode.insertBefore(n, s); })(this)" title="Di chuyển xuống">↓</button>
+    <button class="tool-btn remove" onclick="(function(btn){ let s=btn.closest('.editor-section'); if(s.parentNode.querySelectorAll('.editor-section').length > 1) s.remove(); })(this)" title="Xóa section">×</button>
+</div>
           <h3 contenteditable="true" data-editable="true" data-field="contactTitle" data-placeholder="Tiêu đề liên hệ" data-single-line="true">Liên hệ</h3>
           <div class="contact-item">
             <span class="contact-label" contenteditable="true" data-editable="true" data-field="phoneLabel" data-placeholder="Nhãn điện thoại" data-single-line="true">Điện thoại</span>
@@ -237,25 +317,49 @@
             <span class="contact-label" contenteditable="true" data-editable="true" data-field="linkLabel" data-placeholder="Nhãn link" data-single-line="true">Link</span>
             <span class="contact-value" contenteditable="true" data-editable="true" data-field="linkedin" data-placeholder="Link cá nhân" data-single-line="true">linkedin.com/in/bao-nguyen-ui</span>
           </div>
-        </section>
+        
+<button class="section-item-add-btn no-print" onclick="(function(btn){ let s=btn.closest('.editor-section'); let selectors = ['.timeline-item', '.entry', '.milestone', '.contact-item', '.row', 'li', '.skill-row']; let item; for(let sel of selectors){ item = s.querySelector(sel); if(item) break; } if(item){ let cl=item.cloneNode(true); cl.querySelectorAll('[contenteditable=true]').forEach(e=>e.innerText = e.tagName==='LI' ? '- Nội dung mới' : 'Mục mới'); item.parentNode.appendChild(cl); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); } else { let ed=s.querySelector('[contenteditable=true]'); if(ed){ ed.innerText += '\\n- Nội dung mới'; ed.focus(); } } })(this)">+ Thêm mục mới</button>
+</section>
 
-        <section class="card">
+        <section class="card editor-section">
+<div class="section-tools no-print">
+    <button class="tool-btn add" onclick="(function(btn){ let s=btn.closest('.editor-section'); let cl=s.cloneNode(true); cl.removeAttribute('id'); cl.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); s.parentNode.insertBefore(cl, s.nextSibling); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); })(this)" title="Thêm section">+</button>
+    <button class="tool-btn up" onclick="(function(btn){ let s=btn.closest('.editor-section'); let p=s.previousElementSibling; if(p && p.classList.contains('editor-section')) s.parentNode.insertBefore(s, p); })(this)" title="Di chuyển lên">↑</button>
+    <button class="tool-btn down" onclick="(function(btn){ let s=btn.closest('.editor-section'); let n=s.nextElementSibling; if(n && n.classList.contains('editor-section')) s.parentNode.insertBefore(n, s); })(this)" title="Di chuyển xuống">↓</button>
+    <button class="tool-btn remove" onclick="(function(btn){ let s=btn.closest('.editor-section'); if(s.parentNode.querySelectorAll('.editor-section').length > 1) s.remove(); })(this)" title="Xóa section">×</button>
+</div>
           <h3 contenteditable="true" data-editable="true" data-field="skillsTitle" data-placeholder="Tiêu đề kỹ năng" data-single-line="true">Kỹ năng</h3>
           <p class="text" contenteditable="true" data-editable="true" data-field="skills" data-placeholder="Danh sách kỹ năng">• UI Design System
 • HTML/CSS/JavaScript
 • React va Vite
 • Giao tiep va thuyet trinh</p>
-        </section>
+        
+<button class="section-item-add-btn no-print" onclick="(function(btn){ let s=btn.closest('.editor-section'); let selectors = ['.timeline-item', '.entry', '.milestone', '.contact-item', '.row', 'li', '.skill-row']; let item; for(let sel of selectors){ item = s.querySelector(sel); if(item) break; } if(item){ let cl=item.cloneNode(true); cl.querySelectorAll('[contenteditable=true]').forEach(e=>e.innerText = e.tagName==='LI' ? '- Nội dung mới' : 'Mục mới'); item.parentNode.appendChild(cl); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); } else { let ed=s.querySelector('[contenteditable=true]'); if(ed){ ed.innerText += '\\n- Nội dung mới'; ed.focus(); } } })(this)">+ Thêm mục mới</button>
+</section>
 
-        <section class="card">
+        <section class="card editor-section">
+<div class="section-tools no-print">
+    <button class="tool-btn add" onclick="(function(btn){ let s=btn.closest('.editor-section'); let cl=s.cloneNode(true); cl.removeAttribute('id'); cl.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); s.parentNode.insertBefore(cl, s.nextSibling); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); })(this)" title="Thêm section">+</button>
+    <button class="tool-btn up" onclick="(function(btn){ let s=btn.closest('.editor-section'); let p=s.previousElementSibling; if(p && p.classList.contains('editor-section')) s.parentNode.insertBefore(s, p); })(this)" title="Di chuyển lên">↑</button>
+    <button class="tool-btn down" onclick="(function(btn){ let s=btn.closest('.editor-section'); let n=s.nextElementSibling; if(n && n.classList.contains('editor-section')) s.parentNode.insertBefore(n, s); })(this)" title="Di chuyển xuống">↓</button>
+    <button class="tool-btn remove" onclick="(function(btn){ let s=btn.closest('.editor-section'); if(s.parentNode.querySelectorAll('.editor-section').length > 1) s.remove(); })(this)" title="Xóa section">×</button>
+</div>
           <h3 contenteditable="true" data-editable="true" data-field="languagesTitle" data-placeholder="Tiêu đề ngoại ngữ" data-single-line="true">Ngoại ngữ</h3>
           <p class="text" contenteditable="true" data-editable="true" data-field="languages" data-placeholder="Danh sách ngoại ngữ">• Tieng Viet: Ban ngu
 • Tieng Anh: IELTS 6.5</p>
-        </section>
+        
+<button class="section-item-add-btn no-print" onclick="(function(btn){ let s=btn.closest('.editor-section'); let selectors = ['.timeline-item', '.entry', '.milestone', '.contact-item', '.row', 'li', '.skill-row']; let item; for(let sel of selectors){ item = s.querySelector(sel); if(item) break; } if(item){ let cl=item.cloneNode(true); cl.querySelectorAll('[contenteditable=true]').forEach(e=>e.innerText = e.tagName==='LI' ? '- Nội dung mới' : 'Mục mới'); item.parentNode.appendChild(cl); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); } else { let ed=s.querySelector('[contenteditable=true]'); if(ed){ ed.innerText += '\\n- Nội dung mới'; ed.focus(); } } })(this)">+ Thêm mục mới</button>
+</section>
       </aside>
 
       <main class="main">
-        <section class="panel">
+        <section class="panel editor-section">
+<div class="section-tools no-print">
+    <button class="tool-btn add" onclick="(function(btn){ let s=btn.closest('.editor-section'); let cl=s.cloneNode(true); cl.removeAttribute('id'); cl.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); s.parentNode.insertBefore(cl, s.nextSibling); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); })(this)" title="Thêm section">+</button>
+    <button class="tool-btn up" onclick="(function(btn){ let s=btn.closest('.editor-section'); let p=s.previousElementSibling; if(p && p.classList.contains('editor-section')) s.parentNode.insertBefore(s, p); })(this)" title="Di chuyển lên">↑</button>
+    <button class="tool-btn down" onclick="(function(btn){ let s=btn.closest('.editor-section'); let n=s.nextElementSibling; if(n && n.classList.contains('editor-section')) s.parentNode.insertBefore(n, s); })(this)" title="Di chuyển xuống">↓</button>
+    <button class="tool-btn remove" onclick="(function(btn){ let s=btn.closest('.editor-section'); if(s.parentNode.querySelectorAll('.editor-section').length > 1) s.remove(); })(this)" title="Xóa section">×</button>
+</div>
           <h3 contenteditable="true" data-editable="true" data-field="experienceTitle" data-placeholder="Tiêu đề kinh nghiệm" data-single-line="true">Hành trình kinh nghiệm</h3>
           <div class="timeline">
             <p class="text" contenteditable="true" data-editable="true" data-field="experience" data-placeholder="Kinh nghiệm làm việc">01/2023 - Hien tai | UI Developer - Nova Digital
@@ -265,27 +369,50 @@
 06/2021 - 12/2022 | Frontend Developer - Pixel Studio
 • Xay dung landing page va bo component tai su dung.</p>
           </div>
-        </section>
+        
+<button class="section-item-add-btn no-print" onclick="(function(btn){ let s=btn.closest('.editor-section'); let selectors = ['.timeline-item', '.entry', '.milestone', '.contact-item', '.row', 'li', '.skill-row']; let item; for(let sel of selectors){ item = s.querySelector(sel); if(item) break; } if(item){ let cl=item.cloneNode(true); cl.querySelectorAll('[contenteditable=true]').forEach(e=>e.innerText = e.tagName==='LI' ? '- Nội dung mới' : 'Mục mới'); item.parentNode.appendChild(cl); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); } else { let ed=s.querySelector('[contenteditable=true]'); if(ed){ ed.innerText += '\\n- Nội dung mới'; ed.focus(); } } })(this)">+ Thêm mục mới</button>
+</section>
 
-        <section class="panel">
+        <section class="panel editor-section">
+<div class="section-tools no-print">
+    <button class="tool-btn add" onclick="(function(btn){ let s=btn.closest('.editor-section'); let cl=s.cloneNode(true); cl.removeAttribute('id'); cl.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); s.parentNode.insertBefore(cl, s.nextSibling); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); })(this)" title="Thêm section">+</button>
+    <button class="tool-btn up" onclick="(function(btn){ let s=btn.closest('.editor-section'); let p=s.previousElementSibling; if(p && p.classList.contains('editor-section')) s.parentNode.insertBefore(s, p); })(this)" title="Di chuyển lên">↑</button>
+    <button class="tool-btn down" onclick="(function(btn){ let s=btn.closest('.editor-section'); let n=s.nextElementSibling; if(n && n.classList.contains('editor-section')) s.parentNode.insertBefore(n, s); })(this)" title="Di chuyển xuống">↓</button>
+    <button class="tool-btn remove" onclick="(function(btn){ let s=btn.closest('.editor-section'); if(s.parentNode.querySelectorAll('.editor-section').length > 1) s.remove(); })(this)" title="Xóa section">×</button>
+</div>
           <h3 contenteditable="true" data-editable="true" data-field="educationTitle" data-placeholder="Tiêu đề học vấn" data-single-line="true">Học vấn</h3>
           <p class="text" contenteditable="true" data-editable="true" data-field="education" data-placeholder="Thông tin học vấn">Dai hoc Cong nghe TP.HCM
 Chuyen nganh Cong nghe thong tin (2017 - 2021)</p>
-        </section>
+        
+<button class="section-item-add-btn no-print" onclick="(function(btn){ let s=btn.closest('.editor-section'); let selectors = ['.timeline-item', '.entry', '.milestone', '.contact-item', '.row', 'li', '.skill-row']; let item; for(let sel of selectors){ item = s.querySelector(sel); if(item) break; } if(item){ let cl=item.cloneNode(true); cl.querySelectorAll('[contenteditable=true]').forEach(e=>e.innerText = e.tagName==='LI' ? '- Nội dung mới' : 'Mục mới'); item.parentNode.appendChild(cl); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); } else { let ed=s.querySelector('[contenteditable=true]'); if(ed){ ed.innerText += '\\n- Nội dung mới'; ed.focus(); } } })(this)">+ Thêm mục mới</button>
+</section>
 
-        <section class="panel">
+        <section class="panel editor-section">
+<div class="section-tools no-print">
+    <button class="tool-btn add" onclick="(function(btn){ let s=btn.closest('.editor-section'); let cl=s.cloneNode(true); cl.removeAttribute('id'); cl.querySelectorAll('[id]').forEach(e=>e.removeAttribute('id')); s.parentNode.insertBefore(cl, s.nextSibling); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); })(this)" title="Thêm section">+</button>
+    <button class="tool-btn up" onclick="(function(btn){ let s=btn.closest('.editor-section'); let p=s.previousElementSibling; if(p && p.classList.contains('editor-section')) s.parentNode.insertBefore(s, p); })(this)" title="Di chuyển lên">↑</button>
+    <button class="tool-btn down" onclick="(function(btn){ let s=btn.closest('.editor-section'); let n=s.nextElementSibling; if(n && n.classList.contains('editor-section')) s.parentNode.insertBefore(n, s); })(this)" title="Di chuyển xuống">↓</button>
+    <button class="tool-btn remove" onclick="(function(btn){ let s=btn.closest('.editor-section'); if(s.parentNode.querySelectorAll('.editor-section').length > 1) s.remove(); })(this)" title="Xóa section">×</button>
+</div>
           <h3 contenteditable="true" data-editable="true" data-field="projectsTitle" data-placeholder="Tiêu đề dự án" data-single-line="true">Dự án nổi bật</h3>
           <p class="text" contenteditable="true" data-editable="true" data-field="projects" data-placeholder="Các dự án nổi bật">He thong quan ly ung vien ATS
 • Thiet ke bo giao dien va to chuc thong tin ung vien.
 
 Nen tang booking su kien
 • Xay dung trang quan ly lich va bao cao doanh thu.</p>
-        </section>
+        
+<button class="section-item-add-btn no-print" onclick="(function(btn){ let s=btn.closest('.editor-section'); let selectors = ['.timeline-item', '.entry', '.milestone', '.contact-item', '.row', 'li', '.skill-row']; let item; for(let sel of selectors){ item = s.querySelector(sel); if(item) break; } if(item){ let cl=item.cloneNode(true); cl.querySelectorAll('[contenteditable=true]').forEach(e=>e.innerText = e.tagName==='LI' ? '- Nội dung mới' : 'Mục mới'); item.parentNode.appendChild(cl); let ed=cl.querySelector('[contenteditable=true]'); if(ed)ed.focus(); } else { let ed=s.querySelector('[contenteditable=true]'); if(ed){ ed.innerText += '\\n- Nội dung mới'; ed.focus(); } } })(this)">+ Thêm mục mới</button>
+</section>
       </main>
     </div>
   </article>
 </body>
 </html>
+
+
+
+
+
 
 
 

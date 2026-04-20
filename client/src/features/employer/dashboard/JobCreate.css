@@ -108,6 +108,10 @@
   font-weight: 600;
 }
 
+.job-create-skills-input {
+  min-height: 44px;
+}
+
 .cgrte.job-create-career-editor {
   border-color: #cfdbeb;
   border-radius: 14px;

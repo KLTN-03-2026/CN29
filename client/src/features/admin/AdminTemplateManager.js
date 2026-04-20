@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, PencilLine, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import './AdminTemplateManager.css';
 
 const EMPTY_TEMPLATE_FORM = {
@@ -17,10 +18,10 @@ const EMPTY_TEMPLATE_FORM = {
 };
 
 const TEMPLATE_STYLE_OPTIONS = [
-    { value: 'professional', label: 'Chuyên nghiệp' },
-    { value: 'creative', label: 'Sáng tạo' },
-    { value: 'minimal', label: 'Tối giản' },
-    { value: 'modern', label: 'Hiện đại' }
+    { value: 'professional', labelKey: 'admin.templatesPage.styleOptions.professional' },
+    { value: 'creative', labelKey: 'admin.templatesPage.styleOptions.creative' },
+    { value: 'minimal', labelKey: 'admin.templatesPage.styleOptions.minimal' },
+    { value: 'modern', labelKey: 'admin.templatesPage.styleOptions.modern' }
 ];
 
 const normalizeTemplateStyle = (value) => {
@@ -52,11 +53,11 @@ const normalizeTemplate = (template) => ({
     NgayCapNhat: String(template?.NgayCapNhat || template?.updatedAt || '')
 });
 
-const formatDate = (value) => {
+const formatDate = (value, locale = 'vi-VN') => {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return String(value);
-    return date.toLocaleString('vi-VN');
+    return date.toLocaleString(locale);
 };
 
 const AVATAR_OVERLAY_SELECTORS = [
@@ -95,6 +96,19 @@ const stripAvatarOverlayFromHtml = (value) => {
 const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'list' }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t, i18n } = useTranslation();
+
+    const currentLocale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en')
+        ? 'en-US'
+        : 'vi-VN';
+
+    const translatedStyleOptions = useMemo(
+        () => TEMPLATE_STYLE_OPTIONS.map((option) => ({
+            ...option,
+            label: t(option.labelKey)
+        })),
+        [t, i18n.resolvedLanguage, i18n.language]
+    );
 
     const isCreateMode = mode === 'create';
     const isListMode = !isCreateMode;
@@ -182,12 +196,12 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             const message = String(data?.error || data?.message || '').trim();
             if (/token|access token|expired|insufficient permissions/i.test(message)) {
                 forceReLogin();
-                throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.');
+                throw new Error(t('admin.templatesPage.messages.sessionExpired'));
             }
         }
 
         if (!res.ok || !data?.success) {
-            throw new Error(data?.error || 'Không thể xử lý yêu cầu');
+            throw new Error(data?.error || t('admin.templatesPage.messages.requestFailed'));
         }
         return data;
     };
@@ -207,7 +221,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             const rows = Array.isArray(data?.templates) ? data.templates : [];
             setTemplates(rows.map(normalizeTemplate));
         } catch (err) {
-            setError(err?.message || 'Không tải được danh sách template');
+            setError(err?.message || t('admin.templatesPage.messages.loadListFailed'));
         } finally {
             setLoading(false);
         }
@@ -254,7 +268,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             setEditorTab('basic');
             setQuickPreview(false);
         } catch (err) {
-            setError(err?.message || 'Không tải được chi tiết template');
+            setError(err?.message || t('admin.templatesPage.messages.loadDetailFailed'));
         } finally {
             setWorkingTemplateId(null);
         }
@@ -282,25 +296,25 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             const detail = await loadTemplateById(id);
             setModalPreview({
                 open: true,
-                title: detail.TenTemplate || 'Preview template',
+                title: detail.TenTemplate || t('admin.templatesPage.preview.defaultTitle'),
                 html: stripAvatarOverlayFromHtml(detail.HtmlContent || '')
             });
         } catch (err) {
-            setError(err?.message || 'Không mở được preview');
+            setError(err?.message || t('admin.templatesPage.messages.openPreviewFailed'));
         } finally {
             setWorkingTemplateId(null);
         }
     };
 
     const handleDelete = async (template) => {
-        const templateName = template?.TenTemplate || '';
-        const confirmMessage = `Bạn có chắc muốn xóa template "${templateName}"?`;
+        const templateName = String(template?.TenTemplate || '').trim();
+        const confirmMessage = t('admin.templatesPage.confirm.deleteMessage', { name: templateName || '-' });
 
         const approved = requestConfirm
             ? await requestConfirm({
-                title: 'Xác nhận xóa template',
+                title: t('admin.templatesPage.confirm.deleteTitle'),
                 message: confirmMessage,
-                confirmText: 'Xóa'
+                confirmText: t('admin.templatesPage.confirm.deleteButton')
             })
             : window.confirm(confirmMessage);
 
@@ -320,10 +334,10 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                 resetEditor();
             }
 
-            setMessage('Đã xóa template thành công.');
+            setMessage(t('admin.templatesPage.messages.deleteSuccess'));
             await loadTemplates(searchText);
         } catch (err) {
-            setError(err?.message || 'Không xóa được template');
+            setError(err?.message || t('admin.templatesPage.messages.deleteFailed'));
         } finally {
             setWorkingTemplateId(null);
         }
@@ -371,19 +385,19 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
         if (!file) return;
 
         if (!String(file.type || '').startsWith('image/')) {
-            setError('Chỉ chấp nhận file ảnh cho thumbnail.');
+            setError(t('admin.templatesPage.messages.thumbnailImageOnly'));
             setThumbnailInputKey((prev) => prev + 1);
             return;
         }
 
         if (file.size > 2 * 1024 * 1024) {
-            setError('Kích thước ảnh thumbnail không vượt quá 2MB.');
+            setError(t('admin.templatesPage.messages.thumbnailSizeLimit'));
             setThumbnailInputKey((prev) => prev + 1);
             return;
         }
 
         if (!authAuthorization) {
-            setError('Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại.');
+            setError(t('admin.templatesPage.messages.missingAuthToken'));
             setThumbnailInputKey((prev) => prev + 1);
             return;
         }
@@ -405,21 +419,21 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
             const data = await res.json().catch(() => null);
             if (!res.ok || !data?.success) {
-                throw new Error(data?.error || 'Không thể tải thumbnail lên .');
+                throw new Error(data?.error || t('admin.templatesPage.messages.thumbnailUploadFailed'));
             }
 
             const nextUrl = String(data?.thumbnailUrl || data?.thumbnailAbsoluteUrl || '').trim();
             if (!nextUrl) {
-                throw new Error(' không trả về URL thumbnail hợp lệ.');
+                throw new Error(t('admin.templatesPage.messages.thumbnailUrlInvalid'));
             }
 
             setForm((prev) => ({
                 ...prev,
                 ThumbnailUrl: nextUrl
             }));
-            setMessage('Đã tải thumbnail lên  thành công.');
+            setMessage(t('admin.templatesPage.messages.thumbnailUploadSuccess'));
         } catch (err) {
-            setError(err?.message || 'Không thể tải thumbnail lên .');
+            setError(err?.message || t('admin.templatesPage.messages.thumbnailUploadFailed'));
         } finally {
             setUploadingThumbnail(false);
             setThumbnailInputKey((prev) => prev + 1);
@@ -444,13 +458,13 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             };
 
             if (!payload.name) {
-                throw new Error('Tên template là bắt buộc.');
+                throw new Error(t('admin.templatesPage.messages.nameRequired'));
             }
             if (!payload.slug) {
-                throw new Error('Slug không hợp lệ.');
+                throw new Error(t('admin.templatesPage.messages.slugInvalid'));
             }
             if (!payload.htmlContent.trim()) {
-                throw new Error('HTML content là bắt buộc.');
+                throw new Error(t('admin.templatesPage.messages.htmlRequired'));
             }
 
             const isEditing = !!form.MaTemplateCV;
@@ -472,18 +486,18 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
             if (isEditing) {
                 setForm(savedTemplate);
-                showSuccessToast('Cập nhật template thành công.');
+                showSuccessToast(t('admin.templatesPage.messages.updateSuccess'));
             } else {
                 setForm(EMPTY_TEMPLATE_FORM);
                 setThumbnailInputKey((prev) => prev + 1);
-                showSuccessToast('Tạo template thành công.');
+                showSuccessToast(t('admin.templatesPage.messages.createSuccess'));
             }
 
             if (isListMode) {
                 await loadTemplates(searchText);
             }
         } catch (err) {
-            setError(err?.message || 'Không lưu được template');
+            setError(err?.message || t('admin.templatesPage.messages.saveFailed'));
         } finally {
             setSaving(false);
         }
@@ -497,11 +511,11 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                         <div className="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                             <h5 className="mb-0">
                                 <i className="bi bi-collection me-2"></i>
-                                Danh sách template CV
+                                {t('admin.templatesPage.list.title')}
                             </h5>
                             <button type="button" className="btn btn-sm btn-primary" onClick={() => goToCreatePage()}>
                                 <i className="bi bi-plus-lg me-1"></i>
-                                Tạo template mới
+                                {t('admin.templatesPage.list.createButton')}
                             </button>
                         </div>
 
@@ -513,13 +527,13 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                 <input
                                     type="text"
                                     className="form-control"
-                                    placeholder="Tìm theo tên hoặc slug..."
+                                    placeholder={t('admin.templatesPage.list.searchPlaceholder')}
                                     value={searchInput}
                                     onChange={(e) => setSearchInput(e.target.value)}
                                 />
-                                <button type="submit" className="btn btn-outline-primary">Tìm</button>
+                                <button type="submit" className="btn btn-outline-primary">{t('common.search')}</button>
                                 {(searchText || searchInput) && (
-                                    <button type="button" className="btn btn-outline-secondary" onClick={handleClearSearch}>Xóa lọc</button>
+                                    <button type="button" className="btn btn-outline-secondary" onClick={handleClearSearch}>{t('common.clearFilters')}</button>
                                 )}
                             </form>
 
@@ -528,10 +542,10 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                     <thead>
                                         <tr>
                                             <th style={{ width: 72 }}>ID</th>
-                                            <th>Tên template</th>
+                                            <th>{t('admin.templatesPage.list.columns.templateName')}</th>
                                             <th style={{ width: 180 }}>Slug</th>
-                                            <th style={{ width: 190 }}>Cập nhật</th>
-                                            <th style={{ width: 230 }}>Thao tác</th>
+                                            <th style={{ width: 190 }}>{t('admin.templatesPage.list.columns.updatedAt')}</th>
+                                            <th style={{ width: 230 }}>{t('admin.templatesPage.list.columns.actions')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -540,10 +554,10 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                 <td>{index + 1}</td>
                                                 <td>
                                                     <div className="fw-semibold text-truncate" title={template.TenTemplate}>{template.TenTemplate}</div>
-                                                    <div className="text-muted small text-truncate" title={template.MoTa || ''}>{template.MoTa || 'Không có mô tả'}</div>
+                                                    <div className="text-muted small text-truncate" title={template.MoTa || ''}>{template.MoTa || t('admin.templatesPage.list.noDescription')}</div>
                                                 </td>
                                                 <td><code>{template.Slug}</code></td>
-                                                <td className="small text-muted">{formatDate(template.NgayCapNhat || template.NgayTao)}</td>
+                                                <td className="small text-muted">{formatDate(template.NgayCapNhat || template.NgayTao, currentLocale)}</td>
                                                 <td>
                                                     <div className="d-flex flex-wrap gap-2">
                                                         <button
@@ -551,8 +565,8 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                             className="btn btn-sm btn-outline-primary admin-action-icon-btn"
                                                             disabled={workingTemplateId === template.MaTemplateCV}
                                                             onClick={() => goToCreatePage(template.MaTemplateCV)}
-                                                            title="Sửa template"
-                                                            aria-label="Sửa template"
+                                                            title={t('admin.templatesPage.list.actions.edit')}
+                                                            aria-label={t('admin.templatesPage.list.actions.edit')}
                                                         >
                                                             <PencilLine size={14} />
                                                         </button>
@@ -561,8 +575,8 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                             className="btn btn-sm btn-outline-info admin-action-icon-btn"
                                                             disabled={workingTemplateId === template.MaTemplateCV}
                                                             onClick={() => handleOpenPreview(template.MaTemplateCV)}
-                                                            title="Xem template"
-                                                            aria-label="Xem template"
+                                                            title={t('admin.templatesPage.list.actions.preview')}
+                                                            aria-label={t('admin.templatesPage.list.actions.preview')}
                                                         >
                                                             <Eye size={14} />
                                                         </button>
@@ -571,8 +585,8 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                             className="btn btn-sm btn-outline-danger admin-action-icon-btn"
                                                             disabled={workingTemplateId === template.MaTemplateCV}
                                                             onClick={() => handleDelete(template)}
-                                                            title="Xóa template"
-                                                            aria-label="Xóa template"
+                                                            title={t('admin.templatesPage.list.actions.delete')}
+                                                            aria-label={t('admin.templatesPage.list.actions.delete')}
                                                         >
                                                             <Trash2 size={14} />
                                                         </button>
@@ -582,14 +596,14 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                         ))}
                                         {templates.length === 0 && !loading && (
                                             <tr>
-                                                <td colSpan={5} className="text-center text-muted py-4">Chưa có template nào</td>
+                                                <td colSpan={5} className="text-center text-muted py-4">{t('admin.templatesPage.list.empty')}</td>
                                             </tr>
                                         )}
                                     </tbody>
                                 </table>
                             </div>
 
-                            {loading && <div className="alert alert-info mt-3 mb-0">Đang tải danh sách template...</div>}
+                            {loading && <div className="alert alert-info mt-3 mb-0">{t('admin.templatesPage.list.loading')}</div>}
                         </div>
                     </div>
                 </div>
@@ -602,17 +616,19 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                             <div className="admin-template-create-header-copy">
                                 <h5 className="mb-0">
                                     <i className="bi bi-code-square me-2"></i>
-                                    {form.MaTemplateCV ? `Chỉnh sửa template #${form.MaTemplateCV}` : 'Tạo template CV mới'}
+                                    {form.MaTemplateCV
+                                        ? t('admin.templatesPage.create.editTitle', { id: form.MaTemplateCV })
+                                        : t('admin.templatesPage.create.newTitle')}
                                 </h5>
                             </div>
                             <button type="button" className="btn btn-sm btn-outline-secondary ms-auto" onClick={() => navigate('/admin/templates')}>
-                                Tất cả template
+                                {t('admin.templatesPage.create.allTemplatesButton')}
                             </button>
                         </div>
 
                         <div className="card-body admin-template-create-body">
                             {!!templateIdFromQuery && workingTemplateId === templateIdFromQuery && (
-                                <div className="alert alert-info">Đang tải chi tiết template...</div>
+                                <div className="alert alert-info">{t('admin.templatesPage.create.loadingDetail')}</div>
                             )}
                             {error && <div className="alert alert-danger">{error}</div>}
                             {message && <div className="alert alert-success">{message}</div>}
@@ -621,17 +637,17 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                 <ul className="nav nav-tabs admin-template-tabs mb-3" role="tablist">
                                     <li className="nav-item" role="presentation">
                                         <button type="button" className={`nav-link ${editorTab === 'basic' ? 'active' : ''}`} onClick={() => setEditorTab('basic')}>
-                                            Thông tin cơ bản
+                                            {t('admin.templatesPage.create.tabs.basic')}
                                         </button>
                                     </li>
                                     <li className="nav-item" role="presentation">
                                         <button type="button" className={`nav-link ${editorTab === 'html' ? 'active' : ''}`} onClick={() => setEditorTab('html')}>
-                                            HTML & Design
+                                            {t('admin.templatesPage.create.tabs.html')}
                                         </button>
                                     </li>
                                     <li className="nav-item" role="presentation">
                                         <button type="button" className={`nav-link ${editorTab === 'preview' ? 'active' : ''}`} onClick={() => setEditorTab('preview')}>
-                                            Xem trước
+                                            {t('admin.templatesPage.create.tabs.preview')}
                                         </button>
                                     </li>
                                 </ul>
@@ -639,70 +655,70 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                 {editorTab === 'basic' && (
                                     <div className="admin-template-basic-grid">
                                         <div>
-                                            <label className="form-label">Tên template *</label>
+                                            <label className="form-label">{t('admin.templatesPage.create.fields.name')} *</label>
                                             <input
                                                 type="text"
                                                 className="form-control"
                                                 value={form.TenTemplate}
                                                 onChange={(e) => handleFormChange('TenTemplate', e.target.value)}
-                                                placeholder="Ví dụ: CV Chuyên nghiệp xanh navy"
+                                                placeholder={t('admin.templatesPage.create.placeholders.name')}
                                                 required
                                             />
                                         </div>
 
                                         <div>
-                                            <label className="form-label">Slug (URL) *</label>
+                                            <label className="form-label">{t('admin.templatesPage.create.fields.slug')} *</label>
                                             <div className="input-group">
                                                 <input
                                                     type="text"
                                                     className="form-control"
                                                     value={form.Slug}
-                                                    placeholder="cv-chuyen-nghiep-xanh-navy"
+                                                    placeholder={t('admin.templatesPage.create.placeholders.slug')}
                                                     readOnly
                                                     required
                                                 />
                                             </div>
-                                            <small className="text-muted">Slug được tạo tự động theo tên template.</small>
+                                            <small className="text-muted">{t('admin.templatesPage.create.slugHint')}</small>
                                         </div>
 
                                         <div>
-                                            <label className="form-label">Trạng thái</label>
+                                            <label className="form-label">{t('admin.templatesPage.create.fields.status')}</label>
                                             <select
                                                 className="form-select"
                                                 value={Number(form.TrangThai) === 0 ? 0 : 1}
                                                 onChange={(e) => handleFormChange('TrangThai', Number(e.target.value))}
                                             >
-                                                <option value={1}>Hoạt động</option>
-                                                <option value={0}>Tạm tắt</option>
+                                                <option value={1}>{t('admin.templatesPage.create.status.active')}</option>
+                                                <option value={0}>{t('admin.templatesPage.create.status.inactive')}</option>
                                             </select>
                                         </div>
 
                                         <div>
-                                            <label className="form-label">Phong cách CV</label>
+                                            <label className="form-label">{t('admin.templatesPage.create.fields.style')}</label>
                                             <select
                                                 className="form-select"
                                                 value={normalizeTemplateStyle(form.PhongCachCV)}
                                                 onChange={(e) => handleFormChange('PhongCachCV', normalizeTemplateStyle(e.target.value))}
                                             >
-                                                {TEMPLATE_STYLE_OPTIONS.map((option) => (
+                                                {translatedStyleOptions.map((option) => (
                                                     <option key={option.value} value={option.value}>{option.label}</option>
                                                 ))}
                                             </select>
                                         </div>
 
                                         <div className="admin-template-basic-grid-full">
-                                            <label className="form-label">Mô tả</label>
+                                            <label className="form-label">{t('admin.templatesPage.create.fields.description')}</label>
                                             <textarea
                                                 className="form-control"
                                                 rows={4}
                                                 value={form.MoTa}
                                                 onChange={(e) => handleFormChange('MoTa', e.target.value)}
-                                                placeholder="Mô tả ngắn về template CV"
+                                                placeholder={t('admin.templatesPage.create.placeholders.description')}
                                             />
                                         </div>
 
                                         <div className="admin-template-thumbnail-field admin-template-basic-grid-full">
-                                            <label className="form-label">Thumbnail URL</label>
+                                            <label className="form-label">{t('admin.templatesPage.create.fields.thumbnailUrl')}</label>
                                             <input
                                                 type="url"
                                                 className="form-control"
@@ -727,7 +743,9 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                     disabled={saving || uploadingThumbnail}
                                                 >
                                                     <i className="bi bi-upload me-2"></i>
-                                                    {uploadingThumbnail ? 'Đang tải ảnh...' : 'Tải ảnh lên '}
+                                                    {uploadingThumbnail
+                                                        ? t('admin.templatesPage.create.uploadingImage')
+                                                        : t('admin.templatesPage.create.uploadImage')}
                                                 </button>
 
                                                 {form.ThumbnailUrl && (
@@ -737,16 +755,16 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                                         disabled={saving || uploadingThumbnail}
                                                         onClick={() => handleFormChange('ThumbnailUrl', '')}
                                                     >
-                                                        Xóa thumbnail
+                                                        {t('admin.templatesPage.create.removeThumbnail')}
                                                     </button>
                                                 )}
                                             </div>
 
-                                            <small className="text-muted d-block mt-2">Chọn ảnh thumbnail trực tiếp từ máy của bạn.</small>
+                                            <small className="text-muted d-block mt-2">{t('admin.templatesPage.create.thumbnailHint')}</small>
 
                                             {form.ThumbnailUrl ? (
                                                 <div className="admin-template-thumbnail-preview mt-3">
-                                                    <img src={form.ThumbnailUrl} alt="Template thumbnail" />
+                                                    <img src={form.ThumbnailUrl} alt={t('admin.templatesPage.preview.thumbnailAlt')} />
                                                 </div>
                                             ) : null}
                                         </div>
@@ -756,13 +774,15 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                 {editorTab === 'html' && (
                                     <div>
                                         <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
-                                            <label className="form-label mb-0">HTML Content *</label>
+                                            <label className="form-label mb-0">{t('admin.templatesPage.create.fields.htmlContent')} *</label>
                                             <button
                                                 type="button"
                                                 className="btn btn-sm btn-outline-primary"
                                                 onClick={() => setQuickPreview((prev) => !prev)}
                                             >
-                                                {quickPreview ? 'Sửa code' : 'Xem Preview nhanh'}
+                                                {quickPreview
+                                                    ? t('admin.templatesPage.create.editCode')
+                                                    : t('admin.templatesPage.create.quickPreview')}
                                             </button>
                                         </div>
 
@@ -778,13 +798,13 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                             <div className="admin-template-preview-pane">
                                                 {sanitizedPreviewHtml.trim() ? (
                                                     <iframe
-                                                        title="Quick Preview"
+                                                        title={t('admin.templatesPage.preview.quickTitle')}
                                                         srcDoc={sanitizedPreviewHtml}
                                                         className="admin-template-preview-frame"
                                                         sandbox="allow-scripts"
                                                     />
                                                 ) : (
-                                                    <div className="admin-template-preview-empty">Nhập HTML content để xem preview.</div>
+                                                    <div className="admin-template-preview-empty">{t('admin.templatesPage.preview.emptyQuick')}</div>
                                                 )}
                                             </div>
                                         )}
@@ -795,13 +815,13 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                     <div className="admin-template-preview-pane">
                                         {sanitizedPreviewHtml.trim() ? (
                                             <iframe
-                                                title="Template Preview"
+                                                title={t('admin.templatesPage.preview.tabTitle')}
                                                 srcDoc={sanitizedPreviewHtml}
                                                 className="admin-template-preview-frame preview-tab"
                                                 sandbox="allow-scripts"
                                             />
                                         ) : (
-                                            <div className="admin-template-preview-empty">Chưa có nội dung HTML để xem trước.</div>
+                                            <div className="admin-template-preview-empty">{t('admin.templatesPage.preview.emptyTab')}</div>
                                         )}
                                     </div>
                                 )}
@@ -809,8 +829,12 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                 <div className="admin-template-form-actions mt-4">
                                     <button type="submit" className="btn btn-primary admin-template-submit-btn" disabled={saving}>
                                         {saving
-                                            ? (form.MaTemplateCV ? 'Đang cập nhật...' : 'Đang tạo...')
-                                            : (form.MaTemplateCV ? 'Cập nhật template' : 'Tạo template')}
+                                            ? (form.MaTemplateCV
+                                                ? t('admin.templatesPage.create.savingUpdating')
+                                                : t('admin.templatesPage.create.savingCreating'))
+                                            : (form.MaTemplateCV
+                                                ? t('admin.templatesPage.create.submitUpdate')
+                                                : t('admin.templatesPage.create.submitCreate'))}
                                     </button>
                                 </div>
                             </form>
@@ -832,21 +856,21 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                 <div className="admin-template-preview-backdrop" role="dialog" aria-modal="true">
                     <div className="admin-template-preview-dialog card border-0 shadow-lg">
                         <div className="card-header bg-white d-flex justify-content-between align-items-center">
-                            <h6 className="mb-0 text-truncate">Preview: {modalPreview.title}</h6>
+                            <h6 className="mb-0 text-truncate">{t('admin.templatesPage.preview.modalTitle')}: {modalPreview.title}</h6>
                             <button type="button" className="btn btn-sm btn-outline-secondary" onClick={() => setModalPreview({ open: false, title: '', html: '' })}>
-                                Đóng
+                                {t('common.close')}
                             </button>
                         </div>
                         <div className="card-body p-0">
                             {modalPreview.html.trim() ? (
                                 <iframe
-                                    title="Template Modal Preview"
+                                    title={t('admin.templatesPage.preview.modalFrameTitle')}
                                     srcDoc={modalPreview.html}
                                     className="admin-template-preview-frame modal-frame"
                                     sandbox="allow-scripts"
                                 />
                             ) : (
-                                <div className="admin-template-preview-empty">Template này chưa có nội dung HTML.</div>
+                                <div className="admin-template-preview-empty">{t('admin.templatesPage.preview.emptyModal')}</div>
                             )}
                         </div>
                     </div>

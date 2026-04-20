@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
@@ -333,6 +333,7 @@ const OnlineCvBuilder = () => {
   const { t, i18n } = useTranslation();
   const { notify } = useNotification();
   const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'vi-VN';
+  const loadTemplatesErrorMessage = t('cvBuilder.errors.loadTemplates');
   const [templates, setTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -354,6 +355,7 @@ const OnlineCvBuilder = () => {
   const [rangeSize, setRangeSize] = useState(GRID_PAGE_SIZE);
   const [rangeFrom, setRangeFrom] = useState(1);
   const [rangeTo, setRangeTo] = useState(GRID_PAGE_SIZE);
+  const requestIdRef = useRef(0);
 
   useEffect(() => {
     const nextSize = viewMode === 'grid' ? GRID_PAGE_SIZE : LIST_PAGE_SIZE;
@@ -365,6 +367,8 @@ const OnlineCvBuilder = () => {
   useEffect(() => {
     let active = true;
     const controller = new AbortController();
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
 
     const loadTemplates = async () => {
       setLoading(true);
@@ -390,10 +394,10 @@ const OnlineCvBuilder = () => {
         });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data?.success) {
-          throw new Error(data?.error || t('cvBuilder.errors.loadTemplates'));
+          throw new Error(data?.error || loadTemplatesErrorMessage);
         }
 
-        if (!active) return;
+        if (!active || requestId !== requestIdRef.current) return;
 
         const rows = Array.isArray(data?.templates) ? data.templates : [];
         const normalizedRows = rows.map(normalizeTemplate).filter((item) => item.id && item.name);
@@ -418,22 +422,11 @@ const OnlineCvBuilder = () => {
         }
 
         setCategoryCounts(nextCounts);
-
-        const serverFrom = safeNumber(data?.from);
-        const serverTo = safeNumber(data?.to);
-        if (nextTotal > 0) {
-          if (serverFrom > 0 && serverFrom !== requestedFrom) {
-            setRangeFrom(serverFrom);
-          }
-          if (serverTo > 0 && serverTo !== requestedTo) {
-            setRangeTo(serverTo);
-          }
-        }
       } catch (err) {
-        if (!active || err?.name === 'AbortError') return;
-        setError(err?.message || t('cvBuilder.errors.loadTemplates'));
+        if (!active || requestId !== requestIdRef.current || err?.name === 'AbortError') return;
+        setError(err?.message || loadTemplatesErrorMessage);
       } finally {
-        if (active) setLoading(false);
+        if (active && requestId === requestIdRef.current) setLoading(false);
       }
     };
 
@@ -442,7 +435,7 @@ const OnlineCvBuilder = () => {
       active = false;
       controller.abort();
     };
-  }, [searchText, categoryFilter, sortBy, rangeFrom, rangeTo, rangeSize, t]);
+  }, [searchText, categoryFilter, sortBy, rangeFrom, rangeTo, rangeSize, loadTemplatesErrorMessage]);
 
   const safeRangeSize = Math.max(1, safeNumber(rangeSize) || 1);
   const safeRangeFrom = totalTemplates > 0
@@ -505,7 +498,7 @@ const OnlineCvBuilder = () => {
   };
 
   const pageSubtitle = useMemo(() => {
-    if (loading) return t('cvBuilder.states.loadingTemplates');
+    if (loading && !hasTemplates) return t('cvBuilder.states.loadingTemplates');
     if (hasTemplates) return t('cvBuilder.subtitle.available');
     return t('cvBuilder.subtitle.empty');
   }, [hasTemplates, loading, t]);
@@ -619,6 +612,7 @@ const OnlineCvBuilder = () => {
                       currentPage={safeCurrentPage}
                       pageSize={safeRangeSize}
                       onRangeChange={handleRangeChange}
+                      loading={loading}
                       className="cv-builder-pagination"
                     />
                   </div>
@@ -679,7 +673,7 @@ const OnlineCvBuilder = () => {
               <div className="cv-gallery-alert error" role="alert">{error}</div>
             ) : null}
 
-            {loading ? <CVTemplateSkeleton mode={viewMode} count={8} /> : null}
+            {loading && !hasTemplates ? <CVTemplateSkeleton mode={viewMode} count={8} /> : null}
 
             {!loading && !hasTemplates ? (
               <div className="cv-gallery-empty-state">
@@ -688,7 +682,7 @@ const OnlineCvBuilder = () => {
               </div>
             ) : null}
 
-            {!loading && hasTemplates && viewMode === 'grid' ? (
+            {hasTemplates && viewMode === 'grid' ? (
               <section className="cv-gallery-grid">
                 {templates.map((template) => (
                   <CVTemplateCard
@@ -702,7 +696,7 @@ const OnlineCvBuilder = () => {
               </section>
             ) : null}
 
-            {!loading && hasTemplates && viewMode === 'list' ? (
+            {hasTemplates && viewMode === 'list' ? (
               <section className="cv-gallery-list">
                 {templates.map((template) => (
                   <CVTemplateListItem

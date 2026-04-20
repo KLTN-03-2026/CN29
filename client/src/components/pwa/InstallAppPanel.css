@@ -229,3 +229,82 @@
     flex-direction: column;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel {
+  --panel-bg: #12253b;
+  --panel-border: #355274;
+  --panel-text: #e4eef9;
+  --panel-muted: #a3bdd4;
+  --panel-primary: #3b82f6;
+  --panel-primary-dark: #2563eb;
+  background: linear-gradient(165deg, #14283f 0%, #112238 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__intro h5,
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__tip-box h6,
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__checklist h6 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__intro p,
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__steps,
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__tip-box ul,
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__checklist ul {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__tab {
+  border-color: #3f5f82;
+  background: #142941;
+  color: #d6e9fc;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__tab:hover {
+  border-color: #5f86af;
+  background: #1b3653;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__body {
+  border-color: #355274;
+  background: linear-gradient(180deg, #112238 0%, #0e1d31 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__platform-chip {
+  background: #1a334f;
+  border-color: #466b8f;
+  color: #cfe5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__platform-hint {
+  background: #173f33;
+  border-color: #2d7c63;
+  color: #9ce7c8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__tip-box,
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__checklist,
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__feedback {
+  border-color: #355274;
+  background: #152a42;
+  color: #bfd3e8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__later-btn {
+  background: #18314b;
+  border-color: #416280;
+  color: #d0e4f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__later-btn:hover {
+  background: #1f3b59;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__reset-btn {
+  background: #173c33;
+  border-color: #2d7c63;
+  color: #a7e7cf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .install-app-panel__reset-btn:hover {
+  background: #1c4a3f;
+}

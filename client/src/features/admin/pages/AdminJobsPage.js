@@ -1,17 +1,32 @@
 import React, { useState } from 'react';
 import { BriefcaseBusiness, ExternalLink, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
-const getStatusBadgeClass = (status) => {
-    const normalized = String(status || '').trim();
+const normalizeStatusType = (status) => {
+    const normalized = String(status || '').trim().toLowerCase();
 
-    if (normalized === 'Đã đăng') return 'bg-success-subtle text-success border border-success-subtle';
-    if (normalized === 'Đã đóng') return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
-    if (normalized === 'Lưu trữ') return 'bg-dark-subtle text-secondary border border-secondary-subtle';
+    if (!normalized) return 'draft';
+    if (normalized === 'đã đăng' || normalized === 'published') return 'posted';
+    if (normalized === 'đã đóng' || normalized === 'closed') return 'closed';
+    if (normalized === 'lưu trữ' || normalized === 'archived') return 'archived';
+    if (normalized === 'nháp' || normalized === 'draft') return 'draft';
+    return 'unknown';
+};
+
+const getStatusBadgeClass = (statusType) => {
+    if (statusType === 'posted') return 'bg-success-subtle text-success border border-success-subtle';
+    if (statusType === 'closed') return 'bg-warning-subtle text-warning-emphasis border border-warning-subtle';
+    if (statusType === 'archived') return 'bg-dark-subtle text-secondary border border-secondary-subtle';
+    if (statusType === 'draft') return 'bg-info-subtle text-info-emphasis border border-info-subtle';
     return 'bg-secondary-subtle text-secondary border border-secondary-subtle';
 };
 
-const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex }) => {
-    const status = job.TrangThai || 'Nháp';
+const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex, t }) => {
+    const statusRaw = String(job.TrangThai || '').trim();
+    const statusType = normalizeStatusType(statusRaw);
+    const statusLabel = statusType === 'unknown'
+        ? (statusRaw || t('admin.jobsPage.status.unknown'))
+        : t(`admin.jobsPage.status.${statusType}`);
     const jobId = job?.MaTin != null ? String(job.MaTin).trim() : '';
     const publicJobUrl = jobId ? `/jobs/${encodeURIComponent(jobId)}` : '';
     const [deleting, setDeleting] = useState(false);
@@ -20,9 +35,9 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
     const handleDelete = async () => {
         if (!canDelete) return;
         const ok = await requestConfirm({
-            title: 'Xác nhận xóa',
-            message: 'Bạn có chắc muốn xóa tin tuyển dụng này?',
-            confirmText: 'Xóa'
+            title: t('admin.jobsPage.confirmDeleteTitle'),
+            message: t('admin.jobsPage.confirmDeleteMessage'),
+            confirmText: t('common.delete')
         });
         if (!ok) return;
         setDeleting(true);
@@ -30,7 +45,7 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
         try {
             await onDelete();
         } catch (e) {
-            setErr(e?.message || 'Lỗi');
+            setErr(e?.message || t('admin.jobsPage.errorFallback'));
         } finally {
             setDeleting(false);
         }
@@ -43,7 +58,7 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
             <td>{job.TenCongTy || '-'}</td>
             <td>{job.ThanhPho || '-'}</td>
             <td className="admin-status-col">
-                <span className={`badge ${getStatusBadgeClass(status)}`}>{status}</span>
+                <span className={`badge ${getStatusBadgeClass(statusType)}`}>{statusLabel}</span>
             </td>
             <td className="admin-action-col">
                 <div className="admin-row-actions">
@@ -53,8 +68,8 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
                             href={publicJobUrl}
                             target="_blank"
                             rel="noreferrer"
-                            title="Xem tin đã đăng"
-                            aria-label="Xem tin đã đăng"
+                            title={t('admin.jobsPage.actions.viewPostedJob')}
+                            aria-label={t('admin.jobsPage.actions.viewPostedJob')}
                         >
                             <ExternalLink size={14} />
                         </a>
@@ -63,8 +78,8 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
                             type="button"
                             className="btn btn-sm btn-outline-primary admin-action-icon-btn"
                             disabled
-                            title="Không tìm thấy mã tin"
-                            aria-label="Không tìm thấy mã tin"
+                            title={t('admin.jobsPage.actions.missingJobId')}
+                            aria-label={t('admin.jobsPage.actions.missingJobId')}
                         >
                             <ExternalLink size={14} />
                         </button>
@@ -74,8 +89,8 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
                         className="btn btn-sm btn-outline-danger admin-action-icon-btn"
                         disabled={!canDelete || deleting}
                         onClick={handleDelete}
-                        title="Xóa tin tuyển dụng"
-                        aria-label="Xóa tin tuyển dụng"
+                        title={t('admin.jobsPage.actions.deleteJob')}
+                        aria-label={t('admin.jobsPage.actions.deleteJob')}
                     >
                         <Trash2 size={14} />
                     </button>
@@ -87,24 +102,26 @@ const AdminJobRow = ({ job, onDelete, canDelete, requestConfirm, displayIndex })
 };
 
 const AdminJobsPage = ({ jobs, loading, canDelete, requestConfirm, onDeleteJob }) => {
+    const { t } = useTranslation();
+
     return (
         <div className="card border-0 shadow-sm admin-module-card mb-4">
             <div className="card-header bg-white border-0 py-3">
                 <h5 className="mb-0 d-flex align-items-center gap-2">
                     <BriefcaseBusiness size={18} />
-                    <span>Kiểm duyệt tin tuyển dụng</span>
+                    <span>{t('admin.jobsPage.title')}</span>
                 </h5>
             </div>
             <div className="table-responsive">
                 <table className="table table-hover align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style={{ width: 90 }}>ID</th>
-                            <th>Tiêu đề</th>
-                            <th style={{ width: 200 }}>Công ty</th>
-                            <th style={{ width: 140 }}>Tỉnh/TP</th>
-                            <th style={{ width: 170 }} className="admin-status-col">Trạng thái</th>
-                            <th style={{ width: 220 }} className="admin-action-col">Thao tác</th>
+                            <th style={{ width: 90 }}>{t('admin.jobsPage.columns.id')}</th>
+                            <th>{t('admin.jobsPage.columns.title')}</th>
+                            <th style={{ width: 200 }}>{t('admin.jobsPage.columns.company')}</th>
+                            <th style={{ width: 140 }}>{t('admin.jobsPage.columns.city')}</th>
+                            <th style={{ width: 170 }} className="admin-status-col">{t('admin.jobsPage.columns.status')}</th>
+                            <th style={{ width: 220 }} className="admin-action-col">{t('admin.jobsPage.columns.actions')}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -116,10 +133,11 @@ const AdminJobsPage = ({ jobs, loading, canDelete, requestConfirm, onDeleteJob }
                                 requestConfirm={requestConfirm}
                                 onDelete={() => onDeleteJob(j.MaTin)}
                                 canDelete={canDelete}
+                                t={t}
                             />
                         ))}
                         {jobs.length === 0 && !loading && (
-                            <tr><td colSpan={6} className="text-center text-muted py-4">Chưa có dữ liệu</td></tr>
+                            <tr><td colSpan={6} className="text-center text-muted py-4">{t('admin.jobsPage.empty')}</td></tr>
                         )}
                     </tbody>
                 </table>

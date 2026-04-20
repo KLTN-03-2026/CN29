@@ -132,3 +132,37 @@
     justify-content: flex-end;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .account-install-prompt {
+  border-color: #355274;
+  background: linear-gradient(160deg, #12253c 0%, #0e1d31 100%);
+  box-shadow: 0 22px 45px rgba(2, 10, 20, 0.58);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .account-install-prompt__icon-wrap {
+  border-color: #3a5778;
+  background: #15304b;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .account-install-prompt__text h4 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .account-install-prompt__text p {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .account-install-prompt__text small {
+  color: #7fc8ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .account-install-prompt__actions button.later {
+  color: #d0e4f8;
+  border-color: #41617f;
+  background: #18314c;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .account-install-prompt__actions button.later:hover {
+  border-color: #5e85ad;
+  background: #1f3b59;
+}

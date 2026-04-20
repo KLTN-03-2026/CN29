@@ -5,6 +5,7 @@ const multer = require('multer');
 const db = require('../config/db');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const { isCloudinaryConfigured, uploadImageFromPath } = require('../config/cloudinary');
+const articleSamples = require('../mocks/articleSamples');
 
 const router = express.Router();
 
@@ -1639,13 +1640,66 @@ router.get('/career-guide-posts', async (req, res) => {
       params
     );
 
+    const total = Number(totalRow?.c || 0);
+
+    if (total <= 0) {
+      const keywordTokens = String(keyword || '').trim().toLowerCase();
+      const sampleRows = (Array.isArray(articleSamples) ? articleSamples : [])
+        .filter((sample) => {
+          if (!keywordTokens) return true;
+
+          const haystack = [
+            sample?.title,
+            sample?.excerpt,
+            sample?.author,
+            ...(Array.isArray(sample?.tags) ? sample.tags : [])
+          ]
+            .map((part) => String(part || '').toLowerCase())
+            .join(' ');
+
+          return haystack.includes(keywordTokens);
+        })
+        .sort((a, b) => {
+          const aTime = Date.parse(String(a?.publishedAt || '')) || 0;
+          const bTime = Date.parse(String(b?.publishedAt || '')) || 0;
+          return bTime - aTime;
+        })
+        .map((sample, index) => ({
+          MaBaiViet: String(sample?.id || `sample-${index + 1}`),
+          TieuDe: String(sample?.title || '').trim(),
+          NoiDung: String(sample?.content || '').trim(),
+          MaTacGia: String(sample?.author || '').trim(),
+          LoaiTacGia: 'admin',
+          NgayTao: sample?.publishedAt || null,
+          NgayCapNhat: sample?.publishedAt || null,
+          LuotXem: Number(sample?.views || 0),
+          Slug: String(sample?.slug || '').trim(),
+          IsSample: 1
+        }));
+
+      const pagedSamples = sampleRows.slice(offset, offset + limit);
+
+      return res.json({
+        success: true,
+        posts: pagedSamples,
+        pagination: {
+          limit,
+          offset,
+          total: sampleRows.length
+        }
+      });
+    }
+
     return res.json({
       success: true,
-      posts,
+      posts: posts.map((row) => ({
+        ...row,
+        IsSample: 0
+      })),
       pagination: {
         limit,
         offset,
-        total: Number(totalRow?.c || 0)
+        total
       }
     });
   } catch (err) {

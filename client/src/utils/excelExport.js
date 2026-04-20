@@ -17,6 +17,10 @@ const pickExcelNamespace = (moduleValue) => {
 };
 
 export const loadExcelJs = async () => {
+  if (typeof window !== 'undefined' && window.ExcelJS?.Workbook) {
+    return window.ExcelJS;
+  }
+
   let lastError = null;
 
   try {
@@ -31,6 +35,16 @@ export const loadExcelJs = async () => {
 
   try {
     const importedModule = await import('exceljs/dist/exceljs.min.js');
+    const excelNamespace = pickExcelNamespace(importedModule);
+    if (excelNamespace?.Workbook && typeof excelNamespace.Workbook === 'function') {
+      return excelNamespace;
+    }
+  } catch (error) {
+    lastError = error;
+  }
+
+  try {
+    const importedModule = await import('exceljs/dist/exceljs.js');
     const excelNamespace = pickExcelNamespace(importedModule);
     if (excelNamespace?.Workbook && typeof excelNamespace.Workbook === 'function') {
       return excelNamespace;

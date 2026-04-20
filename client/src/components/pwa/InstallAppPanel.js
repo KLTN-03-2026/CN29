@@ -117,6 +117,8 @@ const InstallAppPanel = () => {
         ? t('components.pwa.installAppPanel.installButton.installNow')
         : t('components.pwa.installAppPanel.installButton.viewManualGuide');
 
+  const showChecklist = !isInstalled && !isStandalone && (isIOS || canTriggerPrompt);
+
   return (
     <section className="install-app-panel" aria-label={t('components.pwa.installAppPanel.sectionAriaLabel')}>
       <div className="install-app-panel__intro">
@@ -174,14 +176,16 @@ const InstallAppPanel = () => {
           </ul>
         </div>
 
-        <div className="install-app-panel__checklist">
-          <h6>{t('components.pwa.installAppPanel.checklistTitle')}</h6>
-          <ul>
-            {quickChecklist.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
+        {showChecklist ? (
+          <div className="install-app-panel__checklist">
+            <h6>{t('components.pwa.installAppPanel.checklistTitle')}</h6>
+            <ul>
+              {quickChecklist.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
 
         <div className="install-app-panel__actions">
           <button

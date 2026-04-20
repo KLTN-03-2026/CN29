@@ -62,6 +62,25 @@ const JobDetail = () => {
         />
     );
 
+    const jobSkills = useMemo(() => {
+        const source = Array.isArray(job?.skills) ? job.skills : [];
+        return source
+            .map((item) => {
+                const name = typeof item === 'string'
+                    ? String(item).trim()
+                    : String(item?.name || item?.TenKyNang || '').trim();
+                const importanceRaw = typeof item === 'string'
+                    ? 1
+                    : Number(item?.importance ?? item?.DoQuanTrong ?? 1);
+                const importance = Number.isFinite(importanceRaw)
+                    ? Math.max(1, Math.min(5, Math.round(importanceRaw)))
+                    : 1;
+                return { name, importance };
+            })
+            .filter((item) => item.name)
+            .slice(0, 16);
+    }, [job?.skills]);
+
     return (
         <div className="job-detail-page">
             <div className="job-detail-hero">
@@ -132,6 +151,19 @@ const JobDetail = () => {
                                 <h6 className="fw-semibold">{t('employer.jobDetailPage.fields.requirements')}</h6>
                                 {renderRich(job.YeuCau)}
                             </div>
+                            {jobSkills.length > 0 ? (
+                                <div className="mb-3">
+                                    <h6 className="fw-semibold">{t('employer.jobDetailPage.fields.skills', { defaultValue: 'Kỹ năng yêu cầu' })}</h6>
+                                    <div className="job-detail-skills">
+                                        {jobSkills.map((skill, index) => (
+                                            <span key={`${skill.name}-${index}`} className="job-detail-skill-chip">
+                                                <span>{skill.name}</span>
+                                                {skill.importance > 1 ? <small>Ưu tiên {skill.importance}/5</small> : null}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            ) : null}
                             <div>
                                 <h6 className="fw-semibold">{t('employer.jobDetailPage.fields.benefits')}</h6>
                                 {renderRich(job.QuyenLoi)}

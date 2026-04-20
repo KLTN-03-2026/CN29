@@ -129,6 +129,7 @@ const CvManagementPage = () => {
       message: t('cvManagement.confirm.deleteMessage'),
       confirmText: t('common.delete'),
       cancelText: t('common.cancel'),
+      intent: 'delete',
       type: 'warning'
     });
     if (!ok) return;
@@ -318,7 +319,7 @@ const CvManagementPage = () => {
                         <button
                           type="button"
                           className="cv-action-icon view"
-                          onClick={() => navigate(`/create-cv/online-editor?cvId=${encodeURIComponent(cv.id)}`)}
+                          onClick={() => navigate(`/create-cv/online-editor?cvId=${encodeURIComponent(cv.id)}&mode=view`)}
                           title={t('cvManagement.actions.viewOnlineCv')}
                           aria-label={t('cvManagement.actions.viewCvAria', { name: cv.name })}
                         >

@@ -892,3 +892,151 @@
     display: none;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-pill {
+  background: #0f1d30;
+  border-color: #355274;
+  box-shadow: 0 14px 30px rgba(2, 10, 20, 0.5);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-pill-btn {
+  border-color: #3f5f82;
+  background: linear-gradient(180deg, #182b43, #102239);
+  color: #dbeafe;
+  box-shadow: 0 8px 16px rgba(2, 10, 20, 0.42);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-pill-btn:hover {
+  border-color: #5a86b2;
+  background: #1a334f;
+  color: #f0f7ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-badge {
+  border-color: #0f1d30;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-panel,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-chat-panel,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal {
+  background: #0f1d30;
+  border-color: #33506f;
+  box-shadow: 0 26px 62px rgba(2, 10, 20, 0.58);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-toolbar,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-input,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-thread-input,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-head,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-foot,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-actions {
+  background: #13243a;
+  border-color: #2f4864;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-messages,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-chat-inbox,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-thread-list,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-body {
+  background: #0d1a2b;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-chip {
+  border-color: #385877;
+  background: #11243a;
+  color: #d9e8f8;
+  box-shadow: none;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-chip i {
+  color: #74f1ba;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-bubble {
+  background: #14283e;
+  border-color: #385877;
+  color: #e2edf8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-msg.user .aiw-bubble {
+  background: #1b3558;
+  border-color: #466f9f;
+  color: #eef6ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-thread-msg.other .aiw-thread-bubble {
+  background: #1a314a;
+  color: #e2edf8;
+  box-shadow: 0 1px 3px rgba(2, 10, 20, 0.45);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-thread-time,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-inbox-last,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-item-meta,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-attachment-sub,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-selected-note {
+  color: #9fb4cb;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-inbox-item {
+  border-bottom-color: rgba(148, 163, 184, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-inbox-item:hover {
+  background: #17304a;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-inbox-item.active {
+  background: #1b3758;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-inbox-name,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-head h6,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-attachment-name,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-item-title {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-input input,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-thread-input input {
+  background: #0f2238;
+  border-color: #395776;
+  color: #e2edf8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-input input::placeholder,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-thread-input input::placeholder {
+  color: #8eabc5;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-attachment-chip,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-item,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-empty,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-clear-btn,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-close,
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-btn {
+  background: #13243a;
+  border-color: #3b5b7b;
+  color: #d9e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-modal-btn.primary {
+  background: #00a760;
+  border-color: #00a760;
+  color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-attachment-icon {
+  background: #1f3752;
+  color: #dbeafe;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-attachment-remove {
+  border-color: #3b5b7b;
+  background: #102237;
+  color: #d6e6f6;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-cv-item-state {
+  color: #74f1ba;
+}

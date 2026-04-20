@@ -241,6 +241,17 @@ const getNumericSalaryText = (job, t, locale = 'vi-VN') => {
   return t('jobSearch.salary.negotiable');
 };
 
+const getJobSkillNames = (job) => {
+  const source = Array.isArray(job?.skills) ? job.skills : [];
+  return source
+    .map((item) => {
+      if (typeof item === 'string') return String(item).trim();
+      return String(item?.name || item?.TenKyNang || '').trim();
+    })
+    .filter(Boolean)
+    .slice(0, 4);
+};
+
 const getCardBadge = (job, t) => {
   const salaryTop = toNumber(job?.LuongDen) ?? toNumber(job?.LuongTu) ?? 0;
   if (salaryTop >= 30000000) return t('jobSearch.badges.goodSalary');
@@ -560,6 +571,15 @@ const JobSearchPage = () => {
 
     const idStr = String(jobId);
     const isSaved = savedSet.has(idStr);
+    let previousSavedIds = null;
+
+    setSavedIds((prev) => {
+      previousSavedIds = prev;
+      const next = new Set(prev.map((item) => String(item)));
+      if (isSaved) next.delete(idStr);
+      else next.add(idStr);
+      return Array.from(next);
+    });
 
     try {
       const response = await fetch(`${API_BASE}/jobs/saved/${encodeURIComponent(idStr)}`, {
@@ -570,18 +590,14 @@ const JobSearchPage = () => {
       const data = await response.json().catch(() => null);
       if (!response.ok) throw new Error((data && data.error) || t('jobSearch.errors.updateSavedJob'));
 
-      setSavedIds((prev) => {
-        const next = new Set(prev.map((item) => String(item)));
-        if (isSaved) next.delete(idStr);
-        else next.add(idStr);
-        return Array.from(next);
-      });
-
       notify({
         type: 'success',
         message: isSaved ? t('jobSearch.notifications.unsavedJob') : t('jobSearch.notifications.savedJob')
       });
     } catch (toggleError) {
+      if (Array.isArray(previousSavedIds)) {
+        setSavedIds(previousSavedIds);
+      }
       notify({ type: 'error', message: toggleError.message || t('jobSearch.errors.updateSavedJob') });
     }
   };
@@ -959,6 +975,7 @@ const JobSearchPage = () => {
                 {sortedJobs.map((job) => {
                   const isSaved = savedSet.has(String(job.MaTin));
                   const badge = getCardBadge(job, t);
+                  const skillNames = getJobSkillNames(job);
 
                   return (
                     <article key={job.MaTin} className="jf-jobs-result-card">
@@ -994,6 +1011,14 @@ const JobSearchPage = () => {
                             <span><i className="bi bi-person-workspace"></i>{job.KinhNghiem || t('jobSearch.options.notRequired')}</span>
                             <span><i className="bi bi-cash-coin"></i>{formatSalary(job, t, currentLocale)}</span>
                           </div>
+
+                          {skillNames.length > 0 ? (
+                            <div className="jf-jobs-result-skills" data-i18n-skip="true">
+                              {skillNames.map((skillName) => (
+                                <span key={`${job.MaTin}-${skillName}`}>{skillName}</span>
+                              ))}
+                            </div>
+                          ) : null}
                         </div>
                       </div>
 

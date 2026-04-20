@@ -60,21 +60,77 @@ body {
   margin-right: 0;
 }
 
+.jf-main-navbar__auth-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.jf-main-navbar__user-actions {
+  min-width: 0;
+}
+
+/* Tailwind utility `.collapse` conflicts with Bootstrap navbar collapse visibility. */
+.jf-main-navbar .navbar-collapse {
+  visibility: visible;
+}
+
 .jf-utility-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
   flex-shrink: 0;
+}
+
+.jf-utility-group {
+  border: 1px solid #e2e8f0;
+  border-radius: 999px;
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
 }
 
 .jf-utility-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.35rem;
-  border-radius: 999px;
-  font-weight: 600;
+  border: 0 !important;
+  border-radius: 0;
+  font-weight: 700;
+  color: #334155;
+  background: transparent;
+  min-width: 42px;
+  min-height: 34px;
+  padding: 0.45rem 0.7rem;
   line-height: 1;
+  box-shadow: none !important;
+  transition: all 0.2s ease;
+}
+
+.jf-utility-group .jf-utility-btn + .jf-utility-btn {
+  border-left: 1px solid #e7edf5;
+}
+
+.jf-utility-group-theme .jf-utility-btn {
+  min-width: 36px;
+  padding: 0.45rem 0.62rem;
 }
 
 .jf-utility-btn i {
   font-size: 0.9rem;
+}
+
+.jf-utility-btn:hover,
+.jf-utility-btn:focus-visible {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+.jf-utility-btn.is-active {
+  background: #eef2f7;
+  color: #0f172a;
 }
 
 @media (min-width: 992px) {
@@ -138,32 +194,53 @@ body {
 
   .jf-main-navbar .navbar-nav > .nav-item > .nav-link {
     width: 100%;
-    padding: 10px 2px;
+    padding: 8px 2px;
   }
 
   .jf-main-navbar .navbar-collapse > .d-flex {
     width: 100%;
     border-top: 1px solid rgba(15, 23, 42, 0.08);
-    margin-top: 10px;
-    padding-top: 10px;
-    flex-direction: column;
-    align-items: stretch !important;
-    gap: 10px !important;
+    margin-top: 8px;
+    padding-top: 8px;
+    flex-wrap: wrap;
+    align-items: center !important;
+    gap: 8px !important;
   }
 
-  .jf-main-navbar .navbar-collapse > .d-flex .btn,
-  .jf-main-navbar .jf-user-chip,
-  .jf-main-navbar .dropdown {
+  .jf-main-navbar .jf-main-navbar__auth-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .jf-main-navbar .jf-main-navbar__auth-actions .btn {
+    width: 100%;
+    padding-left: 0.6rem;
+    padding-right: 0.6rem;
+  }
+
+  .jf-main-navbar .jf-main-navbar__user-actions,
+  .jf-main-navbar .jf-main-navbar__user-actions .dropdown,
+  .jf-main-navbar .jf-user-chip {
     width: 100%;
   }
 
   .jf-main-navbar .jf-utility-actions {
-    width: 100%;
-    justify-content: stretch;
+    width: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex: 0 0 auto;
+  }
+
+  .jf-main-navbar .jf-utility-group {
+    width: auto;
+    justify-content: center;
   }
 
   .jf-main-navbar .jf-utility-actions .jf-utility-btn {
-    flex: 1;
+    flex: 1 1 auto;
     justify-content: center;
   }
 
@@ -184,6 +261,18 @@ body {
     inset: auto;
     box-shadow: none;
   }
+}
+
+.jf-main-navbar .navbar-toggler {
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+.jf-main-navbar .navbar-toggler:focus {
+  box-shadow: 0 0 0 0.2rem rgba(31, 126, 202, 0.2);
+}
+
+.jf-main-navbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2815,23,42,0.78%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
 }
 
 @media (max-width: 575.98px) {
@@ -312,6 +401,28 @@ body {
   color: #00C271;
 }
 
+.jf-jobs-menu-head {
+  padding: 12px 12px 8px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.jf-jobs-menu-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0 8px 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.jf-jobs-menu-link {
+  min-height: 40px;
+}
+
 .jf-nav-dropdown-toggle[aria-expanded='true'] .jf-nav-chevron,
 .jf-nav-dropdown:hover .jf-nav-chevron {
   transform: rotate(180deg);
@@ -325,6 +436,8 @@ body {
     box-shadow: none;
     border: 1px solid rgba(15, 23, 42, 0.1);
     margin-top: 6px;
+    max-height: min(320px, 60vh);
+    overflow-y: auto;
   }
 
   .jf-nav-dropdown:hover .jf-nav-dropdown-menu {
@@ -338,7 +451,33 @@ body {
   .jf-nav-dropdown .jf-nav-dropdown-toggle {
     width: 100%;
     justify-content: space-between;
-    padding: 10px 2px;
+    padding: 8px 2px;
+  }
+
+  .jf-jobs-menu-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 7px;
+    padding-bottom: 10px;
+  }
+
+  .jf-jobs-menu-grid.is-employer {
+    grid-template-columns: 1fr;
+  }
+
+  .jf-jobs-menu-link {
+    align-items: flex-start !important;
+    gap: 6px !important;
+    min-height: 0;
+    padding: 8px !important;
+  }
+
+  .jf-jobs-menu-link i {
+    font-size: 1rem !important;
+  }
+
+  .jf-jobs-menu-link span {
+    font-size: 0.84rem;
+    line-height: 1.25;
   }
 }
 
@@ -500,6 +639,13 @@ body {
   font-size: 0.95rem;
 }
 
+.jf-user-dropdown-icon {
+  width: 16px;
+  height: 16px;
+  color: #2563eb;
+  flex: 0 0 auto;
+}
+
 .jf-user-dropdown-item:hover,
 .jf-user-dropdown-item:focus {
   background: #eff6ff;
@@ -659,6 +805,44 @@ body {
 @media (max-width: 767.98px) {
   .online-cv-editor-page {
     padding-top: 96px !important;
+  }
+}
+
+/* Focus mode for online editor: keep global header compact and free more preview space. */
+body.cv-editor-focus-mode .jf-main-navbar {
+  min-height: 66px;
+}
+
+body.cv-editor-focus-mode .jf-main-navbar__container {
+  min-height: 66px;
+}
+
+body.cv-editor-focus-mode .jf-main-navbar__logo {
+  height: 54px;
+}
+
+body.cv-editor-focus-mode .online-cv-editor-page {
+  padding-top: 84px !important;
+  padding-bottom: 36px !important;
+}
+
+@media (max-width: 991.98px) {
+  body.cv-editor-focus-mode .jf-main-navbar {
+    min-height: 62px;
+  }
+
+  body.cv-editor-focus-mode .jf-main-navbar__container {
+    min-height: 62px;
+  }
+
+  body.cv-editor-focus-mode .jf-main-navbar__logo {
+    height: 48px;
+  }
+}
+
+@media (max-width: 767.98px) {
+  body.cv-editor-focus-mode .online-cv-editor-page {
+    padding-top: 76px !important;
   }
 }
 
@@ -1089,6 +1273,32 @@ body {
   color: #64748b;
 }
 
+.job-detail-skills {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.job-detail-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #cbe0f3;
+  border-radius: 999px;
+  background: #f2f9ff;
+  color: #11406a;
+  padding: 5px 11px;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.job-detail-skill-chip small {
+  color: #3f6484;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
 :is(html.dark, html[data-bs-theme='dark']) .job-detail-page {
   background: radial-gradient(circle at 6% 8%, rgba(59, 130, 246, 0.12), transparent 30%),
     radial-gradient(circle at 92% 12%, rgba(16, 185, 129, 0.12), transparent 30%),
@@ -1118,6 +1328,16 @@ body {
   background: rgba(15, 23, 42, 0.72);
   border-color: rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-skill-chip {
+  background: rgba(20, 42, 64, 0.86);
+  border-color: #335271;
+  color: #b7d3ed;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-detail-skill-chip small {
+  color: #90b2d0;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .job-detail-rich-block em {
@@ -2166,6 +2386,25 @@ body {
   font-size: 0.8rem;
 }
 
+.jf-jobs-result-skills {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.jf-jobs-result-skills span {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #cde0f2;
+  border-radius: 999px;
+  background: #f4f9ff;
+  color: #275173;
+  font-size: 0.73rem;
+  font-weight: 700;
+  padding: 3px 8px;
+}
+
 .jf-jobs-result-side {
   min-width: 170px;
   display: flex;
@@ -2341,6 +2580,7 @@ body {
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-skills span,
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-badge,
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-alert-btn,
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-state-card,
@@ -2529,6 +2769,14 @@ html[data-bs-theme='dark'] .jf-main-navbar.bg-white {
   border-color: rgba(148, 163, 184, 0.26) !important;
 }
 
+html[data-bs-theme='dark'] .jf-main-navbar .navbar-toggler {
+  border-color: rgba(148, 163, 184, 0.38);
+}
+
+html[data-bs-theme='dark'] .jf-main-navbar .navbar-toggler-icon {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28226,232,240,0.9%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
 html[data-bs-theme='dark'] .jf-main-navbar .navbar-collapse {
   border-color: rgba(148, 163, 184, 0.22);
   background: #0f172a;
@@ -2555,17 +2803,28 @@ html[data-bs-theme='dark'] .jf-main-navbar .jf-nav-dropdown-toggle:focus-visible
   box-shadow: inset 0 0 0 1px rgba(116, 241, 186, 0.24);
 }
 
-html[data-bs-theme='dark'] .jf-utility-btn {
+html[data-bs-theme='dark'] .jf-utility-group {
   border-color: #334155;
-  background: #0f172a;
+  background: #111827;
+}
+
+html[data-bs-theme='dark'] .jf-utility-btn {
   color: #e2e8f0;
+}
+
+html[data-bs-theme='dark'] .jf-utility-group .jf-utility-btn + .jf-utility-btn {
+  border-left-color: #334155;
 }
 
 html[data-bs-theme='dark'] .jf-utility-btn:hover,
 html[data-bs-theme='dark'] .jf-utility-btn:focus-visible {
   background: #111d34;
   color: #f8fafc;
-  border-color: #475569;
+}
+
+html[data-bs-theme='dark'] .jf-utility-btn.is-active {
+  background: #1f2937;
+  color: #f8fafc;
 }
 
 html[data-bs-theme='dark'] .jf-user-chip-info small {

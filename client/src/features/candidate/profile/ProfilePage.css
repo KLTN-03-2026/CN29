@@ -710,3 +710,126 @@
     width: calc(100% - 0.8rem);
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-page-wrap {
+  background:
+    radial-gradient(circle at 0% 0%, rgba(37, 99, 235, 0.2), transparent 34%),
+    radial-gradient(circle at 100% 0%, rgba(20, 184, 166, 0.15), transparent 30%),
+    linear-gradient(170deg, #06111f 0%, #0c1b2d 46%, #12263a 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-sidebar-card,
+:is(html.dark, html[data-bs-theme='dark']) .profile-tab-card,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-panel,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-hero,
+:is(html.dark, html[data-bs-theme='dark']) .profile-empty-state,
+:is(html.dark, html[data-bs-theme='dark']) .profile-inline-state,
+:is(html.dark, html[data-bs-theme='dark']) .profile-invitation-item,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-panel--security,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-panel--profile,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-panel--install,
+:is(html.dark, html[data-bs-theme='dark']) .profile-modal-body,
+:is(html.dark, html[data-bs-theme='dark']) .profile-modal-footer,
+:is(html.dark, html[data-bs-theme='dark']) .profile-edit-modal-content,
+:is(html.dark, html[data-bs-theme='dark']) .profile-edit-aside,
+:is(html.dark, html[data-bs-theme='dark']) .profile-password-modal-content {
+  border-color: #355274;
+  background: #112136;
+  box-shadow: 0 14px 34px rgba(2, 10, 20, 0.42);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-sidebar-head {
+  border-bottom-color: #2f4762;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-sidebar-head p,
+:is(html.dark, html[data-bs-theme='dark']) .profile-overview-eyebrow,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-panel-kicker {
+  color: #8cc5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-sidebar-head h5,
+:is(html.dark, html[data-bs-theme='dark']) .profile-overview-info h3,
+:is(html.dark, html[data-bs-theme='dark']) .profile-overview-actions h5,
+:is(html.dark, html[data-bs-theme='dark']) .profile-section-head h5,
+:is(html.dark, html[data-bs-theme='dark']) .profile-empty-state h6,
+:is(html.dark, html[data-bs-theme='dark']) .profile-invitation-body h6,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-hero h5,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-panel h6,
+:is(html.dark, html[data-bs-theme='dark']) .profile-modal-input,
+:is(html.dark, html[data-bs-theme='dark']) .profile-edit-section-title,
+:is(html.dark, html[data-bs-theme='dark']) .profile-edit-modal-body .form-label {
+  color: #e8f3ff !important;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-section-head p,
+:is(html.dark, html[data-bs-theme='dark']) .profile-overview-actions p,
+:is(html.dark, html[data-bs-theme='dark']) .profile-empty-state p,
+:is(html.dark, html[data-bs-theme='dark']) .profile-inline-state,
+:is(html.dark, html[data-bs-theme='dark']) .profile-invitation-body p,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-hero p,
+:is(html.dark, html[data-bs-theme='dark']) .profile-modal-description,
+:is(html.dark, html[data-bs-theme='dark']) .profile-edit-hint {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-nav-btn {
+  border-color: #3b5b7b;
+  background: #152a42;
+  color: #d3e6f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-nav-btn:hover {
+  border-color: #5e85ad;
+  background: #1f3b59;
+  color: #edf6ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-nav-icon,
+:is(html.dark, html[data-bs-theme='dark']) .profile-overview-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .profile-kpi-item,
+:is(html.dark, html[data-bs-theme='dark']) .profile-action-link,
+:is(html.dark, html[data-bs-theme='dark']) .profile-invitation-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .profile-overview-card,
+:is(html.dark, html[data-bs-theme='dark']) .profile-edit-readonly,
+:is(html.dark, html[data-bs-theme='dark']) .profile-city-suggestions,
+:is(html.dark, html[data-bs-theme='dark']) .profile-city-suggestions .list-group-item,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-card,
+:is(html.dark, html[data-bs-theme='dark']) .profile-modal-header,
+:is(html.dark, html[data-bs-theme='dark']) .profile-settings-hero {
+  border-color: #3b5b7b;
+  background: #152a42;
+  color: #d3e6f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-action-link:hover,
+:is(html.dark, html[data-bs-theme='dark']) .profile-outline-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .profile-outline-btn:focus-visible {
+  border-color: #5e85ad;
+  background: #1f3b59;
+  color: #edf6ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-kpi-item span,
+:is(html.dark, html[data-bs-theme='dark']) .profile-kpi-item strong,
+:is(html.dark, html[data-bs-theme='dark']) .profile-invitation-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .profile-nav-label,
+:is(html.dark, html[data-bs-theme='dark']) .profile-action-link {
+  color: #d3e6f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-modal-input {
+  border-color: #3b5b7b;
+  background: #102338;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-modal-input:focus {
+  border-color: #5d8cb9;
+  box-shadow: 0 0 0 0.15rem rgba(93, 140, 185, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .profile-outline-btn {
+  border-color: #416280;
+  background: #18314c;
+  color: #d0e4f8;
+}

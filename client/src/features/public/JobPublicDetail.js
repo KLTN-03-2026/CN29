@@ -458,6 +458,24 @@ const JobPublicDetail = () => {
     const displayAddress = jobLocation || companyLocation || 'Đang cập nhật';
     const mapAddress = jobLocation || companyLocation;
     const companyDescription = normalizeText(companyInfo?.MoTa);
+    const jobSkills = useMemo(() => {
+        const source = Array.isArray(job?.skills) ? job.skills : [];
+        return source
+            .map((item) => {
+                const name = typeof item === 'string'
+                    ? String(item).trim()
+                    : String(item?.name || item?.TenKyNang || '').trim();
+                const importanceRaw = typeof item === 'string'
+                    ? 1
+                    : Number(item?.importance ?? item?.DoQuanTrong ?? 1);
+                const importance = Number.isFinite(importanceRaw)
+                    ? Math.max(1, Math.min(5, Math.round(importanceRaw)))
+                    : 1;
+                return { name, importance };
+            })
+            .filter((item) => item.name)
+            .slice(0, 16);
+    }, [job?.skills]);
 
     const generalInfoItems = [
         { icon: 'bi bi-cash-coin', label: 'Mức lương', value: salaryText || 'Thỏa thuận' },
@@ -529,6 +547,20 @@ const JobPublicDetail = () => {
 
                                     <h5 className="fw-bold mt-4 mb-3">Yêu cầu công việc</h5>
                                     <RichBlock html={job.YeuCau} />
+
+                                    {jobSkills.length > 0 ? (
+                                        <>
+                                            <h5 className="fw-bold mt-4 mb-3">Kỹ năng yêu cầu</h5>
+                                            <div className="job-detail-skills">
+                                                {jobSkills.map((skill, index) => (
+                                                    <span key={`${skill.name}-${index}`} className="job-detail-skill-chip" data-i18n-skip="true">
+                                                        <span>{skill.name}</span>
+                                                        {skill.importance > 1 ? <small>Ưu tiên {skill.importance}/5</small> : null}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </>
+                                    ) : null}
 
                                     <h5 className="fw-bold mt-4 mb-3">Quyền lợi</h5>
                                     <RichBlock html={job.QuyenLoi} />

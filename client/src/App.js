@@ -31,6 +31,7 @@ import CreateCvHub from './features/cv/CreateCvHub';
 import CvManagementPage from './features/cv/CvManagementPage';
 import OnlineCvBuilder from './features/cv/OnlineCvBuilder';
 import OnlineCvEditor from './features/cv/OnlineCvEditor';
+import TopCVEditorPage from './features/cv/TopCVEditorPage';
 import AIAssistantWidget from './components/AIAssistantWidget';
 import CareerGuide from './features/career-guide/CareerGuide';
 import CareerGuideDetail from './features/career-guide/CareerGuideDetail';
@@ -196,6 +197,7 @@ function AppContent() {
           <Route path="/cv-management" element={<CvManagementPage />} />
           <Route path="/create-cv/templates" element={<OnlineCvBuilder />} />
           <Route path="/create-cv/online-editor" element={<OnlineCvEditor />} />
+          <Route path="/create-cv/topcv-editor" element={<TopCVEditorPage />} />
           <Route path="/career-guide" element={<CareerGuide />} />
           <Route
             path="/career-guide/create"

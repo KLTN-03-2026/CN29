@@ -1,42 +1,45 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import './AdminNotificationsPage.css';
 
-const notificationItems = [
-  {
-    title: 'Tin nhắn mới từ ứng viên',
-    description: 'Khi ứng viên gửi tin nhắn, hệ thống sẽ đẩy toast trong app và thông báo thiết bị nếu đã bật quyền.',
-    icon: 'bi-chat-dots',
-    accent: 'primary'
-  },
-  {
-    title: 'Cảnh báo quản trị',
-    description: 'Theo dõi báo cáo, template CV và hoạt động hệ thống từ dashboard quản trị.',
-    icon: 'bi-shield-check',
-    accent: 'warning'
-  },
-  {
-    title: 'Trạng thái PWA',
-    description: 'Ứng dụng đã sẵn sàng cho cài đặt trên điện thoại và hỗ trợ thông báo trình duyệt.',
-    icon: 'bi-phone',
-    accent: 'info'
-  }
-];
-
 const AdminNotificationsPage = () => {
+  const { t } = useTranslation();
+
+  const notificationItems = [
+    {
+      title: t('admin.notificationsPage.items.messages.title'),
+      description: t('admin.notificationsPage.items.messages.description'),
+      icon: 'bi-chat-dots',
+      accent: 'primary'
+    },
+    {
+      title: t('admin.notificationsPage.items.alerts.title'),
+      description: t('admin.notificationsPage.items.alerts.description'),
+      icon: 'bi-shield-check',
+      accent: 'warning'
+    },
+    {
+      title: t('admin.notificationsPage.items.pwa.title'),
+      description: t('admin.notificationsPage.items.pwa.description'),
+      icon: 'bi-phone',
+      accent: 'info'
+    }
+  ];
+
   return (
     <div className="admin-notifications-page">
       <section className="admin-notification-hero">
         <div>
-          <span className="admin-notification-eyebrow">Trang quản trị</span>
-          <h1>Thông báo hệ thống</h1>
+          <span className="admin-notification-eyebrow">{t('admin.notificationsPage.eyebrow')}</span>
+          <h1>{t('admin.notificationsPage.title')}</h1>
           <p>
-            Đây là nơi tập trung các tín hiệu quan trọng cho quản trị viên: thông báo hệ thống, trạng thái vận hành và truy cập nhanh đến khu vực cần kiểm tra.
+            {t('admin.notificationsPage.description')}
           </p>
         </div>
         <Link className="btn btn-light admin-notification-hero-btn" to="/support">
           <i className="bi bi-life-preserver me-2"></i>
-          Mở trung tâm thông báo
+          {t('admin.notificationsPage.openCenter')}
         </Link>
       </section>
 
@@ -56,13 +59,13 @@ const AdminNotificationsPage = () => {
 
       <section className="admin-notification-footer">
         <div>
-          <h2>Liên kết nhanh</h2>
-          <p>Đi thẳng đến các khu vực hay dùng trong quản trị.</p>
+          <h2>{t('admin.notificationsPage.quickLinksTitle')}</h2>
+          <p>{t('admin.notificationsPage.quickLinksDescription')}</p>
         </div>
         <div className="admin-notification-links">
-          <Link to="/admin/dashboard" className="admin-notification-link">Dashboard</Link>
-          <Link to="/admin/reports" className="admin-notification-link">Báo cáo</Link>
-          <Link to="/admin/usersmanament" className="admin-notification-link">Người dùng</Link>
+          <Link to="/admin/dashboard" className="admin-notification-link">{t('admin.notificationsPage.links.dashboard')}</Link>
+          <Link to="/admin/reports" className="admin-notification-link">{t('admin.notificationsPage.links.reports')}</Link>
+          <Link to="/admin/usersmanament" className="admin-notification-link">{t('admin.notificationsPage.links.users')}</Link>
         </div>
       </section>
     </div>

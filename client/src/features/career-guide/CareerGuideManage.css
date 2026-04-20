@@ -368,3 +368,94 @@
     width: 100%;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .career-guide-manage-page {
+  --cgm-primary: #63b3ed;
+  --cgm-primary-deep: #3b82f6;
+  --cgm-border: #355274;
+  --cgm-bg: #0f1d30;
+  --cgm-text: #e4eef9;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.2), transparent 34%),
+    radial-gradient(circle at 90% 8%, rgba(20, 184, 166, 0.14), transparent 36%),
+    linear-gradient(170deg, #06111f 0%, #0c1b2d 46%, #12263a 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-header,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-main-card,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-side-card,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-card {
+  border-color: #355274;
+  background: #112136;
+  box-shadow: 0 16px 34px rgba(2, 10, 20, 0.45);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-header-badge,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-tag-preview span {
+  border-color: #3f607f;
+  background: #18314c;
+  color: #cfe5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-header h1,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-side-card h3,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-card h3,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-card h4,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-field label {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-header p,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-hint-row,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-hint-row small,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-field small,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-excerpt,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-content,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-tips ul {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-field .form-control,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-field .form-select {
+  border-color: #3b5b7b;
+  background: #102338;
+  color: #e2edf8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-field .form-control:focus,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-field .form-select:focus {
+  border-color: #5d8cb9;
+  box-shadow: 0 0 0 4px rgba(93, 140, 185, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-cover {
+  background: #0f2238;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-content h2,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-content h3,
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-content h4 {
+  color: #dbeafe;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-preview-content blockquote {
+  border-left-color: #60a5fa;
+  background: #162d45;
+  color: #bfd3e8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-tips {
+  border-color: #5d4a2a;
+  background: #352b1a;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-tips h4 {
+  color: #f6d18a;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cgm-actions .btn-light {
+  border-color: #3f607f;
+  background: #18314c;
+  color: #d0e4f8;
+}

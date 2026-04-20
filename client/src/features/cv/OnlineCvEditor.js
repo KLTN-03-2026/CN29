@@ -754,6 +754,13 @@ const OnlineCvEditor = () => {
   const userId = user?.id || user?.MaNguoiDung || user?.maNguoiDung || user?.userId || user?.userID || null;
   const cvId = query.get('cvId') || query.get('cvid') || query.get('id');
   const requestedTemplateKey = normalizeTemplateKey(query.get('template') || '', '');
+  const requestedMode = String(query.get('mode') || query.get('view') || '').trim().toLowerCase();
+  const requestedReadonly = String(query.get('readonly') || query.get('readOnly') || '').trim().toLowerCase();
+  const isReadOnly = requestedMode === 'view'
+    || requestedMode === 'readonly'
+    || requestedMode === 'preview'
+    || requestedReadonly === '1'
+    || requestedReadonly === 'true';
   const isNewCv = !cvId;
 
   const suppressLoadErrorsUntilRef = useRef(0);
@@ -783,6 +790,16 @@ const OnlineCvEditor = () => {
   const [avatarModalPreview, setAvatarModalPreview] = useState(DEFAULT_AVATAR_DATA_URI);
   const [uploadingAvatarToCloudinary, setUploadingAvatarToCloudinary] = useState(false);
   const [avatarModalInputKey, setAvatarModalInputKey] = useState(0);
+  const templateOptionsRequestIdRef = useRef(0);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined;
+
+    document.body.classList.add('cv-editor-focus-mode');
+    return () => {
+      document.body.classList.remove('cv-editor-focus-mode');
+    };
+  }, []);
 
   const updateFieldValue = useCallback((field, rawValue) => {
     const value = String(rawValue || '').replace(/\r/g, '');
@@ -820,15 +837,19 @@ const OnlineCvEditor = () => {
   }, []);
 
   const openAvatarCloudinaryModal = useCallback((currentAvatar) => {
+    if (isReadOnly) return;
+
     const incoming = normalizeAvatarUrl(currentAvatar) || normalizeAvatarUrl(avatarImageUrl);
     const preview = incoming || DEFAULT_AVATAR_DATA_URI;
 
     setAvatarModalUrl(incoming.startsWith('data:image') ? '' : incoming);
     setAvatarModalPreview(preview);
     setAvatarModalOpen(true);
-  }, [avatarImageUrl]);
+  }, [avatarImageUrl, isReadOnly]);
 
   const bindAvatarTriggerBridge = useCallback(() => {
+    if (isReadOnly) return;
+
     const iframe = previewFrameRef.current;
     const iframeDoc = iframe?.contentDocument;
     if (!iframeDoc) return;
@@ -857,7 +878,7 @@ const OnlineCvEditor = () => {
         openAvatarCloudinaryModal(currentAvatar);
       }, true);
     });
-  }, [avatarImageUrl, openAvatarCloudinaryModal]);
+  }, [avatarImageUrl, isReadOnly, openAvatarCloudinaryModal]);
 
   const handlePreviewFrameLoad = useCallback(() => {
     window.requestAnimationFrame(() => {
@@ -961,6 +982,7 @@ const OnlineCvEditor = () => {
       if (!data || data.__cv_editor !== true) return;
 
       if (data.type === 'CV_AVATAR_PICK_REQUEST') {
+        if (isReadOnly) return;
         openAvatarCloudinaryModal(data.currentAvatar);
         return;
       }
@@ -974,7 +996,7 @@ const OnlineCvEditor = () => {
 
     window.addEventListener('message', handlePreviewBridge);
     return () => window.removeEventListener('message', handlePreviewBridge);
-  }, [openAvatarCloudinaryModal, updateFieldValue]);
+  }, [isReadOnly, openAvatarCloudinaryModal, updateFieldValue]);
 
   useEffect(() => {
     const iframe = previewFrameRef.current;
@@ -996,18 +1018,23 @@ const OnlineCvEditor = () => {
 
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
+    const requestId = templateOptionsRequestIdRef.current + 1;
+    templateOptionsRequestIdRef.current = requestId;
 
     const loadTemplateOptions = async () => {
       setTemplateLoading(true);
 
       try {
-        const res = await fetch(`${API_BASE}/api/cvs/templates?limit=120&offset=0`);
+        const res = await fetch(`${API_BASE}/api/cvs/templates?limit=120&offset=0`, {
+          signal: controller.signal
+        });
         const data = await res.json().catch(() => null);
         if (!res.ok || !data?.success) {
           throw new Error(data?.error || 'Không tải được danh sách template');
         }
 
-        if (!active) return;
+        if (!active || requestId !== templateOptionsRequestIdRef.current) return;
 
         const rows = Array.isArray(data?.templates) ? data.templates : [];
         const mapped = rows
@@ -1032,18 +1059,19 @@ const OnlineCvEditor = () => {
         setTemplateKey(resolvedKey);
         setSelectedTemplateHtml(selected?.htmlContent || '');
       } catch (err) {
-        if (!active) return;
+        if (!active || requestId !== templateOptionsRequestIdRef.current || err?.name === 'AbortError') return;
         setTemplateOptions([]);
         setTemplateKey('');
         setSelectedTemplateHtml('');
       } finally {
-        if (active) setTemplateLoading(false);
+        if (active && requestId === templateOptionsRequestIdRef.current) setTemplateLoading(false);
       }
     };
 
     loadTemplateOptions();
     return () => {
       active = false;
+      controller.abort();
     };
   }, [requestedTemplateKey]);
 
@@ -1319,6 +1347,11 @@ const OnlineCvEditor = () => {
   };
 
   const onSave = async () => {
+    if (isReadOnly) {
+      notify({ type: 'warning', message: 'CV đang ở chế độ chỉ xem nên không thể lưu chỉnh sửa.' });
+      return;
+    }
+
     if (!userId) {
       notify({ type: 'error', message: 'Bạn cần đăng nhập để tạo CV online.' });
       return;
@@ -1468,7 +1501,8 @@ const OnlineCvEditor = () => {
     return `<!doctype html>\n${clone.outerHTML}`;
   }, [avatarImageUrl]);
 
-  const previewHtml = injectPreviewEditorScript(buildHtml());
+  const previewBaseHtml = buildHtml();
+  const previewHtml = isReadOnly ? previewBaseHtml : injectPreviewEditorScript(previewBaseHtml);
 
   if (!userId) {
     return (
@@ -1483,8 +1517,12 @@ const OnlineCvEditor = () => {
       <div className="cv-editor-header">
         <div className="d-flex justify-content-between align-items-center flex-wrap gap-3">
           <div>
-            <h3><i className="bi bi-file-earmark-text me-2"></i>CV Online</h3>
-            <div className="text-muted">Bạn có thể chỉnh trực tiếp mọi nội dung hiển thị trong CV.</div>
+            <h3><i className="bi bi-file-earmark-text me-2"></i>{isReadOnly ? 'Xem CV Online' : 'CV Online'}</h3>
+            <div className="text-muted">
+              {isReadOnly
+                ? 'Chế độ chỉ xem: bạn có thể xem và tải PDF, không thể chỉnh sửa nội dung CV.'
+                : 'Bạn có thể chỉnh trực tiếp mọi nội dung hiển thị trong CV.'}
+            </div>
           </div>
           <div className="cv-editor-actions">
             <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/create-cv')}>
@@ -1493,9 +1531,11 @@ const OnlineCvEditor = () => {
             <button type="button" className="btn btn-outline-primary" onClick={onPrint}>
               <i className="bi bi-download me-2"></i>Tải PDF
             </button>
-            <button type="button" className="btn btn-success" onClick={onSave} disabled={saving || loading}>
-              <i className="bi bi-check-circle me-2"></i>{saving ? 'Đang lưu...' : 'Lưu CV Online'}
-            </button>
+            {!isReadOnly ? (
+              <button type="button" className="btn btn-success" onClick={onSave} disabled={saving || loading}>
+                <i className="bi bi-check-circle me-2"></i>{saving ? 'Đang lưu...' : 'Lưu CV Online'}
+              </button>
+            ) : null}
           </div>
         </div>
       </div>
@@ -1512,7 +1552,7 @@ const OnlineCvEditor = () => {
           <div className="cv-editor-preview-card is-full">
             <div className="cv-editor-preview-header">
               <i className="bi bi-eye"></i>
-              <div className="fw-semibold">Xem trước CV</div>
+              <div className="fw-semibold">{isReadOnly ? 'Xem trước CV (chỉ xem)' : 'Xem trước CV'}</div>
             </div>
 
             <div className="cv-editor-preview-body">
@@ -1528,7 +1568,7 @@ const OnlineCvEditor = () => {
         </div>
       </div>
 
-      {avatarModalOpen ? (
+      {avatarModalOpen && !isReadOnly ? (
         <div className="cv-editor-avatar-modal-backdrop" onClick={closeAvatarCloudinaryModal}>
           <div className="cv-editor-avatar-modal" onClick={(event) => event.stopPropagation()}>
             <div className="cv-editor-avatar-modal-header">

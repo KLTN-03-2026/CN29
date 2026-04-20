@@ -473,6 +473,15 @@ const HomePage = () => {
 
     const idText = String(jobId);
     const currentlySaved = savedSet.has(idText);
+    let previousSavedIds = null;
+
+    setSavedIds((prev) => {
+      previousSavedIds = prev;
+      const next = new Set(prev.map((item) => String(item)));
+      if (currentlySaved) next.delete(idText);
+      else next.add(idText);
+      return Array.from(next);
+    });
 
     try {
       const response = await fetch(`${CLIENT_API_BASE}/jobs/saved/${encodeURIComponent(idText)}`, {
@@ -484,18 +493,14 @@ const HomePage = () => {
         throw new Error((data && data.error) || t('home.notifications.cannotUpdateSaved'));
       }
 
-      setSavedIds((prev) => {
-        const next = new Set(prev.map((item) => String(item)));
-        if (currentlySaved) next.delete(idText);
-        else next.add(idText);
-        return Array.from(next);
-      });
-
       notify({
         type: 'success',
         message: currentlySaved ? t('home.notifications.unsaved') : t('home.notifications.saved')
       });
     } catch (error) {
+      if (Array.isArray(previousSavedIds)) {
+        setSavedIds(previousSavedIds);
+      }
       notify({ type: 'error', message: error.message || t('home.notifications.cannotUpdateSavedGeneric') });
     }
   };

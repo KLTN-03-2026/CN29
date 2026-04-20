@@ -10,6 +10,7 @@ export const NotificationProvider = ({ children }) => {
     open: false,
     mode: 'modal',
     kind: 'notify',
+    intent: '',
     type: 'info',
     title: '',
     message: '',
@@ -74,6 +75,7 @@ export const NotificationProvider = ({ children }) => {
       open: true,
       mode: 'modal',
       kind: 'notify',
+      intent: '',
       type: payload.type || 'info',
       title: payload.title || '',
       message: payload.message || ''
@@ -96,6 +98,7 @@ export const NotificationProvider = ({ children }) => {
         open: true,
         mode: 'modal',
         kind: 'confirm',
+        intent: String(payload.intent || '').trim().toLowerCase(),
         type: payload.type || 'warning',
         title: payload.title || t('components.notificationProvider.confirmActionTitle'),
         message: payload.message || t('components.notificationProvider.confirmActionMessage'),
@@ -135,7 +138,27 @@ export const NotificationProvider = ({ children }) => {
 
   const value = useMemo(() => ({ notify, close, closeToast, requestConfirm }), [notify, close, closeToast, requestConfirm]);
 
-  const getUi = useCallback((type, title) => {
+  const getUi = useCallback((type, title, kind = 'notify', intent = '') => {
+    const normalizedIntent = String(intent || '').trim().toLowerCase();
+
+    if (kind === 'confirm') {
+      if (normalizedIntent === 'delete' || normalizedIntent === 'destructive') {
+        return {
+          icon: 'bi-trash3-fill',
+          accent: 'danger',
+          title: title || t('components.notificationProvider.confirmActionTitle')
+        };
+      }
+
+      if (normalizedIntent === 'logout' || normalizedIntent === 'signout') {
+        return {
+          icon: 'bi-door-open-fill',
+          accent: 'primary',
+          title: title || t('components.notificationProvider.confirmActionTitle')
+        };
+      }
+    }
+
     switch (type) {
       case 'success':
         return { icon: 'bi-check-circle-fill', accent: 'success', title: title || t('components.notificationProvider.statusTitles.success') };
@@ -149,7 +172,12 @@ export const NotificationProvider = ({ children }) => {
     }
   }, [t]);
 
-  const ui = useMemo(() => getUi(state.type, state.title), [state.type, state.title, getUi]);
+  const confirmIntent = useMemo(() => {
+    if (state.kind !== 'confirm') return '';
+    return String(state.intent || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '');
+  }, [state.kind, state.intent]);
+
+  const ui = useMemo(() => getUi(state.type, state.title, state.kind, state.intent), [state.type, state.title, state.kind, state.intent, getUi]);
   const toastUi = useMemo(() => getUi(toastState.type, toastState.title), [toastState.type, toastState.title, getUi]);
 
   return (
@@ -159,7 +187,7 @@ export const NotificationProvider = ({ children }) => {
       {state.open && (
         <div className="jf-notify-overlay" role="dialog" aria-modal="true" onClick={() => closeWithResult(false)}>
           <div
-            className={`jf-notify-dialog jf-notify-${ui.accent} ${state.kind === 'confirm' ? 'jf-notify-dialog-confirm' : ''}`.trim()}
+            className={`jf-notify-dialog jf-notify-${ui.accent} ${state.kind === 'confirm' ? 'jf-notify-dialog-confirm' : ''} ${confirmIntent ? `jf-notify-intent-${confirmIntent}` : ''}`.trim()}
             onClick={(e) => e.stopPropagation()}
           >
             <div className="jf-notify-topbar" />

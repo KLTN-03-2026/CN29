@@ -1,6 +1,17 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
+const getJobSkillNames = (job) => {
+  const source = Array.isArray(job?.skills) ? job.skills : [];
+  return source
+    .map((item) => {
+      if (typeof item === 'string') return String(item).trim();
+      return String(item?.name || item?.TenKyNang || '').trim();
+    })
+    .filter(Boolean)
+    .slice(0, 4);
+};
+
 const LatestJobsSection = ({
   jobs,
   totalJobs,
@@ -22,6 +33,11 @@ const LatestJobsSection = ({
   const currentLocale = String(i18n.resolvedLanguage || i18n.language || 'vi').startsWith('en')
     ? 'en-US'
     : 'vi-VN';
+  const hasJobs = Array.isArray(jobs) && jobs.length > 0;
+  const normalizedTotalJobs = Number.isFinite(Number(totalJobs))
+    ? Number(totalJobs)
+    : (hasJobs ? jobs.length : 0);
+  const showLoadingState = Boolean(loading && !hasJobs);
 
   return (
     <section className="home-jobs-section">
@@ -33,9 +49,9 @@ const LatestJobsSection = ({
 
         <div className="home-jobs-header-right">
           <p className="home-section-subtitle home-section-subtitle-right">
-            {loading
+            {showLoadingState
               ? t('home.latest.syncing')
-              : t('home.latest.subtitleWithCount', { count: totalJobs.toLocaleString(currentLocale) })}
+              : t('home.latest.subtitleWithCount', { count: normalizedTotalJobs.toLocaleString(currentLocale) })}
           </p>
 
           <button type="button" className="home-view-all-btn" onClick={onViewAllJobs}>
@@ -59,15 +75,16 @@ const LatestJobsSection = ({
 
       {error ? <div className="home-jobs-error">{error}</div> : null}
 
-      {loading ? (
+      {showLoadingState ? (
         <div className="home-jobs-loading">{t('home.latest.loading')}</div>
-      ) : jobs.length === 0 ? (
+      ) : !hasJobs ? (
         <div className="home-jobs-empty">{t('home.latest.empty')}</div>
       ) : (
         <div className="home-jobs-feed">
           {jobs.map((job) => {
             const isSaved = savedSet.has(String(job.MaTin));
             const badgeLabel = getHighlightBadge(job);
+            const skillNames = getJobSkillNames(job);
 
             return (
               <article key={job.MaTin} className="home-job-card">
@@ -101,6 +118,14 @@ const LatestJobsSection = ({
                     <span><i className="bi bi-briefcase"></i>{job.HinhThuc || t('home.latest.fullTimeFallback')}</span>
                     <span><i className="bi bi-person-workspace"></i>{job.KinhNghiem || t('home.latest.noExperience')}</span>
                   </div>
+
+                  {skillNames.length > 0 ? (
+                    <div className="home-job-skills" data-i18n-skip="true">
+                      {skillNames.map((skillName) => (
+                        <span key={`${job.MaTin}-${skillName}`}>{skillName}</span>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className="home-job-side">

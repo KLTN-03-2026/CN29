@@ -857,3 +857,177 @@
     row-gap: 10px;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-page-root {
+  color-scheme: dark;
+  background:
+    radial-gradient(circle at 10% 6%, rgba(37, 99, 235, 0.22), transparent 48%),
+    radial-gradient(circle at 92% 94%, rgba(20, 184, 166, 0.14), transparent 42%),
+    linear-gradient(180deg, #06111f 0%, #0c1b2d 46%, #12263a 100%);
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-brand,
+:is(html.dark, html[data-bs-theme='dark']) .auth-brand-text,
+:is(html.dark, html[data-bs-theme='dark']) .auth-form-title,
+:is(html.dark, html[data-bs-theme='dark']) .auth-field-label,
+:is(html.dark, html[data-bs-theme='dark']) .auth-hero-title,
+:is(html.dark, html[data-bs-theme='dark']) .auth-forgot-panel .forgot-modal .modal-title {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-switch-text,
+:is(html.dark, html[data-bs-theme='dark']) .auth-form-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .auth-help-note,
+:is(html.dark, html[data-bs-theme='dark']) .auth-terms-text,
+:is(html.dark, html[data-bs-theme='dark']) .auth-switch-inline,
+:is(html.dark, html[data-bs-theme='dark']) .auth-forgot-panel .forgot-modal p,
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-hint,
+:is(html.dark, html[data-bs-theme='dark']) .auth-checkbox-wrap {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-card {
+  background: #111f33;
+  border-color: #345171;
+  box-shadow: 0 18px 48px rgba(2, 10, 20, 0.5);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-form-column {
+  background: linear-gradient(180deg, #14283f 0%, #102238 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-hero-layer {
+  background:
+    linear-gradient(160deg, rgba(8, 22, 38, 0.28), transparent 44%),
+    linear-gradient(10deg, rgba(8, 24, 40, 0.86) 4%, rgba(13, 44, 74, 0.6) 46%, rgba(20, 70, 112, 0.22) 82%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-input,
+:is(html.dark, html[data-bs-theme='dark']) .auth-select,
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-trigger,
+:is(html.dark, html[data-bs-theme='dark']) .auth-forgot-panel .forgot-modal .form-control {
+  border-color: #3b5b7b;
+  background: #102338;
+  color: #e2edf8;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-input::placeholder {
+  color: #88a4be;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-trigger span.is-placeholder {
+  color: #8eabc5;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-trigger i,
+:is(html.dark, html[data-bs-theme='dark']) .auth-password-btn {
+  color: #9eb8cf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-password-btn:hover {
+  color: #dbeafe;
+  background: rgba(93, 140, 185, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-input:focus,
+:is(html.dark, html[data-bs-theme='dark']) .auth-select:focus,
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-trigger.is-open {
+  border-color: #5d8cb9;
+  box-shadow: 0 0 0 4px rgba(93, 140, 185, 0.2);
+  background: #132943;
+  color: #eef6ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-input:-webkit-autofill,
+:is(html.dark, html[data-bs-theme='dark']) .auth-input:-webkit-autofill:hover,
+:is(html.dark, html[data-bs-theme='dark']) .auth-input:-webkit-autofill:focus,
+:is(html.dark, html[data-bs-theme='dark']) .auth-select:-webkit-autofill,
+:is(html.dark, html[data-bs-theme='dark']) .auth-select:-webkit-autofill:hover,
+:is(html.dark, html[data-bs-theme='dark']) .auth-select:-webkit-autofill:focus {
+  -webkit-text-fill-color: #e2edf8;
+  -webkit-box-shadow: 0 0 0 1000px #102338 inset;
+  box-shadow: 0 0 0 1000px #102338 inset;
+  border: 1px solid #3b5b7b;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-menu {
+  border-color: #355274;
+  background: #102036;
+  box-shadow: 0 16px 34px rgba(2, 10, 20, 0.56);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-option {
+  background: #132943;
+  color: #dce8f7;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-option:hover {
+  background: #1a3552;
+  border-color: #567da4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-birthday-select-option.is-selected {
+  background: #1f7eca;
+  border-color: #1f7eca;
+  color: #ffffff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-avatar-upload,
+:is(html.dark, html[data-bs-theme='dark']) .auth-avatar-preview-wrap,
+:is(html.dark, html[data-bs-theme='dark']) .auth-avatar-upload-btn,
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-btn,
+:is(html.dark, html[data-bs-theme='dark']) .auth-radio-chip span {
+  border-color: #3b5b7b;
+  background: #132943;
+  color: #d6e9fc;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-avatar-upload-btn:hover,
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-btn:hover:not(:disabled) {
+  border-color: #5e85ad;
+  background: #1f3b59;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-avatar-clear-btn {
+  color: #f5b4b4;
+  border-color: #8a4b58;
+  background: #3f1f2b;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-avatar-clear-btn:hover {
+  border-color: #a25d6c;
+  background: #4b2432;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-icon {
+  background: #1f3752;
+  color: #8cc5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-divider,
+:is(html.dark, html[data-bs-theme='dark']) .auth-switch-inline {
+  color: #9db7cf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-divider::before,
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-divider::after {
+  background: linear-gradient(90deg, rgba(87, 116, 148, 0.18) 0%, rgba(87, 116, 148, 0.8) 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-divider::after {
+  background: linear-gradient(90deg, rgba(87, 116, 148, 0.8) 0%, rgba(87, 116, 148, 0.18) 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-error-banner {
+  border-color: #8a4b58;
+  background: #3f1f2b;
+  color: #ffd4d4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-radio-chip input:checked + span {
+  border-color: #5d8cb9;
+  background: #1f3b59;
+  color: #dbeafe;
+}

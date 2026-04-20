@@ -11,6 +11,8 @@
     "close": "Đóng",
     "delete": "Xóa",
     "cancel": "Hủy",
+    "search": "Tìm",
+    "clearFilters": "Xóa lọc",
     "notAvailable": "N/A",
     "requestFailed": "Yêu cầu thất bại ({{status}})"
   },
@@ -157,6 +159,353 @@
         "progressHeader": "Tỉ lệ (%)",
         "noPopular": "Chưa có dữ liệu"
       }
+    },
+    "jobsPage": {
+      "title": "Kiểm duyệt tin tuyển dụng",
+      "confirmDeleteTitle": "Xác nhận xóa",
+      "confirmDeleteMessage": "Bạn có chắc muốn xóa tin tuyển dụng này?",
+      "errorFallback": "Lỗi không xác định",
+      "columns": {
+        "id": "ID",
+        "title": "Tiêu đề",
+        "company": "Công ty",
+        "city": "Tỉnh/TP",
+        "status": "Trạng thái",
+        "actions": "Thao tác"
+      },
+      "actions": {
+        "viewPostedJob": "Xem tin đã đăng",
+        "missingJobId": "Không tìm thấy mã tin",
+        "deleteJob": "Xóa tin tuyển dụng"
+      },
+      "status": {
+        "posted": "Đã đăng",
+        "closed": "Đã đóng",
+        "archived": "Lưu trữ",
+        "draft": "Nháp",
+        "unknown": "Không xác định"
+      },
+      "empty": "Chưa có dữ liệu"
+    },
+    "reportsPage": {
+      "title": "Báo cáo",
+      "confirmDeleteTitle": "Xóa báo cáo",
+      "confirmDeleteMessage": "Bạn có chắc muốn xóa báo cáo #{{id}}? Thao tác này không thể hoàn tác.",
+      "confirmDeleteMessageSimple": "Bạn có chắc muốn xóa báo cáo #{{id}}?",
+      "approveError": "Không thể phê duyệt báo cáo",
+      "empty": "Chưa có dữ liệu",
+      "columns": {
+        "id": "ID",
+        "reporter": "Người báo",
+        "targetType": "Loại đối tượng",
+        "target": "Đối tượng",
+        "reason": "Lý do",
+        "detail": "Chi tiết",
+        "status": "Trạng thái",
+        "reportedAt": "Ngày báo cáo",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "approve": "Phê duyệt",
+        "deleteReport": "Xóa báo cáo"
+      },
+      "status": {
+        "unprocessed": "Chưa xử lý",
+        "pending": "Đang xử lý",
+        "approved": "Đã xử lý",
+        "rejected": "Từ chối"
+      },
+      "targetTypeLabels": {
+        "job": "Tin tuyển dụng",
+        "company": "Công ty",
+        "user": "Người dùng",
+        "post": "Bài viết",
+        "comment": "Bình luận"
+      },
+      "modal": {
+        "title": "Phê duyệt báo cáo #{{id}}",
+        "reporterCode": "Mã người báo cáo",
+        "reporterEmail": "Email người báo cáo",
+        "targetCode": "Mã đối tượng",
+        "detailTitle": "Chi tiết báo cáo",
+        "noDetail": "Không có mô tả chi tiết.",
+        "hideTargetContent": "Ẩn nội dung đối tượng",
+        "lockTarget": "Khóa đối tượng",
+        "processing": "Đang xử lý..."
+      }
+    },
+    "notificationsPage": {
+      "eyebrow": "Trang quản trị",
+      "title": "Thông báo hệ thống",
+      "description": "Đây là nơi tập trung các tín hiệu quan trọng cho quản trị viên: thông báo hệ thống, trạng thái vận hành và truy cập nhanh đến khu vực cần kiểm tra.",
+      "openCenter": "Mở trung tâm thông báo",
+      "quickLinksTitle": "Liên kết nhanh",
+      "quickLinksDescription": "Đi thẳng đến các khu vực hay dùng trong quản trị.",
+      "links": {
+        "dashboard": "Dashboard",
+        "reports": "Báo cáo",
+        "users": "Người dùng"
+      },
+      "items": {
+        "messages": {
+          "title": "Tin nhắn mới từ ứng viên",
+          "description": "Khi ứng viên gửi tin nhắn, hệ thống sẽ đẩy toast trong app và thông báo thiết bị nếu đã bật quyền."
+        },
+        "alerts": {
+          "title": "Cảnh báo quản trị",
+          "description": "Theo dõi báo cáo, template CV và hoạt động hệ thống từ dashboard quản trị."
+        },
+        "pwa": {
+          "title": "Trạng thái PWA",
+          "description": "Ứng dụng đã sẵn sàng cho cài đặt trên điện thoại và hỗ trợ thông báo trình duyệt."
+        }
+      }
+    },
+    "templatesPage": {
+      "list": {
+        "title": "Danh sách template CV",
+        "createButton": "Tạo template mới",
+        "searchPlaceholder": "Tìm theo tên hoặc slug...",
+        "noDescription": "Không có mô tả",
+        "empty": "Chưa có template nào",
+        "loading": "Đang tải danh sách template...",
+        "columns": {
+          "templateName": "Tên template",
+          "updatedAt": "Cập nhật",
+          "actions": "Thao tác"
+        },
+        "actions": {
+          "edit": "Sửa template",
+          "preview": "Xem template",
+          "delete": "Xóa template"
+        }
+      },
+      "create": {
+        "newTitle": "Tạo template CV mới",
+        "editTitle": "Chỉnh sửa template #{{id}}",
+        "allTemplatesButton": "Tất cả template",
+        "loadingDetail": "Đang tải chi tiết template...",
+        "tabs": {
+          "basic": "Thông tin cơ bản",
+          "html": "HTML & Design",
+          "preview": "Xem trước"
+        },
+        "fields": {
+          "name": "Tên template",
+          "slug": "Slug (URL)",
+          "status": "Trạng thái",
+          "style": "Phong cách CV",
+          "description": "Mô tả",
+          "thumbnailUrl": "Thumbnail URL",
+          "htmlContent": "HTML Content"
+        },
+        "placeholders": {
+          "name": "Ví dụ: CV Chuyên nghiệp xanh navy",
+          "slug": "cv-chuyen-nghiep-xanh-navy",
+          "description": "Mô tả ngắn về template CV"
+        },
+        "slugHint": "Slug được tạo tự động theo tên template.",
+        "status": {
+          "active": "Hoạt động",
+          "inactive": "Tạm tắt"
+        },
+        "uploadingImage": "Đang tải ảnh...",
+        "uploadImage": "Tải ảnh lên",
+        "removeThumbnail": "Xóa thumbnail",
+        "thumbnailHint": "Chọn ảnh thumbnail trực tiếp từ máy của bạn.",
+        "editCode": "Sửa code",
+        "quickPreview": "Xem preview nhanh",
+        "savingUpdating": "Đang cập nhật...",
+        "savingCreating": "Đang tạo...",
+        "submitUpdate": "Cập nhật template",
+        "submitCreate": "Tạo template"
+      },
+      "styleOptions": {
+        "professional": "Chuyên nghiệp",
+        "creative": "Sáng tạo",
+        "minimal": "Tối giản",
+        "modern": "Hiện đại"
+      },
+      "preview": {
+        "defaultTitle": "Preview template",
+        "quickTitle": "Quick Preview",
+        "tabTitle": "Template Preview",
+        "modalFrameTitle": "Template Modal Preview",
+        "modalTitle": "Preview",
+        "thumbnailAlt": "Template thumbnail",
+        "emptyQuick": "Nhập HTML content để xem preview.",
+        "emptyTab": "Chưa có nội dung HTML để xem trước.",
+        "emptyModal": "Template này chưa có nội dung HTML."
+      },
+      "confirm": {
+        "deleteTitle": "Xác nhận xóa template",
+        "deleteMessage": "Bạn có chắc muốn xóa template \"{{name}}\"?",
+        "deleteButton": "Xóa"
+      },
+      "messages": {
+        "sessionExpired": "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+        "requestFailed": "Không thể xử lý yêu cầu",
+        "loadListFailed": "Không tải được danh sách template",
+        "loadDetailFailed": "Không tải được chi tiết template",
+        "openPreviewFailed": "Không mở được preview",
+        "deleteSuccess": "Đã xóa template thành công.",
+        "deleteFailed": "Không xóa được template",
+        "thumbnailImageOnly": "Chỉ chấp nhận file ảnh cho thumbnail.",
+        "thumbnailSizeLimit": "Kích thước ảnh thumbnail không vượt quá 2MB.",
+        "missingAuthToken": "Không tìm thấy token đăng nhập. Vui lòng đăng nhập lại.",
+        "thumbnailUploadFailed": "Không thể tải thumbnail lên.",
+        "thumbnailUrlInvalid": "Không trả về URL thumbnail hợp lệ.",
+        "thumbnailUploadSuccess": "Đã tải thumbnail lên thành công.",
+        "nameRequired": "Tên template là bắt buộc.",
+        "slugInvalid": "Slug không hợp lệ.",
+        "htmlRequired": "HTML content là bắt buộc.",
+        "updateSuccess": "Cập nhật template thành công.",
+        "createSuccess": "Tạo template thành công.",
+        "saveFailed": "Không lưu được template"
+      }
+    },
+    "careerGuidePostsPage": {
+      "title": "Quản lý bài viết hướng nghiệp",
+      "sampleBadge": "Mẫu",
+      "empty": "Chưa có dữ liệu",
+      "columns": {
+        "title": "Tiêu đề",
+        "author": "Tác giả",
+        "authorType": "Loại tác giả",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Ngày cập nhật",
+        "views": "Lượt xem",
+        "actions": "Hành động"
+      },
+      "authorType": {
+        "candidate": "Ứng viên",
+        "employer": "Nhà tuyển dụng",
+        "admin": "Quản trị"
+      },
+      "actions": {
+        "openPost": "Đi tới link bài viết",
+        "delete": "Xóa bài viết",
+        "deleteDisabledSample": "Bài mẫu không thể xóa"
+      },
+      "confirm": {
+        "deleteTitle": "Xóa bài viết hướng nghiệp",
+        "deleteMessage": "Bạn có chắc muốn xóa bài viết #{{id}}? Thao tác này không thể hoàn tác.",
+        "deleteButton": "Xóa"
+      },
+      "messages": {
+        "deleteFailed": "Không thể xóa bài viết hướng nghiệp"
+      }
+    },
+    "auditLogsPage": {
+      "title": "Nhật ký quản trị",
+      "meta": {
+        "total": "Tổng bản ghi",
+        "page": "Trang"
+      },
+      "columns": {
+        "actor": "Người thực hiện",
+        "action": "Nội dung hành động",
+        "object": "Đối tượng",
+        "timestamp": "Thời gian",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "delete": "Xóa audit-log"
+      },
+      "fallback": {
+        "userWithId": "Người dùng #{{id}}",
+        "system": "Hệ thống",
+        "object": "Đối tượng"
+      },
+      "messages": {
+        "loadFailed": "Không tải được nhật ký quản trị",
+        "exportLoadFailed": "Không thể tải dữ liệu để xuất Excel.",
+        "exportEmpty": "Chưa có dữ liệu nhật ký quản trị để xuất Excel.",
+        "exportFailed": "Không thể xuất file Excel nhật ký quản trị.",
+        "deleteFailed": "Không thể xóa audit-log"
+      },
+      "confirm": {
+        "deleteMessage": "Bạn có chắc muốn xóa audit-log #{{id}}?"
+      },
+      "empty": "Chưa có nhật ký phù hợp",
+      "export": {
+        "downloadButton": "Tải Excel",
+        "exporting": "Đang xuất...",
+        "sheetName": "Nhật ký quản trị",
+        "title": "JOBFINDER - NHẬT KÝ QUẢN TRỊ",
+        "exportedAt": "Ngày xuất: {{value}}",
+        "totalNote": "Tổng bản ghi: {{total}} | Nguồn dữ liệu: JobFinder Admin",
+        "footer": "Báo cáo được xuất từ hệ thống JobFinder. Vui lòng không chỉnh sửa dữ liệu gốc khi đối soát.",
+        "columns": {
+          "no": "STT",
+          "id": "ID",
+          "actor": "Người thực hiện",
+          "email": "Email",
+          "action": "Nội dung hành động",
+          "object": "Đối tượng",
+          "timestamp": "Thời gian"
+        }
+      }
+    },
+    "profilePage": {
+      "roles": {
+        "superAdmin": "Siêu quản trị viên",
+        "admin": "Quản trị viên"
+      },
+      "messages": {
+        "missingAccount": "Không tìm thấy tài khoản admin. Vui lòng đăng nhập lại.",
+        "loadFailed": "Không tải được thông tin cá nhân admin.",
+        "editFirst": "Nhấn \"Chỉnh sửa hồ sơ\" để thay đổi ảnh đại diện.",
+        "avatarTypeInvalid": "Ảnh đại diện chỉ nhận JPG, PNG hoặc WEBP.",
+        "avatarTooLarge": "Ảnh đại diện không được vượt quá 5MB.",
+        "avatarUploadFailed": "Không thể tải ảnh đại diện lên.",
+        "avatarUploadSuccess": "Đã cập nhật ảnh đại diện admin.",
+        "saveFailed": "Không thể lưu hồ sơ admin.",
+        "saveSuccess": "Đã lưu hồ sơ admin thành công.",
+        "loadingProfile": "Đang tải thông tin hồ sơ..."
+      },
+      "avatar": {
+        "hint": "Ảnh JPG/PNG/WEBP, dung lượng tối đa 5MB.",
+        "selectImage": "Chọn ảnh",
+        "uploading": "Đang tải...",
+        "updateAvatar": "Cập nhật avatar",
+        "clearSelection": "Bỏ chọn"
+      },
+      "info": {
+        "email": "Email",
+        "role": "Vai trò",
+        "createdAt": "Ngày tạo tài khoản",
+        "updatedAt": "Lần cập nhật gần nhất",
+        "phone": "Số điện thoại",
+        "city": "Thành phố",
+        "address": "Địa chỉ",
+        "status": "Trạng thái",
+        "active": "Đang hoạt động",
+        "noData": "Chưa có dữ liệu"
+      },
+      "form": {
+        "title": "Hồ sơ admin",
+        "subtitle": "Thông tin này sẽ hiển thị ở chip tài khoản và dropdown của khu vực quản trị.",
+        "editButton": "Chỉnh sửa hồ sơ",
+        "cancelButton": "Hủy chỉnh sửa",
+        "saving": "Đang lưu...",
+        "saveButton": "Lưu hồ sơ admin",
+        "editHint": "Nhấn \"Chỉnh sửa hồ sơ\" để thay đổi thông tin.",
+        "fields": {
+          "fullName": "Họ tên",
+          "email": "Email",
+          "phone": "Số điện thoại",
+          "city": "Thành phố",
+          "address": "Địa chỉ",
+          "position": "Chức danh",
+          "personalLink": "Link cá nhân / Website"
+        }
+      },
+      "settings": {
+        "kicker": "Ứng dụng",
+        "title": "Cài đặt JobFinder",
+        "subtitle": "Cài app để truy cập nhanh hơn và hoạt động ổn định khi mạng yếu."
+      }
     }
   },
   "home": {
@@ -179,6 +528,9 @@
       "allIndustries": "Tất cả ngành nghề",
       "locationLabel": "Địa điểm",
       "nationwide": "Toàn quốc",
+      "searchIndustryPlaceholder": "Nhập để lọc ngành nghề",
+      "searchLocationPlaceholder": "Nhập để lọc địa điểm",
+      "noOptionFound": "Không tìm thấy lựa chọn phù hợp",
       "submit": "Tìm việc ngay"
     },
     "filters": {

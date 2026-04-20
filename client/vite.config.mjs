@@ -1,5 +1,6 @@
 import { defineConfig, loadEnv, transformWithEsbuild } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 const PROXY_PATHS = [
   '/auth',
@@ -78,6 +79,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       jsxInJsSourcePlugin(),
+      tailwindcss(),
       react({
         include: /\.[jt]sx?$/,
         exclude: /node_modules/

@@ -378,6 +378,85 @@
     font-size: 1.5rem;
   }
 
+
+:is(html.dark, html[data-bs-theme='dark']) .career-guide-detail-container {
+  background: #0a1627;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .breadcrumb,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-card,
+:is(html.dark, html[data-bs-theme='dark']) .comments-section,
+:is(html.dark, html[data-bs-theme='dark']) .comment-item {
+  background: #112136;
+  border-color: #355274;
+  box-shadow: 0 2px 8px rgba(2, 10, 20, 0.38);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .post-header,
+:is(html.dark, html[data-bs-theme='dark']) .comment-form {
+  border-bottom-color: #2f4762;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .breadcrumb-item.active,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-excerpt,
+:is(html.dark, html[data-bs-theme='dark']) .meta-item,
+:is(html.dark, html[data-bs-theme='dark']) .comment-content,
+:is(html.dark, html[data-bs-theme='dark']) .no-comments,
+:is(html.dark, html[data-bs-theme='dark']) .comment-date {
+  color: #9db7cf;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-title,
+:is(html.dark, html[data-bs-theme='dark']) .comments-title,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content,
+:is(html.dark, html[data-bs-theme='dark']) .comment-author,
+:is(html.dark, html[data-bs-theme='dark']) .meta-item strong,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content h1,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content h2,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content h3,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content h4,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content h5,
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content h6 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-category {
+  background: #1a334f;
+  border-color: #44698d;
+  color: #cfe5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-tag {
+  background: #172c44;
+  border-color: #3b5b7b;
+  color: #bcd3e8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content code {
+  background: #1a314a;
+  color: #fda4af;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .post-detail-content blockquote {
+  border-left-color: #60a5fa;
+  background: #162d45;
+  color: #bfd3e8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .comment-form textarea {
+  border-color: #3b5b7b;
+  background: #102338;
+  color: #e2edf8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .comment-form textarea:focus {
+  border-color: #5d8cb9;
+  box-shadow: 0 0 0 3px rgba(93, 140, 185, 0.2);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .btn-delete-comment:hover {
+  background: #3f1f2b;
+}
   .comment-header {
     flex-direction: column;
     align-items: flex-start;

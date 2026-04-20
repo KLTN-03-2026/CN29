@@ -4,10 +4,45 @@ import { useTranslation } from 'react-i18next';
 import { downloadBlobFile, loadExcelJs } from '../../../utils/excelExport';
 
 const EXCEL_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+const DASHBOARD_EXPORT_LOGO_URL = '/images/logo.png';
 
 const buildFileToken = (date = new Date()) => {
     const pad = (value) => String(value).padStart(2, '0');
     return `${date.getFullYear()}${pad(date.getMonth() + 1)}${pad(date.getDate())}-${pad(date.getHours())}${pad(date.getMinutes())}${pad(date.getSeconds())}`;
+};
+
+const detectWorkbookImageExtension = (mimeType = '', sourceUrl = '') => {
+    const normalizedType = String(mimeType || '').toLowerCase();
+    if (normalizedType.includes('png')) return 'png';
+    if (normalizedType.includes('jpg') || normalizedType.includes('jpeg')) return 'jpeg';
+    if (normalizedType.includes('gif')) return 'gif';
+
+    const normalizedUrl = String(sourceUrl || '').toLowerCase();
+    if (normalizedUrl.endsWith('.jpg') || normalizedUrl.endsWith('.jpeg')) return 'jpeg';
+    if (normalizedUrl.endsWith('.gif')) return 'gif';
+    return 'png';
+};
+
+const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = () => reject(new Error('Không thể đọc dữ liệu ảnh logo.'));
+    reader.readAsDataURL(blob);
+});
+
+const loadWorkbookLogoSource = async (sourceUrl) => {
+    const response = await fetch(sourceUrl, { cache: 'no-store' });
+    if (!response.ok) {
+        throw new Error(`Không thể tải logo từ ${sourceUrl}`);
+    }
+
+    const imageBlob = await response.blob();
+    const base64DataUrl = await blobToDataUrl(imageBlob);
+
+    return {
+        base64: base64DataUrl,
+        extension: detectWorkbookImageExtension(imageBlob.type, sourceUrl)
+    };
 };
 
 const styleSheetHeader = (row) => {
@@ -52,17 +87,47 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
             workbook.created = new Date();
             workbook.modified = new Date();
 
+            let logoImageId = null;
+            try {
+                const logoSource = await loadWorkbookLogoSource(DASHBOARD_EXPORT_LOGO_URL);
+                logoImageId = workbook.addImage(logoSource);
+            } catch {
+                logoImageId = null;
+            }
+
             const summarySheet = workbook.addWorksheet(t('admin.overview.excel.summarySheet'));
             summarySheet.columns = [
-                { width: 34 },
-                { width: 18 },
+                { width: 25 },
+                { width: 22 },
                 { width: 52 }
             ];
 
-            summarySheet.mergeCells('A1:C1');
-            summarySheet.getCell('A1').value = t('admin.overview.excel.reportTitle');
-            summarySheet.getCell('A1').font = { bold: true, size: 15, color: { argb: 'FF0F172A' } };
-            summarySheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
+            if (logoImageId) {
+                summarySheet.getRow(1).height = 44;
+                summarySheet.getRow(2).height = 24;
+
+                summarySheet.addImage(logoImageId, {
+                    tl: { col: 0.16, row: 0.2 },
+                    ext: { width: 165, height: 52 }
+                });
+
+                summarySheet.mergeCells('B1:C1');
+                summarySheet.getCell('B1').value = t('admin.overview.excel.reportTitle');
+                summarySheet.getCell('B1').font = { bold: true, size: 15, color: { argb: 'FF0F172A' } };
+                summarySheet.getCell('B1').alignment = { vertical: 'middle', horizontal: 'left' };
+
+                summarySheet.mergeCells('B2:C2');
+                summarySheet.getCell('B2').value = t('admin.overview.heroChip');
+                summarySheet.getCell('B2').font = { bold: true, size: 11, color: { argb: 'FF334155' } };
+                summarySheet.getCell('B2').alignment = { vertical: 'middle', horizontal: 'left' };
+            } else {
+                summarySheet.mergeCells('A1:C1');
+                summarySheet.getCell('A1').value = t('admin.overview.excel.reportTitle');
+                summarySheet.getCell('A1').font = { bold: true, size: 15, color: { argb: 'FF0F172A' } };
+                summarySheet.getCell('A1').alignment = { vertical: 'middle', horizontal: 'left' };
+            }
+
+            summarySheet.addRow([]);
 
             summarySheet.addRow([t('admin.overview.excel.adminLabel'), currentAdminName || t('admin.greetingDefault'), '']);
             summarySheet.addRow([t('admin.overview.excel.exportDateLabel'), new Date().toLocaleString(locale), '']);
@@ -146,7 +211,8 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
 
             const fileName = `jobfinder-dashboard-${buildFileToken(new Date())}.xlsx`;
             const buffer = await workbook.xlsx.writeBuffer();
-            const blob = new Blob([buffer], { type: EXCEL_MIME_TYPE });
+            const normalizedBuffer = ArrayBuffer.isView(buffer) ? buffer : new Uint8Array(buffer);
+            const blob = new Blob([normalizedBuffer], { type: EXCEL_MIME_TYPE });
             downloadBlobFile(blob, fileName);
         } catch (error) {
             setExportError(error?.message || t('admin.overview.exportError'));

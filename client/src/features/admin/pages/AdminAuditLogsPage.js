@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Download, History, Trash2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import SmartPagination from '../../../components/SmartPagination';
 import { downloadBlobFile, loadExcelJs } from '../../../utils/excelExport';
 
@@ -20,9 +21,9 @@ const blobToDataUrl = (blob) => new Promise((resolve, reject) => {
             resolve(reader.result);
             return;
         }
-        reject(new Error('Không thể chuyển logo sang định dạng base64.'));
+        reject(new Error('Unable to convert logo to base64.'));
     };
-    reader.onerror = () => reject(reader.error || new Error('Không thể đọc logo JobFinder.'));
+    reader.onerror = () => reject(reader.error || new Error('Unable to read JobFinder logo.'));
     reader.readAsDataURL(blob);
 });
 
@@ -41,33 +42,34 @@ const loadJobFinderLogoAsset = async () => {
     }
 };
 
-const formatDateTime = (value) => {
+const formatDateTime = (value, locale = 'vi-VN') => {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return String(value);
-    return date.toLocaleString('vi-VN');
+    return date.toLocaleString(locale);
 };
 
-const formatUserLabel = (row) => {
+const formatUserLabel = (row, t) => {
     const name = String(row?.user_name || '').trim();
     if (name) return name;
 
     const email = String(row?.user_email || '').trim();
     if (email) return email;
 
-    if (row?.user_id != null) return `Người dùng #${row.user_id}`;
-    return 'Hệ thống';
+    if (row?.user_id != null) return t('admin.auditLogsPage.fallback.userWithId', { id: row.user_id });
+    return t('admin.auditLogsPage.fallback.system');
 };
 
-const formatObjectRef = (row) => {
+const formatObjectRef = (row, t) => {
     const object = String(row?.entity_type || '').trim();
     const objectId = row?.entity_id != null ? String(row.entity_id).trim() : '';
     if (!object && !objectId) return '-';
     if (!objectId) return object || '-';
-    return `${object || 'Đối tượng'} #${objectId}`;
+    return `${object || t('admin.auditLogsPage.fallback.object')} #${objectId}`;
 };
 
 const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
+    const { t, i18n } = useTranslation();
     const [offset, setOffset] = useState(0);
     const [logs, setLogs] = useState([]);
     const [total, setTotal] = useState(0);
@@ -80,6 +82,9 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
     const totalPages = Math.max(1, Math.ceil(Math.max(0, total) / PAGE_LIMIT));
     const fromRecord = total === 0 ? 0 : offset + 1;
     const toRecord = total === 0 ? 0 : Math.min(offset + Math.max(1, logs.length), total);
+    const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en')
+        ? 'en-US'
+        : 'vi-VN';
 
     const fetchLogs = async () => {
         setLoading(true);
@@ -96,7 +101,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok || !data.success) {
-                throw new Error(data.error || 'Không tải được nhật ký quản trị');
+                throw new Error(data.error || t('admin.auditLogsPage.messages.loadFailed'));
             }
 
             setLogs(Array.isArray(data.logs) ? data.logs : []);
@@ -104,7 +109,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
         } catch (err) {
             setLogs([]);
             setTotal(0);
-            setError(err?.message || 'Không tải được nhật ký quản trị');
+            setError(err?.message || t('admin.auditLogsPage.messages.loadFailed'));
         } finally {
             setLoading(false);
         }
@@ -126,7 +131,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok || !data?.success) {
-                throw new Error(data?.error || 'Không thể tải dữ liệu để xuất Excel.');
+                throw new Error(data?.error || t('admin.auditLogsPage.messages.exportLoadFailed'));
             }
 
             const rows = Array.isArray(data.logs) ? data.logs : [];
@@ -158,7 +163,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
         try {
             const exportRows = await fetchAllLogsForExport();
             if (!exportRows.length) {
-                throw new Error('Chưa có dữ liệu nhật ký quản trị để xuất Excel.');
+                throw new Error(t('admin.auditLogsPage.messages.exportEmpty'));
             }
 
             const ExcelJS = await loadExcelJs();
@@ -169,7 +174,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             workbook.created = new Date();
             workbook.modified = new Date();
 
-            const sheet = workbook.addWorksheet('Nhật ký quản trị');
+            const sheet = workbook.addWorksheet(t('admin.auditLogsPage.export.sheetName'));
             sheet.views = [{ state: 'frozen', ySplit: 5 }];
             sheet.properties.defaultRowHeight = 22;
             sheet.columns = [
@@ -203,23 +208,33 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             sheet.mergeCells('B3:G3');
 
             const titleCell = sheet.getCell('B1');
-            titleCell.value = 'JOBFINDER - NHẬT KÝ QUẢN TRỊ';
+            titleCell.value = t('admin.auditLogsPage.export.title');
             titleCell.font = { bold: true, size: 16, color: { argb: 'FF0F172A' } };
             titleCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
             const subtitleCell = sheet.getCell('B2');
-            subtitleCell.value = `Ngày xuất: ${new Date().toLocaleString('vi-VN')}`;
+            subtitleCell.value = t('admin.auditLogsPage.export.exportedAt', { value: new Date().toLocaleString(locale) });
             subtitleCell.font = { size: 11, color: { argb: 'FF334155' } };
             subtitleCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
             const noteCell = sheet.getCell('B3');
-            noteCell.value = `Tổng bản ghi: ${exportRows.length.toLocaleString('vi-VN')} | Nguồn dữ liệu: JobFinder Admin`;
+            noteCell.value = t('admin.auditLogsPage.export.totalNote', {
+                total: exportRows.length.toLocaleString(locale)
+            });
             noteCell.font = { italic: true, size: 10, color: { argb: 'FF475569' } };
             noteCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
             const headerRowIndex = 5;
             const headerRow = sheet.getRow(headerRowIndex);
-            headerRow.values = ['STT', 'ID', 'Người thực hiện', 'Email', 'Nội dung hành động', 'Đối tượng', 'Thời gian'];
+            headerRow.values = [
+                t('admin.auditLogsPage.export.columns.no'),
+                t('admin.auditLogsPage.export.columns.id'),
+                t('admin.auditLogsPage.export.columns.actor'),
+                t('admin.auditLogsPage.export.columns.email'),
+                t('admin.auditLogsPage.export.columns.action'),
+                t('admin.auditLogsPage.export.columns.object'),
+                t('admin.auditLogsPage.export.columns.timestamp')
+            ];
             headerRow.height = 26;
 
             headerRow.eachCell((cell) => {
@@ -242,11 +257,11 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
                 const excelRow = sheet.addRow([
                     index + 1,
                     row?.id ?? '-',
-                    formatUserLabel(row),
+                    formatUserLabel(row, t),
                     row?.user_email || '-',
                     String(row?.action || '-'),
-                    formatObjectRef(row),
-                    formatDateTime(row?.timestamp)
+                    formatObjectRef(row, t),
+                    formatDateTime(row?.timestamp, locale)
                 ]);
 
                 excelRow.eachCell((cell, colNumber) => {
@@ -270,7 +285,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             const footerRowIndex = sheet.lastRow.number + 2;
             sheet.mergeCells(`A${footerRowIndex}:G${footerRowIndex}`);
             const footerCell = sheet.getCell(`A${footerRowIndex}`);
-            footerCell.value = 'Báo cáo được xuất từ hệ thống JobFinder. Vui lòng không chỉnh sửa dữ liệu gốc khi đối soát.';
+            footerCell.value = t('admin.auditLogsPage.export.footer');
             footerCell.font = { italic: true, size: 10, color: { argb: 'FF64748B' } };
             footerCell.alignment = { vertical: 'middle', horizontal: 'left' };
 
@@ -279,7 +294,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             const blob = new Blob([buffer], { type: EXCEL_MIME_TYPE });
             downloadBlobFile(blob, fileName);
         } catch (err) {
-            setError(err?.message || 'Không thể xuất file Excel nhật ký quản trị.');
+            setError(err?.message || t('admin.auditLogsPage.messages.exportFailed'));
         } finally {
             setExporting(false);
         }
@@ -294,7 +309,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
     const handleDeleteLog = async (row) => {
         const targetId = Number(row?.id);
         if (!Number.isFinite(targetId)) return;
-        if (!window.confirm(`Bạn có chắc muốn xóa audit-log #${targetId}?`)) return;
+        if (!window.confirm(t('admin.auditLogsPage.confirm.deleteMessage', { id: targetId }))) return;
 
         setDeletingId(targetId);
         setError('');
@@ -307,7 +322,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             const data = await response.json().catch(() => ({}));
 
             if (!response.ok || !data.success) {
-                throw new Error(data.error || 'Không thể xóa audit-log');
+                throw new Error(data.error || t('admin.auditLogsPage.messages.deleteFailed'));
             }
 
             const isDeletingLastRowInPage = logs.length === 1 && offset > 0;
@@ -317,7 +332,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
                 await fetchLogs();
             }
         } catch (err) {
-            setError(err?.message || 'Không thể xóa audit-log');
+            setError(err?.message || t('admin.auditLogsPage.messages.deleteFailed'));
         } finally {
             setDeletingId(null);
         }
@@ -333,7 +348,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
             <div className="card-header bg-white border-0 py-3 admin-audit-toolbar">
                 <h5 className="mb-0 d-flex align-items-center gap-2">
                     <History size={18} />
-                    <span>Nhật ký quản trị</span>
+                    <span>{t('admin.auditLogsPage.title')}</span>
                 </h5>
                 <button
                     type="button"
@@ -342,14 +357,14 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
                     disabled={loading || exporting}
                 >
                     <Download size={14} />
-                    <span>{exporting ? 'Đang xuất...' : 'Tải Excel'}</span>
+                    <span>{exporting ? t('admin.auditLogsPage.export.exporting') : t('admin.auditLogsPage.export.downloadButton')}</span>
                 </button>
             </div>
 
             <div className="card-body pt-2 pb-3">
                 <div className="admin-audit-meta">
-                    <span>Tổng bản ghi: <strong>{total.toLocaleString('vi-VN')}</strong></span>
-                    <span>Trang: <strong>{page}/{totalPages}</strong></span>
+                    <span>{t('admin.auditLogsPage.meta.total')}: <strong>{total.toLocaleString(locale)}</strong></span>
+                    <span>{t('admin.auditLogsPage.meta.page')}: <strong>{page}/{totalPages}</strong></span>
                 </div>
 
                 {error ? <div className="alert alert-danger mt-3 mb-0">{error}</div> : null}
@@ -359,17 +374,17 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
                         <thead>
                             <tr>
                                 <th style={{ width: 90 }}>ID</th>
-                                <th style={{ width: 220 }}>Người thực hiện</th>
-                                <th style={{ width: 240 }}>Nội dung hành động</th>
-                                <th style={{ width: 180 }}>Đối tượng</th>
-                                <th style={{ width: 190 }}>Thời gian</th>
-                                <th style={{ width: 130 }}>Hành động</th>
+                                <th style={{ width: 220 }}>{t('admin.auditLogsPage.columns.actor')}</th>
+                                <th style={{ width: 240 }}>{t('admin.auditLogsPage.columns.action')}</th>
+                                <th style={{ width: 180 }}>{t('admin.auditLogsPage.columns.object')}</th>
+                                <th style={{ width: 190 }}>{t('admin.auditLogsPage.columns.timestamp')}</th>
+                                <th style={{ width: 130 }}>{t('admin.auditLogsPage.columns.actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
                             {!loading && logs.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="text-center text-muted py-4">Chưa có nhật ký phù hợp</td>
+                                    <td colSpan={6} className="text-center text-muted py-4">{t('admin.auditLogsPage.empty')}</td>
                                 </tr>
                             ) : null}
 
@@ -377,20 +392,20 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
                                 <tr key={row.id}>
                                     <td>{offset + index + 1}</td>
                                     <td>
-                                        <div className="fw-semibold">{formatUserLabel(row)}</div>
+                                        <div className="fw-semibold">{formatUserLabel(row, t)}</div>
                                         {row.user_email ? <small className="text-muted">{row.user_email}</small> : null}
                                     </td>
                                     <td>{String(row.action || '-')}</td>
-                                    <td>{formatObjectRef(row)}</td>
-                                    <td>{formatDateTime(row.timestamp)}</td>
+                                    <td>{formatObjectRef(row, t)}</td>
+                                    <td>{formatDateTime(row.timestamp, locale)}</td>
                                     <td>
                                         <button
                                             type="button"
                                             className="btn btn-sm btn-outline-danger"
                                             onClick={() => handleDeleteLog(row)}
                                             disabled={loading || deletingId === row.id}
-                                            title="Xóa audit-log"
-                                            aria-label="Xóa audit-log"
+                                            title={t('admin.auditLogsPage.actions.delete')}
+                                            aria-label={t('admin.auditLogsPage.actions.delete')}
                                         >
                                             <Trash2 size={14} />
                                         </button>

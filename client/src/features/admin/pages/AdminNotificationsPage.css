@@ -164,3 +164,36 @@
     flex-direction: column;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-hero {
+  border-color: #355274;
+  box-shadow: 0 16px 32px rgba(2, 10, 20, 0.46);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-card,
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-footer {
+  border-color: #355274;
+  background: #112136;
+  box-shadow: 0 12px 24px rgba(2, 10, 20, 0.38);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-card h2,
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-footer h2 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-card p,
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-footer p {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-link {
+  border-color: #3e5f80;
+  background: #142a42;
+  color: #d3e6f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-notification-link:hover {
+  background: #1b3653;
+  border-color: #5b84ad;
+}

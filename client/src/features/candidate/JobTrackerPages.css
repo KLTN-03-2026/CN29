@@ -241,3 +241,61 @@
     margin-left: 0;
   }
 }
+
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-page {
+  background:
+    radial-gradient(circle at 10% 4%, rgba(37, 99, 235, 0.2), transparent 34%),
+    radial-gradient(circle at 90% 0%, rgba(20, 184, 166, 0.15), transparent 30%),
+    linear-gradient(170deg, #06111f 0%, #0c1b2d 46%, #12263a 100%);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-header,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-card,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-empty {
+  border-color: #355274;
+  background: #112136;
+  box-shadow: 0 14px 30px rgba(2, 10, 20, 0.42);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-title,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-job-title a,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-empty h5 {
+  color: #e8f3ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-subtitle,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-company,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-empty p {
+  color: #a3bdd4;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-count,
+:is(html.dark, html[data-bs-theme='dark']) .job-chip,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-logo,
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-state {
+  border-color: #3e5f80;
+  background: #152a42;
+  color: #d2e4f6;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-chip.status {
+  border-color: #4b70a1;
+  background: #1f3558;
+  color: #bfdbfe;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-chip.match {
+  border-color: #6a4e9d;
+  background: #2b1f44;
+  color: #e9d5ff;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-back {
+  border-color: #3f607f !important;
+  background: #18314c !important;
+  color: #d0e4f8 !important;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .job-tracker-job-title a:hover {
+  color: #74f1ba;
+}

@@ -450,6 +450,7 @@ const JobCreate = () => {
         experience: 'Không yêu cầu',
         level: 'Nhân viên',
         jobField: 'CNTT',
+        skillsText: '',
         deadline: '',
         status: 'Đã đăng'
     });
@@ -469,6 +470,7 @@ const JobCreate = () => {
         benefits: t('employer.jobCreatePage.sectionTitles.benefits')
     });
     const [extraSections, setExtraSections] = useState([]);
+    const [skillSuggestions, setSkillSuggestions] = useState([]);
     const [showLocationModal, setShowLocationModal] = useState(false);
     const [locationModalError, setLocationModalError] = useState('');
 
@@ -500,6 +502,40 @@ const JobCreate = () => {
             }
         };
         fetchProvinces();
+    }, []);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        const fetchSkills = async () => {
+            try {
+                const res = await fetch('/jobs/skills');
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok) return;
+
+                const source = Array.isArray(data?.skills)
+                    ? data.skills
+                    : (Array.isArray(data) ? data : []);
+
+                const normalized = Array.from(new Set(source
+                    .map((item) => String(item?.name || item?.TenKyNang || item || '').trim())
+                    .filter(Boolean)))
+                    .slice(0, 200);
+
+                if (!cancelled) {
+                    setSkillSuggestions(normalized);
+                }
+            } catch {
+                if (!cancelled) {
+                    setSkillSuggestions([]);
+                }
+            }
+        };
+
+        fetchSkills();
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
     const setField = (key) => (valueOrEvent) => {
@@ -589,6 +625,12 @@ const JobCreate = () => {
                     experience: data.KinhNghiem || 'Không yêu cầu',
                     level: data.CapBac || 'Nhân viên',
                     jobField: data.LinhVucCongViec || 'CNTT',
+                    skillsText: Array.isArray(data.skills)
+                        ? data.skills
+                            .map((item) => String(item?.name || item || '').trim())
+                            .filter(Boolean)
+                            .join(', ')
+                        : String(data.skillsText || ''),
                     deadline: data.HanNopHoSo ? String(data.HanNopHoSo).slice(0, 10) : '',
                     status: data.TrangThai || 'Đã đăng'
                 });
@@ -681,6 +723,7 @@ const JobCreate = () => {
                 },
                 body: JSON.stringify({
                     ...form,
+                    skills: form.skillsText,
                     description: richValues.description,
                     requirements: richValues.requirements,
                     benefits: richValues.benefits,
@@ -1079,6 +1122,26 @@ const JobCreate = () => {
                                             emptyText={t('employer.jobCreatePage.placeholders.noJobFieldFound')}
                                             disabled={submitting || loadingJob}
                                         />
+                                    </div>
+
+                                    <div className="col-12">
+                                        <label className="form-label">Kỹ năng yêu cầu (phân tách bằng dấu phẩy)</label>
+                                        <input
+                                            className="form-control job-create-skills-input"
+                                            value={form.skillsText}
+                                            onChange={setField('skillsText')}
+                                            placeholder="Ví dụ: React, Node.js, SQL, Giao tiếp"
+                                            list="job-create-skills-suggestions"
+                                            disabled={submitting || loadingJob}
+                                        />
+                                        <small className="job-create-helptext">
+                                            Hệ thống sẽ lưu kỹ năng vào bảng KyNang và liên kết trực tiếp với tin tuyển dụng.
+                                        </small>
+                                        <datalist id="job-create-skills-suggestions">
+                                            {skillSuggestions.map((skillName) => (
+                                                <option key={skillName} value={skillName} />
+                                            ))}
+                                        </datalist>
                                     </div>
                                 </div>
                             </div>

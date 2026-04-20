@@ -536,6 +536,11 @@
     box-shadow: 0 24px 48px rgba(30, 64, 175, 0.28);
 }
 
+.admin-hero-banner > * {
+    position: relative;
+    z-index: 1;
+}
+
 .admin-hero-banner-head {
     display: flex;
     align-items: center;
@@ -574,6 +579,8 @@
     right: -72px;
     top: -104px;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0) 70%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 .admin-hero-chip {
@@ -1711,7 +1718,7 @@
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .admin-layout {
-    background: radial-gradient(circle at top, #111827 0%, #0b1120 46%, #060b16 100%);
+    background: radial-gradient(circle at top, #17253f 0%, #101a2e 46%, #0a1120 100%);
     color: #e2e8f0;
 }
 
@@ -1974,22 +1981,26 @@
 :is(html.dark, html[data-bs-theme='dark']) .admin-module-card .card-header,
 :is(html.dark, html[data-bs-theme='dark']) .admin-report-modal-header,
 :is(html.dark, html[data-bs-theme='dark']) .admin-users-view-header {
-    background: #0f172a;
+    background: #14233b;
     border-bottom-color: #334155;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .admin-module-card .table thead th {
-    background: #111d34;
-    color: #94a3b8;
+    background: #1d2f4d;
+    color: #d6e5ff;
     border-bottom-color: #334155;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .admin-module-card .table td {
-    color: #e2e8f0;
+    color: #edf3ff;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .admin-module-card .table > :not(caption) > * > * {
     border-bottom-color: #334155;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .admin-module-card .table tbody tr:hover td {
+    background: rgba(59, 130, 246, 0.14);
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .admin-audit-filter-grid .form-label,
