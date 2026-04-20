@@ -10,7 +10,9 @@
     "success": "Thành công",
     "close": "Đóng",
     "delete": "Xóa",
-    "cancel": "Hủy"
+    "cancel": "Hủy",
+    "notAvailable": "N/A",
+    "requestFailed": "Yêu cầu thất bại ({{status}})"
   },
   "header": {
     "nav": {
@@ -989,6 +991,102 @@
         "updateSuccess": "Cập nhật tin tuyển dụng thành công!",
         "createSuccess": "Đăng tin tuyển dụng thành công!"
       }
+    },
+    "applicationManagement": {
+      "pageTitle": "Quản lý hồ sơ ứng tuyển",
+      "filters": {
+        "aria": "Lọc hồ sơ ứng tuyển",
+        "all": "Tất cả",
+        "new": "Chưa xem",
+        "viewed": "Đã xem",
+        "interview": "Phỏng vấn",
+        "rejected": "Từ chối"
+      },
+      "loading": "Đang tải danh sách hồ sơ...",
+      "empty": {
+        "all": "Chưa có hồ sơ ứng tuyển nào.",
+        "filtered": "Không có hồ sơ phù hợp bộ lọc."
+      },
+      "table": {
+        "candidate": "Ứng viên",
+        "email": "Email",
+        "position": "Vị trí ứng tuyển",
+        "submittedAt": "Ngày nộp",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "details": "Chi tiết",
+        "inviteInterview": "Mời phỏng vấn",
+        "reject": "Từ chối",
+        "close": "Đóng"
+      },
+      "detailModal": {
+        "title": "Chi tiết hồ sơ ứng tuyển",
+        "candidate": "Ứng viên",
+        "email": "Email",
+        "position": "Vị trí ứng tuyển",
+        "submittedAt": "Ngày nộp",
+        "status": "Trạng thái",
+        "applicationCode": "Mã ứng tuyển",
+        "coverLetter": "Thư giới thiệu",
+        "attachmentTitle": "CV đính kèm",
+        "cvCode": "Mã CV: {{code}}",
+        "viewCv": "Xem CV",
+        "downloadCv": "Tải CV",
+        "noCvFile": "Không tìm thấy file CV"
+      },
+      "status": {
+        "submitted": "Đã nộp",
+        "reviewing": "Đang xem xét",
+        "interview": "Phỏng vấn",
+        "offer": "Đề nghị",
+        "rejected": "Từ chối",
+        "accepted": "Đã nhận",
+        "default": "{{status}}"
+      },
+      "errors": {
+        "notLoggedIn": "Bạn cần đăng nhập.",
+        "loadFailed": "Không tải được hồ sơ ứng tuyển.",
+        "updateFailed": "Không cập nhật được hồ sơ.",
+        "generic": "Có lỗi xảy ra."
+      },
+      "notifications": {
+        "statusUpdated": "Đã cập nhật trạng thái hồ sơ thành \"{{status}}\"."
+      }
+    },
+    "messagesPage": {
+      "pageTitle": "Tin nhắn",
+      "searchCandidates": "Tìm thêm ứng viên",
+      "loadingInbox": "Đang tải hộp thư...",
+      "inbox": {
+        "title": "Hội thoại",
+        "loading": "Đang tải...",
+        "count": "{{count}} liên hệ",
+        "empty": "Chưa có hội thoại nào."
+      },
+      "thread": {
+        "chooseTitle": "Chọn hội thoại",
+        "chooseDescription": "Nhấn vào một ứng viên để bắt đầu nhắn tin.",
+        "chooseEmpty": "Hãy chọn một hội thoại ở cột bên trái.",
+        "loading": "Đang tải tin nhắn...",
+        "empty": "Chưa có tin nhắn. Hãy gửi lời chào đầu tiên."
+      },
+      "composer": {
+        "placeholder": "Nhập nội dung tin nhắn...",
+        "placeholderNoSelection": "Chọn hội thoại để nhắn tin",
+        "send": "Gửi",
+        "sending": "Đang gửi..."
+      },
+      "fallbacks": {
+        "contact": "Ứng viên #{{id}}",
+        "startConversation": "Bắt đầu cuộc trò chuyện"
+      },
+      "errors": {
+        "loginRequired": "Bạn cần đăng nhập để dùng tính năng nhắn tin.",
+        "loadFailed": "Không thể tải hộp thư.",
+        "sendFailed": "Không thể gửi tin nhắn."
+      }
     }
   },
   "supportCenterPage": {
@@ -1083,6 +1181,906 @@
       "enabledMessage": "JobFinder sẽ hiển thị thông báo trên thiết bị của bạn.",
       "deniedTitle": "Chưa bật được thông báo",
       "deniedMessage": "Hãy cho phép thông báo trong cài đặt trình duyệt hoặc thiết bị."
+    },
+    "applicationManagement": {
+      "pageTitle": "Quản lý hồ sơ ứng tuyển",
+      "filters": {
+        "aria": "Lọc hồ sơ ứng tuyển",
+        "all": "Tất cả",
+        "new": "Chưa xem",
+        "viewed": "Đã xem",
+        "interview": "Phỏng vấn",
+        "rejected": "Từ chối"
+      },
+      "loading": "Đang tải danh sách hồ sơ...",
+      "empty": {
+        "all": "Chưa có hồ sơ ứng tuyển nào.",
+        "filtered": "Không có hồ sơ phù hợp bộ lọc."
+      },
+      "table": {
+        "candidate": "Ứng viên",
+        "email": "Email",
+        "position": "Vị trí ứng tuyển",
+        "submittedAt": "Ngày nộp",
+        "status": "Trạng thái",
+        "actions": "Hành động"
+      },
+      "actions": {
+        "details": "Chi tiết",
+        "inviteInterview": "Mời phỏng vấn",
+        "reject": "Từ chối",
+        "close": "Đóng"
+      },
+      "detailModal": {
+        "title": "Chi tiết hồ sơ ứng tuyển",
+        "candidate": "Ứng viên",
+        "email": "Email",
+        "position": "Vị trí ứng tuyển",
+        "submittedAt": "Ngày nộp",
+        "status": "Trạng thái",
+        "applicationCode": "Mã ứng tuyển",
+        "coverLetter": "Thư giới thiệu",
+        "attachmentTitle": "CV đính kèm",
+        "cvCode": "Mã CV: {{code}}",
+        "viewCv": "Xem CV",
+        "downloadCv": "Tải CV",
+        "noCvFile": "Không tìm thấy file CV"
+      },
+      "status": {
+        "submitted": "Đã nộp",
+        "reviewing": "Đang xem xét",
+        "interview": "Phỏng vấn",
+        "offer": "Đề nghị",
+        "rejected": "Từ chối",
+        "accepted": "Đã nhận",
+        "default": "{{status}}"
+      },
+      "errors": {
+        "notLoggedIn": "Bạn cần đăng nhập.",
+        "loadFailed": "Không tải được hồ sơ ứng tuyển.",
+        "updateFailed": "Không cập nhật được hồ sơ.",
+        "generic": "Có lỗi xảy ra."
+      },
+      "notifications": {
+        "statusUpdated": "Đã cập nhật trạng thái hồ sơ thành \"{{status}}\"."
+      }
+    },
+    "messagesPage": {
+      "pageTitle": "Tin nhắn",
+      "searchCandidates": "Tìm thêm ứng viên",
+      "loadingInbox": "Đang tải hộp thư...",
+      "inbox": {
+        "title": "Hội thoại",
+        "loading": "Đang tải...",
+        "count": "{{count}} liên hệ",
+        "empty": "Chưa có hội thoại nào."
+      },
+      "thread": {
+        "chooseTitle": "Chọn hội thoại",
+        "chooseDescription": "Nhấn vào một ứng viên để bắt đầu nhắn tin.",
+        "chooseEmpty": "Hãy chọn một hội thoại ở cột bên trái.",
+        "loading": "Đang tải tin nhắn...",
+        "empty": "Chưa có tin nhắn. Hãy gửi lời chào đầu tiên."
+      },
+      "composer": {
+        "placeholder": "Nhập nội dung tin nhắn...",
+        "placeholderNoSelection": "Chọn hội thoại để nhắn tin",
+        "send": "Gửi",
+        "sending": "Đang gửi..."
+      },
+      "fallbacks": {
+        "contact": "Ứng viên #{{id}}",
+        "startConversation": "Bắt đầu cuộc trò chuyện"
+      },
+      "errors": {
+        "loginRequired": "Bạn cần đăng nhập để dùng tính năng nhắn tin.",
+        "loadFailed": "Không thể tải hộp thư.",
+        "sendFailed": "Không thể gửi tin nhắn."
+      }
+    }
+  },
+  "components": {
+    "footer": {
+      "brandTitle": "JobFinder",
+      "links": {
+        "home": "Trang chủ",
+        "careerGuide": "Bài viết hướng nghiệp",
+        "findJobs": "Tìm việc làm"
+      },
+      "candidate": {
+        "title": "Dành cho ứng viên",
+        "exploreJobs": "Khám phá việc làm",
+        "savedJobs": "Việc làm đã lưu",
+        "appliedJobs": "Việc làm đã ứng tuyển",
+        "completeProfile": "Hoàn thiện hồ sơ"
+      },
+      "employer": {
+        "title": "Dành cho nhà tuyển dụng",
+        "registerAccount": "Đăng ký tài khoản",
+        "manageRecruitment": "Quản lý tuyển dụng",
+        "marketOverview": "Xem thị trường việc làm"
+      },
+      "policies": {
+        "title": "Chính sách và hỗ trợ",
+        "jobGuide": "Hướng dẫn tìm việc",
+        "terms": "Điều khoản sử dụng",
+        "privacy": "Chính sách bảo mật",
+        "support": "Liên hệ hỗ trợ"
+      },
+      "bottomTagline": "Kết nối ứng viên và nhà tuyển dụng hiệu quả hơn."
+    },
+    "notificationProvider": {
+      "confirmText": "Xác nhận",
+      "cancelText": "Hủy",
+      "confirmActionTitle": "Xác nhận thao tác",
+      "confirmActionMessage": "Bạn có chắc chắn muốn tiếp tục?",
+      "understood": "Đã hiểu",
+      "closeNotificationAria": "Đóng thông báo",
+      "statusTitles": {
+        "success": "Thành công",
+        "error": "Có lỗi",
+        "warning": "Cảnh báo",
+        "info": "Thông báo"
+      }
+    },
+    "smartPagination": {
+      "prevPageAria": "Trang trước",
+      "nextPageAria": "Trang sau",
+      "editRangeTitle": "Nhấn để chỉnh phạm vi",
+      "fromRecordAria": "Bản ghi bắt đầu",
+      "toRecordAria": "Bản ghi kết thúc",
+      "pageListAria": "Danh sách trang",
+      "pageAria": "Trang {{page}}"
+    },
+    "calendarDatePicker": {
+      "placeholder": "Chọn ngày",
+      "prevYearAria": "Năm trước",
+      "prevMonthAria": "Tháng trước",
+      "nextMonthAria": "Tháng sau",
+      "nextYearAria": "Năm sau",
+      "today": "Hôm nay",
+      "weekdays": {
+        "su": "CN",
+        "mo": "T2",
+        "tu": "T3",
+        "we": "T4",
+        "th": "T5",
+        "fr": "T6",
+        "sa": "T7"
+      }
+    },
+    "messageNotificationBridge": {
+      "defaultSenderName": "Có người gửi tin nhắn",
+      "defaultMessageBody": "Bạn có tin nhắn mới.",
+      "toastTitle": "Tin nhắn mới",
+      "browserTitle": "Tin nhắn mới trên JobFinder"
+    },
+    "firebaseMessagingBridge": {
+      "defaultTitle": "Thông báo JobFinder",
+      "defaultBody": "Bạn có thông báo mới."
+    },
+    "notificationUtils": {
+      "defaultBrowserTitle": "Thông báo JobFinder"
+    },
+    "pwa": {
+      "accountInstallPrompt": {
+        "ariaLabel": "Cài đặt ứng dụng JobFinder",
+        "title": "Cài đặt JobFinder",
+        "description": "Cài đặt ứng dụng để truy cập nhanh hơn và sử dụng offline.",
+        "installButton": "Cài đặt ứng dụng",
+        "laterButton": "Để sau",
+        "feedback": {
+          "iosManual": "Trên iOS, hãy nhấn Chia sẻ và chọn Thêm vào Màn hình chính.",
+          "dismissed": "Bạn đã đóng hộp thoại cài đặt.",
+          "cannotOpen": "Không mở được prompt cài đặt lúc này."
+        }
+      },
+      "updatePrompt": {
+        "readyTitle": "Phiên bản mới đã sẵn sàng.",
+        "readyDescription": "Làm mới để cập nhật JobFinder.",
+        "updateNow": "Cập nhật ngay",
+        "later": "Để sau"
+      },
+      "installAppPanel": {
+        "sectionAriaLabel": "Cài đặt ứng dụng JobFinder",
+        "introTitle": "Cài đặt theo thiết bị của bạn",
+        "introDescription": "App sau khi cài sẽ mở nhanh hơn, nhận thông báo ổn định hơn và giảm thao tác đăng nhập lại.",
+        "tabsAriaLabel": "Nền tảng cài đặt",
+        "platformLabels": {
+          "android": "Android",
+          "ios": "iOS",
+          "desktop": "Desktop"
+        },
+        "steps": {
+          "android": [
+            "Mở JobFinder bằng Chrome hoặc Edge trên Android (không dùng tab ẩn danh).",
+            "Đăng nhập tài khoản để đồng bộ thông báo và dữ liệu ngay sau khi cài.",
+            "Nhấn biểu tượng cài đặt trên thanh địa chỉ, hoặc mở menu 3 chấm.",
+            "Chọn Cài đặt ứng dụng / Add to Home screen và xác nhận Cài đặt.",
+            "Mở app từ màn hình chính, vào Thông báo để cấp quyền nếu được hỏi."
+          ],
+          "ios": [
+            "Mở JobFinder bằng Safari trên iPhone hoặc iPad.",
+            "Nhấn nút Chia sẻ (hình vuông có mũi tên) ở thanh dưới/trên.",
+            "Chọn Thêm vào Màn hình chính (Add to Home Screen).",
+            "Đặt tên dễ nhớ như JobFinder rồi nhấn Thêm.",
+            "Mở app từ màn hình chính và bật thông báo trong Cài đặt iOS nếu cần."
+          ],
+          "desktop": [
+            "Mở JobFinder trên Chrome hoặc Edge bản mới nhất.",
+            "Đăng nhập tài khoản trước khi cài để giữ trạng thái phiên làm việc.",
+            "Nhấn biểu tượng cài đặt ở cạnh thanh địa chỉ (Install app).",
+            "Nếu chưa thấy biểu tượng, mở menu trình duyệt và chọn Cài đặt JobFinder.",
+            "Sau khi cài, ghim app ra taskbar/start menu để mở nhanh mỗi ngày."
+          ]
+        },
+        "tips": {
+          "android": {
+            "badge": "Khuyến nghị",
+            "heading": "Mẹo để cài nhanh trên Android",
+            "items": [
+              "Ưu tiên Chrome/Edge vì hỗ trợ PWA ổn định nhất.",
+              "Nếu không thấy nút cài đặt, tải lại trang 1-2 lần rồi thử lại.",
+              "Sau khi cài, bật thông báo để nhận tin ứng tuyển theo thời gian thực."
+            ]
+          },
+          "ios": {
+            "badge": "Lưu ý",
+            "heading": "iOS cần cài thủ công",
+            "items": [
+              "Safari là trình duyệt bắt buộc để hiện nút Thêm vào Màn hình chính.",
+              "Nếu mục Thêm vào Màn hình chính bị ẩn, cuộn xuống trong menu Chia sẻ.",
+              "iOS chưa hỗ trợ prompt tự động như Android/Desktop nên hãy làm đúng thứ tự bước."
+            ]
+          },
+          "desktop": {
+            "badge": "Năng suất",
+            "heading": "Tối ưu trải nghiệm trên Desktop",
+            "items": [
+              "Sau khi cài, bạn có thể mở như app riêng không cần tab trình duyệt.",
+              "Bật thông báo để nhận tin nhắn và cập nhật hồ sơ ngay khi có thay đổi.",
+              "Nếu dùng máy công ty, kiểm tra chính sách IT có chặn cài app trình duyệt hay không."
+            ]
+          }
+        },
+        "checklistTitle": "Checklist khi không thấy nút cài đặt",
+        "checklistItems": [
+          "Truy cập bằng HTTPS hoặc localhost.",
+          "Không mở ở chế độ ẩn danh/private mode.",
+          "Cho phép JavaScript và không chặn service worker.",
+          "Đảm bảo trình duyệt đã cập nhật phiên bản mới."
+        ],
+        "installButton": {
+          "installed": "Đã cài đặt",
+          "viewIosGuide": "Xem hướng dẫn iOS",
+          "installNow": "Cài đặt ứng dụng",
+          "viewManualGuide": "Xem hướng dẫn cài thủ công"
+        },
+        "laterButton": "Để sau",
+        "reenableButton": "Bật lại gợi ý",
+        "feedback": {
+          "alreadyInstalled": "Ứng dụng đã được cài đặt trên thiết bị này.",
+          "iosManual": "iOS chưa hỗ trợ prompt tự động. Hãy làm theo hướng dẫn phía dưới để cài thủ công.",
+          "noPrompt": "Trình duyệt chưa cấp beforeinstallprompt. Hãy đảm bảo chạy HTTPS hoặc localhost và truy cập lại trang vài giây.",
+          "installedSuccess": "Cài đặt thành công. Bạn có thể mở JobFinder như ứng dụng độc lập.",
+          "dismissed": "Bạn đã đóng hộp thoại cài đặt. Có thể bấm lại bất cứ lúc nào.",
+          "cannotOpen": "Không thể mở prompt cài đặt ở thời điểm này.",
+          "hidden7Days": "Đã ẩn gợi ý cài đặt trong 7 ngày trên trình duyệt này.",
+          "reenabled": "Đã bật lại gợi ý cài đặt."
+        }
+      }
+    },
+    "aiAssistantWidget": {
+      "title": "AI trợ lý",
+      "initialAssistantMessage": "Mình là AI hỗ trợ JobFinder. Bạn có thể hỏi về cách dùng website, CV, phỏng vấn, việc làm. Bạn cũng có thể chọn CV đã lưu để mình đọc và gợi ý việc phù hợp hơn.",
+      "assistantDialogAriaLabel": "Trợ lý AI",
+      "assistantSubtitle": "Trả lời nhanh, gợi ý rõ ràng",
+      "defaultPromptWithAttachment": "Đánh giá CV đã đính kèm và gợi ý công việc phù hợp giúp mình.",
+      "okFallback": "OK",
+      "common": {
+        "close": "Đóng"
+      },
+      "status": {
+        "analyzingCv": "Đang phân tích CV...",
+        "replying": "Đang trả lời..."
+      },
+      "input": {
+        "placeholder": "Nhập câu hỏi của bạn...",
+        "placeholderWithAttachment": "Nhập yêu cầu thêm (có thể bỏ trống)..."
+      },
+      "clearHistory": {
+        "title": "Xóa lịch sử trò chuyện AI",
+        "message": "Bạn có chắc muốn xóa toàn bộ lịch sử chat AI hiện tại?",
+        "confirmText": "Xóa lịch sử",
+        "cancelText": "Giữ lại",
+        "success": "Đã xóa lịch sử trò chuyện AI.",
+        "buttonLabel": "Xóa lịch sử chat AI",
+        "buttonText": "Xóa lịch sử"
+      },
+      "attachment": {
+        "uploadedFromDevice": "CV tải lên từ máy",
+        "storedOnlineCv": "CV Online đã lưu",
+        "storedUploadedCv": "CV tải lên đã lưu",
+        "label": "Đính kèm",
+        "attachCvTitle": "Đính kèm CV",
+        "currentAttachmentTitle": "Đang đính kèm: {{name}}",
+        "selectedCvSuccess": "Đã chọn CV: {{name}}",
+        "attachedSuccess": "Đã đính kèm CV: {{name}}",
+        "clearedSuccess": "Đã bỏ đính kèm CV."
+      },
+      "cvModal": {
+        "ariaLabel": "Đính kèm CV",
+        "title": "Đính kèm CV",
+        "reloadCv": "Tải lại CV",
+        "uploadFromDevice": "Upload CV từ máy",
+        "loadingCvList": "Đang tải danh sách CV...",
+        "noStoredCv": "Bạn chưa có CV nào đã lưu.",
+        "defaultCvName": "CV chưa đặt tên",
+        "cvLabelFormat": "{{name}} ({{type}})",
+        "cvType": {
+          "online": "CV Online",
+          "uploaded": "CV tải lên"
+        },
+        "selected": "Đã chọn",
+        "selectThisCv": "Chọn CV này",
+        "usingCv": "Đang dùng: {{name}}",
+        "noCvSelected": "Chưa chọn CV (AI sẽ chat thường)",
+        "clearCv": "Bỏ chọn CV"
+      },
+      "chat": {
+        "dialogAriaLabel": "Tin nhắn",
+        "title": "Tin nhắn",
+        "subtitle": "Trò chuyện lại với người đã nhắn",
+        "loading": "Đang tải...",
+        "noConversation": "Chưa có hội thoại",
+        "selectConversation": "Chọn một hội thoại",
+        "loadingMessages": "Đang tải tin nhắn...",
+        "noMessages": "Chưa có tin nhắn",
+        "inputPlaceholderWithName": "Nhắn cho {{name}}...",
+        "inputPlaceholderNoConversation": "Chọn hội thoại để nhắn",
+        "sendButton": "Gửi"
+      },
+      "pill": {
+        "shortcutsAriaLabel": "Phím tắt AI",
+        "openAi": "Mở AI",
+        "savedJobs": "Việc làm đã lưu",
+        "askAi": "Hỏi đáp",
+        "messages": "Tin nhắn",
+        "collapse": "Thu nhỏ",
+        "expand": "Phóng ra"
+      },
+      "errors": {
+        "callAiFailed": "Không thể gọi AI.",
+        "providerBusy": "Hệ thống AI đang quá tải tạm thời. Bạn thử gửi lại sau khoảng 10-30 giây nhé.",
+        "providerBusyReply": "Mình đang gặp tải cao từ hệ thống AI nên phản hồi chưa ổn định. Bạn vui lòng thử lại sau một chút nhé.",
+        "providerBusyRetry": "Máy chủ AI đang bận tạm thời. Bạn thử gửi lại sau vài chục giây nhé.",
+        "processingFailedRetry": "Mình gặp lỗi khi xử lý. Bạn thử lại giúp mình nhé.",
+        "loginRequiredAssistant": "Bạn cần đăng nhập để dùng trợ lý AI.",
+        "loginRequiredChooseCv": "Bạn cần đăng nhập để chọn CV.",
+        "loginRequiredMessaging": "Bạn cần đăng nhập để nhắn tin.",
+        "loginRequiredViewMessages": "Bạn cần đăng nhập để xem tin nhắn.",
+        "loginRequiredAnalyzeStoredCv": "Bạn cần đăng nhập để phân tích CV đã lưu.",
+        "invalidCvFileType": "Chỉ nhận file PDF hoặc DOCX.",
+        "cvFileTooLarge": "File quá lớn (tối đa 5MB).",
+        "loadCvListFailed": "Không tải được danh sách CV.",
+        "loadStoredCvFailed": "Không tải được CV đã lưu.",
+        "loadInboxFailed": "Không thể tải hộp thư.",
+        "loadConversationFailed": "Không thể tải hội thoại.",
+        "sendMessageFailed": "Không thể gửi tin nhắn."
+      }
+    },
+    "employerDashboard": {
+      "title": "Dashboard Nhà Tuyển Dụng",
+      "logout": "Đăng xuất",
+      "greeting": "Xin chào, {{name}}!",
+      "roleLabel": "Vai trò"
+    }
+  },
+  "authPages": {
+    "layout": {
+      "brandAlt": "Logo JobFinder",
+      "brandName": "JobFinder",
+      "heroAlt": "Minh họa xác thực",
+      "heroEyebrow": "Truy cập an toàn"
+    },
+    "loginPage": {
+      "title": "Đăng nhập",
+      "subtitle": "Tiếp tục hành trình tìm việc của bạn.",
+      "switchText": "Bạn chưa có tài khoản?",
+      "switchLabel": "Đăng ký",
+      "heroTitle": "Chào mừng bạn quay lại",
+      "heroSubtitle": "Đăng nhập để quản lý hồ sơ, việc làm và ứng tuyển."
+    },
+    "registerPage": {
+      "title": "Đăng ký tài khoản",
+      "subtitle": "Tham gia JobFinder để tìm cơ hội phù hợp hơn.",
+      "switchText": "Bạn đã có tài khoản?",
+      "switchLabel": "Đăng nhập",
+      "heroTitle": "Bắt đầu hành trình nghề nghiệp",
+      "heroSubtitle": "Tạo hồ sơ và nhận gợi ý việc làm phù hợp."
+    },
+    "forgotPasswordPage": {
+      "title": "Quên mật khẩu",
+      "subtitle": "Khôi phục tài khoản chỉ với vài bước.",
+      "switchText": "Bạn đã nhớ mật khẩu?",
+      "switchLabel": "Quay lại đăng nhập",
+      "heroTitle": "Khôi phục quyền truy cập",
+      "heroSubtitle": "Xác thực email và đặt mật khẩu mới an toàn."
+    },
+    "roleSelection": {
+      "title": "Chọn vai trò",
+      "subtitle": "Giúp chúng tôi cá nhân hóa trải nghiệm cho bạn.",
+      "switchText": "Muốn dùng tài khoản khác?",
+      "switchLabel": "Quay lại đăng nhập",
+      "heroTitle": "Thêm một bước nhanh",
+      "heroSubtitle": "Chọn bạn là ứng viên hay nhà tuyển dụng.",
+      "rolePrompt": "Bạn tham gia với vai trò nào?",
+      "candidate": "Ứng viên",
+      "employer": "Nhà tuyển dụng",
+      "continue": "Tiếp tục",
+      "processing": "Đang xử lý...",
+      "errors": {
+        "selectRoleRequired": "Vui lòng chọn vai trò.",
+        "saveRoleFailed": "Không thể lưu vai trò đã chọn."
+      }
+    },
+    "verifyOtp": {
+      "title": "Xác thực OTP",
+      "delivery": {
+        "failedPrefix": "Việc gửi OTP có thể đang bị chậm.",
+        "sentPrefix": "OTP đã được gửi đến email của bạn.",
+        "fallbackWarning": "Vui lòng kiểm tra hộp thư đến (và thư rác)."
+      },
+      "tempOtpLabel": "OTP tạm thời:",
+      "inputLabel": "Nhập OTP",
+      "inputPlaceholder": "Mã 6 chữ số",
+      "inputHint": "OTP có hiệu lực trong thời gian ngắn.",
+      "verifying": "Đang xác thực...",
+      "verifyButton": "Xác nhận OTP",
+      "notReceived": "Chưa nhận được mã?",
+      "resendButton": "Gửi lại OTP",
+      "resending": "Đang gửi lại...",
+      "errors": {
+        "invalidOtpLength": "OTP phải gồm 6 chữ số.",
+        "verifyFailed": "Xác thực OTP thất bại.",
+        "resendFailed": "Không thể gửi lại OTP."
+      },
+      "success": {
+        "redirectNextStep": "Xác thực OTP thành công. Đang chuyển bước tiếp theo...",
+        "redirectLogin": "Xác thực OTP thành công. Đang chuyển về đăng nhập..."
+      }
+    },
+    "forgotPassword": {
+      "modalTitle": "Đặt lại mật khẩu",
+      "stepLabel": "Bước {{step}}/3",
+      "labels": {
+        "registeredEmail": "Email đã đăng ký"
+      },
+      "placeholders": {
+        "email": "Nhập email",
+        "otp": "Nhập OTP",
+        "newPassword": "Nhập mật khẩu mới",
+        "confirmPassword": "Xác nhận mật khẩu mới"
+      },
+      "sendOtp": "Gửi OTP",
+      "sending": "Đang gửi...",
+      "verifying": "Đang xác thực...",
+      "processing": "Đang xử lý...",
+      "messages": {
+        "otpSent": "OTP đã được gửi đến email của bạn.",
+        "otpVerified": "Xác thực OTP thành công.",
+        "resetPasswordSuccess": "Đặt lại mật khẩu thành công."
+      },
+      "errors": {
+        "invalidEmail": "Vui lòng nhập email hợp lệ.",
+        "sendOtpFailed": "Không thể gửi OTP.",
+        "invalidOtpFormat": "Định dạng OTP không hợp lệ.",
+        "invalidOtp": "OTP không hợp lệ.",
+        "invalidOtpNeedReverify": "OTP không hợp lệ. Vui lòng xác thực lại.",
+        "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự.",
+        "passwordRequireLetterNumber": "Mật khẩu phải gồm chữ và số.",
+        "confirmPasswordMismatch": "Mật khẩu xác nhận không khớp.",
+        "resetPasswordFailed": "Không thể đặt lại mật khẩu."
+      },
+      "step2": {
+        "title": "Xác thực OTP",
+        "hint": "Chúng tôi đã gửi OTP tới {{email}}.",
+        "resendWithTimer": "Gửi lại OTP sau {{seconds}}s",
+        "resend": "Gửi lại OTP",
+        "verifyOtp": "Xác thực OTP",
+        "changeEmail": "Đổi email"
+      },
+      "step3": {
+        "title": "Đặt mật khẩu mới",
+        "hint": "Tạo mật khẩu mạnh để tăng bảo mật.",
+        "resetPassword": "Đặt lại mật khẩu"
+      },
+      "step4": {
+        "successDescription": "Mật khẩu của bạn đã được đặt lại thành công.",
+        "loginNow": "Đăng nhập ngay"
+      },
+      "aria": {
+        "showNewPassword": "Hiển thị mật khẩu mới",
+        "hideNewPassword": "Ẩn mật khẩu mới",
+        "showConfirmPassword": "Hiển thị mật khẩu xác nhận",
+        "hideConfirmPassword": "Ẩn mật khẩu xác nhận"
+      }
+    },
+    "loginForm": {
+      "labels": {
+        "identity": "Email hoặc số điện thoại",
+        "password": "Mật khẩu"
+      },
+      "placeholders": {
+        "identity": "Nhập email hoặc số điện thoại",
+        "password": "Nhập mật khẩu"
+      },
+      "rememberMe": "Ghi nhớ đăng nhập",
+      "forgotPassword": "Quên mật khẩu?",
+      "submit": "Đăng nhập",
+      "processing": "Đang xử lý...",
+      "or": "hoặc",
+      "continueWithGoogle": "Tiếp tục với Google",
+      "noAccount": "Chưa có tài khoản?",
+      "register": "Đăng ký",
+      "aria": {
+        "showPassword": "Hiển thị mật khẩu",
+        "hidePassword": "Ẩn mật khẩu"
+      },
+      "messages": {
+        "loginSuccessWelcome": "Chào mừng trở lại, {{name}}!"
+      },
+      "errors": {
+        "invalidLoginResponse": "Phản hồi đăng nhập không hợp lệ.",
+        "googlePopupBlocked": "Popup Google bị chặn. Vui lòng cho phép popup.",
+        "googleIframeInitFailed": "Không thể khởi tạo iframe đăng nhập Google.",
+        "googleLoginFailed": "Đăng nhập Google thất bại.",
+        "missingGoogleClientId": "Thiếu Google Client ID.",
+        "googleApiNotReady": "Google API chưa sẵn sàng.",
+        "googleButtonInitFailed": "Không thể khởi tạo nút Google.",
+        "googlePopupCannotOpen": "Không thể mở cửa sổ đăng nhập Google.",
+        "backendConfigHint": "Vui lòng kiểm tra cấu hình xác thực ở backend.",
+        "cannotConnectServer": "Không thể kết nối máy chủ ({{apiBase}}).",
+        "loginFailed": "Đăng nhập thất bại."
+      }
+    },
+    "registerForm": {
+      "labels": {
+        "lastName": "Họ",
+        "firstName": "Tên",
+        "birthday": "Ngày sinh",
+        "gender": "Giới tính",
+        "email": "Email",
+        "phone": "Số điện thoại",
+        "password": "Mật khẩu",
+        "confirmPassword": "Xác nhận mật khẩu"
+      },
+      "placeholders": {
+        "lastName": "Nhập họ",
+        "firstName": "Nhập tên",
+        "email": "Nhập email",
+        "phone": "Nhập số điện thoại",
+        "password": "Nhập mật khẩu",
+        "confirmPassword": "Xác nhận mật khẩu"
+      },
+      "birthday": {
+        "monthLabel": "Tháng {{month}}",
+        "dayPlaceholder": "Ngày",
+        "monthPlaceholder": "Tháng",
+        "yearPlaceholder": "Năm",
+        "menuTitle": "Chọn ngày sinh",
+        "menuSubtitle": "Chọn ngày, tháng và năm",
+        "ageHint": "Bạn cần từ 16 tuổi trở lên."
+      },
+      "gender": {
+        "female": "Nữ",
+        "male": "Nam",
+        "custom": "Tùy chỉnh"
+      },
+      "acceptTerms": "Tôi đồng ý với các điều khoản",
+      "terms": {
+        "prefix": "Khi tiếp tục, bạn đồng ý với",
+        "terms": "Điều khoản sử dụng",
+        "privacy": "Chính sách bảo mật",
+        "and": "và",
+        "cookies": "Chính sách Cookie"
+      },
+      "hasAccount": "Đã có tài khoản?",
+      "login": "Đăng nhập",
+      "helpText": "Vui lòng điền đầy đủ thông tin để tạo tài khoản.",
+      "submit": "Tạo tài khoản",
+      "processing": "Đang xử lý...",
+      "common": {
+        "close": "Đóng"
+      },
+      "aria": {
+        "selectBirthday": "Chọn ngày sinh",
+        "showPassword": "Hiển thị mật khẩu",
+        "hidePassword": "Ẩn mật khẩu"
+      },
+      "messages": {
+        "registerSuccess": "Đăng ký thành công. Vui lòng xác thực OTP."
+      },
+      "errors": {
+        "invalidBirthday": "Ngày sinh không hợp lệ.",
+        "ageUnder16": "Bạn phải từ 16 tuổi trở lên.",
+        "invalidEmail": "Email không đúng định dạng.",
+        "invalidPhone": "Số điện thoại không hợp lệ.",
+        "acceptTermsRequired": "Vui lòng đồng ý điều khoản để tiếp tục.",
+        "passwordMinLength": "Mật khẩu phải có ít nhất 8 ký tự.",
+        "passwordRequireLetterNumber": "Mật khẩu phải gồm chữ và số.",
+        "confirmPasswordMismatch": "Mật khẩu xác nhận không khớp.",
+        "registerFailed": "Đăng ký thất bại."
+      }
+    },
+    "completeProfile": {
+      "title": "Hoàn thiện hồ sơ",
+      "subtitle": "Bổ sung thông tin để hoàn tất onboarding.",
+      "switchText": "Muốn chuyển tài khoản khác?",
+      "switchLabel": "Quay lại đăng nhập",
+      "heroTitle": "Bạn sắp xong rồi",
+      "heroSubtitle": "Hoàn thiện hồ sơ để mở khóa trải nghiệm cá nhân hóa.",
+      "candidateTitle": "Thông tin ứng viên",
+      "employerTitle": "Thông tin nhà tuyển dụng",
+      "labels": {
+        "fullName": "Họ và tên",
+        "phone": "Số điện thoại",
+        "birthday": "Ngày sinh",
+        "gender": "Giới tính",
+        "city": "Thành phố",
+        "district": "Quận/Huyện",
+        "address": "Địa chỉ",
+        "title": "Chức danh",
+        "education": "Học vấn",
+        "personalLink": "Liên kết cá nhân",
+        "selfIntro": "Giới thiệu bản thân",
+        "experienceYears": "Số năm kinh nghiệm",
+        "avatar": "Ảnh đại diện",
+        "companyName": "Tên công ty",
+        "representativeName": "Người đại diện",
+        "website": "Website",
+        "companyDescription": "Mô tả công ty",
+        "industry": "Lĩnh vực",
+        "taxCode": "Mã số thuế",
+        "logoUrl": "URL logo"
+      },
+      "placeholders": {
+        "birthday": "Chọn ngày sinh"
+      },
+      "gender": {
+        "female": "Nữ",
+        "male": "Nam",
+        "other": "Khác"
+      },
+      "uploadAvatar": "Tải ảnh lên",
+      "removeAvatar": "Xóa ảnh",
+      "avatarHint": "Khuyến nghị dùng ảnh vuông.",
+      "submit": "Lưu hồ sơ",
+      "saving": "Đang lưu...",
+      "errors": {
+        "avatarTooLarge": "File ảnh đại diện quá lớn.",
+        "invalidAvatarFile": "Định dạng ảnh đại diện không hợp lệ.",
+        "missingUserForAvatarUpload": "Không xác định được người dùng để tải ảnh.",
+        "uploadAvatarFailed": "Tải ảnh đại diện thất bại.",
+        "candidateRequiredFields": "Vui lòng điền đầy đủ các trường bắt buộc cho ứng viên.",
+        "employerRequiredFields": "Vui lòng điền đầy đủ các trường bắt buộc cho nhà tuyển dụng.",
+        "saveProfileFailed": "Không thể lưu hồ sơ."
+      }
+    }
+  },
+  "candidatePages": {
+    "common": {
+      "back": "Quay lại",
+      "findJobsNow": "Tìm việc ngay",
+      "logoAlt": "Logo nhà tuyển dụng",
+      "employerFallback": "Nhà tuyển dụng",
+      "salary": {
+        "negotiable": "Thỏa thuận",
+        "range": "{{from}} - {{to}} VND/{{unit}}",
+        "from": "Từ {{amount}} VND/{{unit}}",
+        "to": "Đến {{amount}} VND/{{unit}}"
+      }
+    },
+    "appliedJobs": {
+      "title": "Việc làm đã ứng tuyển",
+      "subtitle": "Theo dõi tiến trình ứng tuyển và xem lại các cơ hội đã nộp hồ sơ.",
+      "count": "{{count}} hồ sơ đã nộp",
+      "loading": "Đang tải danh sách việc làm đã ứng tuyển...",
+      "emptyTitle": "Bạn chưa ứng tuyển công việc nào",
+      "emptyDescription": "Khám phá thêm cơ hội và gửi hồ sơ để tăng khả năng nhận phản hồi.",
+      "appliedOn": "Nộp ngày {{date}}",
+      "defaultStatus": "Đã nộp",
+      "viewPost": "Xem lại tin",
+      "errors": {
+        "loginRequired": "Bạn cần đăng nhập để xem việc làm đã ứng tuyển.",
+        "loadFailed": "Không tải được danh sách việc làm đã ứng tuyển."
+      }
+    },
+    "savedJobs": {
+      "title": "Việc làm đã lưu",
+      "subtitle": "Theo dõi các tin tuyển dụng bạn quan tâm để ứng tuyển đúng thời điểm.",
+      "count": "{{count}} tin đã lưu",
+      "loading": "Đang tải danh sách việc làm đã lưu...",
+      "emptyTitle": "Bạn chưa lưu công việc nào",
+      "emptyDescription": "Lưu các công việc phù hợp để theo dõi và ứng tuyển sau.",
+      "deadline": "Hạn nộp {{date}}",
+      "viewDetail": "Xem chi tiết",
+      "remove": "Bỏ lưu",
+      "messages": {
+        "removed": "Đã bỏ lưu công việc."
+      },
+      "errors": {
+        "loginRequired": "Bạn cần đăng nhập để xem việc làm đã lưu.",
+        "loginRequiredShort": "Bạn cần đăng nhập.",
+        "loadFailed": "Không tải được danh sách việc làm đã lưu.",
+        "removeFailed": "Không thể bỏ lưu công việc."
+      }
+    },
+    "matchingJobs": {
+      "title": "Việc làm phù hợp",
+      "subtitle": "Gợi ý thông minh theo hồ sơ của bạn để tập trung vào cơ hội phù hợp.",
+      "count": "{{count}} gợi ý dành cho bạn",
+      "loading": "Đang phân tích và tải việc làm phù hợp...",
+      "emptyTitle": "Chưa có gợi ý phù hợp",
+      "emptyDescription": "Hãy cập nhật hồ sơ hoặc mở rộng tiêu chí để nhận thêm đề xuất.",
+      "viewAllJobs": "Xem tất cả việc làm",
+      "matchBadge": "Gợi ý phù hợp",
+      "viewDetail": "Xem chi tiết",
+      "errors": {
+        "loginRequired": "Bạn cần đăng nhập để xem việc làm phù hợp.",
+        "loadFailed": "Không tải được việc làm phù hợp."
+      }
+    },
+    "cvUpload": {
+      "title": "Tải CV",
+      "subtitle": "Tải CV (PDF/DOC/DOCX) hoặc tạo CV Online để chỉnh sửa trực tiếp.",
+      "createOnline": "Tạo CV Online",
+      "uploadButton": "Tải CV lên",
+      "uploading": "Đang tải...",
+      "loading": "Đang tải danh sách CV...",
+      "emptyTitle": "Chưa có CV nào.",
+      "emptyHint": "Chấp nhận: PDF, DOC, DOCX (tối đa 5MB)",
+      "onlineBadge": "CV Online",
+      "table": {
+        "name": "Tên CV",
+        "size": "Dung lượng",
+        "updatedAt": "Cập nhật",
+        "actions": "Thao tác"
+      },
+      "actions": {
+        "view": "Xem",
+        "editOnline": "Sửa Online",
+        "delete": "Xóa"
+      },
+      "confirmDelete": {
+        "title": "Xóa CV",
+        "message": "Bạn có chắc muốn xóa CV này?",
+        "confirmText": "Xóa",
+        "cancelText": "Hủy"
+      },
+      "messages": {
+        "uploadSuccess": "Tải CV lên thành công.",
+        "deleteSuccess": "Đã xóa CV."
+      },
+      "errors": {
+        "loadFailed": "Không tải được danh sách CV.",
+        "invalidFileType": "Chỉ chấp nhận file PDF, DOC hoặc DOCX.",
+        "fileTooLarge": "Kích thước file không được vượt quá 5MB.",
+        "loginRequiredUpload": "Vui lòng đăng nhập để tải CV.",
+        "uploadFailed": "Không thể tải CV lên.",
+        "deleteFailed": "Không thể xóa CV.",
+        "loginRequiredManage": "Bạn cần đăng nhập để quản lý CV."
+      }
+    },
+    "dashboard": {
+      "title": "Dashboard Ứng viên",
+      "logout": "Đăng xuất",
+      "greeting": "Xin chào, {{name}}!",
+      "roleLabel": "Vai trò",
+      "cards": {
+        "cvProfile": "Hồ sơ CV",
+        "appliedJobs": "Việc đã ứng tuyển",
+        "savedJobs": "Việc đã lưu",
+        "notifications": "Thông báo"
+      },
+      "matchingSection": {
+        "title": "Việc làm phù hợp với bạn",
+        "description": "Hãy hoàn thiện hồ sơ để nhận gợi ý việc làm phù hợp hơn."
+      },
+      "applicationsSection": {
+        "title": "Hồ sơ ứng tuyển của tôi",
+        "empty": "Bạn chưa ứng tuyển công việc nào."
+      },
+      "savedSection": {
+        "title": "Việc làm đã lưu",
+        "empty": "Bạn chưa lưu công việc nào."
+      },
+      "actions": {
+        "createCv": "Tạo CV",
+        "view": "Xem",
+        "completeProfile": "Hoàn thiện hồ sơ",
+        "findJobsNow": "Tìm việc ngay"
+      }
+    },
+    "profile": {
+      "nav": {
+        "overview": "Thông tin cá nhân",
+        "jobs": "Việc làm của tôi",
+        "invitations": "Lời mời phỏng vấn",
+        "notifications": "Thông báo",
+        "settings": "Cài đặt"
+      },
+      "sidebar": {
+        "greeting": "Xin chào",
+        "defaultUser": "Người dùng"
+      },
+      "overview": {
+        "avatarAlt": "avatar",
+        "eyebrow": "Hồ sơ ứng viên",
+        "fallbackPosition": "Chưa cập nhật chức danh",
+        "fallbackCity": "Chưa cập nhật thành phố",
+        "fallbackEmail": "Chưa có email",
+        "updateProfile": "Cập nhật hồ sơ",
+        "kpis": {
+          "appliedJobs": "Việc đã ứng tuyển",
+          "newInvitations": "Lời mời mới",
+          "notifications": "Thông báo"
+        },
+        "journey": {
+          "title": "Tiếp tục hành trình tìm việc",
+          "description": "Cập nhật hồ sơ và khám phá cơ hội phù hợp ngay hôm nay.",
+          "findJobs": "Tìm việc làm",
+          "savedJobs": "Việc làm đã lưu",
+          "trackApplications": "Theo dõi ứng tuyển",
+          "completeProfile": "Hoàn thiện hồ sơ"
+        }
+      },
+      "jobs": {
+        "title": "Việc làm của tôi",
+        "subtitle": "Quản lý các việc đã lưu và tiến trình ứng tuyển của bạn.",
+        "emptyTitle": "Bạn chưa ứng tuyển công việc nào",
+        "emptyDescription": "Khám phá danh sách việc làm mới nhất và bắt đầu ứng tuyển.",
+        "findJobs": "Tìm việc làm"
+      },
+      "invitations": {
+        "title": "Lời mời phỏng vấn",
+        "subtitle": "Danh sách công ty đã chuyển hồ sơ của bạn sang trạng thái phỏng vấn.",
+        "loading": "Đang tải lời mời phỏng vấn...",
+        "emptyTitle": "Hiện chưa có lời mời phỏng vấn",
+        "emptyDescription": "Hãy tiếp tục ứng tuyển và hoàn thiện hồ sơ để tăng tỷ lệ được mời phỏng vấn.",
+        "updateProfileNow": "Cập nhật hồ sơ ngay",
+        "companyLogoAlt": "Logo công ty",
+        "positionFallback": "Vị trí đã ứng tuyển",
+        "statusInterview": "Phỏng vấn",
+        "submittedOn": "Nộp hồ sơ: {{date}}",
+        "viewJob": "Xem tin"
+      },
+      "notifications": {
+        "title": "Thông báo",
+        "subtitle": "Thông tin việc làm mới, nhắc lịch và cập nhật trạng thái hồ sơ.",
+        "emptyTitle": "Chưa có thông báo mới",
+        "emptyDescription": "Khi có cập nhật quan trọng từ hệ thống, bạn sẽ thấy tại đây."
+      },
+      "settings": {
+        "heroTitle": "Cài đặt tài khoản",
+        "heroDescription": "Quản lý bảo mật, hồ sơ cá nhân và cài đặt ứng dụng JobFinder trên thiết bị của bạn.",
+        "security": {
+          "kicker": "Bảo mật",
+          "title": "Đổi mật khẩu tài khoản",
+          "button": "Đổi mật khẩu",
+          "hint": "Mật khẩu mới nên có tối thiểu 8 ký tự, gồm chữ hoa, chữ thường và số để tăng an toàn."
+        },
+        "profile": {
+          "kicker": "Hồ sơ",
+          "title": "Cập nhật thông tin ứng viên",
+          "button": "Mở hồ sơ chi tiết",
+          "hint": "Tối ưu hồ sơ để tăng khả năng được nhà tuyển dụng tìm thấy và gửi lời mời phỏng vấn."
+        },
+        "app": {
+          "kicker": "Ứng dụng",
+          "title": "Cài đặt JobFinder"
+        }
+      }
     }
   }
 }

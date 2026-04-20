@@ -1,4 +1,5 @@
 import { requestFirebaseMessagingToken } from '../config/firebaseMessaging';
+import i18n from '../i18n/config';
 
 export const isBrowserNotificationSupported = () => {
   return typeof window !== 'undefined' && 'Notification' in window;
@@ -61,7 +62,7 @@ export const showBrowserNotification = async ({ title, body, url = '/', tag = 'j
     try {
       const registration = await navigator.serviceWorker.ready;
       if (registration?.showNotification) {
-        await registration.showNotification(title || 'Thông báo JobFinder', options);
+        await registration.showNotification(title || i18n.t('components.notificationUtils.defaultBrowserTitle'), options);
         return true;
       }
     } catch {
@@ -71,7 +72,7 @@ export const showBrowserNotification = async ({ title, body, url = '/', tag = 'j
 
   try {
     // eslint-disable-next-line no-new
-    new Notification(title || 'Thông báo JobFinder', options);
+    new Notification(title || i18n.t('components.notificationUtils.defaultBrowserTitle'), options);
     return true;
   } catch {
     return false;

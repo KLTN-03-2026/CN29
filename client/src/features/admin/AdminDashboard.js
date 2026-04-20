@@ -6,17 +6,13 @@ import {
     BookOpen,
     BriefcaseBusiness,
     Building2,
-    ChevronDown,
     ClipboardList,
     FileStack,
     History,
-    House,
     LayoutDashboard,
-    Languages,
     LogOut,
     Menu,
     Moon,
-    ShieldCheck,
     Sun,
     UserRound,
     Users,
@@ -34,6 +30,8 @@ import AdminAuditLogsPage from './pages/AdminAuditLogsPage';
 import AdminCareerGuidePostsPage from './pages/AdminCareerGuidePostsPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import EmployerHeaderShell from '../shared/components/EmployerHeaderShell';
+import AdminHeaderRightActions from '../shared/components/AdminHeaderRightActions';
 import './AdminDashboard.css';
 
 const readStoredUser = () => {
@@ -638,6 +636,40 @@ const AdminDashboard = () => {
         setProfileMenuOpen(false);
     };
 
+    const adminHeaderMenuItems = [
+        {
+            key: 'dashboard',
+            icon: LayoutDashboard,
+            label: t('admin.dropdown.dashboard'),
+            onClick: () => handleProfileMenuNavigate('/admin/dashboard')
+        },
+        {
+            key: 'profile',
+            icon: UserRound,
+            label: t('admin.dropdown.profile'),
+            onClick: () => handleProfileMenuNavigate('/admin/profile')
+        },
+        {
+            key: 'notifications',
+            icon: Bell,
+            label: t('admin.dropdown.notifications'),
+            onClick: () => handleProfileMenuNavigate('/admin/dashboard')
+        },
+        {
+            key: 'theme',
+            icon: isDarkMode ? Sun : Moon,
+            label: isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark'),
+            onClick: handleProfileMenuThemeToggle
+        },
+        {
+            key: 'logout',
+            icon: LogOut,
+            label: t('admin.dropdown.logout'),
+            onClick: handleLogout,
+            danger: true
+        }
+    ];
+
     const isPathActive = (path, exact = false) => {
         if (exact) return location.pathname === path;
         return location.pathname === path || location.pathname.startsWith(`${path}/`);
@@ -753,100 +785,33 @@ const AdminDashboard = () => {
             </div>
 
             <div className={`admin-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-                <div className="admin-header">
-                    <div className="admin-header-left">
-                        <button
-                            type="button"
-                            className="admin-sidebar-toggle"
-                            onClick={handleSidebarToggle}
-                            aria-label={t('header.aria.toggleNavigation')}
-                        >
-                            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-                        </button>
-                        <h1 className="admin-header-page-title">{t(resolvePageTitleKey(location.pathname))}</h1>
-                    </div>
-
-                    <div className="admin-header-user">
-                        <button
-                            type="button"
-                            className="admin-header-home-btn"
-                            onClick={handleToggleLanguage}
-                            title={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
-                            aria-label={t('common.languageSwitch')}
-                        >
-                            <Languages size={16} />
-                            <span>{isEnglish ? 'VI' : 'EN'}</span>
-                        </button>
-
-                        <button
-                            type="button"
-                            className="admin-header-home-btn"
-                            onClick={() => navigate('/')}
-                        >
-                            <House size={16} />
-                            <span>{t('admin.actions.home')}</span>
-                        </button>
-
-                        <div className={`admin-header-user-menu ${profileMenuOpen ? 'open' : ''}`} ref={profileMenuRef}>
-                            <button
-                                type="button"
-                                className="admin-header-user-trigger"
-                                onClick={() => setProfileMenuOpen((prev) => !prev)}
-                                aria-haspopup="menu"
-                                aria-expanded={profileMenuOpen}
-                            >
-                                <div className="admin-header-avatar">
-                                    {adminAvatarUrl ? (
-                                        <img
-                                            src={adminAvatarUrl}
-                                            alt={greetingName}
-                                            onError={(event) => {
-                                                event.currentTarget.onerror = null;
-                                                event.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-                                            }}
-                                        />
-                                    ) : (
-                                        <ShieldCheck size={15} />
-                                    )}
-                                </div>
-                                <div className="admin-header-user-info">
-                                    <strong>{greetingName}</strong>
-                                    <small>{roleLabel}</small>
-                                </div>
-                                <ChevronDown size={16} className="admin-header-user-chevron" />
-                            </button>
-
-                            {profileMenuOpen && (
-                                <div className="admin-header-dropdown" role="menu">
-                                    <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/admin/dashboard')}>
-                                        <LayoutDashboard size={16} />
-                                        <span>{t('admin.dropdown.dashboard')}</span>
-                                    </button>
-                                    <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/admin/profile')}>
-                                        <UserRound size={16} />
-                                        <span>{t('admin.dropdown.profile')}</span>
-                                    </button>
-                                    <button type="button" className="admin-header-dropdown-item" onClick={() => handleProfileMenuNavigate('/admin/dashboard')}>
-                                        <Bell size={16} />
-                                        <span>{t('admin.dropdown.notifications')}</span>
-                                    </button>
-                                    <button type="button" className="admin-header-dropdown-item" onClick={handleProfileMenuThemeToggle}>
-                                        {isDarkMode ? <Sun size={16} /> : <Moon size={16} />}
-                                        <span>{isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark')}</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="admin-header-dropdown-item danger"
-                                        onClick={handleLogout}
-                                    >
-                                        <LogOut size={16} />
-                                        <span>{t('admin.dropdown.logout')}</span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <EmployerHeaderShell
+                    onToggleSidebar={handleSidebarToggle}
+                    toggleAriaLabel={t('header.aria.toggleNavigation')}
+                    toggleIcon={mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
+                    title={t(resolvePageTitleKey(location.pathname))}
+                    rightContent={(
+                        <AdminHeaderRightActions
+                            isEnglish={isEnglish}
+                            onToggleLanguage={handleToggleLanguage}
+                            languageToggleTitle={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
+                            languageAriaLabel={t('common.languageSwitch')}
+                            onGoHome={() => navigate('/')}
+                            homeLabel={t('admin.actions.home')}
+                            profileMenuOpen={profileMenuOpen}
+                            onToggleProfileMenu={() => setProfileMenuOpen((prev) => !prev)}
+                            profileMenuRef={profileMenuRef}
+                            avatarUrl={adminAvatarUrl}
+                            displayName={greetingName}
+                            roleLabel={roleLabel}
+                            onAvatarError={(event) => {
+                                event.currentTarget.onerror = null;
+                                event.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                            }}
+                            menuItems={adminHeaderMenuItems}
+                        />
+                    )}
+                />
 
                 <div className="admin-content">
                     {error && <div className="alert alert-danger admin-feedback">{error}</div>}

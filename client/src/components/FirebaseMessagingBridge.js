@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNotification } from './NotificationProvider';
+import i18n from '../i18n/config';
 import { initFirebaseAnalytics } from '../config/firebase';
 import { API_BASE } from '../config/apiBase';
 import {
@@ -62,7 +63,7 @@ const resolveNotificationTitle = (payload) => {
   return String(
     payload?.notification?.title
     || payload?.data?.title
-    || 'Thông báo JobFinder'
+    || i18n.t('components.firebaseMessagingBridge.defaultTitle')
   ).trim();
 };
 
@@ -71,7 +72,7 @@ const resolveNotificationBody = (payload) => {
     payload?.notification?.body
     || payload?.data?.body
     || payload?.data?.message
-    || 'Bạn có thông báo mới.'
+    || i18n.t('components.firebaseMessagingBridge.defaultBody')
   ).trim();
 };
 

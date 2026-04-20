@@ -1,4 +1,5 @@
 import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './SmartPagination.css';
 
 const buildPageItems = (currentPage, totalPages, siblingCount = 1) => {
@@ -35,6 +36,7 @@ const SmartPagination = ({
   showPageNumbers = false,
   className = ''
 }) => {
+  const { t } = useTranslation();
   const safeTotal = Math.max(0, Number(totalItems) || 0);
   const safePerPage = Math.max(1, Number(perPage || pageSize) || pageSize);
   const maxPage = Math.max(1, Math.ceil((safeTotal || 1) / safePerPage));
@@ -175,7 +177,7 @@ const SmartPagination = ({
             className="smart-pagination-arrow"
             onClick={handlePrev}
             disabled={loading || !canGoPrev}
-            aria-label="Trang trước"
+            aria-label={t('components.smartPagination.prevPageAria')}
           >
             <span aria-hidden="true">&lsaquo;</span>
           </button>
@@ -189,7 +191,7 @@ const SmartPagination = ({
             aria-live="polite"
             onClick={openRangeEditor}
             disabled={loading || safeTotal <= 0}
-            title="Nhấn để chỉnh phạm vi"
+            title={t('components.smartPagination.editRangeTitle')}
           >
             <strong>{fromDisplay}-{toDisplay}</strong>
             <span>/ {safeTotal}</span>
@@ -208,7 +210,7 @@ const SmartPagination = ({
               onBlur={handleRangeEditorBlur}
               onKeyDown={handleRangeEditorKeyDown}
               onChange={(event) => setTempFrom(event.target.value.replace(/\D/g, ''))}
-              aria-label="Bản ghi bắt đầu"
+              aria-label={t('components.smartPagination.fromRecordAria')}
             />
             <span className="smart-pagination-range-separator">-</span>
             <input
@@ -219,7 +221,7 @@ const SmartPagination = ({
               onBlur={handleRangeEditorBlur}
               onKeyDown={handleRangeEditorKeyDown}
               onChange={(event) => setTempTo(event.target.value.replace(/\D/g, ''))}
-              aria-label="Bản ghi kết thúc"
+              aria-label={t('components.smartPagination.toRecordAria')}
             />
             <span className="smart-pagination-range-separator">/</span>
             <span>{safeTotal}</span>
@@ -232,7 +234,7 @@ const SmartPagination = ({
             className="smart-pagination-arrow"
             onClick={handleNext}
             disabled={loading || !canGoNext}
-            aria-label="Trang sau"
+            aria-label={t('components.smartPagination.nextPageAria')}
           >
             <span aria-hidden="true">&rsaquo;</span>
           </button>
@@ -240,7 +242,7 @@ const SmartPagination = ({
       </div>
 
       {showPageNumbers && maxPage > 1 ? (
-        <div className="smart-pagination-pages" aria-label="Danh sách trang">
+        <div className="smart-pagination-pages" aria-label={t('components.smartPagination.pageListAria')}>
           {pageItems.map((item) => {
             if (item === 'ellipsis-left' || item === 'ellipsis-right') {
               return <span key={item} className="smart-pagination-ellipsis">&hellip;</span>;
@@ -256,7 +258,7 @@ const SmartPagination = ({
                 className={active ? 'active' : ''}
                 onClick={() => emitPage(page)}
                 aria-current={active ? 'page' : undefined}
-                aria-label={`Trang ${page}`}
+                aria-label={t('components.smartPagination.pageAria', { page })}
                 disabled={loading}
               >
                 {page}

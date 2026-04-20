@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from 'react-i18next';
 import "./PWAUpdatePrompt.css";
 
 const PWAUpdatePrompt = () => {
+  const { t } = useTranslation();
   const [registration, setRegistration] = useState(null);
   const [hidden, setHidden] = useState(false);
 
@@ -51,15 +53,15 @@ const PWAUpdatePrompt = () => {
   return (
     <div className="pwa-update-prompt" role="status" aria-live="polite">
       <div className="pwa-update-prompt__content">
-        <strong>Phiên bản mới đã sẵn sàng.</strong>
-        <span>Làm mới để cập nhật JobFinder.</span>
+        <strong>{t('components.pwa.updatePrompt.readyTitle')}</strong>
+        <span>{t('components.pwa.updatePrompt.readyDescription')}</span>
       </div>
       <div className="pwa-update-prompt__actions">
         <button type="button" onClick={handleRefresh}>
-          Cập nhật ngay
+          {t('components.pwa.updatePrompt.updateNow')}
         </button>
         <button type="button" className="is-secondary" onClick={() => setHidden(true)}>
-          Để sau
+          {t('components.pwa.updatePrompt.later')}
         </button>
       </div>
     </div>

@@ -13,11 +13,11 @@ export const PROFILE_ALLOWED_TABS = [
 ];
 
 export const PROFILE_NAV_ITEMS = [
-  { key: PROFILE_TAB_OVERVIEW, icon: 'bi-grid', label: 'Thông tin cá nhân' },
-  { key: PROFILE_TAB_JOBS, icon: 'bi-briefcase', label: 'Việc làm của tôi' },
-  { key: PROFILE_TAB_INVITATIONS, icon: 'bi-envelope', label: 'Lời mời phỏng vấn', badge: null },
-  { key: PROFILE_TAB_NOTIFICATIONS, icon: 'bi-bell', label: 'Thông báo' },
-  { key: PROFILE_TAB_SETTINGS, icon: 'bi-gear', label: 'Cài đặt' }
+  { key: PROFILE_TAB_OVERVIEW, icon: 'bi-grid', labelKey: 'candidatePages.profile.nav.overview' },
+  { key: PROFILE_TAB_JOBS, icon: 'bi-briefcase', labelKey: 'candidatePages.profile.nav.jobs' },
+  { key: PROFILE_TAB_INVITATIONS, icon: 'bi-envelope', labelKey: 'candidatePages.profile.nav.invitations', badge: null },
+  { key: PROFILE_TAB_NOTIFICATIONS, icon: 'bi-bell', labelKey: 'candidatePages.profile.nav.notifications' },
+  { key: PROFILE_TAB_SETTINGS, icon: 'bi-gear', labelKey: 'candidatePages.profile.nav.settings' }
 ];
 
 export const normalizeProfileTab = (tab, fallback = PROFILE_TAB_OVERVIEW) =>

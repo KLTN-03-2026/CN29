@@ -1,7 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useNavigate, Outlet, Link, useLocation, matchPath } from 'react-router-dom';
+import { useNavigate, Outlet, Link, useLocation } from 'react-router-dom';
+import {
+    Bell,
+    BriefcaseBusiness,
+    LayoutDashboard,
+    LogOut,
+    Menu,
+    Moon,
+    Sun,
+    UserRound
+} from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
+import { useDarkMode } from '../../context/DarkModeContext';
+import EmployerHeaderShell from '../shared/components/EmployerHeaderShell';
+import AdminHeaderRightActions from '../shared/components/AdminHeaderRightActions';
 import './EmployerLayout.css';
 
 const readStoredUser = () => {
@@ -56,6 +69,7 @@ const EmployerLayout = () => {
     const location = useLocation();
     const { t, i18n } = useTranslation();
     const { requestConfirm } = useNotification();
+    const { isDarkMode, toggleDarkMode } = useDarkMode();
     const [user, setUser] = useState(() => readStoredUser());
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -256,21 +270,58 @@ const EmployerLayout = () => {
         }
     ];
 
+    const employerHeaderMenuItems = [
+        {
+            key: 'profile',
+            icon: UserRound,
+            label: t('employer.layout.dropdown.profile'),
+            onClick: () => handleHeaderMenuNavigate('/employer/account')
+        },
+        {
+            key: 'dashboard',
+            icon: LayoutDashboard,
+            label: t('employer.layout.dropdown.dashboard'),
+            onClick: () => handleHeaderMenuNavigate('/employer')
+        },
+        {
+            key: 'jobs',
+            icon: BriefcaseBusiness,
+            label: t('employer.layout.dropdown.jobs'),
+            onClick: () => handleHeaderMenuNavigate('/employer/jobs')
+        },
+        {
+            key: 'notifications',
+            icon: Bell,
+            label: t('employer.layout.dropdown.notifications'),
+            onClick: () => handleHeaderMenuNavigate('/employer/notifications')
+        },
+        {
+            key: 'theme',
+            icon: isDarkMode ? Sun : Moon,
+            label: isDarkMode ? t('common.switchToLight') : t('common.switchToDark'),
+            onClick: () => {
+                setShowProfileDropdown(false);
+                toggleDarkMode();
+            }
+        },
+        {
+            key: 'logout',
+            icon: LogOut,
+            label: t('employer.layout.dropdown.logout'),
+            danger: true,
+            onClick: () => {
+                setShowProfileDropdown(false);
+                handleLogout();
+            }
+        }
+    ];
+
     const isActive = (menuPath, exact = false) => {
         if (exact) {
             return location.pathname === menuPath;
         }
         return location.pathname.startsWith(menuPath);
     };
-
-    const currentMenu = menuItems.find((item) =>
-        matchPath({ path: item.path, end: item.exact || false }, location.pathname)
-    ) || menuItems[0];
-    const hidePageHeaderText =
-        location.pathname === '/employer/account' ||
-        location.pathname === '/employer/cv-search' ||
-        location.pathname === '/employer/cv-manage' ||
-        location.pathname.startsWith('/employer/jobs');
 
     const handleToggleSidebar = () => {
         if (window.matchMedia('(max-width: 991px)').matches) {
@@ -337,123 +388,32 @@ const EmployerLayout = () => {
             </aside>
 
             <div className={`employer-main ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
-                <header className="employer-header">
-                    <div className="employer-header-left">
-                        <button
-                            type="button"
-                            className="employer-sidebar-toggle"
-                            onClick={handleToggleSidebar}
-                            aria-label={t('employer.layout.aria.toggleMenu')}
-                        >
-                            <i className="bi bi-list"></i>
-                        </button>
-                        {!hidePageHeaderText ? (
-                            <div>
-                                <h1 className="employer-header-title">{currentMenu?.labelKey ? t(currentMenu.labelKey) : t('employer.layout.defaultDisplayName')}</h1>
-                                <p className="employer-header-subtitle">{currentMenu?.subtitleKey ? t(currentMenu.subtitleKey) : t('employer.layout.defaultSubtitle')}</p>
-                            </div>
-                        ) : null}
-                    </div>
-
-                    <div className="employer-header-right">
-                        <Link to="/" className="employer-home-btn" title={t('common.home')}>
-                            <i className="bi bi-house-door"></i>
-                            <span>{t('common.home')}</span>
-                        </Link>
-                        <div className="employer-language-toggle" aria-label={t('common.languageSwitch')}>
-                            <button
-                                type="button"
-                                className={`employer-language-btn ${isEnglish ? 'is-active' : ''}`}
-                                onClick={() => handleToggleLanguage('en')}
-                                title={t('common.switchToEnglish')}
-                                aria-pressed={isEnglish}
-                            >
-                                EN
-                            </button>
-                            <button
-                                type="button"
-                                className={`employer-language-btn ${!isEnglish ? 'is-active' : ''}`}
-                                onClick={() => handleToggleLanguage('vi')}
-                                title={t('common.switchToVietnamese')}
-                                aria-pressed={!isEnglish}
-                            >
-                                VI
-                            </button>
-                        </div>
-                        <Link
-                            to="/employer/notifications"
-                            className="employer-notification-btn"
-                            title={t('header.user.notifications')}
-                            aria-label={t('header.user.notifications')}
-                        >
-                            <i className="bi bi-bell"></i>
-                            <span>{t('header.user.notifications')}</span>
-                        </Link>
-                        <div className="employer-header-user" ref={profileDropdownRef}>
-                            <button
-                                type="button"
-                                className={`employer-user-pill ${showProfileDropdown ? 'is-open' : ''}`}
-                                onClick={() => setShowProfileDropdown((prev) => !prev)}
-                                aria-haspopup="menu"
-                                aria-expanded={showProfileDropdown}
-                                aria-label={t('employer.layout.aria.openAccountMenu')}
-                            >
-                                <div className="employer-user-pill-icon">
-                                    {avatarUrl ? (
-                                        <img
-                                            src={avatarUrl}
-                                            alt={displayName}
-                                            className="employer-user-pill-avatar"
-                                            onError={(event) => {
-                                                event.currentTarget.onerror = null;
-                                                event.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
-                                            }}
-                                        />
-                                    ) : (
-                                        <i className="bi bi-shield-check"></i>
-                                    )}
-                                </div>
-                                <div className="employer-user-pill-copy">
-                                    <strong>{displayName}</strong>
-                                    <small>{roleLabel}</small>
-                                </div>
-                                <i className={`bi bi-chevron-${showProfileDropdown ? 'up' : 'down'} employer-user-pill-chevron`} aria-hidden="true"></i>
-                            </button>
-
-                            {showProfileDropdown && (
-                                <div className="employer-user-menu" role="menu">
-                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer/account')}>
-                                        <i className="bi bi-file-earmark-person"></i>
-                                        <span>{t('employer.layout.dropdown.profile')}</span>
-                                    </button>
-                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer')}>
-                                        <i className="bi bi-speedometer2"></i>
-                                        <span>{t('employer.layout.dropdown.dashboard')}</span>
-                                    </button>
-                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer/jobs')}>
-                                        <i className="bi bi-briefcase"></i>
-                                        <span>{t('employer.layout.dropdown.jobs')}</span>
-                                    </button>
-                                    <button type="button" className="employer-user-menu-item" onClick={() => handleHeaderMenuNavigate('/employer/notifications')}>
-                                        <i className="bi bi-bell"></i>
-                                        <span>{t('employer.layout.dropdown.notifications')}</span>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        className="employer-user-menu-item danger"
-                                        onClick={() => {
-                                            setShowProfileDropdown(false);
-                                            handleLogout();
-                                        }}
-                                    >
-                                        <i className="bi bi-box-arrow-right"></i>
-                                        <span>{t('employer.layout.dropdown.logout')}</span>
-                                    </button>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </header>
+                <EmployerHeaderShell
+                    onToggleSidebar={handleToggleSidebar}
+                    toggleAriaLabel={t('employer.layout.aria.toggleMenu')}
+                    toggleIcon={<Menu size={20} />}
+                    rightContent={(
+                        <AdminHeaderRightActions
+                            isEnglish={isEnglish}
+                            onToggleLanguage={() => handleToggleLanguage(isEnglish ? 'vi' : 'en')}
+                            languageToggleTitle={isEnglish ? t('common.switchToVietnamese') : t('common.switchToEnglish')}
+                            languageAriaLabel={t('common.languageSwitch')}
+                            onGoHome={() => navigate('/')}
+                            homeLabel={t('common.home')}
+                            profileMenuOpen={showProfileDropdown}
+                            onToggleProfileMenu={() => setShowProfileDropdown((prev) => !prev)}
+                            profileMenuRef={profileDropdownRef}
+                            avatarUrl={avatarUrl}
+                            displayName={displayName}
+                            roleLabel={roleLabel}
+                            onAvatarError={(event) => {
+                                event.currentTarget.onerror = null;
+                                event.currentTarget.src = 'https://cdn-icons-png.flaticon.com/512/149/149071.png';
+                            }}
+                            menuItems={employerHeaderMenuItems}
+                        />
+                    )}
+                />
 
                 <div className="main-content">
                     <Outlet />

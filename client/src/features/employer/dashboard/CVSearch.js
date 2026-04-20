@@ -187,7 +187,7 @@ const CVSearch = () => {
         return cityEntries.filter((entry) => entry.value === '' || String(entry.label).toLowerCase().includes(query));
     }, [cityEntries, cityQuery]);
 
-    const selectedCityLabel = searchParams.city || (loadingProvinces ? t('employer.cvSearchPage.filters.location.loading') : t('employer.cvSearchPage.filters.location.all'));
+    const selectedCityLabel = searchParams.city || t('employer.cvSearchPage.filters.location.all');
     const selectedExperienceLabel = EXPERIENCE_ENTRIES.find((entry) => entry.value === searchParams.experience)?.label || t('employer.cvSearchPage.filters.experience.all');
 
     const updateSearchParam = (name, value) => {

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AuthLayout from './components/AuthLayout';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import CalendarDatePicker from '../../components/date/CalendarDatePicker';
@@ -59,6 +60,7 @@ const readJsonStorage = (key, fallback = null) => {
 const CompleteProfilePage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const apiBase = CLIENT_API_BASE;
 
   const token = String(localStorage.getItem('token') || '').trim();
@@ -177,14 +179,14 @@ const CompleteProfilePage = () => {
     setError('');
 
     if (!file.type.startsWith('image/')) {
-      setError('Vui lòng chọn file ảnh hợp lệ.');
+      setError(t('authPages.completeProfile.errors.invalidAvatarFile'));
       setAvatarFile(null);
       setAvatarInputKey((prev) => prev + 1);
       return;
     }
 
     if (file.size > MAX_AVATAR_FILE_SIZE) {
-      setError('Ảnh đại diện không được vượt quá 2MB.');
+      setError(t('authPages.completeProfile.errors.avatarTooLarge'));
       setAvatarFile(null);
       setAvatarInputKey((prev) => prev + 1);
       return;
@@ -223,7 +225,7 @@ const CompleteProfilePage = () => {
 
       if (role === CANDIDATE_ROLE) {
         if (!candidateForm.fullName || !candidateForm.phone || !candidateForm.birthday) {
-          throw new Error('Vui lòng nhập đầy đủ họ tên, số điện thoại và ngày sinh.');
+          throw new Error(t('authPages.completeProfile.errors.candidateRequiredFields'));
         }
 
         let resolvedAvatar = String(candidateForm.avatar || '').trim();
@@ -231,7 +233,7 @@ const CompleteProfilePage = () => {
         if (avatarFile) {
           const userId = resolveUserId(currentUser);
           if (!userId) {
-            throw new Error('Không xác định được tài khoản để tải ảnh đại diện. Vui lòng đăng nhập lại.');
+            throw new Error(t('authPages.completeProfile.errors.missingUserForAvatarUpload'));
           }
 
           const avatarBody = new FormData();
@@ -246,7 +248,7 @@ const CompleteProfilePage = () => {
 
           const avatarData = await avatarResponse.json().catch(() => ({}));
           if (!avatarResponse.ok || !avatarData.success) {
-            throw new Error(avatarData.error || 'Không thể tải ảnh đại diện lên hệ thống.');
+            throw new Error(avatarData.error || t('authPages.completeProfile.errors.uploadAvatarFailed'));
           }
 
           resolvedAvatar = String(avatarData.absoluteUrl || avatarData.avatarUrl || '').trim();
@@ -272,7 +274,7 @@ const CompleteProfilePage = () => {
         };
       } else {
         if (!employerForm.fullName || !employerForm.phone || !employerForm.companyName) {
-          throw new Error('Vui lòng nhập đầy đủ họ tên, số điện thoại và tên công ty.');
+          throw new Error(t('authPages.completeProfile.errors.employerRequiredFields'));
         }
 
         payload = {
@@ -301,7 +303,7 @@ const CompleteProfilePage = () => {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Không thể lưu hồ sơ.');
+        throw new Error(data.error || t('authPages.completeProfile.errors.saveProfileFailed'));
       }
 
       if (data.token && data.user) {
@@ -314,7 +316,7 @@ const CompleteProfilePage = () => {
       const defaultRedirect = role === EMPLOYER_ROLE ? '/employer' : '/profile';
       navigate(data.redirectTo || defaultRedirect, { replace: true });
     } catch (err) {
-      setError(err.message || 'Không thể lưu hồ sơ.');
+      setError(err.message || t('authPages.completeProfile.errors.saveProfileFailed'));
     } finally {
       setLoading(false);
     }
@@ -325,93 +327,93 @@ const CompleteProfilePage = () => {
   return (
     <AuthLayout
       mode="register"
-      title={isCandidate ? 'Hoàn thiện hồ sơ ứng viên' : 'Hoàn thiện hồ sơ nhà tuyển dụng'}
-      subtitle="Điền thông tin một lần để hệ thống đưa bạn vào đúng khu vực làm việc."
-      switchText="Muốn đổi vai trò?"
-      switchLabel="Chọn lại vai trò"
+      title={isCandidate ? t('authPages.completeProfile.candidateTitle') : t('authPages.completeProfile.employerTitle')}
+      subtitle={t('authPages.completeProfile.subtitle')}
+      switchText={t('authPages.completeProfile.switchText')}
+      switchLabel={t('authPages.completeProfile.switchLabel')}
       switchTo="/onboarding/role"
       heroImage="/images/auth-career-hero.svg"
-      heroTitle="Hoàn thiện hồ sơ để bắt đầu sử dụng hệ thống."
-      heroSubtitle="Bạn có thể cập nhật thêm trong trang hồ sơ sau khi hoàn tất bước này."
+      heroTitle={t('authPages.completeProfile.heroTitle')}
+      heroSubtitle={t('authPages.completeProfile.heroSubtitle')}
     >
       <form className="auth-form" onSubmit={handleSubmit}>
         {isCandidate ? (
           <>
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateFullName">Họ tên</label>
+                <label className="auth-field-label" htmlFor="candidateFullName">{t('authPages.completeProfile.labels.fullName')}</label>
                 <input id="candidateFullName" name="fullName" className="auth-input" value={candidateForm.fullName} onChange={handleCandidateChange} required />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidatePhone">Số điện thoại</label>
+                <label className="auth-field-label" htmlFor="candidatePhone">{t('authPages.completeProfile.labels.phone')}</label>
                 <input id="candidatePhone" name="phone" className="auth-input" value={candidateForm.phone} onChange={handleCandidateChange} required />
               </div>
             </div>
 
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateBirthday">Ngày sinh</label>
+                <label className="auth-field-label" htmlFor="candidateBirthday">{t('authPages.completeProfile.labels.birthday')}</label>
                 <div className="auth-birthday-grid">
                   <CalendarDatePicker
                     id="candidateBirthday"
                     value={candidateForm.birthday}
                     onChange={handleBirthdayChange}
-                    placeholder="Chọn ngày sinh"
+                    placeholder={t('authPages.completeProfile.placeholders.birthday')}
                     maxDate={maxBirthdayDate}
                     inputClassName="auth-input"
                   />
                 </div>
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateGender">Giới tính</label>
+                <label className="auth-field-label" htmlFor="candidateGender">{t('authPages.completeProfile.labels.gender')}</label>
                 <select id="candidateGender" name="gender" className="auth-select" value={candidateForm.gender} onChange={handleCandidateChange}>
-                  <option value="Nam">Nam</option>
-                  <option value="Nữ">Nữ</option>
-                  <option value="Khác">Khác</option>
+                  <option value="Nam">{t('authPages.completeProfile.gender.male')}</option>
+                  <option value="Nữ">{t('authPages.completeProfile.gender.female')}</option>
+                  <option value="Khác">{t('authPages.completeProfile.gender.other')}</option>
                 </select>
               </div>
             </div>
 
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateCity">Thành phố</label>
+                <label className="auth-field-label" htmlFor="candidateCity">{t('authPages.completeProfile.labels.city')}</label>
                 <input id="candidateCity" name="city" className="auth-input" value={candidateForm.city} onChange={handleCandidateChange} />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateDistrict">Quận/Huyện</label>
+                <label className="auth-field-label" htmlFor="candidateDistrict">{t('authPages.completeProfile.labels.district')}</label>
                 <input id="candidateDistrict" name="district" className="auth-input" value={candidateForm.district} onChange={handleCandidateChange} />
               </div>
             </div>
 
             <div className="auth-field">
-              <label className="auth-field-label" htmlFor="candidateAddress">Địa chỉ</label>
+              <label className="auth-field-label" htmlFor="candidateAddress">{t('authPages.completeProfile.labels.address')}</label>
               <input id="candidateAddress" name="address" className="auth-input" value={candidateForm.address} onChange={handleCandidateChange} />
             </div>
 
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateTitle">Chức danh</label>
+                <label className="auth-field-label" htmlFor="candidateTitle">{t('authPages.completeProfile.labels.title')}</label>
                 <input id="candidateTitle" name="title" className="auth-input" value={candidateForm.title} onChange={handleCandidateChange} />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateExperience">Số năm kinh nghiệm</label>
+                <label className="auth-field-label" htmlFor="candidateExperience">{t('authPages.completeProfile.labels.experienceYears')}</label>
                 <input id="candidateExperience" type="number" min="0" name="experienceYears" className="auth-input" value={candidateForm.experienceYears} onChange={handleCandidateChange} />
               </div>
             </div>
 
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateEducation">Trình độ học vấn</label>
+                <label className="auth-field-label" htmlFor="candidateEducation">{t('authPages.completeProfile.labels.education')}</label>
                 <input id="candidateEducation" name="education" className="auth-input" value={candidateForm.education} onChange={handleCandidateChange} />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="candidateLink">Link cá nhân</label>
+                <label className="auth-field-label" htmlFor="candidateLink">{t('authPages.completeProfile.labels.personalLink')}</label>
                 <input id="candidateLink" name="personalLink" className="auth-input" value={candidateForm.personalLink} onChange={handleCandidateChange} />
               </div>
             </div>
 
             <div className="auth-field">
-              <label className="auth-field-label" htmlFor="candidateAvatar">Ảnh đại diện</label>
+              <label className="auth-field-label" htmlFor="candidateAvatar">{t('authPages.completeProfile.labels.avatar')}</label>
               <div className="auth-avatar-upload">
                 <div className="auth-avatar-preview-wrap" aria-hidden="true">
                   {avatarPreview ? (
@@ -432,17 +434,17 @@ const CompleteProfilePage = () => {
                     className="auth-hidden-file-input"
                     onChange={handleAvatarFileChange}
                   />
-                  <label htmlFor="candidateAvatar" className="auth-avatar-upload-btn">Tải ảnh lên</label>
+                  <label htmlFor="candidateAvatar" className="auth-avatar-upload-btn">{t('authPages.completeProfile.uploadAvatar')}</label>
                   <button type="button" className="auth-avatar-clear-btn" onClick={clearAvatarSelection}>
-                    Xóa ảnh
+                    {t('authPages.completeProfile.removeAvatar')}
                   </button>
-                  <small className="text-muted d-block">Ảnh vuông, tối đa 2MB.</small>
+                  <small className="text-muted d-block">{t('authPages.completeProfile.avatarHint')}</small>
                 </div>
               </div>
             </div>
 
             <div className="auth-field">
-              <label className="auth-field-label" htmlFor="candidateIntro">Giới thiệu bản thân</label>
+              <label className="auth-field-label" htmlFor="candidateIntro">{t('authPages.completeProfile.labels.selfIntro')}</label>
               <textarea id="candidateIntro" name="introHtml" className="auth-input" style={{ height: 100, paddingTop: 10 }} value={candidateForm.introHtml} onChange={handleCandidateChange} />
             </div>
           </>
@@ -450,55 +452,55 @@ const CompleteProfilePage = () => {
           <>
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerFullName">Họ tên người đại diện</label>
+                <label className="auth-field-label" htmlFor="employerFullName">{t('authPages.completeProfile.labels.representativeName')}</label>
                 <input id="employerFullName" name="fullName" className="auth-input" value={employerForm.fullName} onChange={handleEmployerChange} required />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerPhone">Số điện thoại</label>
+                <label className="auth-field-label" htmlFor="employerPhone">{t('authPages.completeProfile.labels.phone')}</label>
                 <input id="employerPhone" name="phone" className="auth-input" value={employerForm.phone} onChange={handleEmployerChange} required />
               </div>
             </div>
 
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerCompanyName">Tên công ty</label>
+                <label className="auth-field-label" htmlFor="employerCompanyName">{t('authPages.completeProfile.labels.companyName')}</label>
                 <input id="employerCompanyName" name="companyName" className="auth-input" value={employerForm.companyName} onChange={handleEmployerChange} required />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerTaxCode">Mã số thuế</label>
+                <label className="auth-field-label" htmlFor="employerTaxCode">{t('authPages.completeProfile.labels.taxCode')}</label>
                 <input id="employerTaxCode" name="taxCode" className="auth-input" value={employerForm.taxCode} onChange={handleEmployerChange} />
               </div>
             </div>
 
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerCity">Thành phố</label>
+                <label className="auth-field-label" htmlFor="employerCity">{t('authPages.completeProfile.labels.city')}</label>
                 <input id="employerCity" name="city" className="auth-input" value={employerForm.city} onChange={handleEmployerChange} />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerIndustry">Lĩnh vực</label>
+                <label className="auth-field-label" htmlFor="employerIndustry">{t('authPages.completeProfile.labels.industry')}</label>
                 <input id="employerIndustry" name="industry" className="auth-input" value={employerForm.industry} onChange={handleEmployerChange} />
               </div>
             </div>
 
             <div className="auth-field">
-              <label className="auth-field-label" htmlFor="employerAddress">Địa chỉ</label>
+              <label className="auth-field-label" htmlFor="employerAddress">{t('authPages.completeProfile.labels.address')}</label>
               <input id="employerAddress" name="address" className="auth-input" value={employerForm.address} onChange={handleEmployerChange} />
             </div>
 
             <div className="auth-grid-two">
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerWebsite">Website</label>
+                <label className="auth-field-label" htmlFor="employerWebsite">{t('authPages.completeProfile.labels.website')}</label>
                 <input id="employerWebsite" name="website" className="auth-input" value={employerForm.website} onChange={handleEmployerChange} />
               </div>
               <div className="auth-field">
-                <label className="auth-field-label" htmlFor="employerLogo">Logo (URL)</label>
+                <label className="auth-field-label" htmlFor="employerLogo">{t('authPages.completeProfile.labels.logoUrl')}</label>
                 <input id="employerLogo" name="logo" className="auth-input" value={employerForm.logo} onChange={handleEmployerChange} />
               </div>
             </div>
 
             <div className="auth-field">
-              <label className="auth-field-label" htmlFor="employerDescription">Mô tả công ty</label>
+              <label className="auth-field-label" htmlFor="employerDescription">{t('authPages.completeProfile.labels.companyDescription')}</label>
               <textarea id="employerDescription" name="description" className="auth-input" style={{ height: 120, paddingTop: 10 }} value={employerForm.description} onChange={handleEmployerChange} />
             </div>
           </>
@@ -507,7 +509,7 @@ const CompleteProfilePage = () => {
         {error ? <div className="auth-error-banner">{error}</div> : null}
 
         <button type="submit" className="auth-submit-btn" disabled={loading}>
-          {loading ? 'Đang lưu...' : 'Hoàn tất'}
+          {loading ? t('authPages.completeProfile.saving') : t('authPages.completeProfile.submit')}
           <i className="bi bi-arrow-right"></i>
         </button>
       </form>

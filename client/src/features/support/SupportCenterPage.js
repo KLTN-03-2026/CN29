@@ -406,36 +406,17 @@ const SupportCenterPage = () => {
 
     loadNotifications('initial');
 
-    const refreshOnFocus = () => {
-      if (document.visibilityState === 'visible') {
-        loadNotifications('focus');
-      }
-    };
-
-    const refreshOnVisible = () => {
-      if (document.visibilityState === 'visible') {
-        loadNotifications('visibility');
-      }
-    };
-
     if (typeof window !== 'undefined' && !privateFeedDenied) {
-      intervalId = window.setInterval(() => loadNotifications('interval'), 30000);
-      window.addEventListener('focus', refreshOnFocus);
-    }
-    if (typeof document !== 'undefined' && !privateFeedDenied) {
-      document.addEventListener('visibilitychange', refreshOnVisible);
+      intervalId = window.setInterval(() => {
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+        loadNotifications('interval');
+      }, 30000);
     }
 
     return () => {
       cancelled = true;
       if (intervalId && typeof window !== 'undefined') {
         window.clearInterval(intervalId);
-      }
-      if (typeof window !== 'undefined') {
-        window.removeEventListener('focus', refreshOnFocus);
-      }
-      if (typeof document !== 'undefined') {
-        document.removeEventListener('visibilitychange', refreshOnVisible);
       }
     };
   }, [API_BASE, canReadPrivateNotifications, messageLink, normalizedRole, privateFeedDenied, token]);

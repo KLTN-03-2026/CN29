@@ -1,10 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
 
 const CvUploadPage = () => {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { notify, requestConfirm } = useNotification();
+  const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en') ? 'en-US' : 'vi-VN';
 
   const user = useMemo(() => {
     try {
@@ -27,10 +30,10 @@ const CvUploadPage = () => {
     try {
       const res = await fetch(`/api/cvs?userId=${encodeURIComponent(userId)}`);
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Không tải được danh sách CV');
+      if (!res.ok || !data.success) throw new Error(data.error || t('candidatePages.cvUpload.errors.loadFailed'));
       setCvs(Array.isArray(data.cvs) ? data.cvs : []);
     } catch (err) {
-      notify({ type: 'error', message: err.message || 'Không tải được danh sách CV' });
+      notify({ type: 'error', message: err.message || t('candidatePages.cvUpload.errors.loadFailed') });
       setCvs([]);
     } finally {
       setLoading(false);
@@ -54,19 +57,19 @@ const CvUploadPage = () => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
     if (!allowedTypes.includes(file.type)) {
-      notify({ type: 'error', message: 'Chỉ chấp nhận file PDF, DOC, hoặc DOCX' });
+      notify({ type: 'error', message: t('candidatePages.cvUpload.errors.invalidFileType') });
       e.target.value = '';
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      notify({ type: 'error', message: 'Kích thước file không được vượt quá 5MB' });
+      notify({ type: 'error', message: t('candidatePages.cvUpload.errors.fileTooLarge') });
       e.target.value = '';
       return;
     }
 
     if (!userId) {
-      notify({ type: 'error', message: 'Vui lòng đăng nhập để tải CV.' });
+      notify({ type: 'error', message: t('candidatePages.cvUpload.errors.loginRequiredUpload') });
       e.target.value = '';
       return;
     }
@@ -80,11 +83,11 @@ const CvUploadPage = () => {
     try {
       const res = await fetch('/api/cvs', { method: 'POST', body: form });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể tải CV lên');
-      notify({ type: 'success', message: 'Tải CV lên thành công.' });
+      if (!res.ok || !data.success) throw new Error(data.error || t('candidatePages.cvUpload.errors.uploadFailed'));
+      notify({ type: 'success', message: t('candidatePages.cvUpload.messages.uploadSuccess') });
       await fetchCvs();
     } catch (err) {
-      notify({ type: 'error', message: err.message || 'Không thể tải CV lên' });
+      notify({ type: 'error', message: err.message || t('candidatePages.cvUpload.errors.uploadFailed') });
     } finally {
       setUploading(false);
       e.target.value = '';
@@ -96,10 +99,10 @@ const CvUploadPage = () => {
     if (!userId) return;
 
     const ok = await requestConfirm({
-      title: 'Xóa CV',
-      message: 'Bạn có chắc muốn xóa CV này?',
-      confirmText: 'Xóa',
-      cancelText: 'Hủy',
+      title: t('candidatePages.cvUpload.confirmDelete.title'),
+      message: t('candidatePages.cvUpload.confirmDelete.message'),
+      confirmText: t('candidatePages.cvUpload.confirmDelete.confirmText'),
+      cancelText: t('candidatePages.cvUpload.confirmDelete.cancelText'),
       type: 'warning'
     });
     if (!ok) return;
@@ -107,18 +110,18 @@ const CvUploadPage = () => {
     try {
       const res = await fetch(`/api/cvs/${cv.id}?userId=${encodeURIComponent(userId)}`, { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.success) throw new Error(data.error || 'Không thể xóa CV');
+      if (!res.ok || !data.success) throw new Error(data.error || t('candidatePages.cvUpload.errors.deleteFailed'));
       setCvs((prev) => prev.filter((x) => x.id !== cv.id));
-      notify({ type: 'success', message: 'Đã xóa CV.' });
+      notify({ type: 'success', message: t('candidatePages.cvUpload.messages.deleteSuccess') });
     } catch (err) {
-      notify({ type: 'error', message: err.message || 'Không thể xóa CV' });
+      notify({ type: 'error', message: err.message || t('candidatePages.cvUpload.errors.deleteFailed') });
     }
   };
 
   if (!userId) {
     return (
       <div className="container py-5">
-        <div className="alert alert-warning mb-0">Bạn cần đăng nhập để quản lý CV.</div>
+        <div className="alert alert-warning mb-0">{t('candidatePages.cvUpload.errors.loginRequiredManage')}</div>
       </div>
     );
   }
@@ -127,15 +130,15 @@ const CvUploadPage = () => {
     <div className="container py-4">
       <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
         <div>
-          <h3 className="mb-1">Tải CV</h3>
-          <div className="text-muted">Tải CV (PDF/DOC/DOCX) hoặc tạo CV Online để chỉnh sửa trực tiếp.</div>
+          <h3 className="mb-1">{t('candidatePages.cvUpload.title')}</h3>
+          <div className="text-muted">{t('candidatePages.cvUpload.subtitle')}</div>
         </div>
         <div className="d-flex gap-2 flex-wrap">
-          <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/create-cv')}>Quay lại</button>
-          <button type="button" className="btn btn-success" onClick={() => navigate('/create-cv/templates')}>Tạo CV Online</button>
+          <button type="button" className="btn btn-outline-secondary" onClick={() => navigate('/create-cv')}>{t('candidatePages.common.back')}</button>
+          <button type="button" className="btn btn-success" onClick={() => navigate('/create-cv/templates')}>{t('candidatePages.cvUpload.createOnline')}</button>
 
           <button type="button" className="btn btn-primary" onClick={onPickFile} disabled={uploading}>
-            {uploading ? 'Đang tải...' : 'Tải CV lên'}
+            {uploading ? t('candidatePages.cvUpload.uploading') : t('candidatePages.cvUpload.uploadButton')}
           </button>
           <input ref={fileInputRef} type="file" accept=".pdf,.doc,.docx" style={{ display: 'none' }} onChange={onUpload} />
         </div>
@@ -144,21 +147,21 @@ const CvUploadPage = () => {
       <div className="card border-0 shadow-sm">
         <div className="card-body">
           {loading ? (
-            <div className="text-muted">Đang tải danh sách CV...</div>
+            <div className="text-muted">{t('candidatePages.cvUpload.loading')}</div>
           ) : cvs.length === 0 ? (
             <div className="text-center py-4">
-              <div className="text-muted">Chưa có CV nào.</div>
-              <div className="text-muted small mt-1">Chấp nhận: PDF, DOC, DOCX (tối đa 5MB)</div>
+              <div className="text-muted">{t('candidatePages.cvUpload.emptyTitle')}</div>
+              <div className="text-muted small mt-1">{t('candidatePages.cvUpload.emptyHint')}</div>
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table align-middle mb-0">
                 <thead>
                   <tr>
-                    <th>Tên CV</th>
-                    <th style={{ width: 140 }}>Dung lượng</th>
-                    <th style={{ width: 160 }}>Cập nhật</th>
-                    <th style={{ width: 220 }}>Thao tác</th>
+                    <th>{t('candidatePages.cvUpload.table.name')}</th>
+                    <th style={{ width: 140 }}>{t('candidatePages.cvUpload.table.size')}</th>
+                    <th style={{ width: 160 }}>{t('candidatePages.cvUpload.table.updatedAt')}</th>
+                    <th style={{ width: 220 }}>{t('candidatePages.cvUpload.table.actions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -167,15 +170,15 @@ const CvUploadPage = () => {
                       <td className="fw-semibold">
                         {cv.name}
                         {cv?.fileUrl?.endsWith('.html') ? (
-                          <span className="badge bg-info text-dark ms-2">CV Online</span>
+                          <span className="badge bg-info text-dark ms-2">{t('candidatePages.cvUpload.onlineBadge')}</span>
                         ) : null}
                       </td>
                       <td>{cv.size || '-'}</td>
-                      <td>{cv.uploadDate ? new Date(cv.uploadDate).toLocaleDateString('vi-VN') : '-'}</td>
+                      <td>{cv.uploadDate ? new Date(cv.uploadDate).toLocaleDateString(locale) : '-'}</td>
                       <td>
                         <div className="d-flex gap-2 flex-wrap">
                           {cv.fileUrl ? (
-                            <a className="btn btn-sm btn-outline-primary" href={cv.fileUrl} target="_blank" rel="noreferrer">Xem</a>
+                            <a className="btn btn-sm btn-outline-primary" href={cv.fileUrl} target="_blank" rel="noreferrer">{t('candidatePages.cvUpload.actions.view')}</a>
                           ) : null}
                           {cv?.fileUrl?.endsWith('.html') ? (
                             <button
@@ -183,11 +186,11 @@ const CvUploadPage = () => {
                               className="btn btn-sm btn-outline-success"
                               onClick={() => navigate(`/create-cv/online-editor?cvId=${encodeURIComponent(cv.id)}`)}
                             >
-                              Sửa Online
+                              {t('candidatePages.cvUpload.actions.editOnline')}
                             </button>
                           ) : null}
                           <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => onDelete(cv)}>
-                            Xóa
+                            {t('candidatePages.cvUpload.actions.delete')}
                           </button>
                         </div>
                       </td>

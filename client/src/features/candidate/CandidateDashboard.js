@@ -1,7 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CandidateDashboard = () => {
+    const { t } = useTranslation();
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
@@ -16,14 +18,14 @@ const CandidateDashboard = () => {
             <div className="row">
                 <div className="col-12">
                     <div className="d-flex justify-content-between align-items-center mb-4">
-                        <h2>Dashboard Ứng Viên</h2>
+                        <h2>{t('candidatePages.dashboard.title')}</h2>
                         <button className="btn btn-outline-danger" onClick={handleLogout}>
-                            Đăng xuất
+                            {t('candidatePages.dashboard.logout')}
                         </button>
                     </div>
                     <div className="alert alert-primary">
-                        <h4>Xin chào, {user.name}!</h4>
-                        <p>Vai trò: <strong>{user.role}</strong></p>
+                        <h4>{t('candidatePages.dashboard.greeting', { name: user.name || '' })}</h4>
+                        <p>{t('candidatePages.dashboard.roleLabel')}: <strong>{user.role}</strong></p>
                     </div>
                 </div>
             </div>
@@ -32,36 +34,36 @@ const CandidateDashboard = () => {
                 <div className="col-md-3">
                     <div className="card text-center">
                         <div className="card-body">
-                            <h5 className="card-title">Hồ sơ CV</h5>
+                            <h5 className="card-title">{t('candidatePages.dashboard.cards.cvProfile')}</h5>
                             <p className="card-text display-6">0</p>
-                            <button className="btn btn-primary btn-sm">Tạo CV</button>
+                            <button className="btn btn-primary btn-sm">{t('candidatePages.dashboard.actions.createCv')}</button>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="card text-center">
                         <div className="card-body">
-                            <h5 className="card-title">Việc đã ứng tuyển</h5>
+                            <h5 className="card-title">{t('candidatePages.dashboard.cards.appliedJobs')}</h5>
                             <p className="card-text display-6">0</p>
-                            <button className="btn btn-info btn-sm text-white">Xem</button>
+                            <button className="btn btn-info btn-sm text-white">{t('candidatePages.dashboard.actions.view')}</button>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="card text-center">
                         <div className="card-body">
-                            <h5 className="card-title">Việc đã lưu</h5>
+                            <h5 className="card-title">{t('candidatePages.dashboard.cards.savedJobs')}</h5>
                             <p className="card-text display-6">0</p>
-                            <button className="btn btn-warning btn-sm">Xem</button>
+                            <button className="btn btn-warning btn-sm">{t('candidatePages.dashboard.actions.view')}</button>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-3">
                     <div className="card text-center">
                         <div className="card-body">
-                            <h5 className="card-title">Thông báo</h5>
+                            <h5 className="card-title">{t('candidatePages.dashboard.cards.notifications')}</h5>
                             <p className="card-text display-6">0</p>
-                            <button className="btn btn-secondary btn-sm">Xem</button>
+                            <button className="btn btn-secondary btn-sm">{t('candidatePages.dashboard.actions.view')}</button>
                         </div>
                     </div>
                 </div>
@@ -71,11 +73,11 @@ const CandidateDashboard = () => {
                 <div className="col-12">
                     <div className="card">
                         <div className="card-header">
-                            <h5>Việc làm phù hợp với bạn</h5>
+                            <h5>{t('candidatePages.dashboard.matchingSection.title')}</h5>
                         </div>
                         <div className="card-body">
-                            <p className="text-muted">Hãy hoàn thiện hồ sơ để nhận gợi ý việc làm phù hợp!</p>
-                            <button className="btn btn-primary">Hoàn thiện hồ sơ</button>
+                            <p className="text-muted">{t('candidatePages.dashboard.matchingSection.description')}</p>
+                            <button className="btn btn-primary">{t('candidatePages.dashboard.actions.completeProfile')}</button>
                         </div>
                     </div>
                 </div>
@@ -85,21 +87,21 @@ const CandidateDashboard = () => {
                 <div className="col-md-6">
                     <div className="card">
                         <div className="card-header">
-                            <h5>Hồ sơ ứng tuyển của tôi</h5>
+                            <h5>{t('candidatePages.dashboard.applicationsSection.title')}</h5>
                         </div>
                         <div className="card-body">
-                            <p className="text-muted">Bạn chưa ứng tuyển công việc nào.</p>
-                            <button className="btn btn-success">Tìm việc ngay</button>
+                            <p className="text-muted">{t('candidatePages.dashboard.applicationsSection.empty')}</p>
+                            <button className="btn btn-success">{t('candidatePages.dashboard.actions.findJobsNow')}</button>
                         </div>
                     </div>
                 </div>
                 <div className="col-md-6">
                     <div className="card">
                         <div className="card-header">
-                            <h5>Việc làm đã lưu</h5>
+                            <h5>{t('candidatePages.dashboard.savedSection.title')}</h5>
                         </div>
                         <div className="card-body">
-                            <p className="text-muted">Bạn chưa lưu công việc nào.</p>
+                            <p className="text-muted">{t('candidatePages.dashboard.savedSection.empty')}</p>
                         </div>
                     </div>
                 </div>

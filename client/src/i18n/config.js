@@ -21,7 +21,7 @@ i18n
   .use(LanguageDetector)
   .use(initReactI18next)
   .init({
-    lng: 'vi',
+    // lng: 'vi',
     fallbackLng: 'vi',
     supportedLngs: ['en', 'vi'],
     defaultNS: 'translation',

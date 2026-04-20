@@ -3,15 +3,16 @@ import { useNotification } from './NotificationProvider';
 import { syncAppIconBadge } from './notificationUtils';
 import './AIAssistantWidget.css';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const CHAT_REALTIME_POLL_INTERVAL_MS = 5000;
 const THREAD_SCROLL_BOTTOM_THRESHOLD_PX = 72;
 const INLINE_LINK_PATTERN = /(https?:\/\/[^\s<>"']+|\/career-guide\/[a-zA-Z0-9\-._~%]+)/gi;
-const INITIAL_AI_MESSAGES = [
+
+const buildInitialAiMessages = (t) => [
   {
     role: 'assistant',
-    content:
-      'Mình là AI hỗ trợ JobFinder. Bạn có thể hỏi về cách dùng website, CV, phỏng vấn, việc làm. Bạn cũng có thể chọn CV đã lưu để mình đọc và gợi ý việc phù hợp hơn.'
+    content: t('components.aiAssistantWidget.initialAssistantMessage')
   }
 ];
 
@@ -101,25 +102,26 @@ const isProviderBusyError = (text = '') => {
   );
 };
 
-const toFriendlyAiError = (text = '') => {
+const toFriendlyAiError = (text = '', t) => {
   const value = String(text || '').trim();
-  if (!value) return 'Không thể gọi AI.';
+  if (!value) return t('components.aiAssistantWidget.errors.callAiFailed');
   if (isProviderBusyError(value) || /"error"\s*:\s*\{/i.test(value)) {
-    return 'Hệ thống AI đang quá tải tạm thời. Bạn thử gửi lại sau khoảng 10-30 giây nhé.';
+    return t('components.aiAssistantWidget.errors.providerBusy');
   }
   return value;
 };
 
-const normalizeAssistantReply = (text = '') => {
+const normalizeAssistantReply = (text = '', t) => {
   const value = String(text || '').trim();
   if (!value) return '';
   if (isProviderBusyError(value) || /"error"\s*:\s*\{/i.test(value)) {
-    return 'Mình đang gặp tải cao từ hệ thống AI nên phản hồi chưa ổn định. Bạn vui lòng thử lại sau một chút nhé.';
+    return t('components.aiAssistantWidget.errors.providerBusyReply');
   }
   return value;
 };
 
 const AIAssistantWidget = () => {
+  const { t } = useTranslation();
   const { notify, requestConfirm } = useNotification();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
@@ -136,7 +138,7 @@ const AIAssistantWidget = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [messages, setMessages] = useState(INITIAL_AI_MESSAGES);
+  const [messages, setMessages] = useState(() => buildInitialAiMessages(t));
   const [cvOptions, setCvOptions] = useState([]);
   const [cvLoading, setCvLoading] = useState(false);
   const [selectedCvId, setSelectedCvId] = useState('');
@@ -148,7 +150,7 @@ const AIAssistantWidget = () => {
   const fileInputRef = useRef(null);
   const chatPollInFlightRef = useRef(false);
 
-  const title = useMemo(() => 'AI trợ lý', []);
+  const title = t('components.aiAssistantWidget.title');
   const selectedCv = useMemo(
     () => cvOptions.find((cv) => String(cv.id) === String(selectedCvId)) || null,
     [cvOptions, selectedCvId]
@@ -157,25 +159,27 @@ const AIAssistantWidget = () => {
     if (pendingUploadFile) {
       return {
         name: pendingUploadFile.name,
-        subLabel: 'CV tải lên từ máy',
+        subLabel: t('components.aiAssistantWidget.attachment.uploadedFromDevice'),
         source: 'upload'
       };
     }
     if (selectedCv) {
       return {
         name: selectedCv.name,
-        subLabel: selectedCv.isOnline ? 'CV Online đã lưu' : 'CV tải lên đã lưu',
+        subLabel: selectedCv.isOnline
+          ? t('components.aiAssistantWidget.attachment.storedOnlineCv')
+          : t('components.aiAssistantWidget.attachment.storedUploadedCv'),
         source: 'stored'
       };
     }
     return null;
-  }, [pendingUploadFile, selectedCv]);
+  }, [pendingUploadFile, selectedCv, t]);
 
   const busy = loading || uploading;
   const activeChatUserId = Number(activeChatUser?.userId || 0) || null;
   const showFloatingUnreadBadge = unreadConversations > 0 && !chatOpen;
 
-  const requireLogin = (message = 'Bạn cần đăng nhập để dùng trợ lý AI.') => {
+  const requireLogin = (message = t('components.aiAssistantWidget.errors.loginRequiredAssistant')) => {
     const token = getToken();
     if (!token) {
       notify({ type: 'error', message });
@@ -212,19 +216,19 @@ const AIAssistantWidget = () => {
 
     const confirmed = await requestConfirm({
       type: 'warning',
-      title: 'Xóa lịch sử trò chuyện AI',
-      message: 'Bạn có chắc muốn xóa toàn bộ lịch sử chat AI hiện tại?',
-      confirmText: 'Xóa lịch sử',
-      cancelText: 'Giữ lại'
+      title: t('components.aiAssistantWidget.clearHistory.title'),
+      message: t('components.aiAssistantWidget.clearHistory.message'),
+      confirmText: t('components.aiAssistantWidget.clearHistory.confirmText'),
+      cancelText: t('components.aiAssistantWidget.clearHistory.cancelText')
     });
 
     if (!confirmed) return;
 
-    setMessages(INITIAL_AI_MESSAGES);
+    setMessages(buildInitialAiMessages(t));
     setInput('');
     setPendingUploadFile(null);
     setSelectedCvId('');
-    notify({ type: 'success', message: 'Đã xóa lịch sử trò chuyện AI.' });
+    notify({ type: 'success', message: t('components.aiAssistantWidget.clearHistory.success') });
     setTimeout(scrollToBottom, 0);
   };
 
@@ -259,20 +263,25 @@ const AIAssistantWidget = () => {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok || !data?.success) {
-        throw new Error(data?.error || 'Không tải được danh sách CV');
+        throw new Error(data?.error || t('components.aiAssistantWidget.errors.loadCvListFailed'));
       }
 
       const nextOptions = (Array.isArray(data?.cvs) ? data.cvs : [])
         .map((cv, index) => {
           const id = cv?.id || cv?.cvId || cv?.MaCV || `cv-${index}`;
-          const name = String(cv?.name || cv?.TenCV || cv?.title || 'CV chưa đặt tên').trim();
+          const name = String(cv?.name || cv?.TenCV || cv?.title || t('components.aiAssistantWidget.cvModal.defaultCvName')).trim();
           const refUrl = String(cv?.fileUrl || cv?.fileAbsoluteUrl || '').split('?')[0].toLowerCase();
           const isOnline = refUrl.endsWith('.html');
           return {
             id: String(id),
             name,
             isOnline,
-            label: `${name} (${isOnline ? 'CV Online' : 'CV tải lên'})`
+            label: t('components.aiAssistantWidget.cvModal.cvLabelFormat', {
+              name,
+              type: isOnline
+                ? t('components.aiAssistantWidget.cvModal.cvType.online')
+                : t('components.aiAssistantWidget.cvModal.cvType.uploaded')
+            })
           };
         })
         .filter((cv) => cv.id);
@@ -285,16 +294,16 @@ const AIAssistantWidget = () => {
       setCvOptions([]);
       setSelectedCvId('');
       if (showErrorToast) {
-        notify({ type: 'error', message: err.message || 'Không tải được CV đã lưu.' });
+        notify({ type: 'error', message: err.message || t('components.aiAssistantWidget.errors.loadStoredCvFailed') });
       }
       return [];
     } finally {
       setCvLoading(false);
     }
-  }, [notify]);
+  }, [notify, t]);
 
   const openCvModal = async () => {
-    if (!requireLogin('Bạn cần đăng nhập để chọn CV.')) return;
+    if (!requireLogin(t('components.aiAssistantWidget.errors.loginRequiredChooseCv'))) return;
     setCvModalOpen(true);
     await loadUserCvs(false);
   };
@@ -304,13 +313,16 @@ const AIAssistantWidget = () => {
     setSelectedCvId(String(cv.id));
     setPendingUploadFile(null);
     setCvModalOpen(false);
-    notify({ type: 'success', message: `Đã chọn CV: ${cv.name}` });
+    notify({
+      type: 'success',
+      message: t('components.aiAssistantWidget.attachment.selectedCvSuccess', { name: cv.name })
+    });
   };
 
   const clearSelectedCv = () => {
     setSelectedCvId('');
     setPendingUploadFile(null);
-    notify({ type: 'success', message: 'Đã bỏ đính kèm CV.' });
+    notify({ type: 'success', message: t('components.aiAssistantWidget.attachment.clearedSuccess') });
   };
 
   const attachUploadedCv = (file) => {
@@ -321,18 +333,21 @@ const AIAssistantWidget = () => {
       'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ];
     if (!allowed.includes(file.type)) {
-      notify({ type: 'error', message: 'Chỉ nhận file PDF hoặc DOCX.' });
+      notify({ type: 'error', message: t('components.aiAssistantWidget.errors.invalidCvFileType') });
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      notify({ type: 'error', message: 'File quá lớn (tối đa 5MB).' });
+      notify({ type: 'error', message: t('components.aiAssistantWidget.errors.cvFileTooLarge') });
       return;
     }
 
     setPendingUploadFile(file);
     setSelectedCvId('');
     setCvModalOpen(false);
-    notify({ type: 'success', message: `Đã đính kèm CV: ${file.name}` });
+    notify({
+      type: 'success',
+      message: t('components.aiAssistantWidget.attachment.attachedSuccess', { name: file.name })
+    });
   };
 
   const refreshUnreadCount = async ({ silent = true } = {}) => {
@@ -375,7 +390,7 @@ const AIAssistantWidget = () => {
       if (err.message.includes('Invalid token') || err.message.includes('401')) {
         console.log('Message inbox not available:', err.message);
       } else if (showErrorToast) {
-        notify({ type: 'error', message: err.message || 'Không thể tải hộp thư.' });
+        notify({ type: 'error', message: err.message || t('components.aiAssistantWidget.errors.loadInboxFailed') });
       }
       return [];
     } finally {
@@ -432,7 +447,7 @@ const AIAssistantWidget = () => {
       return nextMessages;
     } catch (err) {
       if (!silent) {
-        notify({ type: 'error', message: err.message || 'Không thể tải hội thoại.' });
+        notify({ type: 'error', message: err.message || t('components.aiAssistantWidget.errors.loadConversationFailed') });
       }
       return [];
     } finally {
@@ -446,7 +461,7 @@ const AIAssistantWidget = () => {
 
     const token = getToken();
     if (!token) {
-      notify({ type: 'error', message: 'Bạn cần đăng nhập để nhắn tin.' });
+      notify({ type: 'error', message: t('components.aiAssistantWidget.errors.loginRequiredMessaging') });
       return;
     }
 
@@ -477,7 +492,7 @@ const AIAssistantWidget = () => {
       ]);
       emitMessageRefresh();
     } catch (err) {
-      notify({ type: 'error', message: err.message || 'Không thể gửi tin nhắn.' });
+      notify({ type: 'error', message: err.message || t('components.aiAssistantWidget.errors.sendMessageFailed') });
     }
   };
 
@@ -486,9 +501,9 @@ const AIAssistantWidget = () => {
     const hasAttachment = Boolean(attachedCvPreview);
     if ((!text && !hasAttachment) || busy) return;
 
-    const userPrompt = text || 'Đánh giá CV đã đính kèm và gợi ý công việc phù hợp giúp mình.';
+    const userPrompt = text || t('components.aiAssistantWidget.defaultPromptWithAttachment');
     const composedUserMessage = pendingUploadFile
-      ? `${userPrompt}\n(Đính kèm: ${pendingUploadFile.name})`
+      ? `${userPrompt}\n(${t('components.aiAssistantWidget.attachment.label')}: ${pendingUploadFile.name})`
       : userPrompt;
 
     // Optimistic append user message
@@ -519,7 +534,7 @@ const AIAssistantWidget = () => {
       } else if (selectedCvId) {
         const token = getToken();
         if (!token) {
-          throw new Error('Bạn cần đăng nhập để phân tích CV đã lưu.');
+          throw new Error(t('components.aiAssistantWidget.errors.loginRequiredAnalyzeStoredCv'));
         }
 
         res = await fetch('/api/ai/chat/cv-stored', {
@@ -550,25 +565,25 @@ const AIAssistantWidget = () => {
 
       const data = await res.json();
       if (!res.ok || !data.success) {
-        throw new Error(toFriendlyAiError(data.error || 'Không thể gọi AI.'));
+        throw new Error(toFriendlyAiError(data.error || t('components.aiAssistantWidget.errors.callAiFailed'), t));
       }
 
-      const safeReply = normalizeAssistantReply(data.reply || '');
-      setMessages((prev) => [...prev, { role: 'assistant', content: safeReply || 'OK' }]);
+      const safeReply = normalizeAssistantReply(data.reply || '', t);
+      setMessages((prev) => [...prev, { role: 'assistant', content: safeReply || t('components.aiAssistantWidget.okFallback') }]);
       if (pendingUploadFile) {
         setPendingUploadFile(null);
       }
       setTimeout(scrollToBottom, 0);
     } catch (err) {
-      const friendlyMessage = toFriendlyAiError(err.message || 'Không thể gọi AI.');
+      const friendlyMessage = toFriendlyAiError(err.message || t('components.aiAssistantWidget.errors.callAiFailed'), t);
       notify({ type: 'error', message: friendlyMessage });
       setMessages((prev) => [
         ...prev,
         {
           role: 'assistant',
           content: isProviderBusyError(friendlyMessage)
-            ? 'Máy chủ AI đang bận tạm thời. Bạn thử gửi lại sau vài chục giây nhé.'
-            : 'Mình gặp lỗi khi xử lý. Bạn thử lại giúp mình nhé.'
+            ? t('components.aiAssistantWidget.errors.providerBusyRetry')
+            : t('components.aiAssistantWidget.errors.processingFailedRetry')
         }
       ]);
       setTimeout(scrollToBottom, 0);
@@ -699,16 +714,16 @@ const AIAssistantWidget = () => {
   return (
     <div className={`aiw-root ${open ? 'aiw-open' : ''}`}>
       {!open && chatOpen && (
-        <div className="aiw-chat-panel" role="dialog" aria-label="Tin nhắn">
+        <div className="aiw-chat-panel" role="dialog" aria-label={t('components.aiAssistantWidget.chat.dialogAriaLabel')}>
           <div className="aiw-header">
             <div className="aiw-title">
               <div className="aiw-avatar">💬</div>
               <div>
-                <div className="aiw-title-text">Tin nhắn</div>
-                <div className="aiw-title-sub">Trò chuyện lại với người đã nhắn</div>
+                <div className="aiw-title-text">{t('components.aiAssistantWidget.chat.title')}</div>
+                <div className="aiw-title-sub">{t('components.aiAssistantWidget.chat.subtitle')}</div>
               </div>
             </div>
-            <button type="button" className="aiw-close" onClick={() => setChatOpen(false)} aria-label="Đóng">
+            <button type="button" className="aiw-close" onClick={() => setChatOpen(false)} aria-label={t('components.aiAssistantWidget.common.close')}>
               <i className="bi bi-x"></i>
             </button>
           </div>
@@ -716,9 +731,9 @@ const AIAssistantWidget = () => {
           <div className="aiw-chat-body">
             <div className="aiw-chat-inbox">
               {inboxLoading ? (
-                <div style={{ padding: 12, color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>Đang tải...</div>
+                <div style={{ padding: 12, color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.loading')}</div>
               ) : inbox.length === 0 ? (
-                <div style={{ padding: 12, color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>Chưa có hội thoại</div>
+                <div style={{ padding: 12, color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.noConversation')}</div>
               ) : (
                 inbox.map((c) => (
                   <button
@@ -740,11 +755,11 @@ const AIAssistantWidget = () => {
             <div className="aiw-chat-thread">
               <div className="aiw-thread-list" ref={threadListRef}>
                 {!activeChatUser ? (
-                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>Chọn một hội thoại</div>
+                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.selectConversation')}</div>
                 ) : threadLoading ? (
-                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>Đang tải tin nhắn...</div>
+                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.loadingMessages')}</div>
                 ) : threadMessages.length === 0 ? (
-                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>Chưa có tin nhắn</div>
+                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.noMessages')}</div>
                 ) : (
                   threadMessages.map((m) => {
                     const myId = getUserId();
@@ -770,11 +785,13 @@ const AIAssistantWidget = () => {
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') sendChatMessage();
                   }}
-                  placeholder={activeChatUser ? `Nhắn cho ${activeChatUser.name}...` : 'Chọn hội thoại để nhắn'}
+                  placeholder={activeChatUser
+                    ? t('components.aiAssistantWidget.chat.inputPlaceholderWithName', { name: activeChatUser.name })
+                    : t('components.aiAssistantWidget.chat.inputPlaceholderNoConversation')}
                   disabled={!activeChatUser}
                 />
                 <button type="button" onClick={sendChatMessage} disabled={!activeChatUser || !chatInput.trim()}>
-                  Gửi
+                  {t('components.aiAssistantWidget.chat.sendButton')}
                 </button>
               </div>
             </div>
@@ -783,13 +800,13 @@ const AIAssistantWidget = () => {
       )}
 
       {open && (
-        <div className="aiw-panel" role="dialog" aria-label="AI Assistant">
+        <div className="aiw-panel" role="dialog" aria-label={t('components.aiAssistantWidget.assistantDialogAriaLabel')}>
           <div className="aiw-header">
             <div className="aiw-title">
               <div className="aiw-avatar">🤖</div>
               <div>
                 <div className="aiw-title-text">{title}</div>
-                <div className="aiw-title-sub">Trả lời nhanh, gợi ý rõ ràng</div>
+                <div className="aiw-title-sub">{t('components.aiAssistantWidget.assistantSubtitle')}</div>
               </div>
             </div>
             <div className="aiw-header-actions">
@@ -797,13 +814,13 @@ const AIAssistantWidget = () => {
                 type="button"
                 className="aiw-clear"
                 onClick={clearAiHistory}
-                aria-label="Xóa lịch sử chat AI"
+                aria-label={t('components.aiAssistantWidget.clearHistory.buttonLabel')}
                 disabled={busy || messages.length <= 1}
               >
                 <i className="bi bi-trash3"></i>
-                <span>Xóa lịch sử</span>
+                <span>{t('components.aiAssistantWidget.clearHistory.buttonText')}</span>
               </button>
-              <button type="button" className="aiw-close" onClick={() => setOpen(false)} aria-label="Đóng">
+              <button type="button" className="aiw-close" onClick={() => setOpen(false)} aria-label={t('components.aiAssistantWidget.common.close')}>
                 <i className="bi bi-x"></i>
               </button>
             </div>
@@ -817,12 +834,12 @@ const AIAssistantWidget = () => {
             ))}
             {uploading && (
               <div className="aiw-msg assistant">
-                <div className="aiw-bubble aiw-typing">Đang phân tích CV...</div>
+                <div className="aiw-bubble aiw-typing">{t('components.aiAssistantWidget.status.analyzingCv')}</div>
               </div>
             )}
             {loading && (
               <div className="aiw-msg assistant">
-                <div className="aiw-bubble aiw-typing">Đang trả lời...</div>
+                <div className="aiw-bubble aiw-typing">{t('components.aiAssistantWidget.status.replying')}</div>
               </div>
             )}
           </div>
@@ -849,7 +866,9 @@ const AIAssistantWidget = () => {
               onKeyDown={(e) => {
                 if (e.key === 'Enter') send();
               }}
-              placeholder={attachedCvPreview ? 'Nhập yêu cầu thêm (có thể bỏ trống)...' : 'Nhập câu hỏi của bạn...'}
+              placeholder={attachedCvPreview
+                ? t('components.aiAssistantWidget.input.placeholderWithAttachment')
+                : t('components.aiAssistantWidget.input.placeholder')}
               disabled={busy}
             />
             <input
@@ -868,7 +887,9 @@ const AIAssistantWidget = () => {
               className={`aiw-upload-btn ${attachedCvPreview ? 'is-attached' : ''}`}
               onClick={openCvModal}
               disabled={busy}
-              title={attachedCvPreview ? `Đang đính kèm: ${attachedCvPreview.name}` : 'Đính kèm CV'}
+              title={attachedCvPreview
+                ? t('components.aiAssistantWidget.attachment.currentAttachmentTitle', { name: attachedCvPreview.name })
+                : t('components.aiAssistantWidget.attachment.attachCvTitle')}
             >
               <i className="bi bi-paperclip"></i>
             </button>
@@ -882,12 +903,12 @@ const AIAssistantWidget = () => {
               className="aiw-cv-modal-backdrop"
               role="dialog"
               aria-modal="true"
-              aria-label="Đính kèm CV"
+              aria-label={t('components.aiAssistantWidget.cvModal.ariaLabel')}
               onClick={() => setCvModalOpen(false)}
             >
               <div className="aiw-cv-modal" onClick={(e) => e.stopPropagation()}>
                 <div className="aiw-cv-modal-head">
-                  <h6>Đính kèm CV</h6>
+                  <h6>{t('components.aiAssistantWidget.cvModal.title')}</h6>
                   <button type="button" className="aiw-cv-modal-close" onClick={() => setCvModalOpen(false)}>
                     <i className="bi bi-x"></i>
                   </button>
@@ -901,7 +922,7 @@ const AIAssistantWidget = () => {
                     disabled={busy || cvLoading}
                   >
                     <i className="bi bi-arrow-clockwise"></i>
-                    <span>Tải lại CV</span>
+                    <span>{t('components.aiAssistantWidget.cvModal.reloadCv')}</span>
                   </button>
                   <button
                     type="button"
@@ -910,15 +931,15 @@ const AIAssistantWidget = () => {
                     disabled={busy}
                   >
                     <i className="bi bi-upload"></i>
-                    <span>Upload CV từ máy</span>
+                    <span>{t('components.aiAssistantWidget.cvModal.uploadFromDevice')}</span>
                   </button>
                 </div>
 
                 <div className="aiw-cv-modal-body">
                   {cvLoading ? (
-                    <div className="aiw-cv-empty">Đang tải danh sách CV...</div>
+                    <div className="aiw-cv-empty">{t('components.aiAssistantWidget.cvModal.loadingCvList')}</div>
                   ) : cvOptions.length === 0 ? (
-                    <div className="aiw-cv-empty">Bạn chưa có CV nào đã lưu.</div>
+                    <div className="aiw-cv-empty">{t('components.aiAssistantWidget.cvModal.noStoredCv')}</div>
                   ) : (
                     <div className="aiw-cv-list">
                       {cvOptions.map((cv) => {
@@ -931,8 +952,12 @@ const AIAssistantWidget = () => {
                             onClick={() => chooseStoredCv(cv)}
                           >
                             <div className="aiw-cv-item-title">{cv.name}</div>
-                            <div className="aiw-cv-item-meta">{cv.isOnline ? 'CV Online' : 'CV tải lên'}</div>
-                            <div className="aiw-cv-item-state">{active ? 'Đã chọn' : 'Chọn CV này'}</div>
+                            <div className="aiw-cv-item-meta">{cv.isOnline
+                              ? t('components.aiAssistantWidget.cvModal.cvType.online')
+                              : t('components.aiAssistantWidget.cvModal.cvType.uploaded')}</div>
+                            <div className="aiw-cv-item-state">{active
+                              ? t('components.aiAssistantWidget.cvModal.selected')
+                              : t('components.aiAssistantWidget.cvModal.selectThisCv')}</div>
                           </button>
                         );
                       })}
@@ -943,13 +968,13 @@ const AIAssistantWidget = () => {
                 <div className="aiw-cv-modal-foot">
                   {attachedCvPreview ? (
                     <div className="aiw-cv-selected-note">
-                      Đang dùng: {attachedCvPreview.name}
+                      {t('components.aiAssistantWidget.cvModal.usingCv', { name: attachedCvPreview.name })}
                     </div>
                   ) : (
-                    <div className="aiw-cv-selected-note">Chưa chọn CV (AI sẽ chat thường)</div>
+                    <div className="aiw-cv-selected-note">{t('components.aiAssistantWidget.cvModal.noCvSelected')}</div>
                   )}
                   <button type="button" className="aiw-cv-clear-btn" onClick={clearSelectedCv} disabled={!attachedCvPreview || busy}>
-                    Bỏ chọn CV
+                    {t('components.aiAssistantWidget.cvModal.clearCv')}
                   </button>
                 </div>
               </div>
@@ -959,7 +984,11 @@ const AIAssistantWidget = () => {
       )}
 
       {!open && (
-        <div className={`aiw-pill ${pillExpanded ? 'expanded' : 'collapsed'}`} role="complementary" aria-label="AI shortcuts">
+        <div
+          className={`aiw-pill ${pillExpanded ? 'expanded' : 'collapsed'}`}
+          role="complementary"
+          aria-label={t('components.aiAssistantWidget.pill.shortcutsAriaLabel')}
+        >
           {pillExpanded ? (
             <>
               <button
@@ -970,8 +999,8 @@ const AIAssistantWidget = () => {
                   setOpen(true);
                   setPillExpanded(true);
                 }}
-                aria-label="Mở AI"
-                title="Mở AI"
+                aria-label={t('components.aiAssistantWidget.pill.openAi')}
+                title={t('components.aiAssistantWidget.pill.openAi')}
               >
                 <i className="bi bi-robot" />
               </button>
@@ -979,18 +1008,18 @@ const AIAssistantWidget = () => {
                 type="button"
                 className="aiw-pill-btn"
                 onClick={() => navigate('/jobs/saved')}
-                aria-label="Việc làm đã lưu"
-                title="Việc làm đã lưu"
+                aria-label={t('components.aiAssistantWidget.pill.savedJobs')}
+                title={t('components.aiAssistantWidget.pill.savedJobs')}
               >
                 <i className="bi bi-bookmark" />
               </button>
               <button
                 type="button"
                 className="aiw-pill-btn aiw-pill-btn-chat"
-                aria-label="Hỏi đáp"
-                title="Tin nhắn"
+                aria-label={t('components.aiAssistantWidget.pill.askAi')}
+                title={t('components.aiAssistantWidget.pill.messages')}
                 onClick={() => {
-                  if (!requireLogin('Bạn cần đăng nhập để xem tin nhắn.')) return;
+                  if (!requireLogin(t('components.aiAssistantWidget.errors.loginRequiredViewMessages'))) return;
                   setChatOpen((v) => !v);
                 }}
               >
@@ -1001,8 +1030,8 @@ const AIAssistantWidget = () => {
                 type="button"
                 className="aiw-pill-caret"
                 onClick={() => setPillExpanded(false)}
-                aria-label="Thu nhỏ"
-                title="Thu nhỏ"
+                aria-label={t('components.aiAssistantWidget.pill.collapse')}
+                title={t('components.aiAssistantWidget.pill.collapse')}
               >
                 <i className="bi bi-caret-up-fill" />
               </button>
@@ -1012,8 +1041,8 @@ const AIAssistantWidget = () => {
               type="button"
               className="aiw-pill-caret aiw-pill-caret-alone"
               onClick={() => setPillExpanded(true)}
-              aria-label="Phóng ra"
-              title="Phóng ra"
+              aria-label={t('components.aiAssistantWidget.pill.expand')}
+              title={t('components.aiAssistantWidget.pill.expand')}
             >
               <i className="bi bi-caret-down-fill" />
               {showFloatingUnreadBadge && <span className="aiw-badge">{unreadConversations}</span>}

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './CalendarDatePicker.css';
-
-const WEEKDAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 const pad2 = (value) => String(value).padStart(2, '0');
 
@@ -49,9 +48,9 @@ const formatDisplayDate = (date) => {
   return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()}`;
 };
 
-const formatMonthTitle = (date) => {
+const formatMonthTitle = (date, locale = 'en-US') => {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(locale, {
     month: 'short',
     year: 'numeric'
   });
@@ -100,7 +99,7 @@ const getViewAnchorDate = (selectedDate) => {
 const CalendarDatePicker = ({
   value,
   onChange,
-  placeholder = 'Chọn ngày',
+  placeholder = '',
   disabled = false,
   minDate,
   maxDate,
@@ -111,12 +110,24 @@ const CalendarDatePicker = ({
   showTodayAction = true,
   ariaLabel
 }) => {
+  const { t, i18n } = useTranslation();
   const rootRef = useRef(null);
   const selectedDate = useMemo(() => parseIsoDate(value), [value]);
   const minDateBound = useMemo(() => normalizeBoundDate(minDate), [minDate]);
   const maxDateBound = useMemo(() => normalizeBoundDate(maxDate), [maxDate]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => getViewAnchorDate(selectedDate));
+  const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en') ? 'en-US' : 'vi-VN';
+  const effectivePlaceholder = placeholder || t('components.calendarDatePicker.placeholder');
+  const weekdayLabels = useMemo(() => ([
+    t('components.calendarDatePicker.weekdays.su'),
+    t('components.calendarDatePicker.weekdays.mo'),
+    t('components.calendarDatePicker.weekdays.tu'),
+    t('components.calendarDatePicker.weekdays.we'),
+    t('components.calendarDatePicker.weekdays.th'),
+    t('components.calendarDatePicker.weekdays.fr'),
+    t('components.calendarDatePicker.weekdays.sa')
+  ]), [t]);
 
   const today = useMemo(() => toDateOnly(new Date()), []);
 
@@ -153,7 +164,7 @@ const CalendarDatePicker = ({
 
   const cells = useMemo(() => buildCalendarCells(viewDate), [viewDate]);
 
-  const triggerLabel = selectedDate ? formatDisplayDate(selectedDate) : placeholder;
+  const triggerLabel = selectedDate ? formatDisplayDate(selectedDate) : effectivePlaceholder;
 
   const selectDate = (date) => {
     if (!isInRange(date, minDateBound, maxDateBound)) return;
@@ -186,7 +197,7 @@ const CalendarDatePicker = ({
         }}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        aria-label={ariaLabel || placeholder}
+        aria-label={ariaLabel || effectivePlaceholder}
         disabled={disabled}
       >
         <span>{triggerLabel}</span>
@@ -201,7 +212,7 @@ const CalendarDatePicker = ({
                 type="button"
                 className="calendar-date-picker__nav-btn"
                 onClick={() => setViewDate((prev) => moveYear(prev, -1))}
-                aria-label="Năm trước"
+                aria-label={t('components.calendarDatePicker.prevYearAria')}
               >
                 <i className="bi bi-chevron-double-left"></i>
               </button>
@@ -209,20 +220,20 @@ const CalendarDatePicker = ({
                 type="button"
                 className="calendar-date-picker__nav-btn"
                 onClick={() => setViewDate((prev) => moveMonth(prev, -1))}
-                aria-label="Tháng trước"
+                aria-label={t('components.calendarDatePicker.prevMonthAria')}
               >
                 <i className="bi bi-chevron-left"></i>
               </button>
             </div>
 
-            <div className="calendar-date-picker__title">{formatMonthTitle(viewDate)}</div>
+            <div className="calendar-date-picker__title">{formatMonthTitle(viewDate, locale)}</div>
 
             <div className="calendar-date-picker__nav-group">
               <button
                 type="button"
                 className="calendar-date-picker__nav-btn"
                 onClick={() => setViewDate((prev) => moveMonth(prev, 1))}
-                aria-label="Tháng sau"
+                aria-label={t('components.calendarDatePicker.nextMonthAria')}
               >
                 <i className="bi bi-chevron-right"></i>
               </button>
@@ -230,7 +241,7 @@ const CalendarDatePicker = ({
                 type="button"
                 className="calendar-date-picker__nav-btn"
                 onClick={() => setViewDate((prev) => moveYear(prev, 1))}
-                aria-label="Năm sau"
+                aria-label={t('components.calendarDatePicker.nextYearAria')}
               >
                 <i className="bi bi-chevron-double-right"></i>
               </button>
@@ -238,7 +249,7 @@ const CalendarDatePicker = ({
           </div>
 
           <div className="calendar-date-picker__weekdays" aria-hidden="true">
-            {WEEKDAY_LABELS.map((label) => (
+            {weekdayLabels.map((label) => (
               <div key={label} className="calendar-date-picker__weekday">{label}</div>
             ))}
           </div>
@@ -276,7 +287,7 @@ const CalendarDatePicker = ({
                 onClick={setToday}
                 disabled={!canSelectToday}
               >
-                Today
+                {t('components.calendarDatePicker.today')}
               </button>
             </div>
           ) : null}

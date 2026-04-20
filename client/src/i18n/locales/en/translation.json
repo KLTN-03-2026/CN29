@@ -10,7 +10,9 @@
     "success": "Success",
     "close": "Close",
     "delete": "Delete",
-    "cancel": "Cancel"
+    "cancel": "Cancel",
+    "notAvailable": "N/A",
+    "requestFailed": "Request failed ({{status}})"
   },
   "header": {
     "nav": {
@@ -989,6 +991,102 @@
         "updateSuccess": "Job post updated successfully!",
         "createSuccess": "Job post published successfully!"
       }
+    },
+    "applicationManagement": {
+      "pageTitle": "Application management",
+      "filters": {
+        "aria": "Filter applications",
+        "all": "All",
+        "new": "Not viewed",
+        "viewed": "Viewed",
+        "interview": "Interview",
+        "rejected": "Rejected"
+      },
+      "loading": "Loading applications...",
+      "empty": {
+        "all": "No applications yet.",
+        "filtered": "No applications match the current filter."
+      },
+      "table": {
+        "candidate": "Candidate",
+        "email": "Email",
+        "position": "Applied position",
+        "submittedAt": "Submitted at",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "details": "Details",
+        "inviteInterview": "Invite to interview",
+        "reject": "Reject",
+        "close": "Close"
+      },
+      "detailModal": {
+        "title": "Application details",
+        "candidate": "Candidate",
+        "email": "Email",
+        "position": "Applied position",
+        "submittedAt": "Submitted at",
+        "status": "Status",
+        "applicationCode": "Application ID",
+        "coverLetter": "Cover letter",
+        "attachmentTitle": "Attached CV",
+        "cvCode": "CV ID: {{code}}",
+        "viewCv": "View CV",
+        "downloadCv": "Download CV",
+        "noCvFile": "CV file not found"
+      },
+      "status": {
+        "submitted": "Submitted",
+        "reviewing": "Under review",
+        "interview": "Interview",
+        "offer": "Offer",
+        "rejected": "Rejected",
+        "accepted": "Accepted",
+        "default": "{{status}}"
+      },
+      "errors": {
+        "notLoggedIn": "You need to sign in.",
+        "loadFailed": "Unable to load applications.",
+        "updateFailed": "Unable to update the application.",
+        "generic": "Something went wrong."
+      },
+      "notifications": {
+        "statusUpdated": "Application status updated to \"{{status}}\"."
+      }
+    },
+    "messagesPage": {
+      "pageTitle": "Messages",
+      "searchCandidates": "Find more candidates",
+      "loadingInbox": "Loading inbox...",
+      "inbox": {
+        "title": "Conversations",
+        "loading": "Loading...",
+        "count": "{{count}} contacts",
+        "empty": "No conversations yet."
+      },
+      "thread": {
+        "chooseTitle": "Choose conversation",
+        "chooseDescription": "Click a candidate to start messaging.",
+        "chooseEmpty": "Choose a conversation in the left column.",
+        "loading": "Loading messages...",
+        "empty": "No messages yet. Send the first hello."
+      },
+      "composer": {
+        "placeholder": "Enter message content...",
+        "placeholderNoSelection": "Choose a conversation to message",
+        "send": "Send",
+        "sending": "Sending..."
+      },
+      "fallbacks": {
+        "contact": "Candidate #{{id}}",
+        "startConversation": "Start a conversation"
+      },
+      "errors": {
+        "loginRequired": "You need to sign in to use messaging.",
+        "loadFailed": "Unable to load inbox.",
+        "sendFailed": "Unable to send message."
+      }
     }
   },
   "supportCenterPage": {
@@ -1083,6 +1181,906 @@
       "enabledMessage": "JobFinder will show notifications on your device.",
       "deniedTitle": "Notifications not enabled",
       "deniedMessage": "Please allow notifications in your browser or device settings."
+    },
+    "applicationManagement": {
+      "pageTitle": "Application management",
+      "filters": {
+        "aria": "Filter applications",
+        "all": "All",
+        "new": "Not viewed",
+        "viewed": "Viewed",
+        "interview": "Interview",
+        "rejected": "Rejected"
+      },
+      "loading": "Loading applications...",
+      "empty": {
+        "all": "No applications yet.",
+        "filtered": "No applications match the current filter."
+      },
+      "table": {
+        "candidate": "Candidate",
+        "email": "Email",
+        "position": "Applied position",
+        "submittedAt": "Submitted at",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "details": "Details",
+        "inviteInterview": "Invite to interview",
+        "reject": "Reject",
+        "close": "Close"
+      },
+      "detailModal": {
+        "title": "Application details",
+        "candidate": "Candidate",
+        "email": "Email",
+        "position": "Applied position",
+        "submittedAt": "Submitted at",
+        "status": "Status",
+        "applicationCode": "Application ID",
+        "coverLetter": "Cover letter",
+        "attachmentTitle": "Attached CV",
+        "cvCode": "CV ID: {{code}}",
+        "viewCv": "View CV",
+        "downloadCv": "Download CV",
+        "noCvFile": "CV file not found"
+      },
+      "status": {
+        "submitted": "Submitted",
+        "reviewing": "Under review",
+        "interview": "Interview",
+        "offer": "Offer",
+        "rejected": "Rejected",
+        "accepted": "Accepted",
+        "default": "{{status}}"
+      },
+      "errors": {
+        "notLoggedIn": "You need to sign in.",
+        "loadFailed": "Unable to load applications.",
+        "updateFailed": "Unable to update the application.",
+        "generic": "Something went wrong."
+      },
+      "notifications": {
+        "statusUpdated": "Application status updated to \"{{status}}\"."
+      }
+    },
+    "messagesPage": {
+      "pageTitle": "Messages",
+      "searchCandidates": "Find more candidates",
+      "loadingInbox": "Loading inbox...",
+      "inbox": {
+        "title": "Conversations",
+        "loading": "Loading...",
+        "count": "{{count}} contacts",
+        "empty": "No conversations yet."
+      },
+      "thread": {
+        "chooseTitle": "Choose conversation",
+        "chooseDescription": "Click a candidate to start messaging.",
+        "chooseEmpty": "Choose a conversation in the left column.",
+        "loading": "Loading messages...",
+        "empty": "No messages yet. Send the first hello."
+      },
+      "composer": {
+        "placeholder": "Enter message content...",
+        "placeholderNoSelection": "Choose a conversation to message",
+        "send": "Send",
+        "sending": "Sending..."
+      },
+      "fallbacks": {
+        "contact": "Candidate #{{id}}",
+        "startConversation": "Start a conversation"
+      },
+      "errors": {
+        "loginRequired": "You need to sign in to use messaging.",
+        "loadFailed": "Unable to load inbox.",
+        "sendFailed": "Unable to send message."
+      }
+    }
+  },
+  "components": {
+    "footer": {
+      "brandTitle": "JobFinder",
+      "links": {
+        "home": "Home",
+        "careerGuide": "Career guide",
+        "findJobs": "Find jobs"
+      },
+      "candidate": {
+        "title": "For candidates",
+        "exploreJobs": "Explore jobs",
+        "savedJobs": "Saved jobs",
+        "appliedJobs": "Applied jobs",
+        "completeProfile": "Complete profile"
+      },
+      "employer": {
+        "title": "For employers",
+        "registerAccount": "Register account",
+        "manageRecruitment": "Manage recruitment",
+        "marketOverview": "View job market"
+      },
+      "policies": {
+        "title": "Policies & support",
+        "jobGuide": "Job search guide",
+        "terms": "Terms of use",
+        "privacy": "Privacy policy",
+        "support": "Contact support"
+      },
+      "bottomTagline": "Connecting candidates and employers more effectively."
+    },
+    "notificationProvider": {
+      "confirmText": "Confirm",
+      "cancelText": "Cancel",
+      "confirmActionTitle": "Confirm action",
+      "confirmActionMessage": "Are you sure you want to continue?",
+      "understood": "Got it",
+      "closeNotificationAria": "Close notification",
+      "statusTitles": {
+        "success": "Success",
+        "error": "Error",
+        "warning": "Warning",
+        "info": "Notification"
+      }
+    },
+    "smartPagination": {
+      "prevPageAria": "Previous page",
+      "nextPageAria": "Next page",
+      "editRangeTitle": "Click to edit range",
+      "fromRecordAria": "From record",
+      "toRecordAria": "To record",
+      "pageListAria": "Page list",
+      "pageAria": "Page {{page}}"
+    },
+    "calendarDatePicker": {
+      "placeholder": "Select date",
+      "prevYearAria": "Previous year",
+      "prevMonthAria": "Previous month",
+      "nextMonthAria": "Next month",
+      "nextYearAria": "Next year",
+      "today": "Today",
+      "weekdays": {
+        "su": "Su",
+        "mo": "Mo",
+        "tu": "Tu",
+        "we": "We",
+        "th": "Th",
+        "fr": "Fr",
+        "sa": "Sa"
+      }
+    },
+    "messageNotificationBridge": {
+      "defaultSenderName": "Someone sent a message",
+      "defaultMessageBody": "You have a new message.",
+      "toastTitle": "New message",
+      "browserTitle": "New message on JobFinder"
+    },
+    "firebaseMessagingBridge": {
+      "defaultTitle": "JobFinder notification",
+      "defaultBody": "You have a new notification."
+    },
+    "notificationUtils": {
+      "defaultBrowserTitle": "JobFinder notification"
+    },
+    "pwa": {
+      "accountInstallPrompt": {
+        "ariaLabel": "Install JobFinder app",
+        "title": "Install JobFinder",
+        "description": "Install the app for faster access and offline usage.",
+        "installButton": "Install app",
+        "laterButton": "Later",
+        "feedback": {
+          "iosManual": "On iOS, tap Share and choose Add to Home Screen.",
+          "dismissed": "You dismissed the install dialog.",
+          "cannotOpen": "Unable to open the install prompt right now."
+        }
+      },
+      "updatePrompt": {
+        "readyTitle": "A new version is ready.",
+        "readyDescription": "Refresh to update JobFinder.",
+        "updateNow": "Update now",
+        "later": "Later"
+      },
+      "installAppPanel": {
+        "sectionAriaLabel": "Install JobFinder app",
+        "introTitle": "Install by your device",
+        "introDescription": "After installation, the app launches faster, keeps notifications more stable, and reduces repeated sign-in steps.",
+        "tabsAriaLabel": "Installation platforms",
+        "platformLabels": {
+          "android": "Android",
+          "ios": "iOS",
+          "desktop": "Desktop"
+        },
+        "steps": {
+          "android": [
+            "Open JobFinder in Chrome or Edge on Android (not incognito).",
+            "Sign in so notifications and data sync right after install.",
+            "Tap the install icon on the address bar or open the 3-dot menu.",
+            "Choose Install app / Add to Home screen and confirm Install.",
+            "Open the app from home screen and allow notifications if prompted."
+          ],
+          "ios": [
+            "Open JobFinder in Safari on iPhone or iPad.",
+            "Tap Share (square with arrow) in the bottom/top bar.",
+            "Choose Add to Home Screen.",
+            "Set a friendly name like JobFinder and tap Add.",
+            "Open from home screen and enable notifications in iOS settings if needed."
+          ],
+          "desktop": [
+            "Open JobFinder in the latest Chrome or Edge.",
+            "Sign in before installing to keep session state.",
+            "Click the install icon next to the address bar.",
+            "If icon is missing, open browser menu and choose Install JobFinder.",
+            "After install, pin app to taskbar/start menu for quick access."
+          ]
+        },
+        "tips": {
+          "android": {
+            "badge": "Recommended",
+            "heading": "Quick Android install tips",
+            "items": [
+              "Prefer Chrome/Edge for the most stable PWA support.",
+              "If install button is missing, reload once or twice and try again.",
+              "Enable notifications after install for real-time application updates."
+            ]
+          },
+          "ios": {
+            "badge": "Note",
+            "heading": "iOS requires manual install",
+            "items": [
+              "Safari is required to show Add to Home Screen.",
+              "If Add to Home Screen is hidden, scroll down inside Share menu.",
+              "iOS does not support automatic prompt like Android/Desktop."
+            ]
+          },
+          "desktop": {
+            "badge": "Productivity",
+            "heading": "Optimize desktop experience",
+            "items": [
+              "After install, use it as a standalone app without browser tabs.",
+              "Enable notifications to receive messages and profile updates instantly.",
+              "On company devices, check IT policy for browser-app installation limits."
+            ]
+          }
+        },
+        "checklistTitle": "Checklist when install button is missing",
+        "checklistItems": [
+          "Access using HTTPS or localhost.",
+          "Do not use incognito/private mode.",
+          "Allow JavaScript and do not block service worker.",
+          "Make sure browser is updated to the latest version."
+        ],
+        "installButton": {
+          "installed": "Installed",
+          "viewIosGuide": "View iOS guide",
+          "installNow": "Install app",
+          "viewManualGuide": "View manual guide"
+        },
+        "laterButton": "Later",
+        "reenableButton": "Re-enable suggestion",
+        "feedback": {
+          "alreadyInstalled": "The app is already installed on this device.",
+          "iosManual": "iOS does not support automatic prompt. Please follow manual steps below.",
+          "noPrompt": "Browser has not provided beforeinstallprompt yet. Ensure HTTPS or localhost and try again in a few seconds.",
+          "installedSuccess": "Install completed. You can open JobFinder as a standalone app.",
+          "dismissed": "You dismissed the install dialog. You can retry anytime.",
+          "cannotOpen": "Unable to open install prompt at this time.",
+          "hidden7Days": "Install suggestion hidden for 7 days on this browser.",
+          "reenabled": "Install suggestion has been re-enabled."
+        }
+      }
+    },
+    "aiAssistantWidget": {
+      "title": "AI assistant",
+      "initialAssistantMessage": "I am the JobFinder AI assistant. You can ask about using the website, CVs, interviews, and jobs. You can also select a saved CV so I can review it and suggest better-fit jobs.",
+      "assistantDialogAriaLabel": "AI Assistant",
+      "assistantSubtitle": "Quick answers, clear suggestions",
+      "defaultPromptWithAttachment": "Please review my attached CV and suggest suitable jobs.",
+      "okFallback": "OK",
+      "common": {
+        "close": "Close"
+      },
+      "status": {
+        "analyzingCv": "Analyzing CV...",
+        "replying": "Replying..."
+      },
+      "input": {
+        "placeholder": "Type your question...",
+        "placeholderWithAttachment": "Add extra request (optional)..."
+      },
+      "clearHistory": {
+        "title": "Clear AI chat history",
+        "message": "Are you sure you want to clear the current AI chat history?",
+        "confirmText": "Clear history",
+        "cancelText": "Keep it",
+        "success": "AI chat history has been cleared.",
+        "buttonLabel": "Clear AI chat history",
+        "buttonText": "Clear history"
+      },
+      "attachment": {
+        "uploadedFromDevice": "CV uploaded from this device",
+        "storedOnlineCv": "Saved online CV",
+        "storedUploadedCv": "Saved uploaded CV",
+        "label": "Attachment",
+        "attachCvTitle": "Attach CV",
+        "currentAttachmentTitle": "Currently attached: {{name}}",
+        "selectedCvSuccess": "Selected CV: {{name}}",
+        "attachedSuccess": "Attached CV: {{name}}",
+        "clearedSuccess": "CV attachment removed."
+      },
+      "cvModal": {
+        "ariaLabel": "Attach CV",
+        "title": "Attach CV",
+        "reloadCv": "Reload CVs",
+        "uploadFromDevice": "Upload CV from device",
+        "loadingCvList": "Loading CV list...",
+        "noStoredCv": "You do not have any saved CV yet.",
+        "defaultCvName": "Untitled CV",
+        "cvLabelFormat": "{{name}} ({{type}})",
+        "cvType": {
+          "online": "Online CV",
+          "uploaded": "Uploaded CV"
+        },
+        "selected": "Selected",
+        "selectThisCv": "Select this CV",
+        "usingCv": "Using: {{name}}",
+        "noCvSelected": "No CV selected (AI will answer in general mode)",
+        "clearCv": "Remove CV"
+      },
+      "chat": {
+        "dialogAriaLabel": "Messages",
+        "title": "Messages",
+        "subtitle": "Continue conversations with people who messaged you",
+        "loading": "Loading...",
+        "noConversation": "No conversations yet",
+        "selectConversation": "Choose a conversation",
+        "loadingMessages": "Loading messages...",
+        "noMessages": "No messages yet",
+        "inputPlaceholderWithName": "Message {{name}}...",
+        "inputPlaceholderNoConversation": "Choose a conversation to message",
+        "sendButton": "Send"
+      },
+      "pill": {
+        "shortcutsAriaLabel": "AI shortcuts",
+        "openAi": "Open AI",
+        "savedJobs": "Saved jobs",
+        "askAi": "Ask AI",
+        "messages": "Messages",
+        "collapse": "Collapse",
+        "expand": "Expand"
+      },
+      "errors": {
+        "callAiFailed": "Unable to call AI.",
+        "providerBusy": "AI system is temporarily overloaded. Please try again in about 10-30 seconds.",
+        "providerBusyReply": "The AI backend is currently under high load, so responses may be unstable. Please try again shortly.",
+        "providerBusyRetry": "AI server is temporarily busy. Please retry in a few seconds.",
+        "processingFailedRetry": "I ran into an error while processing. Please try again.",
+        "loginRequiredAssistant": "You need to sign in to use AI assistant.",
+        "loginRequiredChooseCv": "You need to sign in to choose a CV.",
+        "loginRequiredMessaging": "You need to sign in to send messages.",
+        "loginRequiredViewMessages": "You need to sign in to view messages.",
+        "loginRequiredAnalyzeStoredCv": "You need to sign in to analyze a saved CV.",
+        "invalidCvFileType": "Only PDF or DOCX files are supported.",
+        "cvFileTooLarge": "File is too large (maximum 5MB).",
+        "loadCvListFailed": "Unable to load CV list.",
+        "loadStoredCvFailed": "Unable to load saved CVs.",
+        "loadInboxFailed": "Unable to load inbox.",
+        "loadConversationFailed": "Unable to load conversation.",
+        "sendMessageFailed": "Unable to send message."
+      }
+    },
+    "employerDashboard": {
+      "title": "Employer dashboard",
+      "logout": "Logout",
+      "greeting": "Hello, {{name}}!",
+      "roleLabel": "Role"
+    }
+  },
+  "authPages": {
+    "layout": {
+      "brandAlt": "JobFinder logo",
+      "brandName": "JobFinder",
+      "heroAlt": "Authentication illustration",
+      "heroEyebrow": "Secure access"
+    },
+    "loginPage": {
+      "title": "Sign in",
+      "subtitle": "Continue your job search journey.",
+      "switchText": "New here?",
+      "switchLabel": "Create account",
+      "heroTitle": "Welcome back",
+      "heroSubtitle": "Log in to manage your profile, jobs, and applications."
+    },
+    "registerPage": {
+      "title": "Create account",
+      "subtitle": "Join JobFinder to find better opportunities.",
+      "switchText": "Already have an account?",
+      "switchLabel": "Sign in",
+      "heroTitle": "Start your career journey",
+      "heroSubtitle": "Build your profile and get matched with suitable jobs."
+    },
+    "forgotPasswordPage": {
+      "title": "Forgot password",
+      "subtitle": "Recover your account in a few steps.",
+      "switchText": "Remember your password?",
+      "switchLabel": "Back to sign in",
+      "heroTitle": "Reset access",
+      "heroSubtitle": "Verify your email and set a new password safely."
+    },
+    "roleSelection": {
+      "title": "Choose your role",
+      "subtitle": "This helps us personalize your experience.",
+      "switchText": "Need to use another account?",
+      "switchLabel": "Back to sign in",
+      "heroTitle": "One quick step",
+      "heroSubtitle": "Select whether you are a candidate or employer.",
+      "rolePrompt": "Who are you joining as?",
+      "candidate": "Candidate",
+      "employer": "Employer",
+      "continue": "Continue",
+      "processing": "Processing...",
+      "errors": {
+        "selectRoleRequired": "Please select a role.",
+        "saveRoleFailed": "Unable to save selected role."
+      }
+    },
+    "verifyOtp": {
+      "title": "Verify OTP",
+      "delivery": {
+        "failedPrefix": "OTP delivery may be delayed.",
+        "sentPrefix": "An OTP has been sent to your email.",
+        "fallbackWarning": "Please check your inbox (and spam folder)."
+      },
+      "tempOtpLabel": "Temporary OTP:",
+      "inputLabel": "Enter OTP",
+      "inputPlaceholder": "6-digit code",
+      "inputHint": "OTP is valid for a short time.",
+      "verifying": "Verifying...",
+      "verifyButton": "Verify OTP",
+      "notReceived": "Didn't receive the code?",
+      "resendButton": "Resend OTP",
+      "resending": "Resending...",
+      "errors": {
+        "invalidOtpLength": "OTP must be 6 digits.",
+        "verifyFailed": "OTP verification failed.",
+        "resendFailed": "Unable to resend OTP."
+      },
+      "success": {
+        "redirectNextStep": "OTP verified. Redirecting to next step...",
+        "redirectLogin": "OTP verified. Redirecting to sign in..."
+      }
+    },
+    "forgotPassword": {
+      "modalTitle": "Reset password",
+      "stepLabel": "Step {{step}}/3",
+      "labels": {
+        "registeredEmail": "Registered email"
+      },
+      "placeholders": {
+        "email": "Enter your email",
+        "otp": "Enter OTP",
+        "newPassword": "Enter new password",
+        "confirmPassword": "Confirm new password"
+      },
+      "sendOtp": "Send OTP",
+      "sending": "Sending...",
+      "verifying": "Verifying...",
+      "processing": "Processing...",
+      "messages": {
+        "otpSent": "OTP has been sent to your email.",
+        "otpVerified": "OTP verified successfully.",
+        "resetPasswordSuccess": "Password reset successful."
+      },
+      "errors": {
+        "invalidEmail": "Please enter a valid email.",
+        "sendOtpFailed": "Unable to send OTP.",
+        "invalidOtpFormat": "Invalid OTP format.",
+        "invalidOtp": "Invalid OTP.",
+        "invalidOtpNeedReverify": "OTP is invalid. Please verify again.",
+        "passwordMinLength": "Password must be at least 8 characters.",
+        "passwordRequireLetterNumber": "Password must include letters and numbers.",
+        "confirmPasswordMismatch": "Password confirmation does not match.",
+        "resetPasswordFailed": "Unable to reset password."
+      },
+      "step2": {
+        "title": "Verify OTP",
+        "hint": "We sent OTP to {{email}}.",
+        "resendWithTimer": "Resend OTP in {{seconds}}s",
+        "resend": "Resend OTP",
+        "verifyOtp": "Verify OTP",
+        "changeEmail": "Change email"
+      },
+      "step3": {
+        "title": "Set new password",
+        "hint": "Create a strong password for better security.",
+        "resetPassword": "Reset password"
+      },
+      "step4": {
+        "successDescription": "Your password has been reset successfully.",
+        "loginNow": "Sign in now"
+      },
+      "aria": {
+        "showNewPassword": "Show new password",
+        "hideNewPassword": "Hide new password",
+        "showConfirmPassword": "Show confirm password",
+        "hideConfirmPassword": "Hide confirm password"
+      }
+    },
+    "loginForm": {
+      "labels": {
+        "identity": "Email or phone",
+        "password": "Password"
+      },
+      "placeholders": {
+        "identity": "Enter email or phone",
+        "password": "Enter password"
+      },
+      "rememberMe": "Remember me",
+      "forgotPassword": "Forgot password?",
+      "submit": "Sign in",
+      "processing": "Processing...",
+      "or": "or",
+      "continueWithGoogle": "Continue with Google",
+      "noAccount": "No account?",
+      "register": "Register",
+      "aria": {
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
+      },
+      "messages": {
+        "loginSuccessWelcome": "Welcome back, {{name}}!"
+      },
+      "errors": {
+        "invalidLoginResponse": "Invalid login response.",
+        "googlePopupBlocked": "Google popup was blocked. Please allow popups.",
+        "googleIframeInitFailed": "Unable to initialize Google sign-in iframe.",
+        "googleLoginFailed": "Google sign-in failed.",
+        "missingGoogleClientId": "Google Client ID is missing.",
+        "googleApiNotReady": "Google API is not ready.",
+        "googleButtonInitFailed": "Unable to initialize Google button.",
+        "googlePopupCannotOpen": "Unable to open Google sign-in popup.",
+        "backendConfigHint": "Please check backend auth config.",
+        "cannotConnectServer": "Cannot connect to server ({{apiBase}}).",
+        "loginFailed": "Login failed."
+      }
+    },
+    "registerForm": {
+      "labels": {
+        "lastName": "Last name",
+        "firstName": "First name",
+        "birthday": "Birthday",
+        "gender": "Gender",
+        "email": "Email",
+        "phone": "Phone",
+        "password": "Password",
+        "confirmPassword": "Confirm password"
+      },
+      "placeholders": {
+        "lastName": "Enter last name",
+        "firstName": "Enter first name",
+        "email": "Enter email",
+        "phone": "Enter phone number",
+        "password": "Enter password",
+        "confirmPassword": "Confirm password"
+      },
+      "birthday": {
+        "monthLabel": "Month {{month}}",
+        "dayPlaceholder": "Day",
+        "monthPlaceholder": "Month",
+        "yearPlaceholder": "Year",
+        "menuTitle": "Select birthday",
+        "menuSubtitle": "Choose day, month, and year",
+        "ageHint": "You must be at least 16 years old."
+      },
+      "gender": {
+        "female": "Female",
+        "male": "Male",
+        "custom": "Custom"
+      },
+      "acceptTerms": "I agree to the terms",
+      "terms": {
+        "prefix": "By continuing, you agree to",
+        "terms": "Terms of Use",
+        "privacy": "Privacy Policy",
+        "and": "and",
+        "cookies": "Cookie Policy"
+      },
+      "hasAccount": "Already have an account?",
+      "login": "Sign in",
+      "helpText": "Fill all required fields to create your account.",
+      "submit": "Create account",
+      "processing": "Processing...",
+      "common": {
+        "close": "Close"
+      },
+      "aria": {
+        "selectBirthday": "Select birthday",
+        "showPassword": "Show password",
+        "hidePassword": "Hide password"
+      },
+      "messages": {
+        "registerSuccess": "Registration successful. Please verify OTP."
+      },
+      "errors": {
+        "invalidBirthday": "Invalid birthday.",
+        "ageUnder16": "You must be at least 16 years old.",
+        "invalidEmail": "Invalid email format.",
+        "invalidPhone": "Invalid phone number.",
+        "acceptTermsRequired": "Please accept terms to continue.",
+        "passwordMinLength": "Password must be at least 8 characters.",
+        "passwordRequireLetterNumber": "Password must include letters and numbers.",
+        "confirmPasswordMismatch": "Password confirmation does not match.",
+        "registerFailed": "Registration failed."
+      }
+    },
+    "completeProfile": {
+      "title": "Complete profile",
+      "subtitle": "Provide more details to finish onboarding.",
+      "switchText": "Need to switch account?",
+      "switchLabel": "Back to sign in",
+      "heroTitle": "Almost done",
+      "heroSubtitle": "Complete your profile to unlock personalized experience.",
+      "candidateTitle": "Candidate information",
+      "employerTitle": "Employer information",
+      "labels": {
+        "fullName": "Full name",
+        "phone": "Phone",
+        "birthday": "Birthday",
+        "gender": "Gender",
+        "city": "City",
+        "district": "District",
+        "address": "Address",
+        "title": "Job title",
+        "education": "Education",
+        "personalLink": "Personal link",
+        "selfIntro": "Self introduction",
+        "experienceYears": "Years of experience",
+        "avatar": "Avatar",
+        "companyName": "Company name",
+        "representativeName": "Representative name",
+        "website": "Website",
+        "companyDescription": "Company description",
+        "industry": "Industry",
+        "taxCode": "Tax code",
+        "logoUrl": "Logo URL"
+      },
+      "placeholders": {
+        "birthday": "Select birthday"
+      },
+      "gender": {
+        "female": "Female",
+        "male": "Male",
+        "other": "Other"
+      },
+      "uploadAvatar": "Upload avatar",
+      "removeAvatar": "Remove avatar",
+      "avatarHint": "Square image is recommended.",
+      "submit": "Save profile",
+      "saving": "Saving...",
+      "errors": {
+        "avatarTooLarge": "Avatar file is too large.",
+        "invalidAvatarFile": "Invalid avatar file format.",
+        "missingUserForAvatarUpload": "Cannot identify user for avatar upload.",
+        "uploadAvatarFailed": "Avatar upload failed.",
+        "candidateRequiredFields": "Please fill all required candidate fields.",
+        "employerRequiredFields": "Please fill all required employer fields.",
+        "saveProfileFailed": "Unable to save profile."
+      }
+    }
+  },
+  "candidatePages": {
+    "common": {
+      "back": "Back",
+      "findJobsNow": "Find jobs now",
+      "logoAlt": "Employer logo",
+      "employerFallback": "Employer",
+      "salary": {
+        "negotiable": "Negotiable",
+        "range": "{{from}} - {{to}} VND/{{unit}}",
+        "from": "From {{amount}} VND/{{unit}}",
+        "to": "Up to {{amount}} VND/{{unit}}"
+      }
+    },
+    "appliedJobs": {
+      "title": "Applied jobs",
+      "subtitle": "Track your application progress and revisit submitted opportunities.",
+      "count": "{{count}} applications submitted",
+      "loading": "Loading applied jobs...",
+      "emptyTitle": "You have not applied to any job yet",
+      "emptyDescription": "Explore opportunities and submit your CV to increase response rates.",
+      "appliedOn": "Applied on {{date}}",
+      "defaultStatus": "Submitted",
+      "viewPost": "View post",
+      "errors": {
+        "loginRequired": "You need to sign in to view applied jobs.",
+        "loadFailed": "Unable to load applied jobs."
+      }
+    },
+    "savedJobs": {
+      "title": "Saved jobs",
+      "subtitle": "Keep track of interesting postings and apply when the timing fits.",
+      "count": "{{count}} saved jobs",
+      "loading": "Loading saved jobs...",
+      "emptyTitle": "You haven't saved any jobs",
+      "emptyDescription": "Save suitable jobs so you can review and apply later.",
+      "deadline": "Deadline {{date}}",
+      "viewDetail": "View details",
+      "remove": "Remove",
+      "messages": {
+        "removed": "Job removed from saved list."
+      },
+      "errors": {
+        "loginRequired": "You need to sign in to view saved jobs.",
+        "loginRequiredShort": "You need to sign in.",
+        "loadFailed": "Unable to load saved jobs.",
+        "removeFailed": "Unable to remove saved job."
+      }
+    },
+    "matchingJobs": {
+      "title": "Matching jobs",
+      "subtitle": "Smart recommendations based on your profile so you can focus on better-fit opportunities.",
+      "count": "{{count}} recommendations for you",
+      "loading": "Analyzing and loading matching jobs...",
+      "emptyTitle": "No matching recommendations yet",
+      "emptyDescription": "Update your profile or broaden criteria to receive more suggestions.",
+      "viewAllJobs": "View all jobs",
+      "matchBadge": "Recommended match",
+      "viewDetail": "View details",
+      "errors": {
+        "loginRequired": "You need to sign in to view matching jobs.",
+        "loadFailed": "Unable to load matching jobs."
+      }
+    },
+    "cvUpload": {
+      "title": "Upload CV",
+      "subtitle": "Upload a CV (PDF/DOC/DOCX) or create an online CV for direct editing.",
+      "createOnline": "Create online CV",
+      "uploadButton": "Upload CV",
+      "uploading": "Uploading...",
+      "loading": "Loading CV list...",
+      "emptyTitle": "No CV found yet.",
+      "emptyHint": "Accepted: PDF, DOC, DOCX (max 5MB)",
+      "onlineBadge": "Online CV",
+      "table": {
+        "name": "CV name",
+        "size": "Size",
+        "updatedAt": "Updated",
+        "actions": "Actions"
+      },
+      "actions": {
+        "view": "View",
+        "editOnline": "Edit online",
+        "delete": "Delete"
+      },
+      "confirmDelete": {
+        "title": "Delete CV",
+        "message": "Are you sure you want to delete this CV?",
+        "confirmText": "Delete",
+        "cancelText": "Cancel"
+      },
+      "messages": {
+        "uploadSuccess": "CV uploaded successfully.",
+        "deleteSuccess": "CV deleted successfully."
+      },
+      "errors": {
+        "loadFailed": "Unable to load CV list.",
+        "invalidFileType": "Only PDF, DOC, or DOCX files are allowed.",
+        "fileTooLarge": "File size must not exceed 5MB.",
+        "loginRequiredUpload": "Please sign in to upload CV.",
+        "uploadFailed": "Unable to upload CV.",
+        "deleteFailed": "Unable to delete CV.",
+        "loginRequiredManage": "You need to sign in to manage CVs."
+      }
+    },
+    "dashboard": {
+      "title": "Candidate dashboard",
+      "logout": "Logout",
+      "greeting": "Hello, {{name}}!",
+      "roleLabel": "Role",
+      "cards": {
+        "cvProfile": "CV profile",
+        "appliedJobs": "Applied jobs",
+        "savedJobs": "Saved jobs",
+        "notifications": "Notifications"
+      },
+      "matchingSection": {
+        "title": "Jobs matching your profile",
+        "description": "Complete your profile to receive more relevant job suggestions."
+      },
+      "applicationsSection": {
+        "title": "My applications",
+        "empty": "You have not applied to any jobs yet."
+      },
+      "savedSection": {
+        "title": "Saved jobs",
+        "empty": "You have not saved any jobs yet."
+      },
+      "actions": {
+        "createCv": "Create CV",
+        "view": "View",
+        "completeProfile": "Complete profile",
+        "findJobsNow": "Find jobs now"
+      }
+    },
+    "profile": {
+      "nav": {
+        "overview": "Personal info",
+        "jobs": "My jobs",
+        "invitations": "Interview invitations",
+        "notifications": "Notifications",
+        "settings": "Settings"
+      },
+      "sidebar": {
+        "greeting": "Hello",
+        "defaultUser": "User"
+      },
+      "overview": {
+        "avatarAlt": "avatar",
+        "eyebrow": "Candidate profile",
+        "fallbackPosition": "Position not updated",
+        "fallbackCity": "City not updated",
+        "fallbackEmail": "No email",
+        "updateProfile": "Update profile",
+        "kpis": {
+          "appliedJobs": "Applied jobs",
+          "newInvitations": "New invitations",
+          "notifications": "Notifications"
+        },
+        "journey": {
+          "title": "Continue your job journey",
+          "description": "Update your profile and explore matching opportunities today.",
+          "findJobs": "Find jobs",
+          "savedJobs": "Saved jobs",
+          "trackApplications": "Track applications",
+          "completeProfile": "Complete profile"
+        }
+      },
+      "jobs": {
+        "title": "My jobs",
+        "subtitle": "Manage saved jobs and your application progress.",
+        "emptyTitle": "You have not applied to any jobs",
+        "emptyDescription": "Explore the latest listings and start applying.",
+        "findJobs": "Find jobs"
+      },
+      "invitations": {
+        "title": "Interview invitations",
+        "subtitle": "Companies that moved your applications to interview stage.",
+        "loading": "Loading interview invitations...",
+        "emptyTitle": "No interview invitations yet",
+        "emptyDescription": "Keep applying and improving your profile to increase invitation chances.",
+        "updateProfileNow": "Update profile now",
+        "companyLogoAlt": "Company logo",
+        "positionFallback": "Applied position",
+        "statusInterview": "Interview",
+        "submittedOn": "Submitted: {{date}}",
+        "viewJob": "View job"
+      },
+      "notifications": {
+        "title": "Notifications",
+        "subtitle": "New jobs, reminders, and application status updates.",
+        "emptyTitle": "No new notifications",
+        "emptyDescription": "Important updates will appear here."
+      },
+      "settings": {
+        "heroTitle": "Account settings",
+        "heroDescription": "Manage security, profile details, and JobFinder app setup on your devices.",
+        "security": {
+          "kicker": "Security",
+          "title": "Change account password",
+          "button": "Change password",
+          "hint": "Use at least 8 characters, including uppercase, lowercase, and numbers for better safety."
+        },
+        "profile": {
+          "kicker": "Profile",
+          "title": "Update candidate information",
+          "button": "Open detailed profile",
+          "hint": "Optimize your profile to be discovered by employers and receive more interview invitations."
+        },
+        "app": {
+          "kicker": "Application",
+          "title": "Install JobFinder"
+        }
+      }
     }
   }
 }

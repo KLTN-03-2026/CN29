@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import './ForgotPassword.css';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
@@ -7,6 +8,7 @@ const OTP_REGEX = /^\d{6}$/;
 const PASSWORD_MIN_LENGTH = 8;
 
 const ForgotPassword = ({ onClose, inline = false }) => {
+    const { t } = useTranslation();
     const apiBase = CLIENT_API_BASE;
     const [step, setStep] = useState(1);
     const [email, setEmail] = useState('');
@@ -37,7 +39,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
 
     const sendOtp = async ({ keepCurrentStep = false } = {}) => {
         if (!validateEmail(normalizedEmail)) {
-            setError('Vui lòng nhập email hợp lệ.');
+            setError(t('authPages.forgotPassword.errors.invalidEmail'));
             return;
         }
 
@@ -53,10 +55,10 @@ const ForgotPassword = ({ onClose, inline = false }) => {
 
             const data = await res.json().catch(() => null);
             if (!res.ok) {
-                throw new Error(data?.error || 'Không thể gửi mã xác thực');
+                throw new Error(data?.error || t('authPages.forgotPassword.errors.sendOtpFailed'));
             }
 
-            setMessage(data?.message || 'Đã gửi mã OTP. Vui lòng kiểm tra email của bạn.');
+            setMessage(data?.message || t('authPages.forgotPassword.messages.otpSent'));
             setResendTimer(60);
 
             if (!keepCurrentStep) {
@@ -68,7 +70,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                 setStep(2);
             }
         } catch (e) {
-            setError(e.message || 'Không thể gửi mã xác thực');
+            setError(e.message || t('authPages.forgotPassword.errors.sendOtpFailed'));
         } finally {
             setLoading(false);
         }
@@ -78,7 +80,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
         clearAlerts();
 
         if (!OTP_REGEX.test(String(otp || '').trim())) {
-            setError('Mã OTP gồm đúng 6 chữ số.');
+            setError(t('authPages.forgotPassword.errors.invalidOtpFormat'));
             return;
         }
 
@@ -96,13 +98,13 @@ const ForgotPassword = ({ onClose, inline = false }) => {
 
             const data = await res.json().catch(() => null);
             if (!res.ok) {
-                throw new Error(data?.error || 'Mã OTP không hợp lệ');
+                throw new Error(data?.error || t('authPages.forgotPassword.errors.invalidOtp'));
             }
 
-            setMessage(data?.message || 'Xác thực OTP thành công. Vui lòng đặt mật khẩu mới.');
+            setMessage(data?.message || t('authPages.forgotPassword.messages.otpVerified'));
             setStep(3);
         } catch (e) {
-            setError(e.message || 'Mã OTP không hợp lệ');
+            setError(e.message || t('authPages.forgotPassword.errors.invalidOtp'));
         } finally {
             setLoading(false);
         }
@@ -112,7 +114,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
         clearAlerts();
 
         if (!OTP_REGEX.test(String(otp || '').trim())) {
-            setError('Mã OTP không hợp lệ. Vui lòng xác thực lại.');
+            setError(t('authPages.forgotPassword.errors.invalidOtpNeedReverify'));
             setStep(2);
             return;
         }
@@ -123,17 +125,17 @@ const ForgotPassword = ({ onClose, inline = false }) => {
         const hasNumber = /[0-9]/.test(password);
 
         if (password.length < PASSWORD_MIN_LENGTH) {
-            setError('Mật khẩu mới phải có ít nhất 8 ký tự.');
+            setError(t('authPages.forgotPassword.errors.passwordMinLength'));
             return;
         }
 
         if (!hasLetter || !hasNumber) {
-            setError('Mật khẩu mới phải bao gồm cả chữ và số.');
+            setError(t('authPages.forgotPassword.errors.passwordRequireLetterNumber'));
             return;
         }
 
         if (password !== confirm) {
-            setError('Mật khẩu xác nhận không khớp.');
+            setError(t('authPages.forgotPassword.errors.confirmPasswordMismatch'));
             return;
         }
 
@@ -152,17 +154,17 @@ const ForgotPassword = ({ onClose, inline = false }) => {
 
             const data = await res.json().catch(() => null);
             if (!res.ok) {
-                throw new Error(data?.error || 'Đặt lại mật khẩu thất bại');
+                throw new Error(data?.error || t('authPages.forgotPassword.errors.resetPasswordFailed'));
             }
 
-            setMessage(data?.message || 'Đổi mật khẩu thành công');
+            setMessage(data?.message || t('authPages.forgotPassword.messages.resetPasswordSuccess'));
             setNewPassword('');
             setConfirmPassword('');
             setShowNewPassword(false);
             setShowConfirmPassword(false);
             setStep(4);
         } catch (e) {
-            setError(e.message || 'Đặt lại mật khẩu thất bại');
+            setError(e.message || t('authPages.forgotPassword.errors.resetPasswordFailed'));
         } finally {
             setLoading(false);
         }
@@ -212,35 +214,35 @@ const ForgotPassword = ({ onClose, inline = false }) => {
             {error && <div className="alert alert-danger">{error}</div>}
             {message && <div className="alert alert-success">{message}</div>}
 
-            <p className="forgot-step-meta">Bước {Math.min(step, 3)}/3</p>
+            <p className="forgot-step-meta">{t('authPages.forgotPassword.stepLabel', { step: Math.min(step, 3) })}</p>
 
             {step === 1 && (
                 <>
-                    <label className="forgot-field-label" htmlFor="forgot-email">Email đã đăng ký</label>
+                    <label className="forgot-field-label" htmlFor="forgot-email">{t('authPages.forgotPassword.labels.registeredEmail')}</label>
                     <input
                         id="forgot-email"
                         type="email"
                         className="form-control mb-2"
-                        placeholder="Email"
+                        placeholder={t('authPages.forgotPassword.placeholders.email')}
                         value={email}
                         onChange={(event) => setEmail(event.target.value)}
                         onKeyDown={handleKeyDownEmail}
                         autoComplete="email"
                     />
                     <button className="btn btn-primary w-100" onClick={() => sendOtp()} disabled={loading || !validateEmail(normalizedEmail)}>
-                        {loading ? 'Đang gửi...' : 'Gửi mã'}
+                        {loading ? t('authPages.forgotPassword.sending') : t('authPages.forgotPassword.sendOtp')}
                     </button>
                 </>
             )}
 
             {step === 2 && (
                 <>
-                    <p className="forgot-step-title">Xác thực mã OTP</p>
-                    <p className="forgot-help-text">Nhập mã gồm 6 số đã gửi tới {normalizedEmail}.</p>
+                    <p className="forgot-step-title">{t('authPages.forgotPassword.step2.title')}</p>
+                    <p className="forgot-help-text">{t('authPages.forgotPassword.step2.hint', { email: normalizedEmail })}</p>
                     <input
                         type="text"
                         className="form-control mb-2"
-                        placeholder="Nhập mã OTP"
+                        placeholder={t('authPages.forgotPassword.placeholders.otp')}
                         value={otp}
                         onChange={(event) => setOtp(event.target.value.replace(/\D/g, '').slice(0, 6))}
                         onKeyDown={handleKeyDownOtp}
@@ -250,27 +252,29 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                     />
                     <div className="forgot-action-row">
                         <button className="btn btn-outline-secondary" style={{ flex: 1 }} onClick={handleResend} disabled={resendTimer > 0 || loading}>
-                            {resendTimer > 0 ? `Gửi lại mã (${resendTimer}s)` : 'Gửi lại mã'}
+                            {resendTimer > 0
+                                ? t('authPages.forgotPassword.step2.resendWithTimer', { seconds: resendTimer })
+                                : t('authPages.forgotPassword.step2.resend')}
                         </button>
                         <button className="btn btn-success" style={{ flex: 2 }} onClick={verifyOtp} disabled={loading || !OTP_REGEX.test(String(otp || '').trim())}>
-                            {loading ? 'Đang xác thực...' : 'Xác thực mã'}
+                            {loading ? t('authPages.forgotPassword.verifying') : t('authPages.forgotPassword.step2.verifyOtp')}
                         </button>
                     </div>
                     <button type="button" className="btn btn-link forgot-change-email" onClick={handleChangeEmail} disabled={loading}>
-                        Đổi email
+                        {t('authPages.forgotPassword.step2.changeEmail')}
                     </button>
                 </>
             )}
 
             {step === 3 && (
                 <>
-                    <p className="forgot-step-title">Đặt mật khẩu mới</p>
-                    <p className="forgot-help-text">Mã OTP đã được xác thực. Nhập mật khẩu mới để hoàn tất.</p>
+                    <p className="forgot-step-title">{t('authPages.forgotPassword.step3.title')}</p>
+                    <p className="forgot-help-text">{t('authPages.forgotPassword.step3.hint')}</p>
                     <div className="forgot-password-field mb-2">
                         <input
                             type={showNewPassword ? 'text' : 'password'}
                             className="form-control"
-                            placeholder="Mật khẩu mới"
+                            placeholder={t('authPages.forgotPassword.placeholders.newPassword')}
                             value={newPassword}
                             onChange={(event) => setNewPassword(event.target.value)}
                             onKeyDown={handleKeyDownReset}
@@ -280,7 +284,9 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                             type="button"
                             className="forgot-password-toggle"
                             onClick={() => setShowNewPassword((prev) => !prev)}
-                            aria-label={showNewPassword ? 'Ẩn mật khẩu mới' : 'Hiện mật khẩu mới'}
+                            aria-label={showNewPassword
+                                ? t('authPages.forgotPassword.aria.hideNewPassword')
+                                : t('authPages.forgotPassword.aria.showNewPassword')}
                         >
                             <i className={`bi ${showNewPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                         </button>
@@ -290,7 +296,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                         <input
                             type={showConfirmPassword ? 'text' : 'password'}
                             className="form-control"
-                            placeholder="Nhập lại mật khẩu mới"
+                            placeholder={t('authPages.forgotPassword.placeholders.confirmPassword')}
                             value={confirmPassword}
                             onChange={(event) => setConfirmPassword(event.target.value)}
                             onKeyDown={handleKeyDownReset}
@@ -300,21 +306,23 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                             type="button"
                             className="forgot-password-toggle"
                             onClick={() => setShowConfirmPassword((prev) => !prev)}
-                            aria-label={showConfirmPassword ? 'Ẩn mật khẩu xác nhận' : 'Hiện mật khẩu xác nhận'}
+                            aria-label={showConfirmPassword
+                                ? t('authPages.forgotPassword.aria.hideConfirmPassword')
+                                : t('authPages.forgotPassword.aria.showConfirmPassword')}
                         >
                             <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
                         </button>
                     </div>
                     <button className="btn btn-success w-100" onClick={resetPassword} disabled={loading || !newPassword || !confirmPassword}>
-                        {loading ? 'Đang xử lý...' : 'Đặt lại mật khẩu'}
+                        {loading ? t('authPages.forgotPassword.processing') : t('authPages.forgotPassword.step3.resetPassword')}
                     </button>
                 </>
             )}
 
             {step === 4 && (
                 <>
-                    <p>Mật khẩu đã được đặt lại thành công. Bạn có thể đăng nhập bằng mật khẩu mới.</p>
-                    <button className="btn btn-primary w-100" onClick={closePanel}>Đăng nhập ngay</button>
+                    <p>{t('authPages.forgotPassword.step4.successDescription')}</p>
+                    <button className="btn btn-primary w-100" onClick={closePanel}>{t('authPages.forgotPassword.step4.loginNow')}</button>
                 </>
             )}
         </>
@@ -336,7 +344,7 @@ const ForgotPassword = ({ onClose, inline = false }) => {
                 <div className="modal-dialog modal-dialog-centered forgot-modal-dialog">
                     <div className="forgot-modal-content modal-content">
                         <div className="modal-header">
-                            <h5 className="modal-title">Khôi phục mật khẩu</h5>
+                            <h5 className="modal-title">{t('authPages.forgotPassword.modalTitle')}</h5>
                             <button type="button" className="btn-close" aria-label="Close" onClick={closePanel}></button>
                         </div>
                         <div className="modal-body">

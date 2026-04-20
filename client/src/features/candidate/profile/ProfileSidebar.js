@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { PROFILE_NAV_ITEMS } from './profileNavigation';
 import { PROFILE_TAB_INVITATIONS } from './profileNavigation';
 
 const ProfileSidebar = ({ activeTab, onChangeTab, userName, invitationCount = 0 }) => {
+  const { t } = useTranslation();
   return (
     <div className="col-lg-3 col-md-4">
       <aside className="profile-sidebar-card">
@@ -10,8 +12,8 @@ const ProfileSidebar = ({ activeTab, onChangeTab, userName, invitationCount = 0 
           <span className="profile-sidebar-greeting-icon">
             <i className="bi bi-stars"></i>
           </span>
-          <p>Xin chào</p>
-          <h5>{userName || 'Người dùng'}</h5>
+          <p>{t('candidatePages.profile.sidebar.greeting')}</p>
+          <h5>{userName || t('candidatePages.profile.sidebar.defaultUser')}</h5>
         </div>
 
         <ul className="profile-nav-list">
@@ -29,7 +31,7 @@ const ProfileSidebar = ({ activeTab, onChangeTab, userName, invitationCount = 0 
                   onClick={() => onChangeTab(item.key)}
                 >
                   <span className="profile-nav-icon"><i className={`bi ${item.icon}`}></i></span>
-                  <span className="profile-nav-label">{item.label}</span>
+                  <span className="profile-nav-label">{t(item.labelKey)}</span>
                   {badgeValue ? <span className="profile-nav-badge">{badgeValue}</span> : null}
                 </button>
               </li>

@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../config/apiBase';
 import { useNotification } from './NotificationProvider';
 import { showBrowserNotification, syncAppIconBadge } from './notificationUtils';
 
 const AUTH_SNAPSHOT_INTERVAL_MS = 5000;
 const INBOX_SYNC_INTERVAL_MS = 30000;
+const TAB_RETURN_SYNC_GAP_MS = 12000;
 
 const isMessageScreenPath = (pathname = '') => {
   const normalizedPath = String(pathname || '').trim().toLowerCase();
@@ -29,6 +31,7 @@ const resolveUserId = (user = {}) => user?.id || user?.MaNguoiDung || user?.user
 const resolveRole = (user = {}) => String(user?.role || user?.vaiTro || user?.VaiTro || '').trim();
 
 const MessageNotificationBridge = () => {
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const API_BASE = CLIENT_API_BASE;
   const [authSnapshot, setAuthSnapshot] = useState(() => readAuthSnapshot());
@@ -42,6 +45,7 @@ const MessageNotificationBridge = () => {
   const lastSnapshotRef = useRef(new Map());
   const bootstrappedRef = useRef(false);
   const syncInFlightRef = useRef(false);
+  const lastSyncedAtRef = useRef(0);
 
   useEffect(() => {
     const syncAuthFromStorage = (event) => {
@@ -94,6 +98,7 @@ const MessageNotificationBridge = () => {
       bootstrappedRef.current = false;
       lastSnapshotRef.current = new Map();
       syncInFlightRef.current = false;
+      lastSyncedAtRef.current = 0;
       window.dispatchEvent(new CustomEvent('jobfinder:messages-unread-updated', {
         detail: {
           unreadConversations: 0,
@@ -120,20 +125,20 @@ const MessageNotificationBridge = () => {
     };
 
     const emitNotification = async (conversation) => {
-      const senderName = conversation?.name || 'Có người gửi tin nhắn';
-      const content = String(conversation?.lastMessage || '').trim() || 'Bạn có tin nhắn mới.';
+      const senderName = conversation?.name || t('components.messageNotificationBridge.defaultSenderName');
+      const content = String(conversation?.lastMessage || '').trim() || t('components.messageNotificationBridge.defaultMessageBody');
       const basePath = isEmployer ? '/employer/messages' : '/messages';
       const url = `${basePath}?userId=${encodeURIComponent(String(conversation?.userId || ''))}`;
 
       notify({
         type: 'info',
         mode: 'toast',
-        title: 'Tin nhắn mới',
+        title: t('components.messageNotificationBridge.toastTitle'),
         message: `${senderName}: ${content}`
       });
 
       await showBrowserNotification({
-        title: 'Tin nhắn mới trên JobFinder',
+        title: t('components.messageNotificationBridge.browserTitle'),
         body: `${senderName}: ${content}`,
         url,
         tag: `jobfinder-message-${conversation?.userId || 'global'}`
@@ -189,10 +194,19 @@ const MessageNotificationBridge = () => {
         }));
       }
       void syncAppIconBadge(unreadConversations);
+      lastSyncedAtRef.current = Date.now();
       syncInFlightRef.current = false;
     };
 
-    const runSync = ({ initial = false } = {}) => {
+    const shouldRunForegroundSync = (initial) => {
+      if (initial) return true;
+      return Date.now() - lastSyncedAtRef.current >= TAB_RETURN_SYNC_GAP_MS;
+    };
+
+    const runSync = ({ initial = false, reason = 'manual' } = {}) => {
+      if ((reason === 'focus' || reason === 'visibility') && !shouldRunForegroundSync(initial)) {
+        return;
+      }
       syncInbox({ initial }).catch((err) => {
         syncInFlightRef.current = false;
         if (!cancelled && initial) {
@@ -201,22 +215,23 @@ const MessageNotificationBridge = () => {
       });
     };
 
-    const onFocus = () => runSync({ initial: !bootstrappedRef.current });
+    const onFocus = () => runSync({ initial: !bootstrappedRef.current, reason: 'focus' });
     const onVisibilityChange = () => {
       if (!document.hidden) {
-        runSync({ initial: !bootstrappedRef.current });
+        runSync({ initial: !bootstrappedRef.current, reason: 'visibility' });
       }
     };
-    const onForceRefresh = () => runSync({ initial: !bootstrappedRef.current });
+    const onForceRefresh = () => runSync({ initial: !bootstrappedRef.current, reason: 'force-refresh' });
 
-    runSync({ initial: true });
+    runSync({ initial: true, reason: 'initial' });
 
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('jobfinder:messages-force-refresh', onForceRefresh);
 
     const intervalId = window.setInterval(() => {
-      runSync({ initial: !bootstrappedRef.current });
+      if (typeof document !== 'undefined' && document.hidden) return;
+      runSync({ initial: !bootstrappedRef.current, reason: 'interval' });
     }, INBOX_SYNC_INTERVAL_MS);
 
     return () => {
@@ -227,7 +242,7 @@ const MessageNotificationBridge = () => {
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('jobfinder:messages-force-refresh', onForceRefresh);
     };
-  }, [API_BASE, currentUserId, isEmployer, notify, token]);
+  }, [API_BASE, currentUserId, isEmployer, notify, t, token]);
 
   return null;
 };

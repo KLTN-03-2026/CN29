@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
 const VerifyOTP = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useTranslation();
     const email = location.state?.email || '';
     const otpDeliveryFailed = Boolean(location.state?.otpDeliveryFailed);
     const verificationMessage = String(location.state?.verificationMessage || '');
@@ -31,7 +33,7 @@ const VerifyOTP = () => {
         setLoading(true);
 
         if (otp.length !== 6) {
-            setError('Mã xác thực phải có 6 số');
+            setError(t('authPages.verifyOtp.errors.invalidOtpLength'));
             setLoading(false);
             return;
         }
@@ -48,7 +50,7 @@ const VerifyOTP = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Xác thực thất bại');
+                throw new Error(data.error || t('authPages.verifyOtp.errors.verifyFailed'));
             }
 
             const prefill = {
@@ -67,7 +69,7 @@ const VerifyOTP = () => {
 
             const nextStep = String(data.nextStep || '').trim();
             if (nextStep) {
-                setSuccess('Xác thực thành công! Đang chuyển sang bước tiếp theo...');
+                setSuccess(t('authPages.verifyOtp.success.redirectNextStep'));
                 setTimeout(() => {
                     navigate(nextStep, {
                         state: {
@@ -80,7 +82,7 @@ const VerifyOTP = () => {
                 return;
             }
 
-            setSuccess('Xác thực thành công! Đang chuyển đến trang đăng nhập...');
+            setSuccess(t('authPages.verifyOtp.success.redirectLogin'));
             setTimeout(() => {
                 navigate('/login');
             }, 1200);
@@ -108,7 +110,7 @@ const VerifyOTP = () => {
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.error || 'Không thể gửi lại mã');
+                throw new Error(data.error || t('authPages.verifyOtp.errors.resendFailed'));
             }
 
             const nextOtp = String(data.otp || '').replace(/\D/g, '').slice(0, 6);
@@ -133,9 +135,11 @@ const VerifyOTP = () => {
                         <div className="card-body p-5">
                             <div className="text-center mb-4">
                                 <i className="bi bi-envelope-check" style={{ fontSize: '4rem', color: '#0d6efd' }}></i>
-                                <h2 className="mt-3 mb-2">Xác thực tài khoản</h2>
+                                <h2 className="mt-3 mb-2">{t('authPages.verifyOtp.title')}</h2>
                                 <p className="text-muted">
-                                    {otpDeliveryFailed ? 'Tạm thời chưa gửi được mã xác thực đến' : 'Chúng tôi đã gửi mã xác thực 6 số đến'}<br />
+                                    {otpDeliveryFailed
+                                        ? t('authPages.verifyOtp.delivery.failedPrefix')
+                                        : t('authPages.verifyOtp.delivery.sentPrefix')}<br />
                                     <strong>{email}</strong>
                                 </p>
                             </div>
@@ -143,27 +147,27 @@ const VerifyOTP = () => {
                             {otpDeliveryFailed && (
                                 <div className="alert alert-warning" role="alert">
                                     <i className="bi bi-exclamation-triangle-fill me-2"></i>
-                                    {verificationMessage || 'Vui lòng bấm "Gửi lại mã xác thực" để nhận OTP mới.'}
+                                    {verificationMessage || t('authPages.verifyOtp.delivery.fallbackWarning')}
                                 </div>
                             )}
 
                             {fallbackOtp && (
                                 <div className="alert alert-info" role="alert">
                                     <i className="bi bi-key-fill me-2"></i>
-                                    Mã OTP tạm thời: <strong>{fallbackOtp}</strong>
+                                    {t('authPages.verifyOtp.tempOtpLabel')} <strong>{fallbackOtp}</strong>
                                 </div>
                             )}
 
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-4">
                                     <label className="form-label text-center w-100 fw-bold">
-                                        Nhập mã xác thực
+                                        {t('authPages.verifyOtp.inputLabel')}
                                     </label>
                                     <input
                                         type="text"
                                         className="form-control form-control-lg text-center"
                                         style={{ fontSize: '2rem', letterSpacing: '0.5rem' }}
-                                        placeholder="000000"
+                                        placeholder={t('authPages.verifyOtp.inputPlaceholder')}
                                         value={otp}
                                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                                         maxLength={6}
@@ -171,7 +175,7 @@ const VerifyOTP = () => {
                                         autoFocus
                                     />
                                     <small className="text-muted d-block text-center mt-2">
-                                        Mã có hiệu lực trong 10 phút
+                                        {t('authPages.verifyOtp.inputHint')}
                                     </small>
                                 </div>
 
@@ -197,22 +201,22 @@ const VerifyOTP = () => {
                                     {loading ? (
                                         <>
                                             <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                                            Đang xác thực...
+                                            {t('authPages.verifyOtp.verifying')}
                                         </>
                                     ) : (
-                                        'Xác thực'
+                                        t('authPages.verifyOtp.verifyButton')
                                     )}
                                 </button>
 
                                 <div className="text-center">
-                                    <p className="mb-2">Không nhận được mã?</p>
+                                    <p className="mb-2">{t('authPages.verifyOtp.notReceived')}</p>
                                     <button
                                         type="button"
                                         className="btn btn-link"
                                         onClick={handleResendOTP}
                                         disabled={resending}
                                     >
-                                        {resending ? 'Đang gửi...' : 'Gửi lại mã xác thực'}
+                                        {resending ? t('authPages.verifyOtp.resending') : t('authPages.verifyOtp.resendButton')}
                                     </button>
                                 </div>
                             </form>

@@ -1,9 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import './NotificationProvider.css';
 
 const NotificationContext = createContext(null);
 
 export const NotificationProvider = ({ children }) => {
+  const { t } = useTranslation();
   const [state, setState] = useState({
     open: false,
     mode: 'modal',
@@ -11,8 +13,8 @@ export const NotificationProvider = ({ children }) => {
     type: 'info',
     title: '',
     message: '',
-    confirmText: 'Xác nhận',
-    cancelText: 'Hủy'
+    confirmText: t('components.notificationProvider.confirmText'),
+    cancelText: t('components.notificationProvider.cancelText')
   });
   const [toastState, setToastState] = useState({
     open: false,
@@ -95,13 +97,13 @@ export const NotificationProvider = ({ children }) => {
         mode: 'modal',
         kind: 'confirm',
         type: payload.type || 'warning',
-        title: payload.title || 'Xác nhận thao tác',
-        message: payload.message || 'Bạn có chắc chắn muốn tiếp tục?',
-        confirmText: payload.confirmText || 'Xác nhận',
-        cancelText: payload.cancelText || 'Hủy'
+        title: payload.title || t('components.notificationProvider.confirmActionTitle'),
+        message: payload.message || t('components.notificationProvider.confirmActionMessage'),
+        confirmText: payload.confirmText || t('components.notificationProvider.confirmText'),
+        cancelText: payload.cancelText || t('components.notificationProvider.cancelText')
       });
     });
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -136,16 +138,16 @@ export const NotificationProvider = ({ children }) => {
   const getUi = useCallback((type, title) => {
     switch (type) {
       case 'success':
-        return { icon: 'bi-check-circle-fill', accent: 'success', title: title || 'Thành công' };
+        return { icon: 'bi-check-circle-fill', accent: 'success', title: title || t('components.notificationProvider.statusTitles.success') };
       case 'error':
-        return { icon: 'bi-x-octagon-fill', accent: 'danger', title: title || 'Có lỗi' };
+        return { icon: 'bi-x-octagon-fill', accent: 'danger', title: title || t('components.notificationProvider.statusTitles.error') };
       case 'warning':
-        return { icon: 'bi-exclamation-triangle-fill', accent: 'warning', title: title || 'Cảnh báo' };
+        return { icon: 'bi-exclamation-triangle-fill', accent: 'warning', title: title || t('components.notificationProvider.statusTitles.warning') };
       case 'info':
       default:
-        return { icon: 'bi-info-circle-fill', accent: 'primary', title: title || 'Thông báo' };
+        return { icon: 'bi-info-circle-fill', accent: 'primary', title: title || t('components.notificationProvider.statusTitles.info') };
     }
-  }, []);
+  }, [t]);
 
   const ui = useMemo(() => getUi(state.type, state.title), [state.type, state.title, getUi]);
   const toastUi = useMemo(() => getUi(toastState.type, toastState.title), [toastState.type, toastState.title, getUi]);
@@ -185,7 +187,7 @@ export const NotificationProvider = ({ children }) => {
                 </>
               ) : (
                 <button type="button" className={`jf-notify-btn jf-notify-btn-${ui.accent}`} onClick={() => closeWithResult(true)}>
-                  Đã hiểu
+                  {t('components.notificationProvider.understood')}
                 </button>
               )}
             </div>
@@ -210,7 +212,7 @@ export const NotificationProvider = ({ children }) => {
                 type="button"
                 onClick={closeToast}
                 className="jf-toast-close"
-                aria-label="Đóng thông báo"
+                aria-label={t('components.notificationProvider.closeNotificationAria')}
               >
                 <i className="bi bi-x-lg"></i>
               </button>

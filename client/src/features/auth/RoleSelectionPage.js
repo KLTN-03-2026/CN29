@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AuthLayout from './components/AuthLayout';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 
@@ -19,6 +20,7 @@ const readJsonStorage = (key, fallback = null) => {
 const RoleSelectionPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
   const apiBase = CLIENT_API_BASE;
 
   const token = String(localStorage.getItem('token') || '').trim();
@@ -51,7 +53,7 @@ const RoleSelectionPage = () => {
     setError('');
 
     if (!selectedRole) {
-      setError('Vui lòng chọn vai trò để tiếp tục.');
+      setError(t('authPages.roleSelection.errors.selectRoleRequired'));
       return;
     }
 
@@ -68,7 +70,7 @@ const RoleSelectionPage = () => {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Không thể lưu vai trò.');
+        throw new Error(data.error || t('authPages.roleSelection.errors.saveRoleFailed'));
       }
 
       if (data.token && data.user) {
@@ -83,7 +85,7 @@ const RoleSelectionPage = () => {
         replace: true
       });
     } catch (err) {
-      setError(err.message || 'Không thể lưu vai trò.');
+      setError(err.message || t('authPages.roleSelection.errors.saveRoleFailed'));
     } finally {
       setLoading(false);
     }
@@ -92,18 +94,18 @@ const RoleSelectionPage = () => {
   return (
     <AuthLayout
       mode="register"
-      title="Chọn vai trò của bạn"
-      subtitle="Bước này giúp hệ thống hiển thị đúng biểu mẫu hoàn thiện hồ sơ cho bạn."
-      switchText="Muốn đăng nhập tài khoản khác?"
-      switchLabel="Đăng nhập"
+      title={t('authPages.roleSelection.title')}
+      subtitle={t('authPages.roleSelection.subtitle')}
+      switchText={t('authPages.roleSelection.switchText')}
+      switchLabel={t('authPages.roleSelection.switchLabel')}
       switchTo="/login"
       heroImage="/images/auth-growth-hero.svg"
-      heroTitle="Một tài khoản chung, nhiều trải nghiệm phù hợp vai trò."
-      heroSubtitle="Chọn vai trò trước khi hoàn thiện hồ sơ để vào đúng khu vực hệ thống."
+      heroTitle={t('authPages.roleSelection.heroTitle')}
+      heroSubtitle={t('authPages.roleSelection.heroSubtitle')}
     >
       <form className="auth-form" onSubmit={handleSubmit}>
         <div className="auth-field" style={{ marginBottom: 16 }}>
-          <label className="auth-field-label">Bạn muốn sử dụng JobFinder với vai trò nào?</label>
+          <label className="auth-field-label">{t('authPages.roleSelection.rolePrompt')}</label>
           <div className="auth-radio-group" style={{ gridTemplateColumns: '1fr' }}>
             <label className="auth-radio-chip">
               <input
@@ -113,7 +115,7 @@ const RoleSelectionPage = () => {
                 checked={selectedRole === CANDIDATE_ROLE}
                 onChange={(event) => setSelectedRole(event.target.value)}
               />
-              <span>Ứng viên</span>
+              <span>{t('authPages.roleSelection.candidate')}</span>
             </label>
             <label className="auth-radio-chip">
               <input
@@ -123,7 +125,7 @@ const RoleSelectionPage = () => {
                 checked={selectedRole === EMPLOYER_ROLE}
                 onChange={(event) => setSelectedRole(event.target.value)}
               />
-              <span>Nhà tuyển dụng</span>
+              <span>{t('authPages.roleSelection.employer')}</span>
             </label>
           </div>
         </div>
@@ -131,7 +133,7 @@ const RoleSelectionPage = () => {
         {error ? <div className="auth-error-banner">{error}</div> : null}
 
         <button type="submit" className="auth-submit-btn" disabled={loading}>
-          {loading ? 'Đang xử lý...' : 'Tiếp tục'}
+          {loading ? t('authPages.roleSelection.processing') : t('authPages.roleSelection.continue')}
           <i className="bi bi-arrow-right"></i>
         </button>
       </form>

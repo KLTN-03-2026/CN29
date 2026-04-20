@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import AuthHeroPanel from './AuthHeroPanel';
 import './AuthPages.css';
 
@@ -15,13 +16,15 @@ const AuthLayout = ({
   heroSubtitle,
   children
 }) => {
+  const { t } = useTranslation();
+
   return (
     <div className={`auth-page-root auth-page-root--${mode || 'default'}`}>
       <header className="auth-topbar">
         <div className="auth-topbar-inner">
           <Link className="auth-brand" to="/">
-            <img src="/images/logo.png" alt="JobFinder" />
-            <span className="auth-brand-text">JobFinder</span>
+            <img src="/images/logo.png" alt={t('authPages.layout.brandAlt')} />
+            <span className="auth-brand-text">{t('authPages.layout.brandName')}</span>
           </Link>
           <p className="auth-switch-text">
             {switchText}

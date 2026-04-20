@@ -1,19 +1,22 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import AuthLayout from './components/AuthLayout';
 import LoginForm from './components/LoginForm';
 
 const LoginPage = () => {
+  const { t } = useTranslation();
+
   return (
     <AuthLayout
       mode="login"
-      title="Chào mừng quay lại"
-      subtitle="Đăng nhập để tiếp tục xây dựng CV và theo dõi cơ hội việc làm phù hợp với bạn."
-      switchText="Chưa có tài khoản?"
-      switchLabel="Đăng ký"
+      title={t('authPages.loginPage.title')}
+      subtitle={t('authPages.loginPage.subtitle')}
+      switchText={t('authPages.loginPage.switchText')}
+      switchLabel={t('authPages.loginPage.switchLabel')}
       switchTo="/register"
       heroImage="/images/auth-career-hero.svg"
-      heroTitle="Bắt đầu hành trình nghề nghiệp của bạn."
-      heroSubtitle="Tạo CV online, ứng tuyển nhanh và kết nối với nhà tuyển dụng uy tín chỉ trong vài phút."
+      heroTitle={t('authPages.loginPage.heroTitle')}
+      heroSubtitle={t('authPages.loginPage.heroSubtitle')}
     >
       <LoginForm />
     </AuthLayout>

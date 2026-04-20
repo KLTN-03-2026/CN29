@@ -15,11 +15,12 @@ const parseUserFromStorage = () => {
   }
 };
 
-const formatDateTime = (value) => {
-  if (!value) return '';
+const formatDateTime = (value, locale, fallback = '') => {
+  if (!value) return fallback;
   const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return '';
-  return parsed.toLocaleString('vi-VN');
+  if (Number.isNaN(parsed.getTime())) return fallback;
+  const normalizedLocale = String(locale || '').toLowerCase().startsWith('en') ? 'en-US' : 'vi-VN';
+  return new Intl.DateTimeFormat(normalizedLocale, { dateStyle: 'short', timeStyle: 'short' }).format(parsed);
 };
 
 const MessagesPage = () => {
@@ -30,7 +31,8 @@ const MessagesPage = () => {
 
   const token = String(localStorage.getItem('token') || '').trim();
   const user = useMemo(() => parseUserFromStorage(), []);
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
   const currentUserId = user?.id || user?.MaNguoiDung || user?.userId || null;
 
   const [inbox, setInbox] = useState([]);
@@ -65,11 +67,11 @@ const MessagesPage = () => {
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok || payload?.success === false) {
-      throw new Error(payload?.error || `Request failed (${response.status})`);
+      throw new Error(payload?.error || t('common.requestFailed', { status: response.status }));
     }
 
     return payload;
-  }, [API_BASE, token]);
+  }, [API_BASE, token, t]);
 
   const scrollThreadBottom = useCallback(() => {
     if (!threadRef.current) return;
@@ -174,7 +176,7 @@ const MessagesPage = () => {
       await loadInbox({ silent: true });
       window.dispatchEvent(new Event('jobfinder:messages-force-refresh'));
     } catch (err) {
-      setError(err?.message || 'Không thể gửi tin nhắn');
+      setError(err?.message || t('employer.messagesPage.errors.sendFailed'));
     } finally {
       setSending(false);
     }
@@ -185,7 +187,7 @@ const MessagesPage = () => {
 
     const bootstrap = async () => {
       if (!token) {
-        setError('Bạn cần đăng nhập để dùng tính năng nhắn tin.');
+        setError(t('employer.messagesPage.errors.loginRequired'));
         setInitialLoading(false);
         return;
       }
@@ -201,7 +203,7 @@ const MessagesPage = () => {
         if (canSeedUser) {
           nextUser = inboxList.find((item) => Number(item.userId) === seededUserId) || {
             userId: seededUserId,
-            name: seededName || `Ứng viên #${seededUserId}`,
+            name: seededName || t('employer.messagesPage.fallbacks.contact', { id: seededUserId }),
             email: seededEmail,
             unread: 0,
             lastMessage: '',
@@ -221,7 +223,7 @@ const MessagesPage = () => {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err?.message || 'Không thể tải hộp thư');
+          setError(err?.message || t('employer.messagesPage.errors.loadFailed'));
           setInbox([]);
           setThread([]);
         }
@@ -234,7 +236,7 @@ const MessagesPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, canSeedUser, seededUserId, seededName, seededEmail, loadInbox, openConversation]);
+  }, [token, canSeedUser, seededUserId, seededName, seededEmail, loadInbox, openConversation, t]);
 
   useEffect(() => {
     if (!token) return undefined;
@@ -285,11 +287,11 @@ const MessagesPage = () => {
     <div className="messages-page">
       <div className="messages-page-header">
         <div>
-          <h2 className="mb-1 employer-page-title">{t('employer.layout.menu.messages')}</h2>
+          <h2 className="mb-1 employer-page-title">{t('employer.messagesPage.pageTitle')}</h2>
         </div>
         <Link className="btn btn-outline-primary" to="/employer/cv-search">
           <i className="bi bi-search me-2"></i>
-          Tìm thêm ứng viên
+          {t('employer.messagesPage.searchCandidates')}
         </Link>
       </div>
 
@@ -298,18 +300,18 @@ const MessagesPage = () => {
           {error ? <div className="alert alert-danger m-3 mb-0">{error}</div> : null}
 
           {initialLoading ? (
-            <div className="messages-loading">Đang tải hộp thư...</div>
+            <div className="messages-loading">{t('employer.messagesPage.loadingInbox')}</div>
           ) : (
             <div className="row g-0 messages-layout">
               <aside className="col-lg-4 messages-inbox-col">
                 <div className="messages-inbox-head">
-                  <h5 className="mb-0">Hội thoại</h5>
-                  {inboxLoading ? <small>Đang tải...</small> : <small>{inbox.length} liên hệ</small>}
+                  <h5 className="mb-0">{t('employer.messagesPage.inbox.title')}</h5>
+                  {inboxLoading ? <small>{t('employer.messagesPage.inbox.loading')}</small> : <small>{t('employer.messagesPage.inbox.count', { count: inbox.length })}</small>}
                 </div>
 
                 <div className="messages-inbox-list">
                   {inbox.length === 0 ? (
-                    <div className="messages-empty">Chưa có hội thoại nào</div>
+                    <div className="messages-empty">{t('employer.messagesPage.inbox.empty')}</div>
                   ) : (
                     inbox.map((item) => (
                       <button
@@ -319,11 +321,11 @@ const MessagesPage = () => {
                         onClick={() => openConversation(item, { markRead: true })}
                       >
                         <div className="messages-inbox-item-top">
-                          <strong>{item.name || item.email || `User #${item.userId}`}</strong>
+                          <strong>{item.name || item.email || t('employer.messagesPage.fallbacks.contact', { id: item.userId })}</strong>
                           {Number(item.unread || 0) > 0 ? <span className="messages-unread-pill">{item.unread}</span> : null}
                         </div>
-                        <p className="mb-1">{item.lastMessage || 'Bắt đầu cuộc trò chuyện'}</p>
-                        <small>{formatDateTime(item.lastAt)}</small>
+                        <p className="mb-1">{item.lastMessage || t('employer.messagesPage.fallbacks.startConversation')}</p>
+                        <small>{formatDateTime(item.lastAt, locale)}</small>
                       </button>
                     ))
                   )}
@@ -334,24 +336,24 @@ const MessagesPage = () => {
                 <div className="messages-thread-head">
                   {activeUser ? (
                     <>
-                      <h5 className="mb-0">{activeUser.name || activeUser.email || `User #${activeUser.userId}`}</h5>
+                      <h5 className="mb-0">{activeUser.name || activeUser.email || t('employer.messagesPage.fallbacks.contact', { id: activeUser.userId })}</h5>
                       <small>{activeUser.email || ''}</small>
                     </>
                   ) : (
                     <>
-                      <h5 className="mb-0">Chọn hội thoại</h5>
-                      <small>Nhấn vào một ứng viên để bắt đầu nhắn tin</small>
+                      <h5 className="mb-0">{t('employer.messagesPage.thread.chooseTitle')}</h5>
+                      <small>{t('employer.messagesPage.thread.chooseDescription')}</small>
                     </>
                   )}
                 </div>
 
                 <div className="messages-thread-body" ref={threadRef}>
                   {!activeUser ? (
-                    <div className="messages-empty">Hãy chọn một hội thoại ở cột bên trái</div>
+                    <div className="messages-empty">{t('employer.messagesPage.thread.chooseEmpty')}</div>
                   ) : threadLoading ? (
-                    <div className="messages-empty">Đang tải tin nhắn...</div>
+                    <div className="messages-empty">{t('employer.messagesPage.thread.loading')}</div>
                   ) : thread.length === 0 ? (
-                    <div className="messages-empty">Chưa có tin nhắn. Hãy gửi lời chào đầu tiên.</div>
+                    <div className="messages-empty">{t('employer.messagesPage.thread.empty')}</div>
                   ) : (
                     thread.map((item) => {
                       const isMine = String(item.fromUserId) === String(currentUserId);
@@ -359,7 +361,7 @@ const MessagesPage = () => {
                         <div key={item.id} className={`messages-row ${isMine ? 'mine' : 'other'}`}>
                           <div className="messages-bubble-wrap">
                             <div className="messages-bubble">{item.content}</div>
-                            <div className="messages-time">{formatDateTime(item.createdAt)}</div>
+                            <div className="messages-time">{formatDateTime(item.createdAt, locale)}</div>
                           </div>
                         </div>
                       );
@@ -379,7 +381,7 @@ const MessagesPage = () => {
                         sendMessage();
                       }
                     }}
-                    placeholder={activeUser ? 'Nhập nội dung tin nhắn...' : 'Chọn hội thoại để nhắn tin'}
+                    placeholder={activeUser ? t('employer.messagesPage.composer.placeholder') : t('employer.messagesPage.composer.placeholderNoSelection')}
                     disabled={!activeUser || sending}
                   />
                   <button
@@ -388,7 +390,7 @@ const MessagesPage = () => {
                     onClick={sendMessage}
                     disabled={!activeUser || !String(input || '').trim() || sending}
                   >
-                    {sending ? 'Đang gửi...' : 'Gửi'}
+                    {sending ? t('employer.messagesPage.composer.sending') : t('employer.messagesPage.composer.send')}
                   </button>
                 </div>
               </section>

@@ -1,16 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 import SmartPagination from '../../../components/SmartPagination';
 
 const PAGE_SIZE = 10;
-
-const APPLICATION_FILTERS = [
-    { key: 'all', label: 'Tất cả', icon: 'bi-collection' },
-    { key: 'new', label: 'Chưa xem', icon: 'bi-envelope-paper' },
-    { key: 'viewed', label: 'Đã xem', icon: 'bi-eye' },
-    { key: 'interview', label: 'Phỏng vấn', icon: 'bi-calendar2-check' },
-    { key: 'rejected', label: 'Từ chối', icon: 'bi-x-circle' }
-];
 
 const STATUS_CLASS_BY_VALUE = {
     'Đã nộp': 'viewed',
@@ -21,27 +14,57 @@ const STATUS_CLASS_BY_VALUE = {
     'Đã nhận': 'suitable'
 };
 
+const STATUS_LABEL_KEYS = {
+    'Đã nộp': 'submitted',
+    'Đang xem xét': 'reviewing',
+    'Phỏng vấn': 'interview',
+    'Đề nghị': 'offer',
+    'Từ chối': 'rejected',
+    'Đã nhận': 'accepted'
+};
+
+const createApplicationFilters = (t) => ([
+    { key: 'all', label: t('employer.applicationManagement.filters.all'), icon: 'bi-collection' },
+    { key: 'new', label: t('employer.applicationManagement.filters.new'), icon: 'bi-envelope-paper' },
+    { key: 'viewed', label: t('employer.applicationManagement.filters.viewed'), icon: 'bi-eye' },
+    { key: 'interview', label: t('employer.applicationManagement.filters.interview'), icon: 'bi-calendar2-check' },
+    { key: 'rejected', label: t('employer.applicationManagement.filters.rejected'), icon: 'bi-x-circle' }
+]);
+
 const getStatusValue = (app) => String(app?.TrangThai || 'Đã nộp').trim();
+
+const getStatusLabel = (statusValue, t) => {
+    const normalizedKey = STATUS_LABEL_KEYS[statusValue] || 'default';
+    return t(`employer.applicationManagement.status.${normalizedKey}`, { status: statusValue });
+};
+
+const formatDate = (value, locale, fallback) => {
+    if (!value) return fallback;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return fallback;
+    const normalizedLocale = String(locale || '').toLowerCase().startsWith('en') ? 'en-US' : 'vi-VN';
+    return new Intl.DateTimeFormat(normalizedLocale, { dateStyle: 'short' }).format(parsed);
+};
 
 const ApplicationManagement = () => {
     const API_BASE = CLIENT_API_BASE;
+    const { t, i18n } = useTranslation();
     const [applications, setApplications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [filter, setFilter] = useState('all');
     const [selectedApp, setSelectedApp] = useState(null);
     const [updating, setUpdating] = useState(false);
-    const [messageText, setMessageText] = useState('');
-    const [messages, setMessages] = useState([]);
-    const [messagesLoading, setMessagesLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
+    const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
+    const applicationFilters = useMemo(() => createApplicationFilters(t), [t]);
 
     const loadApplications = useCallback(async () => {
         setLoading(true);
         setError('');
         const token = localStorage.getItem('token');
         if (!token) {
-            setError('Bạn cần đăng nhập.');
+            setError(t('employer.applicationManagement.errors.notLoggedIn'));
             setLoading(false);
             return;
         }
@@ -51,15 +74,15 @@ const ApplicationManagement = () => {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không tải được hồ sơ ứng tuyển');
+            if (!res.ok) throw new Error(data?.error || t('employer.applicationManagement.errors.loadFailed'));
 
             setApplications(Array.isArray(data) ? data : []);
         } catch (err) {
-            setError(err?.message || 'Có lỗi xảy ra');
+            setError(err?.message || t('employer.applicationManagement.errors.generic'));
         } finally {
             setLoading(false);
         }
-    }, [API_BASE]);
+    }, [API_BASE, t]);
 
     useEffect(() => {
         loadApplications();
@@ -112,55 +135,8 @@ const ApplicationManagement = () => {
         }
     }, [currentPage, safeCurrentPage]);
 
-    const openDetails = async (app) => {
+    const openDetails = (app) => {
         setSelectedApp(app);
-        setMessageText('');
-        if (!app?.MaUngVien) return;
-
-        const token = localStorage.getItem('token');
-        if (!token) return;
-        setMessagesLoading(true);
-        try {
-            const res = await fetch(`${API_BASE}/api/messages/conversation/${app.MaUngVien}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không tải được tin nhắn');
-            setMessages(Array.isArray(data?.messages) ? data.messages : []);
-        } catch {
-            setMessages([]);
-        } finally {
-            setMessagesLoading(false);
-        }
-    };
-
-    const sendMessage = async () => {
-        const token = localStorage.getItem('token');
-        if (!token || !selectedApp?.MaUngVien) return;
-        const content = String(messageText || '').trim();
-        if (!content) return;
-
-        try {
-            const res = await fetch(`${API_BASE}/api/messages`, {
-                method: 'POST',
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    toUserId: selectedApp.MaUngVien,
-                    jobId: selectedApp.MaTin || null,
-                    content
-                })
-            });
-            const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không gửi được tin nhắn');
-
-            if (data?.message) setMessages((prev) => [...prev, data.message]);
-            setMessageText('');
-        } catch (err) {
-            alert(err?.message || 'Có lỗi xảy ra');
-        }
     };
 
     const updateApplicationStatus = async (appId, newStatus) => {
@@ -176,7 +152,7 @@ const ApplicationManagement = () => {
                 body: JSON.stringify({ status: newStatus })
             });
             const data = await res.json().catch(() => null);
-            if (!res.ok) throw new Error(data?.error || 'Không cập nhật được');
+            if (!res.ok) throw new Error(data?.error || t('employer.applicationManagement.errors.updateFailed'));
 
             setApplications((prev) =>
                 prev.map((app) =>
@@ -184,9 +160,11 @@ const ApplicationManagement = () => {
                 )
             );
             setSelectedApp((prev) => (prev?.MaUngTuyen === appId ? { ...prev, TrangThai: newStatus } : prev));
-            alert(`Đã cập nhật trạng thái hồ sơ thành "${newStatus}".`);
+            alert(t('employer.applicationManagement.notifications.statusUpdated', {
+                status: getStatusLabel(newStatus, t)
+            }));
         } catch (err) {
-            alert(err?.message || 'Có lỗi xảy ra');
+            alert(err?.message || t('employer.applicationManagement.errors.generic'));
         } finally {
             setUpdating(false);
         }
@@ -196,8 +174,7 @@ const ApplicationManagement = () => {
         <div>
             <div className="d-flex flex-wrap align-items-start justify-content-between gap-2 mb-4">
                 <div>
-                    <h2 className="mb-1 employer-page-title">Quản lý hồ sơ ứng tuyển</h2>
-                    <p className="text-muted mb-0">Theo dõi nhanh hồ sơ mới, trạng thái xử lý và phản hồi ứng viên.</p>
+                    <h2 className="mb-1 employer-page-title">{t('employer.applicationManagement.pageTitle')}</h2>
                 </div>
             </div>
 
@@ -205,8 +182,8 @@ const ApplicationManagement = () => {
 
             <div className="card border-0 shadow-sm mb-3">
                 <div className="card-body">
-                    <div className="cv-manage-filter-wrap" role="tablist" aria-label="Lọc hồ sơ ứng tuyển">
-                        {APPLICATION_FILTERS.map((item) => {
+                    <div className="cv-manage-filter-wrap" role="tablist" aria-label={t('employer.applicationManagement.filters.aria')}>
+                        {applicationFilters.map((item) => {
                             const active = filter === item.key;
                             return (
                                 <button
@@ -229,12 +206,12 @@ const ApplicationManagement = () => {
 
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
-                    {loading && <p className="text-center py-5 mb-0">Đang tải danh sách hồ sơ...</p>}
+                    {loading && <p className="text-center py-5 mb-0">{t('employer.applicationManagement.loading')}</p>}
 
                     {!loading && filteredApps.length === 0 && (
                         <div className="text-muted text-center py-5">
                             <i className="bi bi-inbox fs-2 d-block mb-2"></i>
-                            {filter === 'all' ? 'Chưa có hồ sơ ứng tuyển nào.' : 'Không có hồ sơ phù hợp bộ lọc.'}
+                            {filter === 'all' ? t('employer.applicationManagement.empty.all') : t('employer.applicationManagement.empty.filtered')}
                         </div>
                     )}
 
@@ -243,26 +220,27 @@ const ApplicationManagement = () => {
                             <table className="table table-hover align-middle">
                                 <thead>
                                     <tr>
-                                        <th>Ứng viên</th>
-                                        <th>Email</th>
-                                        <th>Vị trí ứng tuyển</th>
-                                        <th>Ngày nộp</th>
-                                        <th>Trạng thái</th>
-                                        <th className="text-end">Hành động</th>
+                                        <th>{t('employer.applicationManagement.table.candidate')}</th>
+                                        <th>{t('employer.applicationManagement.table.email')}</th>
+                                        <th>{t('employer.applicationManagement.table.position')}</th>
+                                        <th>{t('employer.applicationManagement.table.submittedAt')}</th>
+                                        <th>{t('employer.applicationManagement.table.status')}</th>
+                                        <th className="text-end">{t('employer.applicationManagement.table.actions')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {pagedFilteredApps.map((app) => {
                                         const statusValue = getStatusValue(app);
+                                        const statusLabel = getStatusLabel(statusValue, t);
                                         return (
                                             <tr key={app.MaUngTuyen}>
-                                                <td className="fw-semibold">{app.TenUngVien || 'N/A'}</td>
-                                                <td>{app.EmailUngVien || 'N/A'}</td>
-                                                <td>{app.TieuDe || 'N/A'}</td>
-                                                <td>{app.NgayNop ? new Date(app.NgayNop).toLocaleDateString('vi-VN') : 'N/A'}</td>
+                                                <td className="fw-semibold">{app.TenUngVien || t('common.notAvailable')}</td>
+                                                <td>{app.EmailUngVien || t('common.notAvailable')}</td>
+                                                <td>{app.TieuDe || t('common.notAvailable')}</td>
+                                                <td>{formatDate(app.NgayNop, locale, t('common.notAvailable'))}</td>
                                                 <td>
                                                     <span className={`cv-manage-status-pill ${STATUS_CLASS_BY_VALUE[statusValue] || 'default'}`}>
-                                                        {statusValue}
+                                                        {statusLabel}
                                                     </span>
                                                 </td>
                                                 <td className="text-end">
@@ -272,7 +250,7 @@ const ApplicationManagement = () => {
                                                             onClick={() => openDetails(app)}
                                                         >
                                                             <i className="bi bi-eye me-1"></i>
-                                                            Chi tiết
+                                                            {t('employer.applicationManagement.actions.details')}
                                                         </button>
 
                                                         {(statusValue === 'Đã nộp' || statusValue === 'Đang xem xét') && (
@@ -283,7 +261,7 @@ const ApplicationManagement = () => {
                                                                     disabled={updating}
                                                                 >
                                                                     <i className="bi bi-check2-circle me-1"></i>
-                                                                    Mời phỏng vấn
+                                                                    {t('employer.applicationManagement.actions.inviteInterview')}
                                                                 </button>
                                                                 <button
                                                                     className="btn btn-sm btn-outline-danger"
@@ -291,7 +269,7 @@ const ApplicationManagement = () => {
                                                                     disabled={updating}
                                                                 >
                                                                     <i className="bi bi-x-circle me-1"></i>
-                                                                    Từ chối
+                                                                    {t('employer.applicationManagement.actions.reject')}
                                                                 </button>
                                                             </>
                                                         )}
@@ -325,7 +303,7 @@ const ApplicationManagement = () => {
                     <div className="modal-dialog modal-lg modal-dialog-centered">
                         <div className="modal-content">
                             <div className="modal-header">
-                                <h5 className="modal-title">Chi tiết hồ sơ ứng tuyển</h5>
+                                <h5 className="modal-title">{t('employer.applicationManagement.detailModal.title')}</h5>
                                 <button
                                     type="button"
                                     className="btn-close"
@@ -335,43 +313,41 @@ const ApplicationManagement = () => {
                             <div className="modal-body">
                                 <div className="row mb-3">
                                     <div className="col-md-6">
-                                        <h6 className="text-muted">Ứng viên</h6>
-                                        <p className="fw-bold mb-0">{selectedApp.TenUngVien || 'N/A'}</p>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.candidate')}</h6>
+                                        <p className="fw-bold mb-0">{selectedApp.TenUngVien || t('common.notAvailable')}</p>
                                     </div>
                                     <div className="col-md-6">
-                                        <h6 className="text-muted">Email</h6>
-                                        <p className="mb-0">{selectedApp.EmailUngVien || 'N/A'}</p>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.email')}</h6>
+                                        <p className="mb-0">{selectedApp.EmailUngVien || t('common.notAvailable')}</p>
                                     </div>
                                 </div>
                                 <div className="row mb-3">
                                     <div className="col-md-6">
-                                        <h6 className="text-muted">Vị trí ứng tuyển</h6>
-                                        <p className="mb-0">{selectedApp.TieuDe || 'N/A'}</p>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.position')}</h6>
+                                        <p className="mb-0">{selectedApp.TieuDe || t('common.notAvailable')}</p>
                                     </div>
                                     <div className="col-md-6">
-                                        <h6 className="text-muted">Ngày nộp</h6>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.submittedAt')}</h6>
                                         <p className="mb-0">
-                                            {selectedApp.NgayNop
-                                                ? new Date(selectedApp.NgayNop).toLocaleDateString('vi-VN')
-                                                : 'N/A'}
+                                            {formatDate(selectedApp.NgayNop, locale, t('common.notAvailable'))}
                                         </p>
                                     </div>
                                 </div>
                                 <div className="row mb-3">
                                     <div className="col-md-6">
-                                        <h6 className="text-muted">Trạng thái</h6>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.status')}</h6>
                                         <span className={`cv-manage-status-pill ${STATUS_CLASS_BY_VALUE[getStatusValue(selectedApp)] || 'default'}`}>
-                                            {getStatusValue(selectedApp)}
+                                            {getStatusLabel(getStatusValue(selectedApp), t)}
                                         </span>
                                     </div>
                                     <div className="col-md-6">
-                                        <h6 className="text-muted">Mã ứng tuyển</h6>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.applicationCode')}</h6>
                                         <p className="mb-0">{selectedApp.MaUngTuyen}</p>
                                     </div>
                                 </div>
                                 {selectedApp.ThuGioiThieu && (
                                     <div className="mb-3">
-                                        <h6 className="text-muted">Thư giới thiệu</h6>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.coverLetter')}</h6>
                                         <p className="border rounded p-3 bg-light mb-0">
                                             {selectedApp.ThuGioiThieu}
                                         </p>
@@ -379,60 +355,24 @@ const ApplicationManagement = () => {
                                 )}
                                 {selectedApp.MaCV && (
                                     <div className="mb-3">
-                                        <h6 className="text-muted">CV đính kèm</h6>
+                                        <h6 className="text-muted">{t('employer.applicationManagement.detailModal.attachmentTitle')}</h6>
                                         <div className="d-flex flex-wrap gap-2 align-items-center">
-                                            <span className="text-muted">Mã CV: {selectedApp.MaCV}</span>
+                                            <span className="text-muted">{t('employer.applicationManagement.detailModal.cvCode', { code: selectedApp.MaCV })}</span>
                                             {selectedApp.CvFileAbsoluteUrl ? (
                                                 <>
                                                     <a className="btn btn-sm btn-outline-primary" href={selectedApp.CvFileAbsoluteUrl} target="_blank" rel="noreferrer">
-                                                        <i className="bi bi-eye me-1"></i> Xem CV
+                                                        <i className="bi bi-eye me-1"></i> {t('employer.applicationManagement.detailModal.viewCv')}
                                                     </a>
                                                     <a className="btn btn-sm btn-outline-secondary" href={selectedApp.CvFileAbsoluteUrl} download>
-                                                        <i className="bi bi-download me-1"></i> Tải CV
+                                                        <i className="bi bi-download me-1"></i> {t('employer.applicationManagement.detailModal.downloadCv')}
                                                     </a>
                                                 </>
                                             ) : (
-                                                <span className="text-danger">Không tìm thấy file CV</span>
+                                                <span className="text-danger">{t('employer.applicationManagement.detailModal.noCvFile')}</span>
                                             )}
                                         </div>
                                     </div>
                                 )}
-
-                                <div className="mt-4">
-                                    <h6 className="text-muted">Nhắn tin cho ứng viên</h6>
-                                    <div className="border rounded p-2 mb-2" style={{ maxHeight: 220, overflowY: 'auto', background: '#fafafa' }}>
-                                        {messagesLoading ? (
-                                            <div className="text-muted">Đang tải tin nhắn…</div>
-                                        ) : messages.length === 0 ? (
-                                            <div className="text-muted">Chưa có tin nhắn.</div>
-                                        ) : (
-                                            messages.map((m) => (
-                                                <div key={m.id} className={`mb-2 ${m.fromUserId === selectedApp.MaUngVien ? '' : 'text-end'}`}>
-                                                    <div className={`d-inline-block px-3 py-2 rounded ${m.fromUserId === selectedApp.MaUngVien ? 'bg-white border' : 'bg-primary text-white'}`} style={{ maxWidth: '85%' }}>
-                                                        {m.content}
-                                                    </div>
-                                                    <div className="small text-muted mt-1">
-                                                        {m.createdAt ? new Date(m.createdAt).toLocaleString('vi-VN') : ''}
-                                                    </div>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                    <div className="input-group">
-                                        <input
-                                            className="form-control"
-                                            placeholder="Nhập tin nhắn…"
-                                            value={messageText}
-                                            onChange={(e) => setMessageText(e.target.value)}
-                                            onKeyDown={(e) => {
-                                                if (e.key === 'Enter') sendMessage();
-                                            }}
-                                        />
-                                        <button className="btn btn-primary" onClick={sendMessage} disabled={!messageText.trim()}>
-                                            Gửi
-                                        </button>
-                                    </div>
-                                </div>
                             </div>
                             <div className="modal-footer">
                                 {(getStatusValue(selectedApp) === 'Đã nộp' || getStatusValue(selectedApp) === 'Đang xem xét') && (
@@ -442,14 +382,14 @@ const ApplicationManagement = () => {
                                             onClick={() => updateApplicationStatus(selectedApp.MaUngTuyen, 'Phỏng vấn')}
                                             disabled={updating}
                                         >
-                                            <i className="bi bi-check-circle me-1"></i> Mời phỏng vấn
+                                            <i className="bi bi-check-circle me-1"></i> {t('employer.applicationManagement.actions.inviteInterview')}
                                         </button>
                                         <button
                                             className="btn btn-danger"
                                             onClick={() => updateApplicationStatus(selectedApp.MaUngTuyen, 'Từ chối')}
                                             disabled={updating}
                                         >
-                                            <i className="bi bi-x-circle me-1"></i> Từ chối
+                                            <i className="bi bi-x-circle me-1"></i> {t('employer.applicationManagement.actions.reject')}
                                         </button>
                                     </>
                                 )}
@@ -458,7 +398,7 @@ const ApplicationManagement = () => {
                                     className="btn btn-secondary"
                                     onClick={() => setSelectedApp(null)}
                                 >
-                                    Đóng
+                                    {t('employer.applicationManagement.actions.close')}
                                 </button>
                             </div>
                         </div>

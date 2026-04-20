@@ -1,13 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const pad2 = (value) => String(value).padStart(2, '0');
-const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => ({
-  value: String(index + 1),
-  label: `Tháng ${index + 1}`
-}));
 
 const parseIsoDate = (value) => {
   const text = String(value || '').trim();
@@ -37,6 +34,7 @@ const parseIsoDate = (value) => {
 
 const RegisterForm = ({ onSuccess }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const apiBase = CLIENT_API_BASE;
 
@@ -66,6 +64,14 @@ const RegisterForm = ({ onSuccess }) => {
   const yearOptions = useMemo(
     () => Array.from({ length: 85 }, (_, index) => String(currentYear - 16 - index)),
     [currentYear]
+  );
+
+  const monthOptions = useMemo(
+    () => Array.from({ length: 12 }, (_, index) => ({
+      value: String(index + 1),
+      label: t('authPages.registerForm.birthday.monthLabel', { month: index + 1 })
+    })),
+    [t]
   );
 
   const dayOptions = useMemo(() => {
@@ -109,11 +115,11 @@ const RegisterForm = ({ onSuccess }) => {
   };
 
   const birthdayDisplayValue = useMemo(() => {
-    const day = birthdayParts.day ? pad2(birthdayParts.day) : 'Ngày';
-    const month = birthdayParts.month ? pad2(birthdayParts.month) : 'Tháng';
-    const year = birthdayParts.year || 'Năm';
+    const day = birthdayParts.day ? pad2(birthdayParts.day) : t('authPages.registerForm.birthday.dayPlaceholder');
+    const month = birthdayParts.month ? pad2(birthdayParts.month) : t('authPages.registerForm.birthday.monthPlaceholder');
+    const year = birthdayParts.year || t('authPages.registerForm.birthday.yearPlaceholder');
     return `${day} / ${month} / ${year}`;
-  }, [birthdayParts.day, birthdayParts.month, birthdayParts.year]);
+  }, [birthdayParts.day, birthdayParts.month, birthdayParts.year, t]);
 
   useEffect(() => {
     if (!birthdayOpen) return undefined;
@@ -155,7 +161,7 @@ const RegisterForm = ({ onSuccess }) => {
     if (!birthday) {
       setBirthdayOpen(true);
       setLoading(false);
-      setError('Vui lòng chọn đầy đủ ngày, tháng, năm hợp lệ');
+      setError(t('authPages.registerForm.errors.invalidBirthday'));
       return;
     }
 
@@ -171,31 +177,31 @@ const RegisterForm = ({ onSuccess }) => {
 
     if (age < 16) {
       setLoading(false);
-      setError('Bạn phải đủ 16 tuổi để đăng ký tài khoản');
+      setError(t('authPages.registerForm.errors.ageUnder16'));
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
       setLoading(false);
-      setError('Vui lòng nhập địa chỉ email hợp lệ');
+      setError(t('authPages.registerForm.errors.invalidEmail'));
       return;
     }
 
     if (formData.phone && !/^[0-9]{9,12}$/.test(formData.phone.trim())) {
       setLoading(false);
-      setError('Số điện thoại phải gồm 9 đến 12 chữ số');
+      setError(t('authPages.registerForm.errors.invalidPhone'));
       return;
     }
 
     if (!formData.acceptedTerms) {
       setLoading(false);
-      setError('Bạn cần đồng ý điều khoản sử dụng dịch vụ');
+      setError(t('authPages.registerForm.errors.acceptTermsRequired'));
       return;
     }
 
     if (formData.password.length < 8) {
       setLoading(false);
-      setError('Mật khẩu phải có ít nhất 8 ký tự');
+      setError(t('authPages.registerForm.errors.passwordMinLength'));
       return;
     }
 
@@ -203,13 +209,13 @@ const RegisterForm = ({ onSuccess }) => {
     const hasNumber = /[0-9]/.test(formData.password);
     if (!hasLetter || !hasNumber) {
       setLoading(false);
-      setError('Mật khẩu phải bao gồm cả chữ và số');
+      setError(t('authPages.registerForm.errors.passwordRequireLetterNumber'));
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
       setLoading(false);
-      setError('Mật khẩu xác nhận không khớp');
+      setError(t('authPages.registerForm.errors.confirmPasswordMismatch'));
       return;
     }
 
@@ -234,7 +240,7 @@ const RegisterForm = ({ onSuccess }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Đăng ký thất bại');
+        throw new Error(data.error || t('authPages.registerForm.errors.registerFailed'));
       }
 
       if (data.requireVerification) {
@@ -262,7 +268,7 @@ const RegisterForm = ({ onSuccess }) => {
           }
         });
       } else {
-        notify({ type: 'success', message: 'Đăng ký thành công! Vui lòng đăng nhập.' });
+        notify({ type: 'success', message: t('authPages.registerForm.messages.registerSuccess') });
         if (onSuccess) {
           onSuccess();
         } else {
@@ -277,34 +283,34 @@ const RegisterForm = ({ onSuccess }) => {
   };
 
   const helpText = useMemo(
-    () => 'Hồ sơ được tối ưu sẽ giúp bạn tiếp cận cơ hội phù hợp nhanh hơn trên JobFinder.',
-    []
+    () => t('authPages.registerForm.helpText'),
+    [t]
   );
 
   return (
     <form className="auth-form" onSubmit={handleSubmit}>
       <div className="auth-grid-two">
         <div className="auth-field">
-          <label className="auth-field-label" htmlFor="registerLastName">Họ</label>
+          <label className="auth-field-label" htmlFor="registerLastName">{t('authPages.registerForm.labels.lastName')}</label>
           <input
             id="registerLastName"
             type="text"
             name="lastName"
             className="auth-input"
-            placeholder="Nguyễn"
+            placeholder={t('authPages.registerForm.placeholders.lastName')}
             value={formData.lastName}
             onChange={handleChange}
             required
           />
         </div>
         <div className="auth-field">
-          <label className="auth-field-label" htmlFor="registerFirstName">Tên</label>
+          <label className="auth-field-label" htmlFor="registerFirstName">{t('authPages.registerForm.labels.firstName')}</label>
           <input
             id="registerFirstName"
             type="text"
             name="firstName"
             className="auth-input"
-            placeholder="Văn A"
+            placeholder={t('authPages.registerForm.placeholders.firstName')}
             value={formData.firstName}
             onChange={handleChange}
             required
@@ -313,7 +319,7 @@ const RegisterForm = ({ onSuccess }) => {
       </div>
 
       <div className="auth-field">
-        <label className="auth-field-label">Ngày sinh</label>
+        <label className="auth-field-label">{t('authPages.registerForm.labels.birthday')}</label>
         <div className="auth-birthday-picker" ref={birthdayPickerRef}>
           <button
             id="registerBirthdayTrigger"
@@ -322,7 +328,7 @@ const RegisterForm = ({ onSuccess }) => {
             onClick={() => setBirthdayOpen((prev) => !prev)}
             aria-haspopup="dialog"
             aria-expanded={birthdayOpen}
-            aria-label="Chọn ngày sinh"
+            aria-label={t('authPages.registerForm.aria.selectBirthday')}
           >
             <span className={birthdayParts.day && birthdayParts.month && birthdayParts.year ? '' : 'is-placeholder'}>
               {birthdayDisplayValue}
@@ -331,14 +337,14 @@ const RegisterForm = ({ onSuccess }) => {
           </button>
 
           {birthdayOpen && (
-            <div className="auth-birthday-menu" role="dialog" aria-label="Chọn ngày sinh">
+            <div className="auth-birthday-menu" role="dialog" aria-label={t('authPages.registerForm.aria.selectBirthday')}>
               <div className="auth-birthday-menu-head">
                 <div>
-                  <div className="auth-birthday-menu-title">Chọn ngày sinh</div>
-                  <div className="auth-birthday-menu-subtitle">Chọn theo 3 cột riêng để dễ thao tác hơn.</div>
+                  <div className="auth-birthday-menu-title">{t('authPages.registerForm.birthday.menuTitle')}</div>
+                  <div className="auth-birthday-menu-subtitle">{t('authPages.registerForm.birthday.menuSubtitle')}</div>
                 </div>
                 <button type="button" className="auth-birthday-menu-close" onClick={() => setBirthdayOpen(false)}>
-                  Đóng
+                  {t('authPages.registerForm.common.close')}
                 </button>
               </div>
 
@@ -346,21 +352,21 @@ const RegisterForm = ({ onSuccess }) => {
                 {[
                   {
                     key: 'day',
-                    label: 'Ngày',
+                    label: t('authPages.registerForm.birthday.dayPlaceholder'),
                     options: dayOptions,
                     getValue: (option) => option,
                     getLabel: (option) => pad2(option)
                   },
                   {
                     key: 'month',
-                    label: 'Tháng',
-                    options: MONTH_OPTIONS,
+                    label: t('authPages.registerForm.birthday.monthPlaceholder'),
+                    options: monthOptions,
                     getValue: (option) => option.value,
                     getLabel: (option) => option.label
                   },
                   {
                     key: 'year',
-                    label: 'Năm',
+                    label: t('authPages.registerForm.birthday.yearPlaceholder'),
                     options: yearOptions,
                     getValue: (option) => option,
                     getLabel: (option) => option
@@ -390,25 +396,29 @@ const RegisterForm = ({ onSuccess }) => {
                 ))}
               </div>
 
-              <div className="auth-birthday-hint">Bạn phải đủ 16 tuổi để đăng ký tài khoản.</div>
+              <div className="auth-birthday-hint">{t('authPages.registerForm.birthday.ageHint')}</div>
             </div>
           )}
         </div>
       </div>
 
       <div className="auth-field">
-        <label className="auth-field-label">Giới tính</label>
+        <label className="auth-field-label">{t('authPages.registerForm.labels.gender')}</label>
         <div className="auth-radio-group">
-          {['Nữ', 'Nam', 'Tùy chỉnh'].map((label) => (
-            <label key={label} className="auth-radio-chip">
+          {[
+            { value: 'Nữ', label: t('authPages.registerForm.gender.female') },
+            { value: 'Nam', label: t('authPages.registerForm.gender.male') },
+            { value: 'Tùy chỉnh', label: t('authPages.registerForm.gender.custom') }
+          ].map((item) => (
+            <label key={item.value} className="auth-radio-chip">
               <input
                 type="radio"
                 name="gender"
-                value={label}
-                checked={formData.gender === label}
+                value={item.value}
+                checked={formData.gender === item.value}
                 onChange={handleChange}
               />
-              <span>{label}</span>
+              <span>{item.label}</span>
             </label>
           ))}
         </div>
@@ -416,26 +426,26 @@ const RegisterForm = ({ onSuccess }) => {
 
       <div className="auth-grid-two">
         <div className="auth-field">
-          <label className="auth-field-label" htmlFor="registerEmail">Email</label>
+          <label className="auth-field-label" htmlFor="registerEmail">{t('authPages.registerForm.labels.email')}</label>
           <input
             id="registerEmail"
             type="email"
             name="email"
             className="auth-input"
-            placeholder="name@example.com"
+            placeholder={t('authPages.registerForm.placeholders.email')}
             value={formData.email}
             onChange={handleChange}
             required
           />
         </div>
         <div className="auth-field">
-          <label className="auth-field-label" htmlFor="registerPhone">Số điện thoại</label>
+          <label className="auth-field-label" htmlFor="registerPhone">{t('authPages.registerForm.labels.phone')}</label>
           <input
             id="registerPhone"
             type="tel"
             name="phone"
             className="auth-input"
-            placeholder="09xxxxxxxx"
+            placeholder={t('authPages.registerForm.placeholders.phone')}
             value={formData.phone}
             onChange={handleChange}
           />
@@ -444,14 +454,14 @@ const RegisterForm = ({ onSuccess }) => {
 
       <div className="auth-grid-two">
         <div className="auth-field">
-          <label className="auth-field-label" htmlFor="registerPassword">Mật khẩu</label>
+          <label className="auth-field-label" htmlFor="registerPassword">{t('authPages.registerForm.labels.password')}</label>
           <div className="auth-input-wrap">
             <input
               id="registerPassword"
               type={showPassword ? 'text' : 'password'}
               name="password"
               className="auth-input auth-input--with-icon"
-              placeholder="Tối thiểu 8 ký tự"
+              placeholder={t('authPages.registerForm.placeholders.password')}
               value={formData.password}
               onChange={handleChange}
               required
@@ -460,21 +470,23 @@ const RegisterForm = ({ onSuccess }) => {
               type="button"
               className="auth-password-btn"
               onClick={() => setShowPassword((prev) => !prev)}
-              aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={showPassword
+                ? t('authPages.registerForm.aria.hidePassword')
+                : t('authPages.registerForm.aria.showPassword')}
             >
               <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
             </button>
           </div>
         </div>
         <div className="auth-field">
-          <label className="auth-field-label" htmlFor="registerConfirmPassword">Xác nhận mật khẩu</label>
+          <label className="auth-field-label" htmlFor="registerConfirmPassword">{t('authPages.registerForm.labels.confirmPassword')}</label>
           <div className="auth-input-wrap">
             <input
               id="registerConfirmPassword"
               type={showConfirmPassword ? 'text' : 'password'}
               name="confirmPassword"
               className="auth-input auth-input--with-icon"
-              placeholder="Nhập lại mật khẩu"
+              placeholder={t('authPages.registerForm.placeholders.confirmPassword')}
               value={formData.confirmPassword}
               onChange={handleChange}
               required
@@ -483,7 +495,9 @@ const RegisterForm = ({ onSuccess }) => {
               type="button"
               className="auth-password-btn"
               onClick={() => setShowConfirmPassword((prev) => !prev)}
-              aria-label={showConfirmPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+              aria-label={showConfirmPassword
+                ? t('authPages.registerForm.aria.hidePassword')
+                : t('authPages.registerForm.aria.showPassword')}
             >
               <i className={`bi ${showConfirmPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
             </button>
@@ -501,23 +515,23 @@ const RegisterForm = ({ onSuccess }) => {
           checked={formData.acceptedTerms}
           onChange={handleChange}
         />
-        <span>Tôi đồng ý với điều khoản sử dụng dịch vụ</span>
+        <span>{t('authPages.registerForm.acceptTerms')}</span>
       </label>
 
       <p className="auth-terms-text">
-        Bằng cách nhấn Đăng ký, bạn đồng ý với <a href="/#">Điều khoản</a>,
-        {' '}<a href="/#">Chính sách quyền riêng tư</a> và <a href="/#">Chính sách cookie</a>.
+        {t('authPages.registerForm.terms.prefix')} <a href="/#">{t('authPages.registerForm.terms.terms')}</a>,
+        {' '}<a href="/#">{t('authPages.registerForm.terms.privacy')}</a> {t('authPages.registerForm.terms.and')} <a href="/#">{t('authPages.registerForm.terms.cookies')}</a>.
       </p>
 
       {error ? <div className="auth-error-banner">{error}</div> : null}
 
       <button type="submit" className="auth-submit-btn" disabled={loading}>
-        {loading ? 'Đang xử lý...' : 'Tạo tài khoản ngay'}
+        {loading ? t('authPages.registerForm.processing') : t('authPages.registerForm.submit')}
         <i className="bi bi-arrow-right"></i>
       </button>
 
       <p className="auth-switch-inline">
-        Đã có tài khoản? <Link to="/login">Đăng nhập</Link>
+        {t('authPages.registerForm.hasAccount')} <Link to="/login">{t('authPages.registerForm.login')}</Link>
       </p>
     </form>
   );

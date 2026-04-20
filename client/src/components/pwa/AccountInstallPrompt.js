@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import usePWAInstallPrompt from '../../hooks/usePWAInstallPrompt';
 import './AccountInstallPrompt.css';
 
@@ -18,6 +19,7 @@ const getCurrentUserId = () => {
 const getPromptStorageKey = (userId) => `${ACCOUNT_PROMPT_KEY_PREFIX}${userId}`;
 
 const AccountInstallPrompt = () => {
+  const { t } = useTranslation();
   const location = useLocation();
   const {
     isInstalled,
@@ -82,7 +84,7 @@ const AccountInstallPrompt = () => {
 
   const handleInstall = async () => {
     if (isIOS) {
-      setFeedback('Trên iOS, hãy nhấn Chia sẻ và chọn Thêm vào Màn hình chính.');
+      setFeedback(t('components.pwa.accountInstallPrompt.feedback.iosManual'));
       return;
     }
 
@@ -94,31 +96,31 @@ const AccountInstallPrompt = () => {
     }
 
     if (outcome === 'dismissed') {
-      setFeedback('Bạn đã đóng hộp thoại cài đặt.');
+      setFeedback(t('components.pwa.accountInstallPrompt.feedback.dismissed'));
       setIsVisible(false);
       return;
     }
 
-    setFeedback('Không mở được prompt cài đặt lúc này.');
+    setFeedback(t('components.pwa.accountInstallPrompt.feedback.cannotOpen'));
   };
 
   if (!isVisible) return null;
 
   return (
-    <div className="account-install-prompt" role="dialog" aria-label="Cài đặt ứng dụng JobFinder">
+    <div className="account-install-prompt" role="dialog" aria-label={t('components.pwa.accountInstallPrompt.ariaLabel')}>
       <div className="account-install-prompt__icon-wrap">
         <img src="/logo.jpg" alt="JobFinder" className="account-install-prompt__icon" />
       </div>
 
       <div className="account-install-prompt__text">
-        <h4>Cài đặt JobFinder</h4>
-        <p>Cài đặt ứng dụng để truy cập nhanh hơn và sử dụng offline.</p>
+        <h4>{t('components.pwa.accountInstallPrompt.title')}</h4>
+        <p>{t('components.pwa.accountInstallPrompt.description')}</p>
         {feedback ? <small>{feedback}</small> : null}
       </div>
 
       <div className="account-install-prompt__actions">
-        <button type="button" className="install" onClick={handleInstall}>Cài đặt ứng dụng</button>
-        <button type="button" className="later" onClick={handleDismiss}>Để sau</button>
+        <button type="button" className="install" onClick={handleInstall}>{t('components.pwa.accountInstallPrompt.installButton')}</button>
+        <button type="button" className="later" onClick={handleDismiss}>{t('components.pwa.accountInstallPrompt.laterButton')}</button>
       </div>
     </div>
   );

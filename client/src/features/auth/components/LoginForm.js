@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
@@ -74,7 +75,7 @@ const resolveGoogleClientId = () => {
   return '';
 };
 
-const getGooglePopupErrorMessage = (reason) => {
+const getGooglePopupErrorMessage = (reason, t) => {
   const normalizedReason = String(reason || '').trim().toLowerCase();
 
   if (normalizedReason.includes('popup_closed_by_user')) {
@@ -82,14 +83,14 @@ const getGooglePopupErrorMessage = (reason) => {
   }
 
   if (normalizedReason.includes('popup_failed_to_open')) {
-    return 'Trình duyệt đã chặn popup Google. Vui lòng cho phép popup cho localhost rồi thử lại.';
+    return t('authPages.loginForm.errors.googlePopupBlocked');
   }
 
   if (normalizedReason.includes('idpiframe_initialization_failed')) {
-    return 'Google Sign-In không thể khởi tạo iframe. Hãy thử tắt extension chặn quảng cáo/cookie và tải lại trang.';
+    return t('authPages.loginForm.errors.googleIframeInitFailed');
   }
 
-  return 'Không thể hoàn tất đăng nhập Google. Vui lòng thử lại.';
+  return t('authPages.loginForm.errors.googleLoginFailed');
 };
 
 const parseJsonSafe = async (response) => {
@@ -125,6 +126,7 @@ const redirectByRole = (navigate, role) => {
 
 const LoginForm = ({ onSuccess }) => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { notify } = useNotification();
   const apiBase = CLIENT_API_BASE;
   const googleButtonContainerRef = useRef(null);
@@ -188,7 +190,7 @@ const LoginForm = ({ onSuccess }) => {
 
   const handleLoginSuccess = (data, identityForRemember = '') => {
     if (!data.token || !data.user) {
-      throw new Error('Phản hồi đăng nhập không hợp lệ từ máy chủ.');
+      throw new Error(t('authPages.loginForm.errors.invalidLoginResponse'));
     }
 
     localStorage.setItem('token', data.token);
@@ -203,7 +205,10 @@ const LoginForm = ({ onSuccess }) => {
       localStorage.removeItem(REMEMBER_KEY);
     }
 
-    notify({ type: 'success', message: `Đăng nhập thành công! Xin chào ${data.user.name}` });
+    notify({
+      type: 'success',
+      message: t('authPages.loginForm.messages.loginSuccessWelcome', { name: data.user.name || '' })
+    });
 
     if (onSuccess) {
       onSuccess();
@@ -231,7 +236,7 @@ const LoginForm = ({ onSuccess }) => {
     const data = await parseJsonSafe(response);
 
     if (!response.ok) {
-      throw new Error(data.error || 'Đăng nhập Google thất bại.');
+      throw new Error(data.error || t('authPages.loginForm.errors.googleLoginFailed'));
     }
 
     handleLoginSuccess(data, data?.user?.email || email);
@@ -243,12 +248,12 @@ const LoginForm = ({ onSuccess }) => {
     clearGooglePopupHintTimeout();
 
     if (!googleClientId) {
-      setError('Thiếu cấu hình Google Client ID. Hãy thêm REACT_APP_GOOGLE_CLIENT_ID (hoặc REACT_APP_GOOGLE_OAUTH_CLIENT_ID) trong Vercel Project Settings > Environment Variables rồi redeploy.');
+      setError(t('authPages.loginForm.errors.missingGoogleClientId'));
       return;
     }
 
     if (!window.google?.accounts?.id) {
-      setError('Google API chưa sẵn sàng. Vui lòng thử lại sau giây lát.');
+      setError(t('authPages.loginForm.errors.googleApiNotReady'));
       return;
     }
 
@@ -259,13 +264,13 @@ const LoginForm = ({ onSuccess }) => {
           googleCallbackReceivedRef.current = true;
           clearGooglePopupHintTimeout();
           setGoogleLoading(false);
-          setError(getGooglePopupErrorMessage(googleError?.type || googleError?.message));
+          setError(getGooglePopupErrorMessage(googleError?.type || googleError?.message, t));
         },
         callback: async (response) => {
           const credential = String(response?.credential || '').trim();
           if (!credential) {
             clearGooglePopupHintTimeout();
-            setError(getGooglePopupErrorMessage('missing_credential'));
+            setError(getGooglePopupErrorMessage('missing_credential', t));
             return;
           }
 
@@ -278,7 +283,7 @@ const LoginForm = ({ onSuccess }) => {
           try {
             await handleGoogleCredential(credential);
           } catch (err) {
-            setError(err.message || 'Đăng nhập Google thất bại.');
+            setError(err.message || t('authPages.loginForm.errors.googleLoginFailed'));
           } finally {
             setGoogleLoading(false);
           }
@@ -291,7 +296,7 @@ const LoginForm = ({ onSuccess }) => {
     }
 
     if (!googleButtonContainerRef.current) {
-      setError('Không thể khởi tạo nút đăng nhập Google.');
+      setError(t('authPages.loginForm.errors.googleButtonInitFailed'));
       return;
     }
 
@@ -306,7 +311,7 @@ const LoginForm = ({ onSuccess }) => {
     const googleButton = googleButtonContainerRef.current.querySelector('div[role="button"]');
     if (!googleButton) {
       clearGooglePopupHintTimeout();
-      setError('Không thể mở popup Google. Vui lòng thử lại.');
+      setError(t('authPages.loginForm.errors.googlePopupCannotOpen'));
       return;
     }
 
@@ -340,7 +345,7 @@ const LoginForm = ({ onSuccess }) => {
 
       if (!response.ok) {
         const backendHint = response.status === 405
-          ? 'API chưa trỏ đúng backend. Kiểm tra REACT_APP_API_BASE trên Vercel và redeploy.'
+          ? t('authPages.loginForm.errors.backendConfigHint')
           : '';
         throw new Error(data.error || `${response.status} ${response.statusText}. ${backendHint}`.trim());
       }
@@ -349,9 +354,9 @@ const LoginForm = ({ onSuccess }) => {
     } catch (err) {
       const message = String(err?.message || '').trim();
       if (/Failed to fetch|NetworkError|Load failed|fetch failed/i.test(message)) {
-        setError(`Không thể kết nối máy chủ đăng nhập (${apiBase || 'same-origin'}). Hãy chạy backend bằng lệnh: npm run dev --prefix server`);
+        setError(t('authPages.loginForm.errors.cannotConnectServer', { apiBase: apiBase || 'same-origin' }));
       } else {
-        setError(message || 'Đăng nhập thất bại.');
+        setError(message || t('authPages.loginForm.errors.loginFailed'));
       }
     } finally {
       setLoading(false);
@@ -362,13 +367,13 @@ const LoginForm = ({ onSuccess }) => {
     <form className="auth-form" onSubmit={handleSubmit}>
       <div className="auth-field">
         <label className="auth-field-label" htmlFor="loginIdentity">
-          Email hoặc tên đăng nhập
+          {t('authPages.loginForm.labels.identity')}
         </label>
         <input
           id="loginIdentity"
           type="text"
           className="auth-input"
-          placeholder="name@example.com"
+          placeholder={t('authPages.loginForm.placeholders.identity')}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
@@ -377,14 +382,14 @@ const LoginForm = ({ onSuccess }) => {
 
       <div className="auth-field">
         <label className="auth-field-label" htmlFor="loginPassword">
-          Mật khẩu
+          {t('authPages.loginForm.labels.password')}
         </label>
         <div className="auth-input-wrap">
           <input
             id="loginPassword"
             type={showPassword ? 'text' : 'password'}
             className="auth-input auth-input--with-icon"
-            placeholder="Nhập mật khẩu"
+            placeholder={t('authPages.loginForm.placeholders.password')}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
@@ -393,7 +398,9 @@ const LoginForm = ({ onSuccess }) => {
             type="button"
             className="auth-password-btn"
             onClick={() => setShowPassword((prev) => !prev)}
-            aria-label={showPassword ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={showPassword
+              ? t('authPages.loginForm.aria.hidePassword')
+              : t('authPages.loginForm.aria.showPassword')}
           >
             <i className={`bi ${showPassword ? 'bi-eye-slash' : 'bi-eye'}`}></i>
           </button>
@@ -410,20 +417,20 @@ const LoginForm = ({ onSuccess }) => {
             checked={rememberMe}
             onChange={(e) => setRememberMe(e.target.checked)}
           />
-          <span>Ghi nhớ đăng nhập</span>
+          <span>{t('authPages.loginForm.rememberMe')}</span>
         </label>
         <Link className="auth-inline-link" to="/forgot-password">
-          Quên mật khẩu?
+          {t('authPages.loginForm.forgotPassword')}
         </Link>
       </div>
 
       <button type="submit" className="auth-submit-btn" disabled={loading}>
-        {loading ? 'Đang xử lý...' : 'Đăng nhập ngay'}
+        {loading ? t('authPages.loginForm.processing') : t('authPages.loginForm.submit')}
         <i className="bi bi-arrow-right"></i>
       </button>
 
-      <div className="auth-social-divider" role="separator" aria-label="hoặc">
-        <span>Hoặc</span>
+      <div className="auth-social-divider" role="separator" aria-label={t('authPages.loginForm.or')}> 
+        <span>{t('authPages.loginForm.or')}</span>
       </div>
 
       <button
@@ -435,13 +442,13 @@ const LoginForm = ({ onSuccess }) => {
         <span className="auth-social-icon" aria-hidden="true">
           <i className="bi bi-google"></i>
         </span>
-        <span>{googleLoading ? 'Đang xử lý...' : 'Tiếp tục với Google'}</span>
+        <span>{googleLoading ? t('authPages.loginForm.processing') : t('authPages.loginForm.continueWithGoogle')}</span>
       </button>
 
       <div ref={googleButtonContainerRef} className="auth-google-hidden" aria-hidden="true"></div>
 
       <p className="auth-switch-inline">
-        Chưa có tài khoản? <Link to="/register">Đăng ký</Link>
+        {t('authPages.loginForm.noAccount')} <Link to="/register">{t('authPages.loginForm.register')}</Link>
       </p>
     </form>
   );
