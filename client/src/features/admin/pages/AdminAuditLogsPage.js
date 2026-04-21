@@ -68,7 +68,7 @@ const formatObjectRef = (row, t) => {
     return `${object || t('admin.auditLogsPage.fallback.object')} #${objectId}`;
 };
 
-const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
+const AdminAuditLogsPage = ({ API_BASE, authHeaders, requestConfirm }) => {
     const { t, i18n } = useTranslation();
     const [offset, setOffset] = useState(0);
     const [logs, setLogs] = useState([]);
@@ -309,7 +309,15 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders }) => {
     const handleDeleteLog = async (row) => {
         const targetId = Number(row?.id);
         if (!Number.isFinite(targetId)) return;
-        if (!window.confirm(t('admin.auditLogsPage.confirm.deleteMessage', { id: targetId }))) return;
+        if (typeof requestConfirm !== 'function') return;
+
+        const approved = await requestConfirm({
+            title: t('admin.auditLogsPage.actions.delete'),
+            message: t('admin.auditLogsPage.confirm.deleteMessage', { id: targetId }),
+            confirmText: t('common.delete'),
+            cancelText: t('common.cancel')
+        });
+        if (!approved) return;
 
         setDeletingId(targetId);
         setError('');

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CheckCircle2, ClipboardList, EyeOff, Lock, Trash2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import SmartPagination from '../../../components/SmartPagination';
 
 const formatDateTime = (value, locale) => {
     if (!value) return '-';
@@ -63,11 +64,26 @@ const getTargetTypeLabel = (value, t) => {
     return text;
 };
 
-const AdminReportsPage = ({ reports, loading, onApproveReport, onDeleteReport, requestConfirm }) => {
+const AdminReportsPage = ({
+    reports,
+    pagination,
+    loading,
+    onRangeChange,
+    onApproveReport,
+    onDeleteReport,
+    requestConfirm
+}) => {
     const { t, i18n } = useTranslation();
     const currentLocale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en')
         ? 'en-US'
         : 'vi-VN';
+
+    const totalItems = Math.max(0, Number(pagination?.total) || reports.length || 0);
+    const perPage = Math.max(1, Number(pagination?.limit) || 10);
+    const fromDisplay = totalItems > 0 ? Math.max(1, Number(pagination?.from) || 1) : 0;
+    const toDisplay = totalItems > 0
+        ? Math.max(fromDisplay, Math.min(totalItems, Number(pagination?.to) || (fromDisplay + reports.length - 1)))
+        : 0;
 
     const [activeReport, setActiveReport] = useState(null);
     const [hideContent, setHideContent] = useState(true);
@@ -94,18 +110,14 @@ const AdminReportsPage = ({ reports, loading, onApproveReport, onDeleteReport, r
     const confirmDeleteReport = async (report) => {
         const reportId = Number(report?.MaBaoCao);
         if (!Number.isFinite(reportId)) return;
+        if (typeof requestConfirm !== 'function') return;
 
-        let approved = false;
-        if (typeof requestConfirm === 'function') {
-            approved = await requestConfirm({
-                title: t('admin.reportsPage.confirmDeleteTitle'),
-                message: t('admin.reportsPage.confirmDeleteMessage', { id: reportId }),
-                confirmText: t('common.delete'),
-                cancelText: t('common.cancel')
-            });
-        } else {
-            approved = window.confirm(t('admin.reportsPage.confirmDeleteMessageSimple', { id: reportId }));
-        }
+        const approved = await requestConfirm({
+            title: t('admin.reportsPage.confirmDeleteTitle'),
+            message: t('admin.reportsPage.confirmDeleteMessage', { id: reportId }),
+            confirmText: t('common.delete'),
+            cancelText: t('common.cancel')
+        });
 
         if (!approved) return;
 
@@ -163,7 +175,7 @@ const AdminReportsPage = ({ reports, loading, onApproveReport, onDeleteReport, r
                         <tbody>
                             {reports.map((report, index) => (
                                 <tr key={report.MaBaoCao}>
-                                    <td>{index + 1}</td>
+                                    <td>{fromDisplay + index}</td>
                                     <td><span className="admin-code-chip">{formatCode('NB', report.MaNguoiBaoCao)}</span></td>
                                     <td>{getTargetTypeLabel(report.LoaiDoiTuong, t)}</td>
                                     <td><span className="admin-code-chip">{formatCode('DT', report.MaDoiTuong)}</span></td>
@@ -207,6 +219,24 @@ const AdminReportsPage = ({ reports, loading, onApproveReport, onDeleteReport, r
                         </tbody>
                     </table>
                 </div>
+
+                {totalItems > 0 ? (
+                    <div className="d-flex justify-content-end p-3 border-top bg-white">
+                        <SmartPagination
+                            from={fromDisplay}
+                            to={toDisplay}
+                            pageSize={perPage}
+                            perPage={perPage}
+                            totalItems={totalItems}
+                            loading={loading}
+                            onRangeChange={(nextFrom, nextTo) => {
+                                if (typeof onRangeChange === 'function') {
+                                    onRangeChange(nextFrom, nextTo);
+                                }
+                            }}
+                        />
+                    </div>
+                ) : null}
             </div>
 
             {activeReport ? (

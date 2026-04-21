@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BookOpen, ExternalLink, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import SmartPagination from '../../../components/SmartPagination';
 
 const toText = (value) => String(value || '').trim();
 
@@ -51,7 +52,14 @@ const buildPostPath = (post) => {
     return `/career-guide/${encodeURIComponent(String(id))}`;
 };
 
-const AdminCareerGuidePostsPage = ({ posts, loading, onDeletePost, requestConfirm }) => {
+const AdminCareerGuidePostsPage = ({
+    posts,
+    pagination,
+    loading,
+    onRangeChange,
+    onDeletePost,
+    requestConfirm
+}) => {
     const { t, i18n } = useTranslation();
     const [deletingId, setDeletingId] = useState(null);
     const [error, setError] = useState('');
@@ -60,19 +68,25 @@ const AdminCareerGuidePostsPage = ({ posts, loading, onDeletePost, requestConfir
         ? 'en-US'
         : 'vi-VN';
 
+    const totalItems = Math.max(0, Number(pagination?.total) || posts.length || 0);
+    const perPage = Math.max(1, Number(pagination?.limit) || 10);
+    const fromDisplay = totalItems > 0 ? Math.max(1, Number(pagination?.from) || 1) : 0;
+    const toDisplay = totalItems > 0
+        ? Math.max(fromDisplay, Math.min(totalItems, Number(pagination?.to) || (fromDisplay + posts.length - 1)))
+        : 0;
+
     const handleDeletePost = async (post) => {
         const postId = resolvePostId(post);
         if (!postId || isSamplePost(post)) return;
+        if (typeof requestConfirm !== 'function') return;
 
         const confirmMessage = t('admin.careerGuidePostsPage.confirm.deleteMessage', { id: postId });
-        const approved = requestConfirm
-            ? await requestConfirm({
-                title: t('admin.careerGuidePostsPage.confirm.deleteTitle'),
-                message: confirmMessage,
-                confirmText: t('admin.careerGuidePostsPage.confirm.deleteButton'),
-                cancelText: t('common.cancel')
-            })
-            : window.confirm(confirmMessage);
+        const approved = await requestConfirm({
+            title: t('admin.careerGuidePostsPage.confirm.deleteTitle'),
+            message: confirmMessage,
+            confirmText: t('admin.careerGuidePostsPage.confirm.deleteButton'),
+            cancelText: t('common.cancel')
+        });
         if (!approved) return;
 
         setDeletingId(postId);
@@ -122,7 +136,7 @@ const AdminCareerGuidePostsPage = ({ posts, loading, onDeletePost, requestConfir
                             const rowKey = String(post?.MaBaiViet ?? post?.id ?? `sample-${index}`);
                             return (
                                 <tr key={rowKey}>
-                                    <td>{index + 1}</td>
+                                    <td>{fromDisplay + index}</td>
                                     <td className="admin-career-post-title">
                                         {getPostTitle(post) || '-'}
                                         {isSample ? <span className="badge bg-secondary ms-2">{t('admin.careerGuidePostsPage.sampleBadge')}</span> : null}
@@ -170,6 +184,24 @@ const AdminCareerGuidePostsPage = ({ posts, loading, onDeletePost, requestConfir
                     </tbody>
                 </table>
             </div>
+
+            {totalItems > 0 ? (
+                <div className="d-flex justify-content-end p-3 border-top bg-white">
+                    <SmartPagination
+                        from={fromDisplay}
+                        to={toDisplay}
+                        pageSize={perPage}
+                        perPage={perPage}
+                        totalItems={totalItems}
+                        loading={loading}
+                        onRangeChange={(nextFrom, nextTo) => {
+                            if (typeof onRangeChange === 'function') {
+                                onRangeChange(nextFrom, nextTo);
+                            }
+                        }}
+                    />
+                </div>
+            ) : null}
         </div>
     );
 };

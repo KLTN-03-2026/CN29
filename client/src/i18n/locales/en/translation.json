@@ -69,6 +69,30 @@
       "admin": "Administrator"
     },
     "loadingData": "Loading data...",
+    "apiErrors": {
+      "loadOverview": "Unable to load overview stats",
+      "loadUsers": "Unable to load users",
+      "loadJobs": "Unable to load jobs",
+      "loadCompanies": "Unable to load companies",
+      "loadReports": "Unable to load reports",
+      "loadCareerGuidePosts": "Unable to load career guide posts",
+      "generic": "Something went wrong",
+      "updateUser": "Unable to update user",
+      "loadUserDetail": "Unable to load user details",
+      "updateReport": "Unable to update report",
+      "approveReport": "Unable to approve report",
+      "deleteReport": "Unable to delete report",
+      "deleteCareerGuidePost": "Unable to delete career guide post",
+      "deleteJob": "Unable to delete job",
+      "deleteUser": "Unable to delete user",
+      "restoreUser": "Unable to restore user",
+      "updateCompany": "Unable to update company",
+      "deleteCompany": "Unable to delete company",
+      "restoreCompany": "Unable to restore company"
+    },
+    "confirm": {
+      "defaultTitle": "Confirm"
+    },
     "actions": {
       "home": "Home",
       "logout": "Logout"
@@ -159,6 +183,192 @@
         "progressHeader": "Rate (%)",
         "noPopular": "No data"
       }
+    },
+    "usersPage": {
+      "title": "User management",
+      "filter": {
+        "roleAriaLabel": "Filter by role",
+        "all": "All"
+      },
+      "roles": {
+        "superAdmin": "Super admin",
+        "admin": "Admin",
+        "employer": "Employer",
+        "candidate": "Candidate"
+      },
+      "columns": {
+        "id": "ID",
+        "fullName": "Full name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "createdAt": "Created at",
+        "deletedAt": "Deleted at",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "blocked": "Blocked",
+        "softDeleted": "Soft deleted (72h)"
+      },
+      "time": {
+        "days": "{{count}}d",
+        "hours": "{{count}}h",
+        "minutes": "{{count}}m"
+      },
+      "actions": {
+        "view": "View details",
+        "edit": "Edit user",
+        "delete": "Delete user",
+        "restore": "Restore user",
+        "softDelete": "soft-delete"
+      },
+      "confirm": {
+        "title": "Confirm {{action}}",
+        "deleteButton": "Delete",
+        "restoreButton": "Restore",
+        "deleteMessage": "This account will be soft-deleted for 72 hours. If not restored in time, the system will permanently delete all related data. Continue?",
+        "restoreMessage": "Are you sure you want to restore this account?"
+      },
+      "softDelete": {
+        "expiredHint": "The 72-hour window has passed. The account will be permanently removed on next sync.",
+        "remainingHint": "{{time}} remaining to restore."
+      },
+      "messages": {
+        "detailApiMissing": "User detail API is not configured yet.",
+        "loadDetailFailed": "Unable to load user details",
+        "loadEditDetailFailed": "Unable to load details for editing.",
+        "updateFailed": "Unable to update user",
+        "restoreHandlerMissing": "User restore handler is not configured.",
+        "actionFailed": "Action failed",
+        "loadingDetail": "Loading user details...",
+        "loadingEditDetail": "Loading full user information..."
+      },
+      "fields": {
+        "fullName": "Full name",
+        "email": "Email",
+        "phone": "Phone",
+        "address": "Address"
+      },
+      "candidateFields": {
+        "title": "Position",
+        "gender": "Gender",
+        "birthday": "Birthday",
+        "city": "City",
+        "district": "District",
+        "detailedAddress": "Detailed address",
+        "education": "Education",
+        "experience": "Years of experience",
+        "personalLink": "Personal link",
+        "intro": "Self introduction"
+      },
+      "employerFields": {
+        "companyName": "Company name",
+        "taxCode": "Tax code",
+        "website": "Website",
+        "city": "City",
+        "address": "Address",
+        "description": "Company description"
+      },
+      "viewModal": {
+        "title": "User details",
+        "avatarAlt": "Avatar",
+        "userCode": "User code",
+        "updatedAt": "Updated at",
+        "basicInfo": "Basic information",
+        "candidateInfo": "Candidate profile",
+        "employerInfo": "Employer profile"
+      },
+      "editModal": {
+        "title": "Edit user #{{id}}",
+        "basicInfo": "Basic information",
+        "candidateProfile": "Candidate profile",
+        "employerProfile": "Employer profile",
+        "save": "Save changes",
+        "saving": "Saving...",
+        "softDeletedNote": "This account was soft-deleted at {{deletedAt}}. Setting status to active will clear deletion date automatically.",
+        "placeholders": {
+          "fullName": "Enter full name",
+          "phone": "Enter phone number",
+          "address": "Enter address",
+          "birthday": "Select birthday"
+        },
+        "gender": {
+          "unselected": "Not selected",
+          "male": "Male",
+          "female": "Female",
+          "other": "Other"
+        }
+      },
+      "empty": "No data available"
+    },
+    "companiesPage": {
+      "title": "Company management",
+      "headers": {
+        "id": "ID",
+        "name": "Company name",
+        "taxCode": "Tax code",
+        "city": "City",
+        "website": "Website",
+        "status": "Status",
+        "deletedAt": "Deleted at",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "blocked": "Blocked",
+        "softDeleted": "Soft deleted (72h)"
+      },
+      "actions": {
+        "view": "View company",
+        "block": "Block company",
+        "unblock": "Unblock company",
+        "delete": "Delete company",
+        "restore": "Restore company",
+        "openWebsite": "Open company website"
+      },
+      "confirm": {
+        "deleteTitle": "Confirm delete",
+        "deleteMessage": "Are you sure you want to soft-delete company \"{{name}}\" for 72 hours?",
+        "deleteButton": "Delete",
+        "restoreTitle": "Confirm restore",
+        "restoreMessage": "Are you sure you want to restore company \"{{name}}\"?",
+        "restoreButton": "Restore"
+      },
+      "softDelete": {
+        "expiredHint": "The 72-hour window has passed. The company will be permanently removed on next sync.",
+        "remainingHint": "{{time}} remaining to restore."
+      },
+      "time": {
+        "days": "{{count}}d",
+        "hours": "{{count}}h",
+        "minutes": "{{count}}m"
+      },
+      "messages": {
+        "genericError": "Action failed",
+        "missingRestoreHandler": "Company restore handler is not configured."
+      },
+      "detail": {
+        "ariaLabel": "Company details",
+        "title": "Company information",
+        "logoAlt": "Company logo",
+        "companyInfo": "Business information",
+        "representative": "Representative",
+        "description": "Company description",
+        "companyCode": "Company code",
+        "createdAt": "Created at",
+        "updatedAt": "Updated at",
+        "deletedAt": "Deleted at",
+        "companyName": "Company name",
+        "taxCode": "Tax code",
+        "field": "Industry",
+        "address": "Address",
+        "repName": "Full name",
+        "repEmail": "Email",
+        "repStatus": "Account status",
+        "lastUpdated": "Last updated"
+      },
+      "empty": "No data available"
     },
     "jobsPage": {
       "title": "Job moderation",

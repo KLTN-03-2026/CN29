@@ -1,25 +1,55 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Building2, Eye, Mail, MapPin, PencilLine, RotateCcw, Trash2, Users } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import SmartPagination from '../../../components/SmartPagination';
 import CalendarDatePicker from '../../../components/date/CalendarDatePicker';
 
-const formatDateTime = (value) => {
+const ROLE_CANDIDATE = 'Ứng viên';
+const ROLE_EMPLOYER = 'Nhà tuyển dụng';
+const ROLE_ADMIN = 'Quản trị';
+const ROLE_SUPER_ADMIN = 'Siêu quản trị viên';
+
+const normalizeRoleValue = (value) => {
+    const text = String(value || '').trim();
+    const normalized = text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd');
+
+    if (!normalized) return ROLE_CANDIDATE;
+    if (normalized.includes('sieu quan tri') || normalized.includes('super admin')) return ROLE_SUPER_ADMIN;
+    if (normalized.includes('quan tri') || normalized === 'admin') return ROLE_ADMIN;
+    if (normalized.includes('nha tuyen dung') || normalized.includes('employer') || normalized.includes('recruiter')) return ROLE_EMPLOYER;
+    if (normalized.includes('ung vien') || normalized.includes('candidate') || normalized === 'user') return ROLE_CANDIDATE;
+    return text || ROLE_CANDIDATE;
+};
+
+const getRoleLabel = (value, t) => {
+    const role = normalizeRoleValue(value);
+    if (role === ROLE_SUPER_ADMIN) return t('admin.usersPage.roles.superAdmin');
+    if (role === ROLE_ADMIN) return t('admin.usersPage.roles.admin');
+    if (role === ROLE_EMPLOYER) return t('admin.usersPage.roles.employer');
+    return t('admin.usersPage.roles.candidate');
+};
+
+const formatDateTime = (value, locale = 'vi-VN') => {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    const dateText = date.toLocaleDateString('vi-VN');
-    const timeText = date.toLocaleTimeString('vi-VN', {
+    const dateText = date.toLocaleDateString(locale);
+    const timeText = date.toLocaleTimeString(locale, {
         hour: '2-digit',
         minute: '2-digit'
     });
     return `${dateText} ${timeText}`;
 };
 
-const formatDateOnly = (value) => {
+const formatDateOnly = (value, locale = 'vi-VN') => {
     if (!value) return '-';
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '-';
-    return date.toLocaleDateString('vi-VN');
+    return date.toLocaleDateString(locale);
 };
 
 const toInputDate = (value) => {
@@ -60,7 +90,7 @@ const buildEditForm = (user, detail) => {
     const detailUser = detail?.user || user || {};
     const candidate = detail?.candidateProfile || null;
     const employer = detail?.employerProfile || null;
-    const role = detailUser?.VaiTro || 'Ứng viên';
+    const role = normalizeRoleValue(detailUser?.VaiTro || ROLE_CANDIDATE);
 
     return {
         fullName: toSafeString(detailUser?.HoTen),
@@ -69,8 +99,8 @@ const buildEditForm = (user, detail) => {
         address: toSafeString(detailUser?.DiaChi),
         role,
         status: Number(detailUser?.TrangThai ?? 1),
-        candidateEnabled: role === 'Ứng viên',
-        employerEnabled: role === 'Nhà tuyển dụng',
+        candidateEnabled: role === ROLE_CANDIDATE,
+        employerEnabled: role === ROLE_EMPLOYER,
         candidate: {
             birthday: toInputDate(candidate?.NgaySinh),
             gender: toSafeString(candidate?.GioiTinh),
@@ -79,7 +109,7 @@ const buildEditForm = (user, detail) => {
             address: toSafeString(candidate?.DiaChi),
             title: toSafeString(candidate?.ChucDanh),
             education: toSafeString(candidate?.TrinhDoHocVan),
-            experience: Number(candidate?.SoNamKinhNghiem || 0),
+            experience: Number(candidate?.SoNamKinhNghiem ?? candidate?.experience ?? 0),
             personalLink: toSafeString(candidate?.LinkCaNhan),
             intro: toSafeString(candidate?.GioiThieuBanThan)
         },
@@ -95,7 +125,7 @@ const buildEditForm = (user, detail) => {
 };
 
 const buildUserUpdatePayload = (form) => {
-    const role = form?.role || 'Ứng viên';
+    const role = normalizeRoleValue(form?.role || ROLE_CANDIDATE);
     const payload = {
         fullName: toSafeString(form?.fullName),
         email: toSafeString(form?.email),
@@ -105,7 +135,7 @@ const buildUserUpdatePayload = (form) => {
         status: Number(form?.status ?? 1)
     };
 
-    if (role === 'Ứng viên') {
+    if (role === ROLE_CANDIDATE) {
         payload.candidateProfile = {
             birthday: toSafeString(form?.candidate?.birthday),
             gender: toSafeString(form?.candidate?.gender),
@@ -120,7 +150,7 @@ const buildUserUpdatePayload = (form) => {
         };
     }
 
-    if (role === 'Nhà tuyển dụng') {
+    if (role === ROLE_EMPLOYER) {
         payload.employerProfile = {
             companyName: toSafeString(form?.employer?.companyName),
             taxCode: toSafeString(form?.employer?.taxCode),
@@ -160,22 +190,23 @@ const getSoftDeleteMeta = (user, nowMs = Date.now()) => {
     };
 };
 
-const formatSoftDeleteRemaining = (remainingMs) => {
+const formatSoftDeleteRemaining = (remainingMs, t) => {
     const totalMinutes = Math.max(1, Math.ceil(Math.max(remainingMs, 0) / 60000));
     const days = Math.floor(totalMinutes / (24 * 60));
     const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
     const minutes = totalMinutes % 60;
 
     const parts = [];
-    if (days > 0) parts.push(`${days} ngày`);
-    if (hours > 0 || days > 0) parts.push(`${hours} giờ`);
-    parts.push(`${minutes} phút`);
+    if (days > 0) parts.push(t('admin.usersPage.time.days', { count: days }));
+    if (hours > 0 || days > 0) parts.push(t('admin.usersPage.time.hours', { count: hours }));
+    parts.push(t('admin.usersPage.time.minutes', { count: minutes }));
     return parts.join(' ');
 };
 
 const getUserPermissions = (user, isSuperAdmin, isAdmin) => {
     const isTargetSuperAdmin = Number(user?.IsSuperAdmin) === 1;
-    const isTargetAdmin = user?.VaiTro === 'Quản trị' || user?.VaiTro === 'Siêu quản trị viên' || isTargetSuperAdmin;
+    const role = normalizeRoleValue(user?.VaiTro);
+    const isTargetAdmin = role === ROLE_ADMIN || role === ROLE_SUPER_ADMIN || isTargetSuperAdmin;
     const canManage = (isSuperAdmin || isAdmin) && !isTargetAdmin;
     return {
         canEdit: canManage,
@@ -183,20 +214,20 @@ const getUserPermissions = (user, isSuperAdmin, isAdmin) => {
     };
 };
 
-const getStatusBadge = (user, nowMs = Date.now()) => {
+const getStatusBadge = (user, t, nowMs = Date.now()) => {
     const softDeleteMeta = getSoftDeleteMeta(user, nowMs);
     if (softDeleteMeta) {
         return (
             <span className={`badge ${softDeleteMeta.isExpired ? 'bg-secondary-subtle text-secondary' : 'bg-danger-subtle text-danger'}`}>
-                Đã xóa mềm 72h
+                {t('admin.usersPage.status.softDeleted')}
             </span>
         );
     }
     const status = Number(user?.TrangThai ?? 1);
     if (status === 1) {
-        return <span className="badge bg-success-subtle text-success">Hoạt động</span>;
+        return <span className="badge bg-success-subtle text-success">{t('admin.usersPage.status.active')}</span>;
     }
-    return <span className="badge bg-warning-subtle text-warning-emphasis">Đã chặn</span>;
+    return <span className="badge bg-warning-subtle text-warning-emphasis">{t('admin.usersPage.status.blocked')}</span>;
 };
 
 const UserInfoField = ({ label, value, className = '', noWrap = false }) => {
@@ -220,9 +251,11 @@ const UserInfoField = ({ label, value, className = '', noWrap = false }) => {
 
 const AdminUsersPage = ({
     users,
+    pagination,
     loading,
     roleFilter,
     onRoleFilterChange,
+    onRangeChange,
     isSuperAdmin,
     isAdmin,
     requestConfirm,
@@ -231,10 +264,20 @@ const AdminUsersPage = ({
     onRestoreUser,
     onViewUserDetail
 }) => {
-    const pageSize = 10;
+    const { t, i18n } = useTranslation();
+    const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en')
+        ? 'en-US'
+        : 'vi-VN';
+
+    const totalUsers = Math.max(0, Number(pagination?.total) || users.length || 0);
+    const perPage = Math.max(1, Number(pagination?.limit) || 10);
+    const fromDisplay = totalUsers > 0 ? Math.max(1, Number(pagination?.from) || 1) : 0;
+    const toDisplay = totalUsers > 0
+        ? Math.max(fromDisplay, Math.min(totalUsers, Number(pagination?.to) || (fromDisplay + users.length - 1)))
+        : 0;
+
     const [rowBusyId, setRowBusyId] = useState(null);
     const [rowErrors, setRowErrors] = useState({});
-    const [currentPage, setCurrentPage] = useState(1);
     const [nowTick, setNowTick] = useState(Date.now());
     const [viewModal, setViewModal] = useState({
         open: false,
@@ -252,7 +295,7 @@ const AdminUsersPage = ({
             email: '',
             phone: '',
             address: '',
-            role: 'Ứng viên',
+            role: ROLE_CANDIDATE,
             status: 1,
             candidateEnabled: false,
             employerEnabled: false,
@@ -271,32 +314,6 @@ const AdminUsersPage = ({
 
         return () => window.clearInterval(timer);
     }, []);
-
-    const filteredUsers = useMemo(() => (
-        (users || [])
-            .filter((u) => Number(u.IsSuperAdmin) !== 1)
-            .filter((u) => (roleFilter === 'all' ? true : u.VaiTro === roleFilter))
-    ), [users, roleFilter]);
-
-    useEffect(() => {
-        setCurrentPage(1);
-    }, [roleFilter]);
-
-    const totalUsers = filteredUsers.length;
-    const totalPages = Math.max(1, Math.ceil(totalUsers / pageSize));
-    const safeCurrentPage = Math.min(Math.max(currentPage, 1), totalPages);
-
-    useEffect(() => {
-        if (safeCurrentPage !== currentPage) {
-            setCurrentPage(safeCurrentPage);
-        }
-    }, [currentPage, safeCurrentPage]);
-
-    const startIndex = (safeCurrentPage - 1) * pageSize;
-    const pagedUsers = useMemo(
-        () => filteredUsers.slice(startIndex, startIndex + pageSize),
-        [filteredUsers, startIndex]
-    );
 
     const setRowError = (userId, message) => {
         setRowErrors((prev) => ({ ...prev, [userId]: message }));
@@ -326,7 +343,7 @@ const AdminUsersPage = ({
             setViewModal((prev) => ({
                 ...prev,
                 loading: false,
-                error: 'Chưa cấu hình API xem chi tiết người dùng.'
+                error: t('admin.usersPage.messages.detailApiMissing')
             }));
             return;
         }
@@ -338,7 +355,7 @@ const AdminUsersPage = ({
             setViewModal((prev) => ({
                 ...prev,
                 loading: false,
-                error: error?.message || 'Không tải được chi tiết người dùng'
+                error: error?.message || t('admin.usersPage.messages.loadDetailFailed')
             }));
         }
     };
@@ -375,7 +392,7 @@ const AdminUsersPage = ({
             setEditModal((prev) => ({
                 ...prev,
                 loadingDetail: false,
-                error: error?.message || 'Không tải được chi tiết để chỉnh sửa.'
+                error: error?.message || t('admin.usersPage.messages.loadEditDetailFailed')
             }));
         }
     };
@@ -390,7 +407,7 @@ const AdminUsersPage = ({
                 email: '',
                 phone: '',
                 address: '',
-                role: 'Ứng viên',
+                role: ROLE_CANDIDATE,
                 status: 1,
                 candidateEnabled: false,
                 employerEnabled: false,
@@ -414,13 +431,14 @@ const AdminUsersPage = ({
     };
 
     const updateRole = (role) => {
+        const normalizedRole = normalizeRoleValue(role);
         setEditModal((prev) => ({
             ...prev,
             form: {
                 ...prev.form,
-                role,
-                candidateEnabled: role === 'Ứng viên',
-                employerEnabled: role === 'Nhà tuyển dụng'
+                role: normalizedRole,
+                candidateEnabled: normalizedRole === ROLE_CANDIDATE,
+                employerEnabled: normalizedRole === ROLE_EMPLOYER
             }
         }));
     };
@@ -461,7 +479,7 @@ const AdminUsersPage = ({
             await onSaveUser(userId, buildUserUpdatePayload(editModal.form));
             closeEditModal();
         } catch (error) {
-            const message = error?.message || 'Không cập nhật được người dùng';
+            const message = error?.message || t('admin.usersPage.messages.updateFailed');
             setEditModal((prev) => ({ ...prev, saving: false, error: message }));
             setRowError(userId, message);
         } finally {
@@ -472,13 +490,14 @@ const AdminUsersPage = ({
     const handleDeleteOrRestore = async (user) => {
         const userId = user.MaNguoiDung;
         const isDeleted = isUserSoftDeleted(user);
-        const actionText = isDeleted ? 'khôi phục' : 'xóa mềm';
-        const confirmText = isDeleted ? 'Khôi phục' : 'Xóa';
+        if (typeof requestConfirm !== 'function') return;
+        const actionText = isDeleted ? t('admin.usersPage.actions.restore') : t('admin.usersPage.actions.softDelete');
+        const confirmText = isDeleted ? t('admin.usersPage.confirm.restoreButton') : t('admin.usersPage.confirm.deleteButton');
         const confirmMessage = isDeleted
-            ? 'Bạn có chắc muốn khôi phục tài khoản này?'
-            : 'Tài khoản sẽ bị xóa mềm trong 72 giờ. Nếu không khôi phục trong thời gian này, hệ thống sẽ xóa vĩnh viễn toàn bộ dữ liệu liên quan. Bạn có muốn tiếp tục?';
+            ? t('admin.usersPage.confirm.restoreMessage')
+            : t('admin.usersPage.confirm.deleteMessage');
         const ok = await requestConfirm({
-            title: `Xác nhận ${actionText}`,
+            title: t('admin.usersPage.confirm.title', { action: actionText }),
             message: confirmMessage,
             confirmText
         });
@@ -489,14 +508,14 @@ const AdminUsersPage = ({
         try {
             if (isDeleted) {
                 if (typeof onRestoreUser !== 'function') {
-                    throw new Error('Chưa cấu hình thao tác khôi phục người dùng.');
+                    throw new Error(t('admin.usersPage.messages.restoreHandlerMissing'));
                 }
                 await onRestoreUser(userId);
             } else {
                 await onDeleteUser(userId);
             }
         } catch (error) {
-            setRowError(userId, error?.message || 'Thao tác thất bại');
+            setRowError(userId, error?.message || t('admin.usersPage.messages.actionFailed'));
         } finally {
             setRowBusyId(null);
         }
@@ -506,9 +525,9 @@ const AdminUsersPage = ({
     const avatarUrl = viewModal.detail?.avatarAbsoluteUrl || viewModal.detail?.avatarUrl || '';
     const candidateProfile = viewModal.detail?.candidateProfile || null;
     const employerProfile = viewModal.detail?.employerProfile || null;
-    const editRole = editModal.form.role;
-    const showCandidateSection = editRole === 'Ứng viên';
-    const showEmployerSection = editRole === 'Nhà tuyển dụng';
+    const editRole = normalizeRoleValue(editModal.form.role);
+    const showCandidateSection = editRole === ROLE_CANDIDATE;
+    const showEmployerSection = editRole === ROLE_EMPLOYER;
 
     const currentEditSnapshot = JSON.stringify(buildUserUpdatePayload(editModal.form));
     const editDirty = Boolean(editModal.user) && (
@@ -521,7 +540,7 @@ const AdminUsersPage = ({
                 <div className="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center flex-wrap gap-3">
                     <h5 className="mb-0 d-flex align-items-center gap-2">
                         <Users size={18} />
-                        <span>Quản lý người dùng</span>
+                        <span>{t('admin.usersPage.title')}</span>
                     </h5>
                     <div className="d-flex align-items-center gap-2">
                         <select
@@ -529,15 +548,15 @@ const AdminUsersPage = ({
                             style={{ minWidth: 170 }}
                             value={roleFilter}
                             onChange={(e) => {
-                                setCurrentPage(1);
-                                onRoleFilterChange(e.target.value);
+                                const nextRole = e.target.value;
+                                onRoleFilterChange(nextRole);
                             }}
-                            aria-label="Lọc vai trò"
+                            aria-label={t('admin.usersPage.filter.roleAriaLabel')}
                         >
-                            <option value="all">Tất cả</option>
-                            <option value="Ứng viên">Ứng viên</option>
-                            <option value="Nhà tuyển dụng">Nhà tuyển dụng</option>
-                            <option value="Quản trị">Quản trị</option>
+                            <option value="all">{t('admin.usersPage.filter.all')}</option>
+                            <option value={ROLE_CANDIDATE}>{t('admin.usersPage.roles.candidate')}</option>
+                            <option value={ROLE_EMPLOYER}>{t('admin.usersPage.roles.employer')}</option>
+                            <option value={ROLE_ADMIN}>{t('admin.usersPage.roles.admin')}</option>
                         </select>
                     </div>
                 </div>
@@ -545,18 +564,18 @@ const AdminUsersPage = ({
                     <table className="table table-hover align-middle mb-0">
                         <thead>
                             <tr>
-                                <th style={{ width: 80 }}>ID</th>
-                                <th style={{ width: 260 }}>Họ tên</th>
-                                <th>Email</th>
-                                <th style={{ width: 180 }}>Vai trò</th>
-                                <th style={{ width: 160 }}>Trạng thái</th>
-                                <th style={{ width: 190 }}>Ngày tạo</th>
-                                <th style={{ width: 190 }}>Ngày xóa</th>
-                                <th style={{ width: 280 }} className="admin-action-col">Thao tác</th>
+                                <th style={{ width: 80 }}>{t('admin.usersPage.columns.id')}</th>
+                                <th style={{ width: 260 }}>{t('admin.usersPage.columns.fullName')}</th>
+                                <th>{t('admin.usersPage.columns.email')}</th>
+                                <th style={{ width: 180 }}>{t('admin.usersPage.columns.role')}</th>
+                                <th style={{ width: 160 }}>{t('admin.usersPage.columns.status')}</th>
+                                <th style={{ width: 190 }}>{t('admin.usersPage.columns.createdAt')}</th>
+                                <th style={{ width: 190 }}>{t('admin.usersPage.columns.deletedAt')}</th>
+                                <th style={{ width: 280 }} className="admin-action-col">{t('admin.usersPage.columns.actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {pagedUsers.map((user, index) => {
+                            {users.map((user, index) => {
                                 const userId = user.MaNguoiDung;
                                 const isDeleted = isUserSoftDeleted(user);
                                 const softDeleteMeta = getSoftDeleteMeta(user, nowTick);
@@ -564,21 +583,21 @@ const AdminUsersPage = ({
                                 const busy = rowBusyId === userId;
                                 return (
                                     <tr key={userId}>
-                                        <td>{startIndex + index + 1}</td>
+                                        <td>{fromDisplay + index}</td>
                                         <td className="admin-users-name-cell" title={user.HoTen || '-'}>{user.HoTen || '-'}</td>
                                         <td>{user.Email}</td>
                                         <td>
-                                            <span className="badge rounded-pill text-bg-light border">{user.VaiTro || 'Ứng viên'}</span>
+                                            <span className="badge rounded-pill text-bg-light border">{getRoleLabel(user.VaiTro, t)}</span>
                                         </td>
-                                        <td>{getStatusBadge(user, nowTick)}</td>
-                                        <td>{formatDateTime(user.NgayTao)}</td>
+                                        <td>{getStatusBadge(user, t, nowTick)}</td>
+                                        <td>{formatDateTime(user.NgayTao, locale)}</td>
                                         <td>
-                                            <div>{formatDateTime(user.NgayXoa)}</div>
+                                            <div>{formatDateTime(user.NgayXoa, locale)}</div>
                                             {softDeleteMeta ? (
                                                 <small className={`d-block mt-1 ${softDeleteMeta.isExpired ? 'text-danger' : 'text-muted'}`}>
                                                     {softDeleteMeta.isExpired
-                                                        ? 'Đã quá hạn 72 giờ, hệ thống sẽ xóa vĩnh viễn khi đồng bộ tiếp theo.'
-                                                        : `Còn ${formatSoftDeleteRemaining(softDeleteMeta.remainingMs)} để khôi phục.`}
+                                                        ? t('admin.usersPage.softDelete.expiredHint')
+                                                        : t('admin.usersPage.softDelete.remainingHint', { time: formatSoftDeleteRemaining(softDeleteMeta.remainingMs, t) })}
                                                 </small>
                                             ) : null}
                                         </td>
@@ -589,8 +608,8 @@ const AdminUsersPage = ({
                                                     className="btn btn-sm btn-outline-info admin-action-icon-btn"
                                                     onClick={() => openViewModal(user)}
                                                     disabled={busy}
-                                                    title="Xem chi tiết"
-                                                    aria-label="Xem chi tiết"
+                                                    title={t('admin.usersPage.actions.view')}
+                                                    aria-label={t('admin.usersPage.actions.view')}
                                                 >
                                                     <Eye size={14} />
                                                 </button>
@@ -599,8 +618,8 @@ const AdminUsersPage = ({
                                                     className="btn btn-sm btn-outline-primary admin-action-icon-btn"
                                                     onClick={() => openEditModal(user)}
                                                     disabled={!permissions.canEdit || busy}
-                                                    title="Sửa người dùng"
-                                                    aria-label="Sửa người dùng"
+                                                    title={t('admin.usersPage.actions.edit')}
+                                                    aria-label={t('admin.usersPage.actions.edit')}
                                                 >
                                                     <PencilLine size={14} />
                                                 </button>
@@ -609,8 +628,8 @@ const AdminUsersPage = ({
                                                     className={`btn btn-sm admin-action-icon-btn ${isDeleted ? 'btn-outline-success' : 'btn-outline-danger'}`}
                                                     onClick={() => handleDeleteOrRestore(user)}
                                                     disabled={!permissions.canDelete || busy}
-                                                    title={isDeleted ? 'Khôi phục người dùng' : 'Xóa người dùng'}
-                                                    aria-label={isDeleted ? 'Khôi phục người dùng' : 'Xóa người dùng'}
+                                                    title={isDeleted ? t('admin.usersPage.actions.restore') : t('admin.usersPage.actions.delete')}
+                                                    aria-label={isDeleted ? t('admin.usersPage.actions.restore') : t('admin.usersPage.actions.delete')}
                                                 >
                                                     {isDeleted ? <RotateCcw size={14} /> : <Trash2 size={14} />}
                                                 </button>
@@ -620,8 +639,8 @@ const AdminUsersPage = ({
                                     </tr>
                                 );
                             })}
-                            {pagedUsers.length === 0 && !loading && (
-                                <tr><td colSpan={8} className="text-center text-muted py-4">Chưa có dữ liệu</td></tr>
+                            {users.length === 0 && !loading && (
+                                <tr><td colSpan={8} className="text-center text-muted py-4">{t('admin.usersPage.empty')}</td></tr>
                             )}
                         </tbody>
                     </table>
@@ -629,11 +648,17 @@ const AdminUsersPage = ({
                 {totalUsers > 0 && (
                     <div className="d-flex justify-content-end p-3 border-top bg-white">
                         <SmartPagination
-                            currentPage={safeCurrentPage}
-                            pageSize={pageSize}
+                            from={fromDisplay}
+                            to={toDisplay}
+                            pageSize={perPage}
+                            perPage={perPage}
                             totalItems={totalUsers}
-                            onPageChange={setCurrentPage}
-                            showPageNumbers={false}
+                            loading={loading}
+                            onRangeChange={(nextFrom, nextTo) => {
+                                if (typeof onRangeChange === 'function') {
+                                    onRangeChange(nextFrom, nextTo, roleFilter);
+                                }
+                            }}
                         />
                     </div>
                 )}
@@ -643,13 +668,13 @@ const AdminUsersPage = ({
                 <div className="admin-confirm-backdrop" role="dialog" aria-modal="true">
                     <div className="admin-confirm-dialog admin-users-view-dialog card border-0 shadow-sm">
                         <div className="card-header bg-white border-0 d-flex align-items-center justify-content-between admin-users-view-header">
-                            <h5 className="mb-0">Thông tin người dùng</h5>
+                            <h5 className="mb-0">{t('admin.usersPage.viewModal.title')}</h5>
                             <button type="button" className="admin-users-close-btn" onClick={() => setViewModal({ open: false, user: null, detail: null, loading: false, error: '' })}>
                                 <i className="bi bi-x-lg"></i>
                             </button>
                         </div>
                         <div className="card-body">
-                            {viewModal.loading && <div className="alert alert-info mb-0">Đang tải chi tiết người dùng...</div>}
+                            {viewModal.loading && <div className="alert alert-info mb-0">{t('admin.usersPage.messages.loadingDetail')}</div>}
                             {!viewModal.loading && viewModal.error && <div className="alert alert-danger mb-0">{viewModal.error}</div>}
 
                             {!viewModal.loading && !viewModal.error && detailUser && (
@@ -658,7 +683,7 @@ const AdminUsersPage = ({
                                         {avatarUrl ? (
                                             <img
                                                 src={avatarUrl}
-                                                alt="avatar"
+                                                alt={t('admin.usersPage.viewModal.avatarAlt')}
                                                 className="admin-users-avatar"
                                             />
                                         ) : (
@@ -674,35 +699,35 @@ const AdminUsersPage = ({
                                         </div>
 
                                         <div className="admin-users-profile-tags">
-                                            <span className="badge rounded-pill text-bg-light border">{detailUser.VaiTro || 'Ứng viên'}</span>
-                                            {getStatusBadge(detailUser, nowTick)}
+                                            <span className="badge rounded-pill text-bg-light border">{getRoleLabel(detailUser.VaiTro, t)}</span>
+                                            {getStatusBadge(detailUser, t, nowTick)}
                                         </div>
 
                                         <div className="admin-users-profile-meta">
                                             <div className="admin-users-profile-meta-item">
-                                                <span>Mã người dùng</span>
+                                                <span>{t('admin.usersPage.viewModal.userCode')}</span>
                                                 <strong>{viewModal.user?.MaNguoiDung || '-'}</strong>
                                             </div>
                                             <div className="admin-users-profile-meta-item">
-                                                <span>Ngày tạo</span>
-                                                <strong>{formatDateTime(detailUser.NgayTao)}</strong>
+                                                <span>{t('admin.usersPage.columns.createdAt')}</span>
+                                                <strong>{formatDateTime(detailUser.NgayTao, locale)}</strong>
                                             </div>
                                             <div className="admin-users-profile-meta-item">
-                                                <span>Cập nhật</span>
-                                                <strong>{formatDateTime(detailUser.NgayCapNhat)}</strong>
+                                                <span>{t('admin.usersPage.viewModal.updatedAt')}</span>
+                                                <strong>{formatDateTime(detailUser.NgayCapNhat, locale)}</strong>
                                             </div>
                                         </div>
                                     </aside>
 
                                     <div className="admin-users-detail-panels">
                                         <section className="admin-users-section-card">
-                                            <h6 className="mb-2">Thông tin cơ bản</h6>
+                                            <h6 className="mb-2">{t('admin.usersPage.viewModal.basicInfo')}</h6>
                                             <div className="admin-users-field-grid">
-                                                <UserInfoField label="Số điện thoại" value={detailUser.SoDienThoai} className="admin-users-info-card" />
-                                                <UserInfoField label="Địa chỉ" value={detailUser.DiaChi} className="admin-users-info-card" />
-                                                <UserInfoField label="Ngày tạo" value={formatDateTime(detailUser.NgayTao)} className="admin-users-info-card" noWrap />
-                                                <UserInfoField label="Ngày cập nhật" value={formatDateTime(detailUser.NgayCapNhat)} className="admin-users-info-card" noWrap />
-                                                <UserInfoField label="Ngày xóa" value={formatDateTime(detailUser.NgayXoa)} className="admin-users-info-card" noWrap />
+                                                <UserInfoField label={t('admin.usersPage.fields.phone')} value={detailUser.SoDienThoai} className="admin-users-info-card" />
+                                                <UserInfoField label={t('admin.usersPage.fields.address')} value={detailUser.DiaChi} className="admin-users-info-card" />
+                                                <UserInfoField label={t('admin.usersPage.columns.createdAt')} value={formatDateTime(detailUser.NgayTao, locale)} className="admin-users-info-card" noWrap />
+                                                <UserInfoField label={t('admin.usersPage.viewModal.updatedAt')} value={formatDateTime(detailUser.NgayCapNhat, locale)} className="admin-users-info-card" noWrap />
+                                                <UserInfoField label={t('admin.usersPage.columns.deletedAt')} value={formatDateTime(detailUser.NgayXoa, locale)} className="admin-users-info-card" noWrap />
                                             </div>
                                         </section>
 
@@ -710,22 +735,22 @@ const AdminUsersPage = ({
                                             <section className="admin-users-section-card">
                                                 <h6 className="mb-2 d-flex align-items-center gap-2">
                                                     <MapPin size={16} />
-                                                    Thông tin ứng viên
+                                                    {t('admin.usersPage.viewModal.candidateInfo')}
                                                 </h6>
                                                 <div className="admin-users-field-grid">
-                                                    <UserInfoField label="Chức danh" value={candidateProfile.ChucDanh} className="admin-users-info-card" />
-                                                    <UserInfoField label="Giới tính" value={candidateProfile.GioiTinh} className="admin-users-info-card" />
-                                                    <UserInfoField label="Ngày sinh" value={formatDateOnly(candidateProfile.NgaySinh)} className="admin-users-info-card" noWrap />
-                                                    <UserInfoField label="Thành phố" value={candidateProfile.ThanhPho} className="admin-users-info-card" />
-                                                    <UserInfoField label="Quận/Huyện" value={candidateProfile.QuanHuyen} className="admin-users-info-card" />
-                                                    <UserInfoField label="Địa chỉ chi tiết" value={candidateProfile.DiaChi} className="admin-users-info-card" />
-                                                    <UserInfoField label="Trình độ học vấn" value={candidateProfile.TrinhDoHocVan} className="admin-users-info-card" />
-                                                    <UserInfoField label="Số năm kinh nghiệm" value={candidateProfile.SoNamKinhNghiem} className="admin-users-info-card" />
-                                                    <UserInfoField label="Link cá nhân" value={candidateProfile.LinkCaNhan} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.title')} value={candidateProfile.ChucDanh} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.gender')} value={candidateProfile.GioiTinh} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.birthday')} value={formatDateOnly(candidateProfile.NgaySinh, locale)} className="admin-users-info-card" noWrap />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.city')} value={candidateProfile.ThanhPho} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.district')} value={candidateProfile.QuanHuyen} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.detailedAddress')} value={candidateProfile.DiaChi} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.education')} value={candidateProfile.TrinhDoHocVan} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.experience')} value={candidateProfile.SoNamKinhNghiem} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.candidateFields.personalLink')} value={candidateProfile.LinkCaNhan} className="admin-users-info-card" />
                                                 </div>
                                                 {candidateProfile.GioiThieuBanThan ? (
                                                     <div className="mt-2 admin-users-note-box">
-                                                        <small className="text-muted d-block">Giới thiệu bản thân</small>
+                                                        <small className="text-muted d-block">{t('admin.usersPage.candidateFields.intro')}</small>
                                                         <div>{candidateProfile.GioiThieuBanThan}</div>
                                                     </div>
                                                 ) : null}
@@ -736,18 +761,18 @@ const AdminUsersPage = ({
                                             <section className="admin-users-section-card">
                                                 <h6 className="mb-2 d-flex align-items-center gap-2">
                                                     <Building2 size={16} />
-                                                    Thông tin nhà tuyển dụng
+                                                    {t('admin.usersPage.viewModal.employerInfo')}
                                                 </h6>
                                                 <div className="admin-users-field-grid">
-                                                    <UserInfoField label="Tên công ty" value={employerProfile.TenCongTy} className="admin-users-info-card" />
-                                                    <UserInfoField label="Mã số thuế" value={employerProfile.MaSoThue} className="admin-users-info-card" />
-                                                    <UserInfoField label="Website" value={employerProfile.Website} className="admin-users-info-card" />
-                                                    <UserInfoField label="Thành phố" value={employerProfile.ThanhPho} className="admin-users-info-card" />
-                                                    <UserInfoField label="Địa chỉ" value={employerProfile.DiaChi} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.employerFields.companyName')} value={employerProfile.TenCongTy} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.employerFields.taxCode')} value={employerProfile.MaSoThue} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.employerFields.website')} value={employerProfile.Website} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.employerFields.city')} value={employerProfile.ThanhPho} className="admin-users-info-card" />
+                                                    <UserInfoField label={t('admin.usersPage.employerFields.address')} value={employerProfile.DiaChi} className="admin-users-info-card" />
                                                 </div>
                                                 {employerProfile.MoTa ? (
                                                     <div className="mt-2 admin-users-note-box">
-                                                        <small className="text-muted d-block">Mô tả công ty</small>
+                                                        <small className="text-muted d-block">{t('admin.usersPage.employerFields.description')}</small>
                                                         <div>{employerProfile.MoTa}</div>
                                                     </div>
                                                 ) : null}
@@ -764,7 +789,7 @@ const AdminUsersPage = ({
                                         className="btn btn-outline-secondary"
                                         onClick={() => setViewModal({ open: false, user: null, detail: null, loading: false, error: '' })}
                                     >
-                                        Hủy
+                                        {t('common.cancel')}
                                     </button>
                                 </div>
                             )}
@@ -778,36 +803,36 @@ const AdminUsersPage = ({
                     <div className="admin-confirm-dialog admin-users-edit-dialog card border-0 shadow-sm">
                         <div className="card-body">
                             <div className="d-flex align-items-center justify-content-between mb-3">
-                                <h5 className="mb-0">Sửa người dùng #{editModal.user?.MaNguoiDung}</h5>
+                                <h5 className="mb-0">{t('admin.usersPage.editModal.title', { id: editModal.user?.MaNguoiDung })}</h5>
                                 <button
                                     type="button"
                                     className="btn btn-sm btn-outline-secondary"
                                     onClick={closeEditModal}
                                     disabled={editModal.saving}
                                 >
-                                    Đóng
+                                    {t('common.close')}
                                 </button>
                             </div>
 
                             {editModal.loadingDetail ? (
-                                <div className="alert alert-info mb-0">Đang tải đầy đủ thông tin người dùng...</div>
+                                <div className="alert alert-info mb-0">{t('admin.usersPage.messages.loadingEditDetail')}</div>
                             ) : (
                                 <>
                                     <div className="admin-users-edit-section">
-                                        <h6 className="mb-3">Thông tin cơ bản</h6>
+                                        <h6 className="mb-3">{t('admin.usersPage.editModal.basicInfo')}</h6>
                                         <div className="row g-3">
                                             <div className="col-md-6">
-                                                <label className="form-label">Họ tên</label>
+                                                <label className="form-label">{t('admin.usersPage.fields.fullName')}</label>
                                                 <input
                                                     className="form-control"
                                                     value={editModal.form.fullName}
                                                     onChange={(e) => updateEditField('fullName', e.target.value)}
                                                     disabled={editModal.saving}
-                                                    placeholder="Nhập họ tên"
+                                                    placeholder={t('admin.usersPage.editModal.placeholders.fullName')}
                                                 />
                                             </div>
                                             <div className="col-md-6">
-                                                <label className="form-label">Email</label>
+                                                <label className="form-label">{t('admin.usersPage.fields.email')}</label>
                                                 <input
                                                     type="email"
                                                     className="form-control"
@@ -818,48 +843,48 @@ const AdminUsersPage = ({
                                                 />
                                             </div>
                                             <div className="col-md-6">
-                                                <label className="form-label">Số điện thoại</label>
+                                                <label className="form-label">{t('admin.usersPage.fields.phone')}</label>
                                                 <input
                                                     className="form-control"
                                                     value={editModal.form.phone}
                                                     onChange={(e) => updateEditField('phone', e.target.value)}
                                                     disabled={editModal.saving}
-                                                    placeholder="Nhập số điện thoại"
+                                                    placeholder={t('admin.usersPage.editModal.placeholders.phone')}
                                                 />
                                             </div>
                                             <div className="col-md-6">
-                                                <label className="form-label">Địa chỉ</label>
+                                                <label className="form-label">{t('admin.usersPage.fields.address')}</label>
                                                 <input
                                                     className="form-control"
                                                     value={editModal.form.address}
                                                     onChange={(e) => updateEditField('address', e.target.value)}
                                                     disabled={editModal.saving}
-                                                    placeholder="Nhập địa chỉ"
+                                                    placeholder={t('admin.usersPage.editModal.placeholders.address')}
                                                 />
                                             </div>
                                             <div className="col-md-6">
-                                                <label className="form-label">Vai trò</label>
+                                                <label className="form-label">{t('admin.usersPage.columns.role')}</label>
                                                 <select
                                                     className="form-select"
                                                     value={editModal.form.role}
                                                     onChange={(e) => updateRole(e.target.value)}
                                                     disabled={editModal.saving}
                                                 >
-                                                    <option value="Ứng viên">Ứng viên</option>
-                                                    <option value="Nhà tuyển dụng">Nhà tuyển dụng</option>
-                                                    <option value="Quản trị">Quản trị</option>
+                                                    <option value={ROLE_CANDIDATE}>{t('admin.usersPage.roles.candidate')}</option>
+                                                    <option value={ROLE_EMPLOYER}>{t('admin.usersPage.roles.employer')}</option>
+                                                    <option value={ROLE_ADMIN}>{t('admin.usersPage.roles.admin')}</option>
                                                 </select>
                                             </div>
                                             <div className="col-md-6">
-                                                <label className="form-label">Trạng thái</label>
+                                                <label className="form-label">{t('admin.usersPage.columns.status')}</label>
                                                 <select
                                                     className="form-select"
                                                     value={editModal.form.status}
                                                     onChange={(e) => updateEditField('status', Number(e.target.value))}
                                                     disabled={editModal.saving}
                                                 >
-                                                    <option value={1}>Hoạt động</option>
-                                                    <option value={0}>Đã chặn</option>
+                                                    <option value={1}>{t('admin.usersPage.status.active')}</option>
+                                                    <option value={0}>{t('admin.usersPage.status.blocked')}</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -868,37 +893,37 @@ const AdminUsersPage = ({
                                     {showCandidateSection && (
                                         <div className="admin-users-edit-section mt-3">
                                             <div className="d-flex align-items-center justify-content-between mb-3">
-                                                <h6 className="mb-0">Hồ sơ ứng viên</h6>
+                                                <h6 className="mb-0">{t('admin.usersPage.editModal.candidateProfile')}</h6>
                                             </div>
 
                                             <div className="row g-3">
                                                 <div className="col-md-4">
-                                                    <label className="form-label">Ngày sinh</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.birthday')}</label>
                                                     <CalendarDatePicker
                                                         value={editModal.form.candidate.birthday}
                                                         onChange={(nextValue) => updateCandidateField('birthday', nextValue)}
-                                                        placeholder="Chọn ngày sinh"
+                                                        placeholder={t('admin.usersPage.editModal.placeholders.birthday')}
                                                         maxDate={new Date()}
                                                         disabled={editModal.saving}
                                                         inputClassName="form-control"
                                                     />
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label">Giới tính</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.gender')}</label>
                                                     <select
                                                         className="form-select"
                                                         value={editModal.form.candidate.gender}
                                                         onChange={(e) => updateCandidateField('gender', e.target.value)}
                                                         disabled={editModal.saving}
                                                     >
-                                                        <option value="">Chưa chọn</option>
-                                                        <option value="Nam">Nam</option>
-                                                        <option value="Nữ">Nữ</option>
-                                                        <option value="Khác">Khác</option>
+                                                        <option value="">{t('admin.usersPage.editModal.gender.unselected')}</option>
+                                                        <option value="Nam">{t('admin.usersPage.editModal.gender.male')}</option>
+                                                        <option value="Nữ">{t('admin.usersPage.editModal.gender.female')}</option>
+                                                        <option value="Khác">{t('admin.usersPage.editModal.gender.other')}</option>
                                                     </select>
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label">Số năm kinh nghiệm</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.experience')}</label>
                                                     <input
                                                         type="number"
                                                         min={0}
@@ -911,7 +936,7 @@ const AdminUsersPage = ({
                                                 </div>
 
                                                 <div className="col-md-4">
-                                                    <label className="form-label">Thành phố</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.city')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.candidate.city}
@@ -920,7 +945,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label">Quận/Huyện</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.district')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.candidate.district}
@@ -929,7 +954,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label">Chức danh</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.title')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.candidate.title}
@@ -939,7 +964,7 @@ const AdminUsersPage = ({
                                                 </div>
 
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Trình độ học vấn</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.education')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.candidate.education}
@@ -948,7 +973,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Link cá nhân</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.personalLink')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.candidate.personalLink}
@@ -959,7 +984,7 @@ const AdminUsersPage = ({
                                                 </div>
 
                                                 <div className="col-12">
-                                                    <label className="form-label">Địa chỉ chi tiết</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.detailedAddress')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.candidate.address}
@@ -968,7 +993,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-12">
-                                                    <label className="form-label">Giới thiệu bản thân</label>
+                                                    <label className="form-label">{t('admin.usersPage.candidateFields.intro')}</label>
                                                     <textarea
                                                         rows={3}
                                                         className="form-control"
@@ -984,12 +1009,12 @@ const AdminUsersPage = ({
                                     {showEmployerSection && (
                                         <div className="admin-users-edit-section mt-3">
                                             <div className="d-flex align-items-center justify-content-between mb-3">
-                                                <h6 className="mb-0">Hồ sơ nhà tuyển dụng</h6>
+                                                <h6 className="mb-0">{t('admin.usersPage.editModal.employerProfile')}</h6>
                                             </div>
 
                                             <div className="row g-3">
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Tên công ty</label>
+                                                    <label className="form-label">{t('admin.usersPage.employerFields.companyName')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.employer.companyName}
@@ -998,7 +1023,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Mã số thuế</label>
+                                                    <label className="form-label">{t('admin.usersPage.employerFields.taxCode')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.employer.taxCode}
@@ -1007,7 +1032,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Website</label>
+                                                    <label className="form-label">{t('admin.usersPage.employerFields.website')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.employer.website}
@@ -1017,7 +1042,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label">Thành phố</label>
+                                                    <label className="form-label">{t('admin.usersPage.employerFields.city')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.employer.city}
@@ -1026,7 +1051,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-12">
-                                                    <label className="form-label">Địa chỉ công ty</label>
+                                                    <label className="form-label">{t('admin.usersPage.employerFields.address')}</label>
                                                     <input
                                                         className="form-control"
                                                         value={editModal.form.employer.address}
@@ -1035,7 +1060,7 @@ const AdminUsersPage = ({
                                                     />
                                                 </div>
                                                 <div className="col-12">
-                                                    <label className="form-label">Mô tả công ty</label>
+                                                    <label className="form-label">{t('admin.usersPage.employerFields.description')}</label>
                                                     <textarea
                                                         rows={3}
                                                         className="form-control"
@@ -1050,7 +1075,7 @@ const AdminUsersPage = ({
 
                                     {editModal.user?.NgayXoa ? (
                                         <div className="alert alert-warning mt-3 mb-0">
-                                            Tài khoản đã bị xóa mềm vào {formatDateTime(editModal.user.NgayXoa)}. Chuyển trạng thái về hoạt động sẽ tự động bỏ ngày xóa.
+                                            {t('admin.usersPage.editModal.softDeletedNote', { deletedAt: formatDateTime(editModal.user.NgayXoa, locale) })}
                                         </div>
                                     ) : null}
 
@@ -1058,7 +1083,7 @@ const AdminUsersPage = ({
 
                                     <div className="d-flex justify-content-end gap-2 mt-4">
                                         <button type="button" className="btn btn-outline-secondary" onClick={closeEditModal} disabled={editModal.saving}>
-                                            Hủy
+                                            {t('common.cancel')}
                                         </button>
                                         <button
                                             type="button"
@@ -1066,7 +1091,7 @@ const AdminUsersPage = ({
                                             onClick={submitEditModal}
                                             disabled={editModal.saving || !editDirty || editModal.loadingDetail}
                                         >
-                                            {editModal.saving ? 'Đang lưu...' : 'Lưu thay đổi'}
+                                            {editModal.saving ? t('admin.usersPage.editModal.saving') : t('admin.usersPage.editModal.save')}
                                         </button>
                                     </div>
                                 </>

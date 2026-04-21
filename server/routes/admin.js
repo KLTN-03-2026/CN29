@@ -48,6 +48,7 @@ const getCompanyWithOwner = async (id) => {
         c.MoTa,
         c.NgayTao,
         c.NgayCapNhat,
+        c.NgayXoa,
         c.Website,
         c.NguoiDaiDien,
         COALESCE(c.Logo, ntd.Logo) AS LogoCongTy,
@@ -65,6 +66,84 @@ const getCompanyWithOwner = async (id) => {
 const toInt = (v, def) => {
   const n = parseInt(String(v ?? ''), 10);
   return Number.isFinite(n) ? n : def;
+};
+
+const normalizeRoleFilterValue = (value) => {
+  const normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd');
+
+  if (!normalized || normalized === 'all') return 'all';
+  if (normalized.includes('quan tri') || normalized === 'admin') return 'admin';
+  if (normalized.includes('nha tuyen dung') || normalized.includes('employer') || normalized.includes('recruiter')) {
+    return 'employer';
+  }
+  if (normalized.includes('ung vien') || normalized.includes('candidate') || normalized === 'user') {
+    return 'candidate';
+  }
+
+  return 'all';
+};
+
+const parseRangePagination = (query = {}, { defaultLimit = 50, maxLimit = 200 } = {}) => {
+  const safeMaxLimit = Math.max(1, toInt(maxLimit, 200));
+  const safeDefaultLimit = Math.min(
+    Math.max(1, toInt(defaultLimit, 50)),
+    safeMaxLimit
+  );
+
+  const rawFrom = toInt(query.from, NaN);
+  const rawTo = toInt(query.to, NaN);
+
+  if (Number.isFinite(rawFrom) && Number.isFinite(rawTo) && rawFrom > 0 && rawTo >= rawFrom) {
+    const from = Math.max(1, rawFrom);
+    const requestedTo = Math.max(from, rawTo);
+    const limit = Math.min(Math.max(requestedTo - from + 1, 1), safeMaxLimit);
+    const offset = from - 1;
+
+    return {
+      limit,
+      offset
+    };
+  }
+
+  const limit = Math.min(Math.max(toInt(query.limit, safeDefaultLimit), 1), safeMaxLimit);
+  const offset = Math.max(toInt(query.offset, 0), 0);
+
+  return {
+    limit,
+    offset
+  };
+};
+
+const buildPaginationMeta = ({ total = 0, limit = 10, offset = 0 } = {}) => {
+  const safeTotal = Math.max(0, Number(total) || 0);
+  const safeLimit = Math.max(1, Number(limit) || 1);
+  const safeOffset = Math.max(0, Number(offset) || 0);
+
+  if (safeTotal <= 0) {
+    return {
+      from: 0,
+      to: 0,
+      total: 0,
+      limit: safeLimit,
+      offset: safeOffset
+    };
+  }
+
+  const from = Math.min(safeTotal, safeOffset + 1);
+  const to = Math.min(safeTotal, safeOffset + safeLimit);
+
+  return {
+    from,
+    to: Math.max(from, to),
+    total: safeTotal,
+    limit: safeLimit,
+    offset: safeOffset
+  };
 };
 
 const cvStoragePath = path.join(__dirname, '../public/cvs');
@@ -332,6 +411,40 @@ const ensureNguoiDungNgayXoaColumn = async () => {
   }
 };
 
+let ensureCongTyNgayXoaColumnPromise = null;
+const ensureCongTyNgayXoaColumn = async () => {
+  if (ensureCongTyNgayXoaColumnPromise) return ensureCongTyNgayXoaColumnPromise;
+
+  ensureCongTyNgayXoaColumnPromise = (async () => {
+    if (isMysql) {
+      const row = await dbGet(
+        `SELECT COUNT(*) AS c
+         FROM INFORMATION_SCHEMA.COLUMNS
+         WHERE TABLE_SCHEMA = DATABASE()
+           AND TABLE_NAME = 'CongTy'
+           AND COLUMN_NAME = 'NgayXoa'`
+      );
+      if (Number(row?.c || 0) === 0) {
+        await dbRun('ALTER TABLE CongTy ADD COLUMN NgayXoa DATETIME NULL');
+      }
+      return;
+    }
+
+    const columns = await dbAll(`PRAGMA table_info('CongTy')`);
+    const hasNgayXoa = columns.some((col) => String(col?.name || '').toLowerCase() === 'ngayxoa');
+    if (!hasNgayXoa) {
+      await dbRun('ALTER TABLE CongTy ADD COLUMN NgayXoa TEXT');
+    }
+  })();
+
+  try {
+    await ensureCongTyNgayXoaColumnPromise;
+  } catch (err) {
+    ensureCongTyNgayXoaColumnPromise = null;
+    throw err;
+  }
+};
+
 const SOFT_DELETE_RETENTION_HOURS = 72;
 const SOFT_DELETE_RETENTION_MS = SOFT_DELETE_RETENTION_HOURS * 60 * 60 * 1000;
 
@@ -505,6 +618,56 @@ const purgeExpiredSoftDeletedUsers = async () => {
     await purgeExpiredSoftDeletedUsersPromise;
   } finally {
     purgeExpiredSoftDeletedUsersPromise = null;
+  }
+};
+
+let purgeExpiredSoftDeletedCompaniesPromise = null;
+const purgeExpiredSoftDeletedCompanies = async () => {
+  if (purgeExpiredSoftDeletedCompaniesPromise) return purgeExpiredSoftDeletedCompaniesPromise;
+
+  purgeExpiredSoftDeletedCompaniesPromise = (async () => {
+    try {
+      await ensureCongTyNgayXoaColumn();
+
+      const rows = await dbAll(
+        `SELECT MaCongTy, NgayXoa
+         FROM CongTy
+         WHERE NgayXoa IS NOT NULL`
+      );
+
+      const nowMs = Date.now();
+      const expiredCompanies = rows.filter((row) => {
+        const meta = computeSoftDeleteMeta(row?.NgayXoa, nowMs);
+        return Boolean(meta?.isExpired);
+      });
+
+      for (const row of expiredCompanies) {
+        const targetId = toInt(row?.MaCongTy, NaN);
+        if (!Number.isFinite(targetId)) continue;
+
+        try {
+          const result = await dbRun('DELETE FROM CongTy WHERE MaCongTy = ?', [targetId]);
+          if (Number(result?.changes || 0) > 0) {
+            await writeAdminAuditLog({
+              userId: null,
+              action: `Xóa cứng công ty quá hạn ${SOFT_DELETE_RETENTION_HOURS}h`,
+              entityType: 'CongTy',
+              entityId: targetId
+            }).catch(() => null);
+          }
+        } catch (err) {
+          console.warn(`[admin] Failed to hard-delete expired company ${targetId}:`, err?.message || err);
+        }
+      }
+    } catch (err) {
+      console.warn('[admin] Failed to purge expired soft-deleted companies:', err?.message || err);
+    }
+  })();
+
+  try {
+    await purgeExpiredSoftDeletedCompaniesPromise;
+  } finally {
+    purgeExpiredSoftDeletedCompaniesPromise = null;
   }
 };
 
@@ -730,6 +893,17 @@ const mapUserRow = (row) => {
   };
 };
 
+const mapCompanyRow = (row) => {
+  if (!row) return null;
+  const softDeleteMeta = computeSoftDeleteMeta(row.NgayXoa);
+  return {
+    ...row,
+    NgayXoa: row.NgayXoa || null,
+    SoftDeleteExpiresAt: softDeleteMeta?.expiresAt || null,
+    SoftDeleteRemainingMs: softDeleteMeta ? Math.max(softDeleteMeta.remainingMs, 0) : null
+  };
+};
+
 const getUserById = (id) => dbGet(
   `SELECT
       MaNguoiDung,
@@ -795,6 +969,7 @@ const requireSuperAdmin = (req, res, next) => {
 router.get('/overview', async (req, res) => {
   await ensureCvTemplateTable().catch(() => null);
   await purgeExpiredSoftDeletedUsers();
+  await purgeExpiredSoftDeletedCompanies();
 
   const tables = [
     'NguoiDung',
@@ -954,20 +1129,59 @@ router.get('/users', async (req, res) => {
     await ensureNguoiDungNgayXoaColumn();
     await purgeExpiredSoftDeletedUsers();
 
-    const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
-    const offset = Math.max(toInt(req.query.offset, 0), 0);
+    const roleFilter = normalizeRoleFilterValue(req.query.role);
+    const adminRoleCondition = `(
+      lower(IFNULL(VaiTro, '')) LIKE '%quản trị%'
+      OR lower(IFNULL(VaiTro, '')) LIKE '%quan tri%'
+      OR lower(IFNULL(VaiTro, '')) = 'admin'
+    )`;
+    const employerRoleCondition = `(
+      lower(IFNULL(VaiTro, '')) LIKE '%nhà tuyển dụng%'
+      OR lower(IFNULL(VaiTro, '')) LIKE '%nha tuyen dung%'
+      OR lower(IFNULL(VaiTro, '')) LIKE '%employer%'
+      OR lower(IFNULL(VaiTro, '')) LIKE '%recruiter%'
+    )`;
+
+    const whereParts = ['IFNULL(IsSuperAdmin, 0) = 0'];
+
+    if (roleFilter === 'admin') {
+      whereParts.push(adminRoleCondition);
+    } else if (roleFilter === 'employer') {
+      whereParts.push(employerRoleCondition);
+    } else if (roleFilter === 'candidate') {
+      whereParts.push(`NOT (${adminRoleCondition} OR ${employerRoleCondition})`);
+    }
+
+    const whereSql = whereParts.length > 0 ? `WHERE ${whereParts.join(' AND ')}` : '';
+
+    const { limit, offset } = parseRangePagination(req.query, {
+      defaultLimit: 50,
+      maxLimit: 200
+    });
 
     const rows = await dbAll(
             `SELECT MaNguoiDung, Email, HoTen, SoDienThoai,
               CASE WHEN IFNULL(IsSuperAdmin, 0) = 1 THEN 'Siêu quản trị viên' ELSE VaiTro END AS VaiTro,
               TrangThai, NgayTao, NgayCapNhat, NgayXoa, IFNULL(IsSuperAdmin, 0) AS IsSuperAdmin
        FROM NguoiDung
+       ${whereSql}
        ORDER BY MaNguoiDung DESC
        LIMIT ? OFFSET ?`,
       [limit, offset]
     );
 
-    return res.json({ success: true, users: rows.map(mapUserRow) });
+    const totalRow = await dbGet(
+      `SELECT COUNT(*) AS c
+       FROM NguoiDung
+       ${whereSql}`
+    );
+    const total = Number(totalRow?.c || 0);
+
+    return res.json({
+      success: true,
+      users: rows.map(mapUserRow),
+      pagination: buildPaginationMeta({ total, limit, offset })
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -1324,24 +1538,30 @@ router.delete('/jobs/:id', requireSuperAdmin, async (req, res) => {
 
 router.get('/companies', async (req, res) => {
   try {
-    const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
-    const offset = Math.max(toInt(req.query.offset, 0), 0);
+    await ensureCongTyNgayXoaColumn();
+    await purgeExpiredSoftDeletedCompanies();
+
+    const { limit, offset } = parseRangePagination(req.query, {
+      defaultLimit: 50,
+      maxLimit: 200
+    });
 
     const rows = await dbAll(
       `SELECT
           c.MaCongTy,
           c.TenCongTy,
           c.MaSoThue,
-         c.DiaChi,
+          c.DiaChi,
           c.ThanhPho,
-         c.LinhVuc,
-         c.MoTa,
-         c.Logo,
+          c.LinhVuc,
+          c.MoTa,
+          c.Logo,
           c.Website,
           c.NguoiDaiDien,
           c.NgayTao,
-         c.NgayCapNhat,
-         COALESCE(c.Logo, ntd.Logo) AS LogoCongTy,
+          c.NgayCapNhat,
+          c.NgayXoa,
+          COALESCE(c.Logo, ntd.Logo) AS LogoCongTy,
           nd.TrangThai AS TrangThaiDaiDien,
           nd.Email AS EmailDaiDien,
           nd.HoTen AS TenNguoiDaiDien
@@ -1353,7 +1573,14 @@ router.get('/companies', async (req, res) => {
       [limit, offset]
     );
 
-    return res.json({ success: true, companies: rows });
+    const totalRow = await dbGet('SELECT COUNT(*) AS c FROM CongTy');
+    const total = Number(totalRow?.c || 0);
+
+    return res.json({
+      success: true,
+      companies: rows.map(mapCompanyRow),
+      pagination: buildPaginationMeta({ total, limit, offset })
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -1361,6 +1588,9 @@ router.get('/companies', async (req, res) => {
 
 router.patch('/companies/:id', requireSuperAdmin, async (req, res) => {
   try {
+    await ensureCongTyNgayXoaColumn();
+    await purgeExpiredSoftDeletedCompanies();
+
     const id = toInt(req.params.id, NaN);
     if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
 
@@ -1369,7 +1599,7 @@ router.patch('/companies/:id', requireSuperAdmin, async (req, res) => {
       return res.status(400).json({ success: false, error: 'TrangThai không hợp lệ (0/1)' });
     }
 
-    const company = await getCompanyWithOwner(id);
+    const company = mapCompanyRow(await getCompanyWithOwner(id));
     if (!company) return res.status(404).json({ success: false, error: 'Không tìm thấy công ty' });
 
     if (company.NguoiDaiDien) {
@@ -1390,7 +1620,7 @@ router.patch('/companies/:id', requireSuperAdmin, async (req, res) => {
       }
     });
 
-    const updated = await getCompanyWithOwner(id);
+    const updated = mapCompanyRow(await getCompanyWithOwner(id));
     return res.json({ success: true, company: updated });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
@@ -1399,22 +1629,68 @@ router.patch('/companies/:id', requireSuperAdmin, async (req, res) => {
 
 router.delete('/companies/:id', requireSuperAdmin, async (req, res) => {
   try {
+    await ensureCongTyNgayXoaColumn();
+    await purgeExpiredSoftDeletedCompanies();
+
     const id = toInt(req.params.id, NaN);
     if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
 
-    const company = await dbGet('SELECT MaCongTy FROM CongTy WHERE MaCongTy = ?', [id]);
+    const company = mapCompanyRow(await getCompanyWithOwner(id));
     if (!company) return res.status(404).json({ success: false, error: 'Không tìm thấy công ty' });
 
-    await dbRun('DELETE FROM CongTy WHERE MaCongTy = ?', [id]);
+    await dbRun(
+      `UPDATE CongTy
+       SET NgayXoa = COALESCE(NgayXoa, datetime("now", "localtime")),
+           NgayCapNhat = datetime("now", "localtime")
+       WHERE MaCongTy = ?`,
+      [id]
+    );
 
     await logAdminAction({
       adminId: req.user?.id,
-      action: 'Xóa công ty',
+      action: 'Xóa mềm công ty',
+      object: 'CongTy',
+      objectId: id,
+      note: {
+        companyName: company.TenCongTy || ''
+      }
+    });
+
+    const updated = mapCompanyRow(await getCompanyWithOwner(id));
+    return res.json({ success: true, company: updated });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message || 'Server error' });
+  }
+});
+
+router.post('/companies/:id/restore', requireSuperAdmin, async (req, res) => {
+  try {
+    await ensureCongTyNgayXoaColumn();
+    await purgeExpiredSoftDeletedCompanies();
+
+    const id = toInt(req.params.id, NaN);
+    if (!Number.isFinite(id)) return res.status(400).json({ success: false, error: 'id không hợp lệ' });
+
+    const company = mapCompanyRow(await getCompanyWithOwner(id));
+    if (!company) return res.status(404).json({ success: false, error: 'Không tìm thấy công ty' });
+
+    await dbRun(
+      `UPDATE CongTy
+       SET NgayXoa = NULL,
+           NgayCapNhat = datetime("now", "localtime")
+       WHERE MaCongTy = ?`,
+      [id]
+    );
+
+    await logAdminAction({
+      adminId: req.user?.id,
+      action: 'Khôi phục công ty',
       object: 'CongTy',
       objectId: id
     });
 
-    return res.json({ success: true });
+    const updated = mapCompanyRow(await getCompanyWithOwner(id));
+    return res.json({ success: true, company: updated });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -1563,8 +1839,10 @@ const applyReportModerationActions = async ({ report, hideContent, lockEntity })
 
 router.get('/reports', async (req, res) => {
   try {
-    const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
-    const offset = Math.max(toInt(req.query.offset, 0), 0);
+    const { limit, offset } = parseRangePagination(req.query, {
+      defaultLimit: 50,
+      maxLimit: 200
+    });
 
     const rows = await dbAll(
       `SELECT
@@ -1584,7 +1862,14 @@ router.get('/reports', async (req, res) => {
       [limit, offset]
     );
 
-    return res.json({ success: true, reports: rows });
+    const totalRow = await dbGet('SELECT COUNT(*) AS c FROM BaoCao');
+    const total = Number(totalRow?.c || 0);
+
+    return res.json({
+      success: true,
+      reports: rows,
+      pagination: buildPaginationMeta({ total, limit, offset })
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }
@@ -1594,8 +1879,10 @@ router.get('/career-guide-posts', async (req, res) => {
   try {
     await ensureCareerGuideAdminSchema();
 
-    const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
-    const offset = Math.max(toInt(req.query.offset, 0), 0);
+    const { limit, offset } = parseRangePagination(req.query, {
+      defaultLimit: 50,
+      maxLimit: 200
+    });
     const keyword = String(req.query.keyword || '').trim().toLowerCase();
 
     const whereParts = [];
@@ -1682,11 +1969,11 @@ router.get('/career-guide-posts', async (req, res) => {
       return res.json({
         success: true,
         posts: pagedSamples,
-        pagination: {
+        pagination: buildPaginationMeta({
+          total: sampleRows.length,
           limit,
-          offset,
-          total: sampleRows.length
-        }
+          offset
+        })
       });
     }
 
@@ -1696,11 +1983,7 @@ router.get('/career-guide-posts', async (req, res) => {
         ...row,
         IsSample: 0
       })),
-      pagination: {
-        limit,
-        offset,
-        total
-      }
+      pagination: buildPaginationMeta({ total, limit, offset })
     });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
@@ -1846,8 +2129,10 @@ router.get('/templates', async (req, res) => {
   try {
     await ensureCvTemplateTable();
 
-    const limit = Math.min(Math.max(toInt(req.query.limit, 50), 1), 200);
-    const offset = Math.max(toInt(req.query.offset, 0), 0);
+    const { limit, offset } = parseRangePagination(req.query, {
+      defaultLimit: 50,
+      maxLimit: 200
+    });
     const search = String(req.query.search || '').trim().toLowerCase();
 
     const whereParts = [];
@@ -1902,7 +2187,14 @@ router.get('/templates', async (req, res) => {
       whereParams
     );
 
-    return res.json({ success: true, templates: templatesWithUsage, total: Number(totalRow?.c || 0) });
+    const total = Number(totalRow?.c || 0);
+
+    return res.json({
+      success: true,
+      templates: templatesWithUsage,
+      total,
+      pagination: buildPaginationMeta({ total, limit, offset })
+    });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message || 'Server error' });
   }

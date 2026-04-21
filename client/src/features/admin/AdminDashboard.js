@@ -4,7 +4,6 @@ import {
     BarChart3,
     Bell,
     BookOpen,
-    BriefcaseBusiness,
     Building2,
     ChevronDown,
     ClipboardList,
@@ -23,14 +22,15 @@ import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import { useDarkMode } from '../../context/DarkModeContext';
 import AdminCompaniesPage from './pages/AdminCompaniesPage';
-import AdminJobsPage from './pages/AdminJobsPage';
 import AdminOverviewPage from './pages/AdminOverviewPage';
+import AdminJobsPage from './pages/AdminJobsPage';
 import AdminProfilePage from './pages/AdminProfilePage';
 import AdminReportsPage from './pages/AdminReportsPage';
 import AdminAuditLogsPage from './pages/AdminAuditLogsPage';
 import AdminCareerGuidePostsPage from './pages/AdminCareerGuidePostsPage';
 import AdminTemplatesPage from './pages/AdminTemplatesPage';
 import AdminUsersPage from './pages/AdminUsersPage';
+import AdminConfirmDialog from './components/AdminConfirmDialog';
 import EmployerHeaderShell from '../shared/components/EmployerHeaderShell';
 import AdminHeaderRightActions from '../shared/components/AdminHeaderRightActions';
 import './AdminDashboard.css';
@@ -68,6 +68,33 @@ const withAvatarVersion = (url, version) => {
 const safeNumber = (value) => {
     const numeric = Number(value);
     return Number.isFinite(numeric) ? numeric : 0;
+};
+
+const DEFAULT_ADMIN_RANGE_SIZE = 10;
+
+const normalizePaginationMeta = (pagination, fallback = {}) => {
+    const fallbackTotal = Math.max(0, safeNumber(fallback?.total));
+    const fallbackLimit = Math.max(1, safeNumber(fallback?.limit) || DEFAULT_ADMIN_RANGE_SIZE);
+    const fallbackOffset = Math.max(0, safeNumber(fallback?.offset));
+
+    const total = Math.max(0, safeNumber(pagination?.total ?? fallbackTotal));
+    const limit = Math.max(1, safeNumber(pagination?.limit ?? fallbackLimit) || fallbackLimit);
+    const offset = Math.max(0, safeNumber(pagination?.offset ?? fallbackOffset));
+
+    const from = total > 0
+        ? Math.min(total, Math.max(1, safeNumber(pagination?.from ?? (offset + 1))))
+        : 0;
+    const to = total > 0
+        ? Math.min(total, Math.max(from, safeNumber(pagination?.to ?? (offset + limit))))
+        : 0;
+
+    return {
+        from,
+        to,
+        total,
+        limit,
+        offset
+    };
 };
 
 const parseDateSafe = (value) => {
@@ -131,7 +158,6 @@ const getTemplateCreatedAt = (template) => parseDateSafe(
 const menuItems = [
     { key: 'dashboard', icon: LayoutDashboard, labelKey: 'admin.menu.dashboard', to: '/admin/dashboard' },
     { key: 'users', icon: Users, labelKey: 'admin.menu.users', to: '/admin/usersmanament' },
-    { key: 'jobs', icon: BriefcaseBusiness, labelKey: 'admin.menu.jobs', to: '/admin/jobs' },
     { key: 'companies', icon: Building2, labelKey: 'admin.menu.companies', to: '/admin/companies' },
     {
         key: 'templates',
@@ -158,7 +184,6 @@ const resolvePageTitleKey = (pathname) => {
     if (normalizedPath.includes('/templates')) return 'admin.pageTitle.templates';
     if (normalizedPath.includes('/usersmanament')) return 'admin.pageTitle.users';
     if (normalizedPath.includes('/companies')) return 'admin.pageTitle.companies';
-    if (normalizedPath.includes('/jobs')) return 'admin.pageTitle.jobs';
     if (normalizedPath.includes('/reports')) return 'admin.pageTitle.reports';
     if (normalizedPath.includes('/profile')) return 'admin.pageTitle.profile';
     return 'admin.pageTitle.dashboard';
@@ -226,20 +251,47 @@ const AdminDashboard = () => {
     const [counts, setCounts] = useState({});
     const [users, setUsers] = useState([]);
     const [roleFilter, setRoleFilter] = useState('all');
-    const [jobs, setJobs] = useState([]);
+    const [usersPagination, setUsersPagination] = useState({
+        from: 0,
+        to: 0,
+        total: 0,
+        limit: DEFAULT_ADMIN_RANGE_SIZE,
+        offset: 0
+    });
     const [companies, setCompanies] = useState([]);
+    const [companiesPagination, setCompaniesPagination] = useState({
+        from: 0,
+        to: 0,
+        total: 0,
+        limit: DEFAULT_ADMIN_RANGE_SIZE,
+        offset: 0
+    });
     const [reports, setReports] = useState([]);
+    const [reportsPagination, setReportsPagination] = useState({
+        from: 0,
+        to: 0,
+        total: 0,
+        limit: DEFAULT_ADMIN_RANGE_SIZE,
+        offset: 0
+    });
     const [careerGuidePosts, setCareerGuidePosts] = useState([]);
+    const [careerGuidePagination, setCareerGuidePagination] = useState({
+        from: 0,
+        to: 0,
+        total: 0,
+        limit: DEFAULT_ADMIN_RANGE_SIZE,
+        offset: 0
+    });
     const [templates, setTemplates] = useState([]);
 
     const confirmResolveRef = useRef(null);
     const profileMenuRef = useRef(null);
     const [confirmState, setConfirmState] = useState({
         open: false,
-        title: 'Xác nhận',
+        title: '',
         message: '',
         confirmText: 'OK',
-        cancelText: 'Hủy'
+        cancelText: ''
     });
 
     const requestConfirm = (opts = {}) => {
@@ -247,10 +299,10 @@ const AdminDashboard = () => {
             confirmResolveRef.current = resolve;
             setConfirmState({
                 open: true,
-                title: opts.title || 'Xác nhận',
+                title: opts.title || t('admin.confirm.defaultTitle'),
                 message: opts.message || '',
                 confirmText: opts.confirmText || 'OK',
-                cancelText: opts.cancelText || 'Hủy'
+                cancelText: opts.cancelText || t('common.cancel')
             });
         });
     };
@@ -278,41 +330,210 @@ const AdminDashboard = () => {
         navigate('/login');
     };
 
+    const resolveRange = (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
+        const safeFrom = Math.max(1, Math.floor(Number(from) || 1));
+        const safeTo = Math.max(
+            safeFrom,
+            Math.floor(Number(to) || (safeFrom + DEFAULT_ADMIN_RANGE_SIZE - 1))
+        );
+        return {
+            from: safeFrom,
+            to: safeTo,
+            limit: safeTo - safeFrom + 1
+        };
+    };
+
+    const fetchAdminRangeList = async ({
+        path,
+        dataKey,
+        errorKey,
+        from = 1,
+        to = DEFAULT_ADMIN_RANGE_SIZE,
+        extraQuery = null
+    }) => {
+        const range = resolveRange(from, to);
+        const query = new URLSearchParams({
+            from: String(range.from),
+            to: String(range.to)
+        });
+
+        if (extraQuery && typeof extraQuery === 'object') {
+            Object.entries(extraQuery).forEach(([key, value]) => {
+                if (value == null) return;
+                const text = String(value).trim();
+                if (!text) return;
+                query.set(key, text);
+            });
+        }
+
+        const res = await fetch(`${API_BASE}/api/admin/${path}?${query.toString()}`, {
+            headers: authHeaders
+        });
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok) {
+            throw new Error(data?.error || t(errorKey));
+        }
+
+        const rows = Array.isArray(data?.[dataKey]) ? data[dataKey] : [];
+        const pagination = normalizePaginationMeta(data?.pagination, {
+            total: rows.length,
+            limit: range.limit,
+            offset: range.from - 1
+        });
+
+        return {
+            rows,
+            pagination
+        };
+    };
+
+    const fetchUsersByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE, nextRoleFilter = roleFilter) => {
+        const normalizedRoleFilter = String(nextRoleFilter || '').trim();
+
+        return fetchAdminRangeList({
+            path: 'users',
+            dataKey: 'users',
+            errorKey: 'admin.apiErrors.loadUsers',
+            from,
+            to,
+            extraQuery: normalizedRoleFilter && normalizedRoleFilter !== 'all'
+                ? { role: normalizedRoleFilter }
+                : null
+        });
+    };
+
+    const loadUsersByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE, nextRoleFilter = roleFilter) => {
+        const result = await fetchUsersByRange(from, to, nextRoleFilter);
+        setUsers(result.rows);
+        setUsersPagination(result.pagination);
+        return result;
+    };
+
+    const fetchCompaniesByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
+        return fetchAdminRangeList({
+            path: 'companies',
+            dataKey: 'companies',
+            errorKey: 'admin.apiErrors.loadCompanies',
+            from,
+            to
+        });
+    };
+
+    const loadCompaniesByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
+        const result = await fetchCompaniesByRange(from, to);
+        setCompanies(result.rows);
+        setCompaniesPagination(result.pagination);
+        return result;
+    };
+
+    const fetchReportsByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
+        return fetchAdminRangeList({
+            path: 'reports',
+            dataKey: 'reports',
+            errorKey: 'admin.apiErrors.loadReports',
+            from,
+            to
+        });
+    };
+
+    const loadReportsByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
+        const result = await fetchReportsByRange(from, to);
+        setReports(result.rows);
+        setReportsPagination(result.pagination);
+        return result;
+    };
+
+    const fetchCareerGuidePostsByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
+        return fetchAdminRangeList({
+            path: 'career-guide-posts',
+            dataKey: 'posts',
+            errorKey: 'admin.apiErrors.loadCareerGuidePosts',
+            from,
+            to
+        });
+    };
+
+    const loadCareerGuidePostsByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
+        const result = await fetchCareerGuidePostsByRange(from, to);
+        setCareerGuidePosts(result.rows);
+        setCareerGuidePagination(result.pagination);
+        return result;
+    };
+
+    const handleCompaniesRangeChange = async (from, to) => {
+        setLoading(true);
+        setError('');
+        try {
+            await loadCompaniesByRange(from, to);
+        } catch (err) {
+            setError(err?.message || t('admin.apiErrors.loadCompanies'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleReportsRangeChange = async (from, to) => {
+        setLoading(true);
+        setError('');
+        try {
+            await loadReportsByRange(from, to);
+        } catch (err) {
+            setError(err?.message || t('admin.apiErrors.loadReports'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleCareerGuideRangeChange = async (from, to) => {
+        setLoading(true);
+        setError('');
+        try {
+            await loadCareerGuidePostsByRange(from, to);
+        } catch (err) {
+            setError(err?.message || t('admin.apiErrors.loadCareerGuidePosts'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleUsersRangeChange = async (from, to, nextRoleFilter = roleFilter) => {
+        setLoading(true);
+        setError('');
+        try {
+            await loadUsersByRange(from, to, nextRoleFilter);
+        } catch (err) {
+            setError(err?.message || t('admin.apiErrors.loadUsers'));
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const loadAll = async () => {
         setLoading(true);
         setError('');
         try {
-            const [ov, us, js, cs, rs, cgp, ts] = await Promise.all([
+            const [ov, cs, rs, cgp, ts] = await Promise.all([
                 fetch(`${API_BASE}/api/admin/overview`, { headers: authHeaders }),
-                fetch(`${API_BASE}/api/admin/users?limit=50`, { headers: authHeaders }),
-                fetch(`${API_BASE}/api/admin/jobs?limit=50`, { headers: authHeaders }),
-                fetch(`${API_BASE}/api/admin/companies?limit=50`, { headers: authHeaders }),
-                fetch(`${API_BASE}/api/admin/reports?limit=50`, { headers: authHeaders }),
-                fetch(`${API_BASE}/api/admin/career-guide-posts?limit=100`, { headers: authHeaders }),
-                fetch(`${API_BASE}/api/admin/templates?limit=200&offset=0`, { headers: authHeaders })
+                fetchCompaniesByRange(1, DEFAULT_ADMIN_RANGE_SIZE),
+                fetchReportsByRange(1, DEFAULT_ADMIN_RANGE_SIZE),
+                fetchCareerGuidePostsByRange(1, DEFAULT_ADMIN_RANGE_SIZE),
+                fetch(`${API_BASE}/api/admin/templates?from=1&to=200`, { headers: authHeaders })
             ]);
 
             const ovData = await ov.json().catch(() => null);
-            const usData = await us.json().catch(() => null);
-            const jsData = await js.json().catch(() => null);
-            const csData = await cs.json().catch(() => null);
-            const rsData = await rs.json().catch(() => null);
-            const cgpData = await cgp.json().catch(() => null);
             const tsData = await ts.json().catch(() => null);
 
-            if (!ov.ok) throw new Error(ovData?.error || 'Không tải được thống kê');
-            if (!us.ok) throw new Error(usData?.error || 'Không tải được người dùng');
-            if (!js.ok) throw new Error(jsData?.error || 'Không tải được tin tuyển dụng');
-            if (!cs.ok) throw new Error(csData?.error || 'Không tải được công ty');
-            if (!rs.ok) throw new Error(rsData?.error || 'Không tải được báo cáo');
-            if (!cgp.ok) throw new Error(cgpData?.error || 'Không tải được bài viết hướng nghiệp');
+            if (!ov.ok) throw new Error(ovData?.error || t('admin.apiErrors.loadOverview'));
+            if (!ts.ok) throw new Error(tsData?.error || t('admin.templatesPage.messages.loadListFailed'));
 
             setCounts(ovData?.counts || {});
-            setUsers(Array.isArray(usData?.users) ? usData.users : []);
-            setJobs(Array.isArray(jsData?.jobs) ? jsData.jobs : []);
-            setCompanies(Array.isArray(csData?.companies) ? csData.companies : []);
-            setReports(Array.isArray(rsData?.reports) ? rsData.reports : []);
-            setCareerGuidePosts(Array.isArray(cgpData?.posts) ? cgpData.posts : []);
+            setCompanies(cs.rows);
+            setCompaniesPagination(cs.pagination);
+            setReports(rs.rows);
+            setReportsPagination(rs.pagination);
+            setCareerGuidePosts(cgp.rows);
+            setCareerGuidePagination(cgp.pagination);
 
             const templateRows = Array.isArray(tsData?.templates)
                 ? tsData.templates
@@ -321,7 +542,7 @@ const AdminDashboard = () => {
                     : [];
             setTemplates(templateRows);
         } catch (err) {
-            setError(err?.message || 'Có lỗi xảy ra');
+            setError(err?.message || t('admin.apiErrors.generic'));
         } finally {
             setLoading(false);
         }
@@ -332,6 +553,12 @@ const AdminDashboard = () => {
         loadAll();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [API_BASE, token]);
+
+    useEffect(() => {
+        if (!token) return;
+        handleUsersRangeChange(1, DEFAULT_ADMIN_RANGE_SIZE, roleFilter);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [token, roleFilter]);
 
     useEffect(() => {
         const onResize = () => {
@@ -375,7 +602,7 @@ const AdminDashboard = () => {
             body: JSON.stringify(payload)
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không cập nhật được người dùng');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.updateUser'));
         return data?.user;
     };
 
@@ -384,7 +611,7 @@ const AdminDashboard = () => {
             headers: authHeaders
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không tải được chi tiết người dùng');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.loadUserDetail'));
         return data?.detail || null;
     };
 
@@ -395,7 +622,7 @@ const AdminDashboard = () => {
             body: JSON.stringify(payload)
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không cập nhật được báo cáo');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.updateReport'));
         return data?.report;
     };
 
@@ -406,7 +633,7 @@ const AdminDashboard = () => {
             body: JSON.stringify(payload || {})
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không phê duyệt được báo cáo');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.approveReport'));
         return data?.report;
     };
 
@@ -416,7 +643,7 @@ const AdminDashboard = () => {
             headers: authHeaders
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không xóa được báo cáo');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.deleteReport'));
     };
 
     const deleteCareerGuidePost = async (id) => {
@@ -425,16 +652,7 @@ const AdminDashboard = () => {
             headers: authHeaders
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không xóa được bài viết hướng nghiệp');
-    };
-
-    const deleteJob = async (id) => {
-        const res = await fetch(`${API_BASE}/api/admin/jobs/${id}`, {
-            method: 'DELETE',
-            headers: authHeaders
-        });
-        const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không xóa được tin tuyển dụng');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.deleteCareerGuidePost'));
     };
 
     const deleteUser = async (id) => {
@@ -443,7 +661,7 @@ const AdminDashboard = () => {
             headers: authHeaders
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không xóa được người dùng');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.deleteUser'));
         return data?.user;
     };
 
@@ -453,7 +671,7 @@ const AdminDashboard = () => {
             headers: authHeaders
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không khôi phục được người dùng');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.restoreUser'));
         return data?.user;
     };
 
@@ -464,7 +682,7 @@ const AdminDashboard = () => {
             body: JSON.stringify(payload)
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không cập nhật được công ty');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.updateCompany'));
         return data?.company;
     };
 
@@ -474,27 +692,41 @@ const AdminDashboard = () => {
             headers: authHeaders
         });
         const data = await res.json().catch(() => null);
-        if (!res.ok) throw new Error(data?.error || 'Không xóa được công ty');
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.deleteCompany'));
+        return data?.company;
+    };
+
+    const restoreCompany = async (id) => {
+        const res = await fetch(`${API_BASE}/api/admin/companies/${id}/restore`, {
+            method: 'POST',
+            headers: authHeaders
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok) throw new Error(data?.error || t('admin.apiErrors.restoreCompany'));
+        return data?.company;
+    };
+
+    const refreshActiveUsersRange = async () => {
+        const activeRange = resolveRange(
+            usersPagination.from || 1,
+            usersPagination.to || DEFAULT_ADMIN_RANGE_SIZE
+        );
+        await loadUsersByRange(activeRange.from, activeRange.to, roleFilter);
     };
 
     const saveUserById = async (userId, payload) => {
-        const updated = await patchUser(userId, payload);
-        setUsers((prev) => prev.map((item) => (item.MaNguoiDung === userId ? updated : item)));
+        await patchUser(userId, payload);
+        await refreshActiveUsersRange();
     };
 
     const deleteUserById = async (userId) => {
-        const updated = await deleteUser(userId);
-        setUsers((prev) => prev.map((item) => (item.MaNguoiDung === userId ? updated : item)));
+        await deleteUser(userId);
+        await refreshActiveUsersRange();
     };
 
     const restoreUserById = async (userId) => {
-        const updated = await restoreUser(userId);
-        setUsers((prev) => prev.map((item) => (item.MaNguoiDung === userId ? updated : item)));
-    };
-
-    const deleteJobById = async (jobId) => {
-        await deleteJob(jobId);
-        setJobs((prev) => prev.filter((item) => item.MaTin !== jobId));
+        await restoreUser(userId);
+        await refreshActiveUsersRange();
     };
 
     const saveCompanyStatusById = async (companyId, status) => {
@@ -503,8 +735,13 @@ const AdminDashboard = () => {
     };
 
     const deleteCompanyById = async (companyId) => {
-        await deleteCompany(companyId);
-        setCompanies((prev) => prev.filter((item) => item.MaCongTy !== companyId));
+        const updated = await deleteCompany(companyId);
+        setCompanies((prev) => prev.map((item) => (item.MaCongTy === companyId ? updated : item)));
+    };
+
+    const restoreCompanyById = async (companyId) => {
+        const updated = await restoreCompany(companyId);
+        setCompanies((prev) => prev.map((item) => (item.MaCongTy === companyId ? updated : item)));
     };
 
     const saveReportById = async (reportId, payload) => {
@@ -519,12 +756,20 @@ const AdminDashboard = () => {
 
     const deleteReportById = async (reportId) => {
         await deleteReport(reportId);
-        setReports((prev) => prev.filter((item) => item.MaBaoCao !== reportId));
+        const activeRange = resolveRange(
+            reportsPagination.from || 1,
+            reportsPagination.to || DEFAULT_ADMIN_RANGE_SIZE
+        );
+        await loadReportsByRange(activeRange.from, activeRange.to);
     };
 
     const deleteCareerGuidePostById = async (postId) => {
         await deleteCareerGuidePost(postId);
-        setCareerGuidePosts((prev) => prev.filter((item) => item.MaBaiViet !== postId));
+        const activeRange = resolveRange(
+            careerGuidePagination.from || 1,
+            careerGuidePagination.to || DEFAULT_ADMIN_RANGE_SIZE
+        );
+        await loadCareerGuidePostsByRange(activeRange.from, activeRange.to);
     };
 
     const greetingName = user?.HoTen || user?.name || user?.full_name || user?.email || t('admin.greetingDefault');
@@ -853,9 +1098,11 @@ const AdminDashboard = () => {
                             element={
                                 <AdminUsersPage
                                     users={users}
+                                    pagination={usersPagination}
                                     loading={loading}
                                     roleFilter={roleFilter}
                                     onRoleFilterChange={setRoleFilter}
+                                    onRangeChange={handleUsersRangeChange}
                                     isSuperAdmin={isSuperAdmin}
                                     isAdmin={isAdmin}
                                     requestConfirm={requestConfirm}
@@ -867,27 +1114,18 @@ const AdminDashboard = () => {
                             }
                         />
                         <Route
-                            path="jobs"
-                            element={
-                                <AdminJobsPage
-                                    jobs={jobs}
-                                    loading={loading}
-                                    canDelete={isSuperAdmin}
-                                    requestConfirm={requestConfirm}
-                                    onDeleteJob={deleteJobById}
-                                />
-                            }
-                        />
-                        <Route
                             path="companies"
                             element={
                                 <AdminCompaniesPage
                                     companies={companies}
+                                    pagination={companiesPagination}
                                     loading={loading}
                                     canEdit={isSuperAdmin}
                                     requestConfirm={requestConfirm}
+                                    onRangeChange={handleCompaniesRangeChange}
                                     onSaveCompanyStatus={saveCompanyStatusById}
                                     onDeleteCompany={deleteCompanyById}
+                                    onRestoreCompany={restoreCompanyById}
                                 />
                             }
                         />
@@ -918,7 +1156,9 @@ const AdminDashboard = () => {
                             element={
                                 <AdminReportsPage
                                     reports={reports}
+                                    pagination={reportsPagination}
                                     loading={loading}
+                                    onRangeChange={handleReportsRangeChange}
                                     onSaveReport={saveReportById}
                                     onApproveReport={approveReportById}
                                     onDeleteReport={deleteReportById}
@@ -932,6 +1172,7 @@ const AdminDashboard = () => {
                                 <AdminAuditLogsPage
                                     API_BASE={API_BASE}
                                     authHeaders={authHeaders}
+                                    requestConfirm={requestConfirm}
                                 />
                             }
                         />
@@ -940,7 +1181,9 @@ const AdminDashboard = () => {
                             element={
                                 <AdminCareerGuidePostsPage
                                     posts={careerGuidePosts}
+                                    pagination={careerGuidePagination}
                                     loading={loading}
+                                    onRangeChange={handleCareerGuideRangeChange}
                                     requestConfirm={requestConfirm}
                                     onDeletePost={deleteCareerGuidePostById}
                                 />
@@ -961,24 +1204,15 @@ const AdminDashboard = () => {
                 </div>
             </div>
 
-            {confirmState.open && (
-                <div className="admin-confirm-backdrop" role="dialog" aria-modal="true">
-                    <div className="admin-confirm-dialog card border-0 shadow-sm">
-                        <div className="card-body">
-                            <h5 className="mb-3">{confirmState.title}</h5>
-                            <div className="mb-4">{confirmState.message}</div>
-                            <div className="d-flex justify-content-end gap-2">
-                                <button type="button" className="btn btn-outline-secondary" onClick={() => closeConfirm(false)}>
-                                    {confirmState.cancelText}
-                                </button>
-                                <button type="button" className="btn btn-danger" onClick={() => closeConfirm(true)}>
-                                    {confirmState.confirmText}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <AdminConfirmDialog
+                open={confirmState.open}
+                title={confirmState.title}
+                message={confirmState.message}
+                confirmText={confirmState.confirmText}
+                cancelText={confirmState.cancelText}
+                onCancel={() => closeConfirm(false)}
+                onConfirm={() => closeConfirm(true)}
+            />
         </div>
     );
 };

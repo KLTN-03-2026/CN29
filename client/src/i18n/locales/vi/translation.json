@@ -69,6 +69,30 @@
       "admin": "Quản trị"
     },
     "loadingData": "Đang tải dữ liệu...",
+    "apiErrors": {
+      "loadOverview": "Không tải được thống kê",
+      "loadUsers": "Không tải được người dùng",
+      "loadJobs": "Không tải được tin tuyển dụng",
+      "loadCompanies": "Không tải được công ty",
+      "loadReports": "Không tải được báo cáo",
+      "loadCareerGuidePosts": "Không tải được bài viết hướng nghiệp",
+      "generic": "Có lỗi xảy ra",
+      "updateUser": "Không cập nhật được người dùng",
+      "loadUserDetail": "Không tải được chi tiết người dùng",
+      "updateReport": "Không cập nhật được báo cáo",
+      "approveReport": "Không phê duyệt được báo cáo",
+      "deleteReport": "Không xóa được báo cáo",
+      "deleteCareerGuidePost": "Không xóa được bài viết hướng nghiệp",
+      "deleteJob": "Không xóa được tin tuyển dụng",
+      "deleteUser": "Không xóa được người dùng",
+      "restoreUser": "Không khôi phục được người dùng",
+      "updateCompany": "Không cập nhật được công ty",
+      "deleteCompany": "Không xóa được công ty",
+      "restoreCompany": "Không khôi phục được công ty"
+    },
+    "confirm": {
+      "defaultTitle": "Xác nhận"
+    },
     "actions": {
       "home": "Trang chủ",
       "logout": "Đăng xuất"
@@ -159,6 +183,192 @@
         "progressHeader": "Tỉ lệ (%)",
         "noPopular": "Chưa có dữ liệu"
       }
+    },
+    "usersPage": {
+      "title": "Quản lý người dùng",
+      "filter": {
+        "roleAriaLabel": "Lọc vai trò",
+        "all": "Tất cả"
+      },
+      "roles": {
+        "superAdmin": "Siêu quản trị viên",
+        "admin": "Quản trị",
+        "employer": "Nhà tuyển dụng",
+        "candidate": "Ứng viên"
+      },
+      "columns": {
+        "id": "ID",
+        "fullName": "Họ tên",
+        "email": "Email",
+        "role": "Vai trò",
+        "status": "Trạng thái",
+        "createdAt": "Ngày tạo",
+        "deletedAt": "Ngày xóa",
+        "actions": "Thao tác"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "blocked": "Đã chặn",
+        "softDeleted": "Đã xóa mềm 72h"
+      },
+      "time": {
+        "days": "{{count}} ngày",
+        "hours": "{{count}} giờ",
+        "minutes": "{{count}} phút"
+      },
+      "actions": {
+        "view": "Xem chi tiết",
+        "edit": "Sửa người dùng",
+        "delete": "Xóa người dùng",
+        "restore": "Khôi phục người dùng",
+        "softDelete": "xóa mềm"
+      },
+      "confirm": {
+        "title": "Xác nhận {{action}}",
+        "deleteButton": "Xóa",
+        "restoreButton": "Khôi phục",
+        "deleteMessage": "Tài khoản sẽ bị xóa mềm trong 72 giờ. Nếu không khôi phục trong thời gian này, hệ thống sẽ xóa vĩnh viễn toàn bộ dữ liệu liên quan. Bạn có muốn tiếp tục?",
+        "restoreMessage": "Bạn có chắc muốn khôi phục tài khoản này?"
+      },
+      "softDelete": {
+        "expiredHint": "Đã quá hạn 72 giờ, hệ thống sẽ xóa vĩnh viễn khi đồng bộ tiếp theo.",
+        "remainingHint": "Còn {{time}} để khôi phục."
+      },
+      "messages": {
+        "detailApiMissing": "Chưa cấu hình API xem chi tiết người dùng.",
+        "loadDetailFailed": "Không tải được chi tiết người dùng",
+        "loadEditDetailFailed": "Không tải được chi tiết để chỉnh sửa.",
+        "updateFailed": "Không cập nhật được người dùng",
+        "restoreHandlerMissing": "Chưa cấu hình thao tác khôi phục người dùng.",
+        "actionFailed": "Thao tác thất bại",
+        "loadingDetail": "Đang tải chi tiết người dùng...",
+        "loadingEditDetail": "Đang tải đầy đủ thông tin người dùng..."
+      },
+      "fields": {
+        "fullName": "Họ tên",
+        "email": "Email",
+        "phone": "Số điện thoại",
+        "address": "Địa chỉ"
+      },
+      "candidateFields": {
+        "title": "Chức danh",
+        "gender": "Giới tính",
+        "birthday": "Ngày sinh",
+        "city": "Thành phố",
+        "district": "Quận/Huyện",
+        "detailedAddress": "Địa chỉ chi tiết",
+        "education": "Trình độ học vấn",
+        "experience": "Số năm kinh nghiệm",
+        "personalLink": "Link cá nhân",
+        "intro": "Giới thiệu bản thân"
+      },
+      "employerFields": {
+        "companyName": "Tên công ty",
+        "taxCode": "Mã số thuế",
+        "website": "Website",
+        "city": "Thành phố",
+        "address": "Địa chỉ",
+        "description": "Mô tả công ty"
+      },
+      "viewModal": {
+        "title": "Thông tin người dùng",
+        "avatarAlt": "Ảnh đại diện",
+        "userCode": "Mã người dùng",
+        "updatedAt": "Cập nhật",
+        "basicInfo": "Thông tin cơ bản",
+        "candidateInfo": "Thông tin ứng viên",
+        "employerInfo": "Thông tin nhà tuyển dụng"
+      },
+      "editModal": {
+        "title": "Sửa người dùng #{{id}}",
+        "basicInfo": "Thông tin cơ bản",
+        "candidateProfile": "Hồ sơ ứng viên",
+        "employerProfile": "Hồ sơ nhà tuyển dụng",
+        "save": "Lưu thay đổi",
+        "saving": "Đang lưu...",
+        "softDeletedNote": "Tài khoản đã bị xóa mềm vào {{deletedAt}}. Chuyển trạng thái về hoạt động sẽ tự động bỏ ngày xóa.",
+        "placeholders": {
+          "fullName": "Nhập họ tên",
+          "phone": "Nhập số điện thoại",
+          "address": "Nhập địa chỉ",
+          "birthday": "Chọn ngày sinh"
+        },
+        "gender": {
+          "unselected": "Chưa chọn",
+          "male": "Nam",
+          "female": "Nữ",
+          "other": "Khác"
+        }
+      },
+      "empty": "Chưa có dữ liệu"
+    },
+    "companiesPage": {
+      "title": "Quản lý công ty",
+      "headers": {
+        "id": "ID",
+        "name": "Tên công ty",
+        "taxCode": "Mã số thuế",
+        "city": "Tỉnh/TP",
+        "website": "Website",
+        "status": "Trạng thái",
+        "deletedAt": "Ngày xóa",
+        "actions": "Thao tác"
+      },
+      "status": {
+        "active": "Hoạt động",
+        "blocked": "Đã chặn",
+        "softDeleted": "Đã xóa mềm 72h"
+      },
+      "actions": {
+        "view": "Xem thông tin công ty",
+        "block": "Chặn công ty",
+        "unblock": "Bỏ chặn công ty",
+        "delete": "Xóa công ty",
+        "restore": "Khôi phục công ty",
+        "openWebsite": "Mở website công ty"
+      },
+      "confirm": {
+        "deleteTitle": "Xác nhận xóa",
+        "deleteMessage": "Bạn có chắc muốn xóa mềm công ty \"{{name}}\" trong 72 giờ?",
+        "deleteButton": "Xóa",
+        "restoreTitle": "Xác nhận khôi phục",
+        "restoreMessage": "Bạn có chắc muốn khôi phục công ty \"{{name}}\"?",
+        "restoreButton": "Khôi phục"
+      },
+      "softDelete": {
+        "expiredHint": "Đã quá hạn 72 giờ, hệ thống sẽ xóa vĩnh viễn khi đồng bộ tiếp theo.",
+        "remainingHint": "Còn {{time}} để khôi phục."
+      },
+      "time": {
+        "days": "{{count}} ngày",
+        "hours": "{{count}} giờ",
+        "minutes": "{{count}} phút"
+      },
+      "messages": {
+        "genericError": "Thao tác thất bại",
+        "missingRestoreHandler": "Chưa cấu hình thao tác khôi phục công ty."
+      },
+      "detail": {
+        "ariaLabel": "Chi tiết công ty",
+        "title": "Thông tin công ty",
+        "logoAlt": "Logo công ty",
+        "companyInfo": "Thông tin doanh nghiệp",
+        "representative": "Người đại diện",
+        "description": "Mô tả doanh nghiệp",
+        "companyCode": "Mã công ty",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật",
+        "deletedAt": "Ngày xóa",
+        "companyName": "Tên công ty",
+        "taxCode": "Mã số thuế",
+        "field": "Lĩnh vực",
+        "address": "Địa chỉ",
+        "repName": "Họ tên",
+        "repEmail": "Email",
+        "repStatus": "Trạng thái tài khoản",
+        "lastUpdated": "Lần cập nhật gần nhất"
+      },
+      "empty": "Chưa có dữ liệu"
     },
     "jobsPage": {
       "title": "Kiểm duyệt tin tuyển dụng",

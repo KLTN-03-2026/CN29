@@ -215,7 +215,8 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
             const blob = new Blob([normalizedBuffer], { type: EXCEL_MIME_TYPE });
             downloadBlobFile(blob, fileName);
         } catch (error) {
-            setExportError(error?.message || t('admin.overview.exportError'));
+            console.warn('[admin-overview] export failed:', error?.message || error);
+            setExportError(t('admin.overview.exportError'));
         } finally {
             setExporting(false);
         }

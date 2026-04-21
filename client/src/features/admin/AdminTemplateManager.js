@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, PencilLine, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import SmartPagination from '../../components/SmartPagination';
 import './AdminTemplateManager.css';
 
 const EMPTY_TEMPLATE_FORM = {
@@ -23,6 +24,8 @@ const TEMPLATE_STYLE_OPTIONS = [
     { value: 'minimal', labelKey: 'admin.templatesPage.styleOptions.minimal' },
     { value: 'modern', labelKey: 'admin.templatesPage.styleOptions.modern' }
 ];
+
+const TEMPLATE_PAGE_SIZE = 10;
 
 const normalizeTemplateStyle = (value) => {
     const normalized = String(value || '').trim().toLowerCase();
@@ -52,6 +55,29 @@ const normalizeTemplate = (template) => ({
     NgayTao: String(template?.NgayTao || template?.createdAt || ''),
     NgayCapNhat: String(template?.NgayCapNhat || template?.updatedAt || '')
 });
+
+const normalizeTemplatePagination = (pagination, fallback = {}) => {
+    const fallbackTotal = Math.max(0, Number(fallback?.total) || 0);
+    const fallbackLimit = Math.max(1, Number(fallback?.limit) || TEMPLATE_PAGE_SIZE);
+    const fallbackOffset = Math.max(0, Number(fallback?.offset) || 0);
+
+    const total = Math.max(0, Number(pagination?.total ?? fallbackTotal) || 0);
+    const limit = Math.max(1, Number(pagination?.limit ?? fallbackLimit) || fallbackLimit);
+    const offset = Math.max(0, Number(pagination?.offset ?? fallbackOffset) || 0);
+
+    const from = total > 0 ? Math.min(total, Math.max(1, Number(pagination?.from ?? (offset + 1)) || 1)) : 0;
+    const to = total > 0
+        ? Math.min(total, Math.max(from, Number(pagination?.to ?? (offset + limit)) || from))
+        : 0;
+
+    return {
+        from,
+        to,
+        total,
+        limit,
+        offset
+    };
+};
 
 const formatDate = (value, locale = 'vi-VN') => {
     if (!value) return '-';
@@ -127,6 +153,17 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
     const [searchInput, setSearchInput] = useState('');
     const [searchText, setSearchText] = useState('');
+    const [listRange, setListRange] = useState({
+        from: 1,
+        to: TEMPLATE_PAGE_SIZE
+    });
+    const [listPagination, setListPagination] = useState({
+        from: 0,
+        to: 0,
+        total: 0,
+        limit: TEMPLATE_PAGE_SIZE,
+        offset: 0
+    });
 
     const [editorTab, setEditorTab] = useState('basic');
     const [quickPreview, setQuickPreview] = useState(false);
@@ -206,12 +243,17 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
         return data;
     };
 
-    const loadTemplates = async (nextSearch = searchText) => {
+    const loadTemplates = async (nextSearch = searchText, nextRange = listRange) => {
         setLoading(true);
         setError('');
 
         try {
-            const query = new URLSearchParams({ limit: '100', offset: '0' });
+            const safeFrom = Math.max(1, Number(nextRange?.from) || 1);
+            const safeTo = Math.max(safeFrom, Number(nextRange?.to) || (safeFrom + TEMPLATE_PAGE_SIZE - 1));
+            const query = new URLSearchParams({
+                from: String(safeFrom),
+                to: String(safeTo)
+            });
             if (nextSearch) query.set('search', nextSearch);
 
             const data = await fetchJson(`${endpoint}?${query.toString()}`, {
@@ -220,6 +262,12 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
             const rows = Array.isArray(data?.templates) ? data.templates : [];
             setTemplates(rows.map(normalizeTemplate));
+            setListPagination(normalizeTemplatePagination(data?.pagination, {
+                total: Number(data?.total ?? rows.length) || rows.length,
+                limit: safeTo - safeFrom + 1,
+                offset: safeFrom - 1
+            }));
+            setListRange({ from: safeFrom, to: safeTo });
         } catch (err) {
             setError(err?.message || t('admin.templatesPage.messages.loadListFailed'));
         } finally {
@@ -229,7 +277,9 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
 
     useEffect(() => {
         if (!isListMode) return;
-        loadTemplates('');
+        const initialRange = { from: 1, to: TEMPLATE_PAGE_SIZE };
+        setListRange(initialRange);
+        loadTemplates('', initialRange);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [endpoint, isListMode]);
 
@@ -309,14 +359,13 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
     const handleDelete = async (template) => {
         const templateName = String(template?.TenTemplate || '').trim();
         const confirmMessage = t('admin.templatesPage.confirm.deleteMessage', { name: templateName || '-' });
+        if (typeof requestConfirm !== 'function') return;
 
-        const approved = requestConfirm
-            ? await requestConfirm({
-                title: t('admin.templatesPage.confirm.deleteTitle'),
-                message: confirmMessage,
-                confirmText: t('admin.templatesPage.confirm.deleteButton')
-            })
-            : window.confirm(confirmMessage);
+        const approved = await requestConfirm({
+            title: t('admin.templatesPage.confirm.deleteTitle'),
+            message: confirmMessage,
+            confirmText: t('admin.templatesPage.confirm.deleteButton')
+        });
 
         if (!approved) return;
 
@@ -335,7 +384,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             }
 
             setMessage(t('admin.templatesPage.messages.deleteSuccess'));
-            await loadTemplates(searchText);
+            await loadTemplates(searchText, listRange);
         } catch (err) {
             setError(err?.message || t('admin.templatesPage.messages.deleteFailed'));
         } finally {
@@ -365,14 +414,27 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
     const handleSearchSubmit = async (e) => {
         e.preventDefault();
         const nextSearch = searchInput.trim();
+        const nextRange = { from: 1, to: TEMPLATE_PAGE_SIZE };
         setSearchText(nextSearch);
-        await loadTemplates(nextSearch);
+        setListRange(nextRange);
+        await loadTemplates(nextSearch, nextRange);
     };
 
     const handleClearSearch = async () => {
+        const nextRange = { from: 1, to: TEMPLATE_PAGE_SIZE };
         setSearchInput('');
         setSearchText('');
-        await loadTemplates('');
+        setListRange(nextRange);
+        await loadTemplates('', nextRange);
+    };
+
+    const handleListRangeChange = async (nextFrom, nextTo) => {
+        const nextRange = {
+            from: Math.max(1, Number(nextFrom) || 1),
+            to: Math.max(1, Number(nextTo) || TEMPLATE_PAGE_SIZE)
+        };
+        setListRange(nextRange);
+        await loadTemplates(searchText, nextRange);
     };
 
     const handlePickThumbnail = () => {
@@ -494,7 +556,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
             }
 
             if (isListMode) {
-                await loadTemplates(searchText);
+                await loadTemplates(searchText, listRange);
             }
         } catch (err) {
             setError(err?.message || t('admin.templatesPage.messages.saveFailed'));
@@ -551,7 +613,7 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                     <tbody>
                                         {templates.map((template, index) => (
                                             <tr key={template.MaTemplateCV}>
-                                                <td>{index + 1}</td>
+                                                <td>{listPagination.from > 0 ? listPagination.from + index : index + 1}</td>
                                                 <td>
                                                     <div className="fw-semibold text-truncate" title={template.TenTemplate}>{template.TenTemplate}</div>
                                                     <div className="text-muted small text-truncate" title={template.MoTa || ''}>{template.MoTa || t('admin.templatesPage.list.noDescription')}</div>
@@ -602,6 +664,20 @@ const AdminTemplateManager = ({ API_BASE, authHeaders, requestConfirm, mode = 'l
                                     </tbody>
                                 </table>
                             </div>
+
+                            {listPagination.total > 0 ? (
+                                <div className="d-flex justify-content-end mt-3">
+                                    <SmartPagination
+                                        from={listPagination.from}
+                                        to={listPagination.to}
+                                        pageSize={Math.max(1, Number(listPagination.limit) || TEMPLATE_PAGE_SIZE)}
+                                        perPage={Math.max(1, Number(listPagination.limit) || TEMPLATE_PAGE_SIZE)}
+                                        totalItems={listPagination.total}
+                                        loading={loading}
+                                        onRangeChange={handleListRangeChange}
+                                    />
+                                </div>
+                            ) : null}
 
                             {loading && <div className="alert alert-info mt-3 mb-0">{t('admin.templatesPage.list.loading')}</div>}
                         </div>
