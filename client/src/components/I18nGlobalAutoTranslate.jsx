@@ -148,15 +148,9 @@ const I18nGlobalAutoTranslate = () => {
     const root = document.getElementById('root');
     if (!root) return undefined;
 
-    const currentLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').slice(0, 2).toLowerCase();
-
     const resolveTranslation = (sourceText) => {
       const source = String(sourceText || '');
       if (!source) return source;
-
-      if (currentLanguage === 'vi') {
-        return source;
-      }
 
       const mappedKey = phraseMaps.vi.getKeyByPhrase(source) || phraseMaps.en.getKeyByPhrase(source);
       if (mappedKey) {
