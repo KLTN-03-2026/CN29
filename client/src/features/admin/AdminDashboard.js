@@ -97,6 +97,59 @@ const normalizePaginationMeta = (pagination, fallback = {}) => {
     };
 };
 
+const pickCareerGuideRowsFromPayload = (payload) => {
+    if (!payload || typeof payload !== 'object') return [];
+
+    const candidates = [
+        payload?.posts,
+        payload?.careerGuidePosts,
+        payload?.rows,
+        payload?.data?.posts,
+        payload?.data?.careerGuidePosts,
+        payload?.data?.rows,
+        payload?.data
+    ];
+
+    for (const candidate of candidates) {
+        if (Array.isArray(candidate)) return candidate;
+    }
+
+    return [];
+};
+
+const mapCareerGuideRowToAdminShape = (row = {}) => ({
+    MaBaiViet: row?.MaBaiViet ?? row?.id ?? row?.postId ?? null,
+    TieuDe: row?.TieuDe ?? row?.title ?? '',
+    NoiDung: row?.NoiDung ?? row?.content ?? '',
+    MaTacGia: row?.MaTacGia ?? row?.authorId ?? row?.author ?? '',
+    LoaiTacGia: row?.LoaiTacGia ?? row?.authorType ?? 'admin',
+    NgayTao: row?.NgayTao ?? row?.createdAt ?? row?.publishedAt ?? null,
+    NgayCapNhat: row?.NgayCapNhat ?? row?.updatedAt ?? row?.publishedAt ?? null,
+    LuotXem: row?.LuotXem ?? row?.views ?? 0,
+    Slug: row?.Slug ?? row?.slug ?? '',
+    IsSample: Number(row?.IsSample ?? row?.isSample ? 1 : 0)
+});
+
+const buildPaginationFromPageMeta = ({ page = 1, limit = DEFAULT_ADMIN_RANGE_SIZE, total = 0 } = {}) => {
+    const safePage = Math.max(1, Number(page) || 1);
+    const safeLimit = Math.max(1, Number(limit) || DEFAULT_ADMIN_RANGE_SIZE);
+    const safeTotal = Math.max(0, Number(total) || 0);
+    const offset = (safePage - 1) * safeLimit;
+
+    return normalizePaginationMeta(
+        {
+            total: safeTotal,
+            limit: safeLimit,
+            offset
+        },
+        {
+            total: safeTotal,
+            limit: safeLimit,
+            offset
+        }
+    );
+};
+
 const parseDateSafe = (value) => {
     if (!value) return null;
     const date = new Date(value);
@@ -445,13 +498,63 @@ const AdminDashboard = () => {
     };
 
     const fetchCareerGuidePostsByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {
-        return fetchAdminRangeList({
-            path: 'career-guide-posts',
-            dataKey: 'posts',
-            errorKey: 'admin.apiErrors.loadCareerGuidePosts',
-            from,
-            to
+        const range = resolveRange(from, to);
+        const query = new URLSearchParams({
+            from: String(range.from),
+            to: String(range.to)
         });
+
+        const adminRes = await fetch(`${API_BASE}/api/admin/career-guide-posts?${query.toString()}`, {
+            headers: authHeaders
+        });
+        const adminData = await adminRes.json().catch(() => null);
+
+        if (!adminRes.ok) {
+            throw new Error(adminData?.error || t('admin.apiErrors.loadCareerGuidePosts'));
+        }
+
+        const adminRows = pickCareerGuideRowsFromPayload(adminData).map(mapCareerGuideRowToAdminShape);
+        const adminPagination = normalizePaginationMeta(adminData?.pagination, {
+            total: adminRows.length,
+            limit: range.limit,
+            offset: range.from - 1
+        });
+
+        if (adminRows.length > 0 || Number(adminPagination.total || 0) > 0) {
+            return {
+                rows: adminRows,
+                pagination: adminPagination
+            };
+        }
+
+        // Fallback for older deployments where admin endpoint may return empty shape while public API has posts.
+        const page = Math.floor((range.from - 1) / range.limit) + 1;
+        const publicRes = await fetch(
+            `${API_BASE}/api/career-guide?page=${encodeURIComponent(String(page))}&limit=${encodeURIComponent(String(range.limit))}`,
+            { headers: authHeaders }
+        );
+        const publicData = await publicRes.json().catch(() => null);
+
+        if (!publicRes.ok) {
+            return {
+                rows: adminRows,
+                pagination: adminPagination
+            };
+        }
+
+        const publicRows = pickCareerGuideRowsFromPayload(publicData).map(mapCareerGuideRowToAdminShape);
+        const publicPagination = publicData?.pagination && typeof publicData.pagination === 'object'
+            ? buildPaginationFromPageMeta(publicData.pagination)
+            : normalizePaginationMeta(null, {
+                total: publicRows.length,
+                limit: range.limit,
+                offset: range.from - 1
+            });
+
+        return {
+            rows: publicRows,
+            pagination: publicPagination
+        };
     };
 
     const loadCareerGuidePostsByRange = async (from = 1, to = DEFAULT_ADMIN_RANGE_SIZE) => {

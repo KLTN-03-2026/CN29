@@ -126,17 +126,23 @@ const AdminHeaderRightActions = ({
 
                 {profileMenuOpen && (
                     <div className="admin-header-dropdown" role="menu">
-                        {menuItems.map((item) => (
-                            <button
-                                key={item.key}
-                                type="button"
-                                className={`admin-header-dropdown-item ${item.danger ? 'danger' : ''}`}
-                                onClick={item.onClick}
-                            >
-                                {renderItemIcon(item.icon)}
-                                <span>{item.label}</span>
-                            </button>
-                        ))}
+                        {menuItems.map((item) => {
+                            const isLogoutItem = item.key === 'logout' || item.danger;
+
+                            return (
+                                <React.Fragment key={item.key}>
+                                    {isLogoutItem ? <div className="admin-header-dropdown-divider" role="separator" /> : null}
+                                    <button
+                                        type="button"
+                                        className={`admin-header-dropdown-item ${isLogoutItem ? 'logout-item' : ''}`}
+                                        onClick={item.onClick}
+                                    >
+                                        {renderItemIcon(item.icon)}
+                                        <span>{item.label}</span>
+                                    </button>
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
                 )}
             </div>
