@@ -27,15 +27,17 @@ const parseGoogleClientIds = (rawValue) => String(rawValue || '')
   .filter((value) => value && !isTemplateValue(value));
 
 const readRuntimeEnv = () => {
+  const env = {};
+
   if (typeof import.meta !== 'undefined' && import.meta.env) {
-    return import.meta.env;
+    Object.assign(env, import.meta.env);
   }
 
   if (typeof process !== 'undefined' && process.env) {
-    return process.env;
+    Object.assign(env, process.env);
   }
 
-  return {};
+  return env;
 };
 
 const readGoogleClientIdFromEnv = () => {
@@ -88,6 +90,11 @@ const getGooglePopupErrorMessage = (reason, t) => {
 
   if (normalizedReason.includes('idpiframe_initialization_failed')) {
     return t('authPages.loginForm.errors.googleIframeInitFailed');
+  }
+
+  if (normalizedReason.includes('origin_mismatch')) {
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `Google chưa cho phép origin hiện tại${currentOrigin ? ` (${currentOrigin})` : ''}. Hãy thêm origin này vào Google Cloud Console.`;
   }
 
   return t('authPages.loginForm.errors.googleLoginFailed');
@@ -149,6 +156,11 @@ const LoginForm = ({ onSuccess }) => {
   // Fetch Google Client ID from backend API for runtime configuration
   useEffect(() => {
     const fetchGoogleConfig = async () => {
+      if (initialGoogleClientId) {
+        window.__GOOGLE_CLIENT_ID__ = initialGoogleClientId;
+        return;
+      }
+
       try {
         const response = await fetch(`${apiBase}/auth/config`);
         if (response.ok) {
