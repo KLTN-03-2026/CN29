@@ -152,7 +152,7 @@ router.post('/', authenticateToken, authorizeRole(['Ứng viên']), async (req, 
             [jobId]
         ).catch(() => {});
 
-        res.status(201).json({ message: 'Nộp hồ sơ thành công', applicationId: inserted.lastID });
+        res.status(201).json({ message: 'Nộp hồ sơ thành công', applicationId: inserted.lastID, applied: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

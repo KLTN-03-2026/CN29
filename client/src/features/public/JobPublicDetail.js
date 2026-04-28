@@ -285,7 +285,7 @@ const JobPublicDetail = () => {
             }
 
             notify({ type: 'success', message: data.message || 'Nộp hồ sơ thành công' });
-            setIsApplied(true);
+            setIsApplied(Boolean(data?.applied ?? true));
             setShowApplyModal(false);
         } catch (err) {
             notify({ type: 'error', message: err.message || 'Ứng tuyển thất bại' });

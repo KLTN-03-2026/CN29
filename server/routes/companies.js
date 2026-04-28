@@ -333,13 +333,28 @@ router.post('/:employerId/ratings', authenticateToken, authorizeRole(['Ứng vi�
       return res.status(404).json({ success: false, error: 'Không tìm thấy công ty' });
     }
 
-    await dbRun(
-      `INSERT INTO DanhGiaCongTy (MaNhaTuyenDung, MaUngVien, SoSao, NgayDanhGia)
-       VALUES (?, ?, ?, datetime('now','localtime'))
-       ON CONFLICT(MaNhaTuyenDung, MaUngVien)
-       DO UPDATE SET SoSao = excluded.SoSao, NgayDanhGia = datetime('now','localtime')`,
-      [employerId, req.user.id, stars]
+    const existedRating = await dbGet(
+      `SELECT MaDanhGia
+       FROM DanhGiaCongTy
+       WHERE MaNhaTuyenDung = ? AND MaUngVien = ?
+       LIMIT 1`,
+      [employerId, req.user.id]
     );
+
+    if (existedRating?.MaDanhGia) {
+      await dbRun(
+        `UPDATE DanhGiaCongTy
+         SET SoSao = ?, NgayDanhGia = CURRENT_TIMESTAMP
+         WHERE MaNhaTuyenDung = ? AND MaUngVien = ?`,
+        [stars, employerId, req.user.id]
+      );
+    } else {
+      await dbRun(
+        `INSERT INTO DanhGiaCongTy (MaNhaTuyenDung, MaUngVien, SoSao, NgayDanhGia)
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+        [employerId, req.user.id, stars]
+      );
+    }
 
     const rating = await getRatingSummary(employerId, req.user.id);
     return res.json({ success: true, rating });

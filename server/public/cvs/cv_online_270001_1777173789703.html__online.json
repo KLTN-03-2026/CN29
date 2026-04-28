@@ -1,0 +1,13 @@
+{
+  "title": "CV Ứng Viên Chuyên Nghiệp",
+  "summary": "Tôi là người có tinh thần trách nhiệm, ham học hỏi và chủ động trong công việc. Có khả năng làm việc nhóm tốt, thích nghi nhanh với môi trường mới và luôn sẵn sàng tiếp thu kiến thức để phát triển bản thân.",
+  "templateKey": "mau-moi",
+  "content": {
+    "skills": "• Quản lý dự án và làm việc nhóm\n• Giao tiếp và thuyết trình\n• Tin học văn phòng: Word, Excel, PowerPoint\n• Kỹ năng giải quyết vấn đề\n• Tư duy sáng tạo và phân tích",
+    "experience": "Nhân viên Marketing - Công ty ABC\n01/2022 - Hiện tại\n• Xây dựng và triển khai chiến dịch marketing trên mạng xã hội\n• Phân tích dữ liệu khách hàng và đề xuất giải pháp tối ưu",
+    "projects": "Chiến dịch \"Mùa hè sôi động\" - Công ty ABC\n• Lên kế hoạch và triển khai chiến dịch marketing tích hợp",
+    "education": "Đại học Kinh tế TP.HCM\n09/2018 - 06/2022\nChuyên ngành: Quản trị Marketing",
+    "languages": "• Tiếng Việt: Bản ngữ\n• Tiếng Anh: Thành thạo (IELTS 7.0)"
+  },
+  "avatarUrl": "data:image/svg+xml;charset=UTF-8,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22420%22%20height%3D%22420%22%20viewBox%3D%220%200%20420%20420%22%20fill%3D%22none%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22g%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%230f766e%22%2F%3E%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%2338bdf8%22%2F%3E%3C%2FlinearGradient%3E%3C%2Fdefs%3E%3Crect%20width%3D%22420%22%20height%3D%22420%22%20rx%3D%2248%22%20fill%3D%22url(%23g)%22%2F%3E%3Ccircle%20cx%3D%22210%22%20cy%3D%22156%22%20r%3D%2272%22%20fill%3D%22rgba(255%2C255%2C255%2C0.92)%22%2F%3E%3Cpath%20d%3D%22M86%20338c24-58%2076-86%20124-86s100%2028%20124%2086%22%20fill%3D%22rgba(255%2C255%2C255%2C0.92)%22%2F%3E%3C%2Fsvg%3E"
+}
