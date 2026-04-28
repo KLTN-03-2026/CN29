@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../../components/NotificationProvider';
@@ -77,6 +77,29 @@ const resolveGoogleClientId = () => {
   return '';
 };
 
+const getGooglePopupErrorMessage = (reason, t) => {
+  const normalizedReason = String(reason || '').trim().toLowerCase();
+
+  if (normalizedReason.includes('popup_closed_by_user')) {
+    return '';
+  }
+
+  if (normalizedReason.includes('popup_failed_to_open')) {
+    return t('authPages.loginForm.errors.googlePopupBlocked');
+  }
+
+  if (normalizedReason.includes('idpiframe_initialization_failed')) {
+    return t('authPages.loginForm.errors.googleIframeInitFailed');
+  }
+
+  if (normalizedReason.includes('origin_mismatch')) {
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `Google chua cho phep origin hien tai${currentOrigin ? ` (${currentOrigin})` : ''}. Hay them origin nay vao Google Cloud Console.`;
+  }
+
+  return t('authPages.loginForm.errors.googleLoginFailed');
+};
+
 const parseJsonSafe = async (response) => {
   const raw = await response.text();
   if (!raw) return {};
@@ -113,6 +136,11 @@ const LoginForm = ({ onSuccess }) => {
   const { t } = useTranslation();
   const { notify } = useNotification();
   const apiBase = CLIENT_API_BASE;
+  const googleButtonContainerRef = useRef(null);
+  const googleInitializedRef = useRef(false);
+  const googleInitializedClientIdRef = useRef('');
+  const googleCallbackReceivedRef = useRef(false);
+  const googlePopupHintTimeoutRef = useRef(null);
   const initialGoogleClientId = resolveGoogleClientId();
 
   // State for Google Client ID with fallback support
@@ -167,6 +195,18 @@ const LoginForm = ({ onSuccess }) => {
       isActive = false;
     };
   }, [apiBase, initialGoogleClientId]);
+
+  const clearGooglePopupHintTimeout = () => {
+    if (!googlePopupHintTimeoutRef.current) return;
+    window.clearTimeout(googlePopupHintTimeoutRef.current);
+    googlePopupHintTimeoutRef.current = null;
+  };
+
+  useEffect(() => {
+    return () => {
+      clearGooglePopupHintTimeout();
+    };
+  }, []);
 
   useEffect(() => {
     const rememberedIdentity = localStorage.getItem(REMEMBER_KEY);
@@ -230,78 +270,94 @@ const LoginForm = ({ onSuccess }) => {
     handleLoginSuccess(data, data?.user?.email || email);
   };
 
-  // Handle redirect callback: parse id_token from URL hash and complete login
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const hash = window.location.hash || '';
-    if (!hash.includes('id_token=')) return;
-
-    const params = new URLSearchParams(hash.startsWith('#') ? hash.slice(1) : hash);
-    const idToken = params.get('id_token');
-    const returnedState = params.get('state') || '';
-    const expectedState = sessionStorage.getItem('google_oauth_state') || '';
-
-    // Clean URL immediately so refresh doesn't re-trigger
-    window.history.replaceState({}, document.title, window.location.pathname + window.location.search);
-
-    if (!idToken) return;
-
-    if (expectedState && returnedState !== expectedState) {
-      setError(t('authPages.loginForm.errors.googleLoginFailed'));
-      return;
-    }
-
-    sessionStorage.removeItem('google_oauth_state');
-    sessionStorage.removeItem('google_oauth_nonce');
-
-    (async () => {
-      setGoogleLoading(true);
-      setError('');
-      try {
-        await handleGoogleCredential(idToken);
-      } catch (err) {
-        setError(err.message || t('authPages.loginForm.errors.googleLoginFailed'));
-      } finally {
-        setGoogleLoading(false);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const generateRandomToken = () => {
-    if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
-      const arr = new Uint8Array(16);
-      window.crypto.getRandomValues(arr);
-      return Array.from(arr, (b) => b.toString(16).padStart(2, '0')).join('');
-    }
-    return Math.random().toString(36).slice(2) + Date.now().toString(36);
-  };
-
   const handleGoogleLogin = () => {
     setError('');
+
+    googleCallbackReceivedRef.current = false;
+    clearGooglePopupHintTimeout();
 
     if (!googleClientId) {
       setError(t('authPages.loginForm.errors.missingGoogleClientId'));
       return;
     }
 
-    const nonce = generateRandomToken();
-    const state = generateRandomToken();
-    sessionStorage.setItem('google_oauth_nonce', nonce);
-    sessionStorage.setItem('google_oauth_state', state);
+    if (!window.google?.accounts?.id) {
+      setError(t('authPages.loginForm.errors.googleApiNotReady'));
+      return;
+    }
 
-    const redirectUri = `${window.location.origin}/login`;
-    const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-    authUrl.searchParams.set('client_id', googleClientId);
-    authUrl.searchParams.set('redirect_uri', redirectUri);
-    authUrl.searchParams.set('response_type', 'id_token');
-    authUrl.searchParams.set('scope', 'openid email profile');
-    authUrl.searchParams.set('nonce', nonce);
-    authUrl.searchParams.set('state', state);
-    authUrl.searchParams.set('prompt', 'select_account');
+    const shouldInitialize = !googleInitializedRef.current
+      || googleInitializedClientIdRef.current !== googleClientId;
 
-    window.location.href = authUrl.toString();
+    if (shouldInitialize) {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        error_callback: (googleError) => {
+          googleCallbackReceivedRef.current = true;
+          clearGooglePopupHintTimeout();
+          setGoogleLoading(false);
+          setError(getGooglePopupErrorMessage(googleError?.type || googleError?.message, t));
+        },
+        callback: async (response) => {
+          const credential = String(response?.credential || '').trim();
+          if (!credential) {
+            clearGooglePopupHintTimeout();
+            setError(getGooglePopupErrorMessage('missing_credential', t));
+            return;
+          }
+
+          googleCallbackReceivedRef.current = true;
+          clearGooglePopupHintTimeout();
+
+          setGoogleLoading(true);
+          setError('');
+
+          try {
+            await handleGoogleCredential(credential);
+          } catch (err) {
+            setError(err.message || t('authPages.loginForm.errors.googleLoginFailed'));
+          } finally {
+            setGoogleLoading(false);
+          }
+        },
+        auto_select: false,
+        cancel_on_tap_outside: false
+      });
+
+      googleInitializedRef.current = true;
+      googleInitializedClientIdRef.current = googleClientId;
+    }
+
+    if (!googleButtonContainerRef.current) {
+      setError(t('authPages.loginForm.errors.googleButtonInitFailed'));
+      return;
+    }
+
+    googleButtonContainerRef.current.innerHTML = '';
+    window.google.accounts.id.renderButton(googleButtonContainerRef.current, {
+      theme: 'outline',
+      size: 'large',
+      text: 'continue_with',
+      shape: 'pill'
+    });
+
+    const googleButton = googleButtonContainerRef.current.querySelector('div[role="button"]');
+    if (!googleButton) {
+      clearGooglePopupHintTimeout();
+      setError(t('authPages.loginForm.errors.googlePopupCannotOpen'));
+      return;
+    }
+
+    googleButton.click();
+
+    googlePopupHintTimeoutRef.current = window.setTimeout(() => {
+      if (!googleCallbackReceivedRef.current) {
+        console.warn('Google popup timed out before returning credential.', {
+          origin: typeof window !== 'undefined' ? window.location.origin : '',
+          clientId: googleClientId
+        });
+      }
+    }, 10000);
   };
 
   const handleSubmit = async (e) => {
@@ -423,6 +479,8 @@ const LoginForm = ({ onSuccess }) => {
           ? t('authPages.loginForm.processing')
           : t('authPages.loginForm.continueWithGoogle')}</span>
       </button>
+
+      <div ref={googleButtonContainerRef} className="auth-google-hidden" aria-hidden="true"></div>
 
       <p className="auth-switch-inline">
         {t('authPages.loginForm.noAccount')} <Link to="/register">{t('authPages.loginForm.register')}</Link>
