@@ -137,12 +137,10 @@ const LoginForm = ({ onSuccess }) => {
   const { notify } = useNotification();
   const apiBase = CLIENT_API_BASE;
   const googleButtonContainerRef = useRef(null);
-  const googleInitializedRef = useRef(false);
   const googleInitializedClientIdRef = useRef('');
-  const googleCallbackReceivedRef = useRef(false);
-  const googlePopupHintTimeoutRef = useRef(null);
+  const googleHandleCredentialRef = useRef(null);
   const initialGoogleClientId = resolveGoogleClientId();
-  
+
   // State for Google Client ID with fallback support
   const [googleClientId, setGoogleClientId] = useState(initialGoogleClientId);
 
@@ -153,6 +151,7 @@ const LoginForm = ({ onSuccess }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleReady, setGoogleReady] = useState(false);
 
   // Fetch Google Client ID from backend API for runtime configuration
   useEffect(() => {
@@ -195,18 +194,6 @@ const LoginForm = ({ onSuccess }) => {
       isActive = false;
     };
   }, [apiBase, initialGoogleClientId]);
-
-  const clearGooglePopupHintTimeout = () => {
-    if (!googlePopupHintTimeoutRef.current) return;
-    window.clearTimeout(googlePopupHintTimeoutRef.current);
-    googlePopupHintTimeoutRef.current = null;
-  };
-
-  useEffect(() => {
-    return () => {
-      clearGooglePopupHintTimeout();
-    };
-  }, []);
 
   useEffect(() => {
     const rememberedIdentity = localStorage.getItem(REMEMBER_KEY);
@@ -270,94 +257,71 @@ const LoginForm = ({ onSuccess }) => {
     handleLoginSuccess(data, data?.user?.email || email);
   };
 
-  const handleGoogleLogin = () => {
+  googleHandleCredentialRef.current = async (credential) => {
+    setGoogleLoading(true);
     setError('');
-    googleCallbackReceivedRef.current = false;
-    clearGooglePopupHintTimeout();
-
-    if (!googleClientId) {
-      setError(t('authPages.loginForm.errors.missingGoogleClientId'));
-      return;
+    try {
+      await handleGoogleCredential(credential);
+    } catch (err) {
+      setError(err.message || t('authPages.loginForm.errors.googleLoginFailed'));
+    } finally {
+      setGoogleLoading(false);
     }
-
-    if (!window.google?.accounts?.id) {
-      setError(t('authPages.loginForm.errors.googleApiNotReady'));
-      return;
-    }
-
-    const shouldInitialize = !googleInitializedRef.current
-      || googleInitializedClientIdRef.current !== googleClientId;
-
-    if (shouldInitialize) {
-      window.google.accounts.id.initialize({
-        client_id: googleClientId,
-        error_callback: (googleError) => {
-          googleCallbackReceivedRef.current = true;
-          clearGooglePopupHintTimeout();
-          setGoogleLoading(false);
-          setError(getGooglePopupErrorMessage(googleError?.type || googleError?.message, t));
-        },
-        callback: async (response) => {
-          const credential = String(response?.credential || '').trim();
-          if (!credential) {
-            clearGooglePopupHintTimeout();
-            setError(getGooglePopupErrorMessage('missing_credential', t));
-            return;
-          }
-
-          googleCallbackReceivedRef.current = true;
-          clearGooglePopupHintTimeout();
-
-          setGoogleLoading(true);
-          setError('');
-
-          try {
-            await handleGoogleCredential(credential);
-          } catch (err) {
-            setError(err.message || t('authPages.loginForm.errors.googleLoginFailed'));
-          } finally {
-            setGoogleLoading(false);
-          }
-        },
-        auto_select: false,
-        cancel_on_tap_outside: false
-      });
-
-      googleInitializedRef.current = true;
-      googleInitializedClientIdRef.current = googleClientId;
-    }
-
-    if (!googleButtonContainerRef.current) {
-      setError(t('authPages.loginForm.errors.googleButtonInitFailed'));
-      return;
-    }
-
-    googleButtonContainerRef.current.innerHTML = '';
-    window.google.accounts.id.renderButton(googleButtonContainerRef.current, {
-      theme: 'outline',
-      size: 'large',
-      text: 'continue_with',
-      shape: 'pill'
-    });
-
-    const googleButton = googleButtonContainerRef.current.querySelector('div[role="button"]');
-    if (!googleButton) {
-      clearGooglePopupHintTimeout();
-      setError(t('authPages.loginForm.errors.googlePopupCannotOpen'));
-      return;
-    }
-
-    googleButton.click();
-
-    googlePopupHintTimeoutRef.current = window.setTimeout(() => {
-      if (!googleCallbackReceivedRef.current) {
-        console.warn('Google popup timed out before returning credential.', {
-          origin: typeof window !== 'undefined' ? window.location.origin : '',
-          clientId: googleClientId
-        });
-      }
-    }, 10000);
   };
+
+  useEffect(() => {
+    if (!googleClientId) return undefined;
+
+    let cancelled = false;
+    const container = googleButtonContainerRef.current;
+    if (!container) return undefined;
+
+    const init = () => {
+      if (cancelled) return;
+      const gsi = window.google?.accounts?.id;
+      if (!gsi) {
+        window.setTimeout(init, 200);
+        return;
+      }
+
+      if (googleInitializedClientIdRef.current !== googleClientId) {
+        gsi.initialize({
+          client_id: googleClientId,
+          callback: async (response) => {
+            const credential = String(response?.credential || '').trim();
+            if (!credential) {
+              setError(getGooglePopupErrorMessage('missing_credential', t));
+              return;
+            }
+            const handler = googleHandleCredentialRef.current;
+            if (handler) await handler(credential);
+          },
+          auto_select: false,
+          cancel_on_tap_outside: false,
+          use_fedcm_for_prompt: true
+        });
+        googleInitializedClientIdRef.current = googleClientId;
+      }
+
+      container.innerHTML = '';
+      gsi.renderButton(container, {
+        type: 'standard',
+        theme: 'outline',
+        size: 'large',
+        text: 'continue_with',
+        shape: 'pill',
+        logo_alignment: 'left',
+        width: container.clientWidth || 320
+      });
+      setGoogleReady(true);
+    };
+
+    init();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [googleClientId, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -465,19 +429,28 @@ const LoginForm = ({ onSuccess }) => {
         <span>{t('authPages.loginForm.or')}</span>
       </div>
 
-      <button
-        type="button"
-        className="auth-social-btn"
-        onClick={handleGoogleLogin}
-        disabled={loading || googleLoading}
-      >
-        <span className="auth-social-icon" aria-hidden="true">
-          <i className="bi bi-google"></i>
-        </span>
-        <span>{googleLoading ? t('authPages.loginForm.processing') : t('authPages.loginForm.continueWithGoogle')}</span>
-      </button>
-
-      <div ref={googleButtonContainerRef} className="auth-google-hidden" aria-hidden="true"></div>
+      <div className="auth-google-wrap">
+        <div
+          ref={googleButtonContainerRef}
+          className="auth-google-button"
+          aria-label={t('authPages.loginForm.continueWithGoogle')}
+        ></div>
+        {!googleReady && (
+          <button type="button" className="auth-social-btn" disabled>
+            <span className="auth-social-icon" aria-hidden="true">
+              <i className="bi bi-google"></i>
+            </span>
+            <span>{!googleClientId
+              ? t('authPages.loginForm.errors.missingGoogleClientId')
+              : t('authPages.loginForm.continueWithGoogle')}</span>
+          </button>
+        )}
+        {googleLoading && (
+          <div className="auth-google-loading" aria-live="polite">
+            {t('authPages.loginForm.processing')}
+          </div>
+        )}
+      </div>
 
       <p className="auth-switch-inline">
         {t('authPages.loginForm.noAccount')} <Link to="/register">{t('authPages.loginForm.register')}</Link>

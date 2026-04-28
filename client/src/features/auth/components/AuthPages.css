@@ -581,12 +581,29 @@
   font-size: 0.95rem;
 }
 
-.auth-google-hidden {
-  position: fixed;
-  left: -9999px;
-  top: 0;
-  opacity: 0;
-  pointer-events: none;
+.auth-google-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.auth-google-button {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  min-height: 44px;
+}
+
+.auth-google-button > div {
+  width: 100% !important;
+}
+
+.auth-google-loading {
+  font-size: 0.9rem;
+  color: #21435f;
+  font-weight: 600;
 }
 
 .auth-error-banner {
