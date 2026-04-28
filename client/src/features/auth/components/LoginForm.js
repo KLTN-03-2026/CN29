@@ -138,6 +138,7 @@ const LoginForm = ({ onSuccess }) => {
   const apiBase = CLIENT_API_BASE;
   const googleButtonContainerRef = useRef(null);
   const googleInitializedRef = useRef(false);
+  const googleInitializedClientIdRef = useRef('');
   const googleCallbackReceivedRef = useRef(false);
   const googlePopupHintTimeoutRef = useRef(null);
   const initialGoogleClientId = resolveGoogleClientId();
@@ -155,30 +156,45 @@ const LoginForm = ({ onSuccess }) => {
 
   // Fetch Google Client ID from backend API for runtime configuration
   useEffect(() => {
-    const fetchGoogleConfig = async () => {
-      if (initialGoogleClientId) {
-        window.__GOOGLE_CLIENT_ID__ = initialGoogleClientId;
-        return;
+    let isActive = true;
+
+    const applyGoogleClientId = (value) => {
+      const ids = parseGoogleClientIds(value);
+      if (!ids.length) return;
+
+      const nextId = ids[0];
+
+      if (typeof window !== 'undefined') {
+        window.__GOOGLE_CLIENT_ID__ = nextId;
       }
 
+      if (!isActive) return;
+
+      setGoogleClientId((prev) => (prev === nextId ? prev : nextId));
+    };
+
+    if (initialGoogleClientId) {
+      applyGoogleClientId(initialGoogleClientId);
+    }
+
+    const fetchGoogleConfig = async () => {
       try {
         const response = await fetch(`${apiBase}/auth/config`);
         if (response.ok) {
           const data = await response.json();
-          if (data.googleClientId && typeof data.googleClientId === 'string') {
-            setGoogleClientId(data.googleClientId);
-            // Also set window alias for other components
-            window.__GOOGLE_CLIENT_ID__ = data.googleClientId;
-          }
+          applyGoogleClientId(data?.googleClientId);
         }
       } catch (err) {
         console.warn('Failed to fetch Google config from backend, using build-time value:', err?.message);
-        // Keep using initialGoogleClientId as fallback
       }
     };
 
     fetchGoogleConfig();
-  }, [apiBase]);
+
+    return () => {
+      isActive = false;
+    };
+  }, [apiBase, initialGoogleClientId]);
 
   const clearGooglePopupHintTimeout = () => {
     if (!googlePopupHintTimeoutRef.current) return;
@@ -269,7 +285,10 @@ const LoginForm = ({ onSuccess }) => {
       return;
     }
 
-    if (!googleInitializedRef.current) {
+    const shouldInitialize = !googleInitializedRef.current
+      || googleInitializedClientIdRef.current !== googleClientId;
+
+    if (shouldInitialize) {
       window.google.accounts.id.initialize({
         client_id: googleClientId,
         error_callback: (googleError) => {
@@ -305,6 +324,7 @@ const LoginForm = ({ onSuccess }) => {
       });
 
       googleInitializedRef.current = true;
+      googleInitializedClientIdRef.current = googleClientId;
     }
 
     if (!googleButtonContainerRef.current) {
