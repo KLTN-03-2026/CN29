@@ -815,6 +815,57 @@
     transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
 }
 
+.main-content .cv-search-skills {
+    margin-top: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.main-content .cv-search-skills-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #64748b;
+    font-weight: 800;
+}
+
+.main-content .cv-skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.main-content .cv-skill-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border: 1px solid #cbe0f3;
+    border-radius: 999px;
+    background: #f4f9ff;
+    color: #275173;
+    font-size: 0.72rem;
+    font-weight: 700;
+    padding: 3px 8px;
+}
+
+.main-content .cv-skill-chip small {
+    color: #4f6d88;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.main-content .cv-skill-chip--more {
+    background: #eaf2ff;
+    border-color: #c7ddf2;
+    color: #1d4ed8;
+}
+
+.main-content .cv-skill-list--compact .cv-skill-chip {
+    font-size: 0.68rem;
+    padding: 2px 7px;
+}
+
 .main-content .cv-search-card.is-saved {
     border-color: #86efac !important;
     background: linear-gradient(180deg, #ffffff 0%, #f5fff9 100%);
@@ -1401,6 +1452,26 @@
     background: #13253b;
     border-color: #395676;
     color: #d8e8f8;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-search-skills-label {
+    color: #9eb8d2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-skill-chip {
+    background: #13253b;
+    border-color: #355271;
+    color: #b9d4ec;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-skill-chip small {
+    color: #8fb0cd;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .main-content .cv-skill-chip--more {
+    background: #193651;
+    border-color: #366c98;
+    color: #8bd6ff;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .employer-menu-item:hover,

@@ -1,0 +1,12 @@
+{
+  "ignore": [
+    "public/**",
+    "data/**",
+    "node_modules/**",
+    "*.db",
+    "*.sqlite",
+    "*.sqlite3",
+    "*.log"
+  ],
+  "ext": "js,mjs,cjs,json"
+}

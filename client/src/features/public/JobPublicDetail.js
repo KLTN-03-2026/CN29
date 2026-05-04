@@ -115,7 +115,16 @@ const JobPublicDetail = () => {
     const [reportDetail, setReportDetail] = useState('');
     const [reportSubmitting, setReportSubmitting] = useState(false);
 
-    const isCandidate = user?.role === 'Ứng viên';
+    const userRole = useMemo(() => {
+        const raw = user?.role
+            ?? user?.VaiTro
+            ?? user?.vaiTro
+            ?? user?.LoaiNguoiDung
+            ?? user?.loaiNguoiDung
+            ?? '';
+        return String(raw || '').trim();
+    }, [user]);
+    const isCandidate = userRole === 'Ứng viên';
     const [candidateAction, setCandidateAction] = useState(null); // 'review' | 'report' | null
 
     useEffect(() => {
@@ -146,7 +155,7 @@ const JobPublicDetail = () => {
             const jobId = job?.MaTin;
             if (!jobId) return;
             if (!token || !userId) return;
-            if (user?.role && user.role !== 'Ứng viên') return;
+            if (userRole && !isCandidate) return;
 
             setAppliedLoading(true);
             try {
@@ -165,7 +174,7 @@ const JobPublicDetail = () => {
         };
         loadAppliedStatus();
         return () => { cancelled = true; };
-    }, [job?.MaTin, token, userId, user?.role]);
+    }, [job?.MaTin, token, userId, userRole, isCandidate]);
 
     useEffect(() => {
         let cancelled = false;
@@ -243,7 +252,7 @@ const JobPublicDetail = () => {
             navigate('/login');
             return;
         }
-        if (user?.role && user.role !== 'Ứng viên') {
+        if (userRole && !isCandidate) {
             notify({ type: 'error', message: 'Chỉ tài khoản Ứng viên mới có thể ứng tuyển.' });
             return;
         }
@@ -302,7 +311,7 @@ const JobPublicDetail = () => {
             navigate('/login');
             return;
         }
-        if (user?.role && user.role !== 'Ứng viên') {
+        if (userRole && !isCandidate) {
             notify({ type: 'error', message: 'Chỉ tài khoản Ứng viên mới có thể bình luận.' });
             return;
         }
@@ -372,7 +381,7 @@ const JobPublicDetail = () => {
             navigate('/login');
             return;
         }
-        if (user?.role && user.role !== 'Ứng viên') {
+        if (userRole && !isCandidate) {
             notify({ type: 'error', message: 'Chỉ tài khoản Ứng viên mới có thể báo cáo công ty.' });
             return;
         }
@@ -671,85 +680,99 @@ const JobPublicDetail = () => {
                                             </div>
 
                                             {isCandidate && (
-                                                <div className="mt-3">
-                                                    <div className="job-detail-company-actions d-flex justify-content-center gap-2 flex-wrap">
-                                                        <button
-                                                            type="button"
-                                                            className={`btn btn-sm ${candidateAction === 'review' ? 'btn-primary' : 'btn-outline-primary'}`}
-                                                            onClick={() => setCandidateAction('review')}
-                                                        >
-                                                            Viết đánh giá
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            className={`btn btn-sm ${candidateAction === 'report' ? 'btn-danger' : 'btn-outline-danger'}`}
-                                                            onClick={() => setCandidateAction('report')}
-                                                        >
-                                                            Báo cáo
-                                                        </button>
-                                                    </div>
+                                                <div className="company-feedback-actions">
+                                                    <button
+                                                        type="button"
+                                                        className={`company-feedback-btn company-feedback-btn--review ${candidateAction === 'review' ? 'is-active' : ''}`}
+                                                        onClick={() => setCandidateAction(candidateAction === 'review' ? '' : 'review')}
+                                                        aria-pressed={candidateAction === 'review'}
+                                                    >
+                                                        <i className="bi bi-star-fill"></i>
+                                                        <span>Viết đánh giá</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={`company-feedback-btn company-feedback-btn--report ${candidateAction === 'report' ? 'is-active' : ''}`}
+                                                        onClick={() => setCandidateAction(candidateAction === 'report' ? '' : 'report')}
+                                                        aria-pressed={candidateAction === 'report'}
+                                                    >
+                                                        <i className="bi bi-flag-fill"></i>
+                                                        <span>Báo cáo</span>
+                                                    </button>
                                                 </div>
                                             )}
 
                                             {isCandidate && candidateAction === 'review' && (
-                                                <div className="mt-3">
-                                                    <div className="small text-muted mb-1">Đánh giá công ty (1-5 sao)</div>
-                                                    <div className="d-flex align-items-center gap-2 flex-wrap">
-                                                        {renderStars(companyRating.userRating || 0, {
-                                                            interactive: true,
-                                                            onSelect: submitRating
-                                                        })}
-                                                        <span className="small text-muted">
-                                                            {companyRating.userRating ? `Bạn đã đánh giá: ${companyRating.userRating}/5` : 'Bạn chưa đánh giá'}
+                                                <div className="company-feedback-card company-feedback-card--review">
+                                                    <div className="company-feedback-card-head">
+                                                        <i className="bi bi-stars"></i>
+                                                        <div>
+                                                            <div className="company-feedback-card-title">Đánh giá công ty</div>
+                                                            <div className="company-feedback-card-subtitle">Chia sẻ trải nghiệm của bạn để giúp ứng viên khác.</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="company-feedback-rating-row">
+                                                        <span className="company-feedback-rating-label">Mức điểm (1-5 sao)</span>
+                                                        <div className="company-feedback-rating-stars">
+                                                            {renderStars(companyRating.userRating || 0, {
+                                                                interactive: true,
+                                                                onSelect: submitRating
+                                                            })}
+                                                        </div>
+                                                        <span className="company-feedback-rating-value">
+                                                            {companyRating.userRating ? `${companyRating.userRating}/5` : 'Chưa đánh giá'}
                                                         </span>
                                                     </div>
 
-                                                    <div className="mt-3">
-                                                        <div className="fw-semibold">Bình luận</div>
+                                                    <div className="company-feedback-comments">
+                                                        <div className="company-feedback-section-title">
+                                                            <i className="bi bi-chat-left-text"></i>
+                                                            <span>Bình luận</span>
+                                                        </div>
 
                                                         {commentsLoading && (
-                                                            <div className="small text-muted mt-2">Đang tải bình luận...</div>
+                                                            <div className="company-feedback-empty">Đang tải bình luận...</div>
                                                         )}
 
                                                         {!commentsLoading && companyComments.length === 0 && (
-                                                            <div className="small text-muted mt-2">Chưa có bình luận nào.</div>
+                                                            <div className="company-feedback-empty">Chưa có bình luận nào. Hãy là người đầu tiên!</div>
                                                         )}
 
                                                         {!commentsLoading && companyComments.length > 0 && (
-                                                            <div className="job-detail-company-comments mt-2 d-flex flex-column gap-2">
+                                                            <div className="job-detail-company-comments d-flex flex-column gap-2">
                                                                 {companyComments.map((c) => (
-                                                                    <div key={c.id} className="job-detail-comment-item border rounded p-2">
-                                                                        <div className="d-flex align-items-center justify-content-between gap-2">
-                                                                            <div className="fw-semibold small">
-                                                                                {c.userName || 'Người dùng'}
-                                                                            </div>
-                                                                            <div className="text-muted small">
+                                                                    <div key={c.id} className="job-detail-comment-item">
+                                                                        <div className="job-detail-comment-head">
+                                                                            <span className="job-detail-comment-author">{c.userName || 'Người dùng'}</span>
+                                                                            <span className="job-detail-comment-time">
                                                                                 {c.createdAt ? new Date(c.createdAt).toLocaleString('vi-VN') : ''}
-                                                                            </div>
+                                                                            </span>
                                                                         </div>
-                                                                        <div className="small text-muted" style={{ whiteSpace: 'pre-wrap' }}>{c.content}</div>
+                                                                        <div className="job-detail-comment-body">{c.content}</div>
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                         )}
 
-                                                        <div className="mt-3">
+                                                        <div className="company-feedback-form">
                                                             <textarea
-                                                                className="form-control"
+                                                                className="form-control company-feedback-textarea"
                                                                 rows={3}
                                                                 placeholder="Viết bình luận của bạn..."
                                                                 value={commentText}
                                                                 onChange={(e) => setCommentText(e.target.value)}
                                                                 disabled={commentSubmitting}
                                                             />
-                                                            <div className="d-flex justify-content-end mt-2">
+                                                            <div className="company-feedback-form-foot">
                                                                 <button
                                                                     type="button"
-                                                                    className="btn btn-outline-primary btn-sm"
+                                                                    className="company-feedback-submit company-feedback-submit--primary"
                                                                     onClick={submitComment}
-                                                                    disabled={commentSubmitting}
+                                                                    disabled={commentSubmitting || !commentText.trim()}
                                                                 >
-                                                                    {commentSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}
+                                                                    <i className="bi bi-send"></i>
+                                                                    <span>{commentSubmitting ? 'Đang gửi...' : 'Gửi bình luận'}</span>
                                                                 </button>
                                                             </div>
                                                         </div>
@@ -758,45 +781,60 @@ const JobPublicDetail = () => {
                                             )}
 
                                             {isCandidate && candidateAction === 'report' && (
-                                                <div className="mt-3 mb-3">
-                                                    <div className="fw-semibold">Báo cáo công ty</div>
-                                                    <select
-                                                        className="form-select form-select-sm mb-2"
-                                                        value={reportReason}
-                                                        onChange={(e) => setReportReason(e.target.value)}
-                                                        disabled={reportSubmitting}
-                                                    >
-                                                        <option value="">-- Chọn lý do --</option>
-                                                        <option value="Nội dung lừa đảo">Nội dung lừa đảo</option>
-                                                        <option value="Vi phạm pháp luật">Vi phạm pháp luật</option>
-                                                        <option value="Thông tin sai sự thật">Thông tin sai sự thật</option>
-                                                        <option value="Ứng xử không chuyên nghiệp">Ứng xử không chuyên nghiệp</option>
-                                                        <option value="Khác">Khác</option>
-                                                    </select>
-                                                    <textarea
-                                                        className="form-control"
-                                                        rows={3}
-                                                        placeholder="Mô tả chi tiết (không bắt buộc)"
-                                                        value={reportDetail}
-                                                        onChange={(e) => setReportDetail(e.target.value)}
-                                                        disabled={reportSubmitting}
-                                                    />
-                                                    <div className="d-flex justify-content-end mt-2">
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-outline-danger btn-sm"
-                                                            onClick={submitReport}
+                                                <div className="company-feedback-card company-feedback-card--report">
+                                                    <div className="company-feedback-card-head">
+                                                        <i className="bi bi-shield-exclamation"></i>
+                                                        <div>
+                                                            <div className="company-feedback-card-title">Báo cáo công ty</div>
+                                                            <div className="company-feedback-card-subtitle">Báo cáo của bạn sẽ được đội ngũ xem xét trong 24h.</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="company-feedback-form">
+                                                        <label className="company-feedback-field-label">Lý do báo cáo</label>
+                                                        <select
+                                                            className="form-select company-feedback-select"
+                                                            value={reportReason}
+                                                            onChange={(e) => setReportReason(e.target.value)}
                                                             disabled={reportSubmitting}
                                                         >
-                                                            {reportSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}
-                                                        </button>
+                                                            <option value="">-- Chọn lý do --</option>
+                                                            <option value="Nội dung lừa đảo">Nội dung lừa đảo</option>
+                                                            <option value="Vi phạm pháp luật">Vi phạm pháp luật</option>
+                                                            <option value="Thông tin sai sự thật">Thông tin sai sự thật</option>
+                                                            <option value="Ứng xử không chuyên nghiệp">Ứng xử không chuyên nghiệp</option>
+                                                            <option value="Khác">Khác</option>
+                                                        </select>
+
+                                                        <label className="company-feedback-field-label">Mô tả chi tiết (không bắt buộc)</label>
+                                                        <textarea
+                                                            className="form-control company-feedback-textarea"
+                                                            rows={3}
+                                                            placeholder="Cung cấp thông tin chi tiết để chúng tôi xử lý nhanh hơn..."
+                                                            value={reportDetail}
+                                                            onChange={(e) => setReportDetail(e.target.value)}
+                                                            disabled={reportSubmitting}
+                                                        />
+
+                                                        <div className="company-feedback-form-foot">
+                                                            <button
+                                                                type="button"
+                                                                className="company-feedback-submit company-feedback-submit--danger"
+                                                                onClick={submitReport}
+                                                                disabled={reportSubmitting || !reportReason}
+                                                            >
+                                                                <i className="bi bi-flag"></i>
+                                                                <span>{reportSubmitting ? 'Đang gửi...' : 'Gửi báo cáo'}</span>
+                                                            </button>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             )}
 
                                             {isCandidate ? null : (
-                                                <div className="mt-3 small text-muted">
-                                                    Chỉ tài khoản Ứng viên mới có thể đánh giá/báo cáo.
+                                                <div className="company-feedback-locked">
+                                                    <i className="bi bi-info-circle"></i>
+                                                    <span>Chỉ tài khoản Ứng viên mới có thể đánh giá/báo cáo.</span>
                                                 </div>
                                             )}
                                         </>

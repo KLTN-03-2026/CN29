@@ -87,8 +87,9 @@ const JobDetail = () => {
                 <div className="job-detail-hero__content container">
                     <div className="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3">
                         <div>
-                            <button className="btn btn-link p-0 mb-2" onClick={() => navigate(-1)}>
-                                {t('employer.jobDetailPage.backButton')}
+                            <button type="button" className="job-detail-back" onClick={() => navigate(-1)}>
+                                <i className="bi bi-arrow-left" aria-hidden="true"></i>
+                                <span>{t('employer.jobDetailPage.backButton')}</span>
                             </button>
                             <h2 className="job-detail-title mb-0">{t('employer.jobDetailPage.title')}</h2>
                         </div>

@@ -1,0 +1,625 @@
+<!doctype html>
+<html lang="vi"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CV TopCV Korean Translator</title>
+  <style>
+    :root {
+      --paper: #fff;
+      --line: #d8e0ec;
+      --line-soft: #e5ebf3;
+      --ink: #1a2638;
+      --muted: #52627a;
+      --brand: #2f8fdf;
+      --left-bg: #f6f9fe;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      padding: 12px;
+      font-family: "Segoe UI", Roboto, sans-serif;
+      color: var(--ink);
+      background: radial-gradient(circle at 12% 10%, #f7fbff, #ebf1f8 44%, #e5edf6 100%);
+    }
+
+    .cv-page {
+      width: min(940px, 100%);
+      min-height: 1060px;
+      margin: 0 auto;
+      background: var(--paper);
+      border: 1px solid #ccd8e6;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow: 0 20px 46px rgba(21, 31, 49, 0.14);
+    }
+
+    .cv-grid {
+      display: grid;
+      grid-template-columns: 38.2% 61.8%;
+      min-height: 1060px;
+    }
+
+    .left-column {
+      background: linear-gradient(180deg, #fbfdff, var(--left-bg));
+      border-right: 1px solid var(--line);
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .main-column {
+      padding: 10px;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .section {
+      border: 1px solid var(--line-soft);
+      border-radius: 14px;
+      background: #fff;
+      padding: 12px;
+      position: relative;
+      overflow: visible;
+    }
+
+    .section-tools {
+      position: absolute;
+      left: 10px;
+      top: -12px;
+      z-index: 9;
+      display: none;
+      align-items: center;
+      gap: 4px;
+      padding: 2px;
+      border-radius: 999px;
+      background: rgba(248, 250, 252, 0.96);
+      border: 1px solid #d8e0ec;
+      box-shadow: 0 4px 10px rgba(26, 38, 56, 0.16);
+    }
+
+    .section:hover > .section-tools,
+    .section:focus-within > .section-tools {
+      display: inline-flex;
+    }
+
+    .tool-btn {
+      border: none;
+      width: 22px;
+      height: 22px;
+      padding: 0;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 13px;
+      line-height: 1;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+    }
+
+    .tool-btn:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .tool-add { background: #16a34a; }
+    .tool-up,
+    .tool-down { background: #64748b; }
+    .tool-remove { background: #dc2626; }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+
+    .section-item-add-btn {
+      position: absolute;
+      right: 0;
+      top: -2px;
+      z-index: 2;
+      border: 1px solid #9fd0fc;
+      background: #ebf5ff;
+      color: #1b6db6;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 4px 9px;
+      cursor: pointer;
+      white-space: nowrap;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .section:hover .section-item-add-btn,
+    .section:focus-within .section-item-add-btn {
+      display: inline-flex;
+    }
+
+    .section-item-add-btn:hover {
+      background: #dceeff;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-weight: 800;
+      color: #235f98;
+      white-space: nowrap;
+    }
+
+    .section-line {
+      width: 100%;
+      height: 1px;
+      background: var(--line);
+    }
+
+    .profile-card {
+      text-align: center;
+      padding-top: 10px;
+    }
+
+    .avatar-wrap {
+      appearance: none;
+      border: 2px solid #cae3f9;
+      background: #eef7ff;
+      border-radius: 50%;
+      width: 172px;
+      height: 172px;
+      margin: 0 auto;
+      overflow: hidden;
+      padding: 0;
+      position: relative;
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(47, 143, 223, 0.24);
+    }
+
+    .avatar-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: auto 0 0 0;
+      background: linear-gradient(180deg, transparent, rgba(8, 31, 58, 0.84));
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 8px;
+    }
+
+    .profile-name {
+      margin: 12px 0 0;
+      font-size: 26px;
+      line-height: 1.04;
+      letter-spacing: -0.01em;
+      color: #1a3f68;
+      font-weight: 800;
+    }
+
+    .profile-position {
+      margin: 8px 0 0;
+      font-size: 16px;
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    .meta-list,
+    .simple-list,
+    .timeline-list {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      display: grid;
+      gap: 8px;
+    }
+
+    .meta-item {
+      display: grid;
+      grid-template-columns: 98px 1fr;
+      gap: 8px;
+      align-items: start;
+      border-bottom: 1px dashed #e7edf5;
+      padding-bottom: 6px;
+    }
+
+    .meta-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .meta-label {
+      font-size: 11px;
+      color: #60718a;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+    }
+
+    .meta-value,
+    .contact-value {
+      font-size: 14px;
+      line-height: 1.45;
+      color: #20324f;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .skill-row {
+      display: grid;
+      gap: 5px;
+      margin-bottom: 8px;
+    }
+
+    .skill-name {
+      font-size: 14px;
+      color: #1c304b;
+      font-weight: 600;
+    }
+
+    .skill-meter {
+      height: 6px;
+      background: #e5edf7;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .skill-meter > span {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #66b5f1, #2f8fdf);
+      border-radius: 999px;
+    }
+
+    .simple-list li {
+      border: 1px solid #e3eaf4;
+      background: #f9fbfe;
+      border-radius: 10px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .sub-time {
+      color: #4f617d;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .timeline-item {
+      border: 1px solid #e2e9f3;
+      border-radius: 12px;
+      background: #fbfdff;
+      padding: 10px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .timeline-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .timeline-time {
+      font-size: 12px;
+      color: #4f627c;
+      font-weight: 700;
+    }
+
+    .timeline-org {
+      font-size: 16px;
+      color: #183758;
+      font-weight: 800;
+    }
+
+    .timeline-role {
+      font-size: 14px;
+      color: #2d4768;
+      font-weight: 600;
+    }
+
+    .timeline-desc {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.58;
+      color: #203652;
+      white-space: pre-wrap;
+    }
+
+    .interest-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .interest-grid li {
+      border: 1px solid #dbe7f3;
+      border-radius: 999px;
+      background: #eef4fb;
+      padding: 6px 10px;
+      text-align: center;
+      font-size: 13px;
+      color: #274666;
+    }
+
+    [data-editable="true"][contenteditable="true"] {
+      outline: none;
+      border-radius: 8px;
+      padding: 1px 3px;
+      margin: -1px -3px;
+      transition: background .15s ease, box-shadow .15s ease;
+    }
+
+    [data-editable="true"][contenteditable="true"]:hover {
+      background: rgba(15, 118, 110, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(15, 118, 110, 0.2);
+    }
+
+    [data-editable="true"][contenteditable="true"]:focus {
+      background: rgba(15, 118, 110, 0.12);
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.24);
+    }
+
+    [data-editable="true"][contenteditable="true"]:empty::before {
+      content: attr(data-placeholder);
+      color: #94a3b8;
+    }
+
+    @media (max-width: 940px) {
+      body { padding: 8px; }
+      .cv-page { border-radius: 0; }
+      .cv-grid { grid-template-columns: 1fr; }
+      .left-column {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+    }
+
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+<style id="__cv_export_fix__">.toolbar,.toolbar.no-print,#resetBtn{display:none!important;}.contact-value{overflow-wrap:anywhere;word-break:break-word;}@media print{body{background:#fff!important;}.shell{padding:0!important;}.stage{display:block!important;max-width:none!important;overflow:visible!important;padding:0!important;}.cv-page{width:210mm!important;min-height:297mm!important;margin:0 auto!important;border:none!important;box-shadow:none!important;}.cv-header{grid-template-columns:148px 1fr!important;}.avatar-wrap.no-print,.avatar-wrap{display:block!important;}.avatar-overlay{display:none!important;}.contact-strip{grid-template-columns:repeat(2,minmax(0,1fr))!important;}.contact-chip{min-width:0!important;}}</style></head>
+<body>
+  <article class="cv-page" id="cvPage">
+    <div class="cv-grid">
+      <aside class="left-column">
+        <section class="section profile-card">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <button id="avatarButton" type="button" class="avatar-wrap no-print" data-cv-avatar-trigger="1" aria-label="Đổi ảnh đại diện" data-cv-parent-avatar-bound="1" style="cursor: pointer;">
+            <img id="avatarImage" src="https://www.bing.com/th/id/OIP.fD95bEoLykm2y1FXmklo5wHaLH?w=177&amp;h=211&amp;c=8&amp;rs=1&amp;qlt=90&amp;o=6&amp;dpr=1.3&amp;pid=3.1&amp;rm=2" http:="" www.w3.org="" 2000="" svg'="" width="300" height="300" viewbox="0 0 300 300" %3e%3cdefs%3e%3clineargradient="" x1="0" y1="0" x2="1" y2="1" %3e%3cstop="" offset="0%25" stop-color="%230f766e" %3e%3c="" lineargradient%3e%3c="" defs%3e%3crect="" rx="42" fill="url(%23g)" %3e%3ccircle="" cx="150" cy="114" r="54" %3e%3cpath="" d="M63 246c18-45 58-66 87-66s69 21 87 66" svg%3e"="" alt="Avatar" data-cv-avatar="1" data-image-editable="avatarImage" data-cv-parent-avatar-bound="1" style="cursor: pointer;">
+            
+          </button>
+          <h1 class="profile-name" contenteditable="true" data-editable="true" data-field="name" data-placeholder="Họ tên" data-single-line="true">Phạm Thúy Hà</h1>
+          <p class="profile-position" contenteditable="true" data-editable="true" data-field="position" data-placeholder="Vị trí ứng tuyển" data-single-line="true">Biên phiên dịch tiếng Hàn</p>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head">
+            <h2 class="section-title" contenteditable="true" data-editable="true" data-field="personalTitle" data-placeholder="Tiêu đề" data-single-line="true">Thông tin cá nhân</h2>
+            <div class="section-line"></div>
+            <button type="button" class="section-item-add-btn no-print" title="Thêm thông tin cá nhân" aria-label="Thêm thông tin cá nhân" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var list=section.querySelector('.meta-list');if(!list)return;var item=document.createElement('li');item.className='meta-item';item.innerHTML='&lt;span class=&quot;meta-label&quot; contenteditable=&quot;true&quot; data-editable=&quot;true&quot; data-placeholder=&quot;Nhãn&quot; data-single-line=&quot;true&quot;&gt;Mục mới&lt;/span&gt;&lt;span class=&quot;meta-value&quot; contenteditable=&quot;true&quot; data-editable=&quot;true&quot; data-placeholder=&quot;Giá trị&quot; data-single-line=&quot;true&quot;&gt;Thông tin&lt;/span&gt;';list.appendChild(item);var target=item.querySelector('.meta-label');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+ Thông tin</button>
+          </div>
+          <ul class="meta-list">
+            <li class="meta-item"><span class="meta-label" contenteditable="true" data-editable="true" data-field="birthdayLabel" data-placeholder="Nhãn" data-single-line="true">Ngày sinh</span><span class="meta-value" contenteditable="true" data-editable="true" data-field="birthday" data-placeholder="DD/MM/YYYY" data-single-line="true">24/08/1996</span></li>
+            <li class="meta-item"><span class="meta-label" contenteditable="true" data-editable="true" data-field="genderLabel" data-placeholder="Nhãn" data-single-line="true">Giới tính</span><span class="meta-value" contenteditable="true" data-editable="true" data-field="gender" data-placeholder="Nam/Nữ" data-single-line="true">Nữ</span></li>
+            <li class="meta-item"><span class="meta-label" contenteditable="true" data-editable="true" data-field="phoneLabel" data-placeholder="Nhãn" data-single-line="true">Điện thoại</span><span class="contact-value" contenteditable="true" data-editable="true" data-field="phone" data-placeholder="Số điện thoại" data-single-line="true">(024) 6680 5588</span></li>
+            <li class="meta-item"><span class="meta-label" contenteditable="true" data-editable="true" data-field="emailLabel" data-placeholder="Nhãn" data-single-line="true">Email</span><span class="contact-value" contenteditable="true" data-editable="true" data-field="email" data-placeholder="Địa chỉ email" data-single-line="true">hotro@topcv.vn</span></li>
+            <li class="meta-item"><span class="meta-label" contenteditable="true" data-editable="true" data-field="addressLabel" data-placeholder="Nhãn" data-single-line="true">Địa chỉ</span><span class="contact-value" contenteditable="true" data-editable="true" data-field="address" data-placeholder="Địa chỉ" data-single-line="true">Hai Bà Trưng, Hà Nội</span></li>
+            <li class="meta-item"><span class="meta-label" contenteditable="true" data-editable="true" data-field="linkedinLabel" data-placeholder="Nhãn" data-single-line="true">Liên kết</span><span class="contact-value" contenteditable="true" data-editable="true" data-field="linkedin" data-placeholder="URL cá nhân" data-single-line="true">linkedin.com/in/profile</span></li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="skillsTitle" data-placeholder="Tiêu đề" data-single-line="true">Kỹ năng</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm kỹ năng" aria-label="Thêm kỹ năng" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var wrap=section.querySelector('[data-field=\'skills\']');if(!wrap)return;var row=document.createElement('div');row.className='skill-row';row.innerHTML='&lt;span class=&quot;skill-name&quot; contenteditable=&quot;true&quot; data-editable=&quot;true&quot; data-placeholder=&quot;Tên kỹ năng&quot; data-single-line=&quot;true&quot;&gt;Kỹ năng mới&lt;/span&gt;&lt;span class=&quot;skill-meter&quot;&gt;&lt;span style=&quot;width:70%&quot;&gt;&lt;/span&gt;&lt;/span&gt;';wrap.appendChild(row);var target=row.querySelector('.skill-name');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+ Kỹ năng</button></div>
+          <div contenteditable="true" data-editable="true" data-field="skills" data-placeholder="Danh sách kỹ năng">
+            <div class="skill-row"><span class="skill-name">Kỹ năng giao tiếp</span><span class="skill-meter"><span style="width:82%"></span></span></div>
+            <div class="skill-row"><span class="skill-name">Kỹ năng đàm phán</span><span class="skill-meter"><span style="width:82%"></span></span></div>
+            <div class="skill-row"><span class="skill-name">Kỹ năng thuyết phục</span><span class="skill-meter"><span style="width:82%"></span></span></div>
+            <div class="skill-row"><span class="skill-name">Kỹ năng giải quyết vấn đề</span><span class="skill-meter"><span style="width:82%"></span></span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="certTitle" data-placeholder="Tiêu đề" data-single-line="true">Chứng chỉ</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm chứng chỉ" aria-label="Thêm chứng chỉ" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var list=section.querySelector('.simple-list');if(!list)return;var item=document.createElement('li');item.innerHTML='&lt;span&gt;Chứng chỉ tiếng Trung (HSK 5)&lt;/span&gt;&lt;span class=\'sub-time\'&gt;2025&lt;/span&gt;';list.appendChild(item);if(list.focus){list.focus();}})(this,event)">+ Chứng chỉ</button></div>
+          <ul class="simple-list" contenteditable="true" data-editable="true" data-field="languages" data-placeholder="Danh sách chứng chỉ">
+            <li><span>TOPIK II cấp 6</span><span class="sub-time">2018</span></li>
+            <li><span>IELTS 7.5</span><span class="sub-time">2019</span></li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="awardTitle" data-placeholder="Tiêu đề" data-single-line="true">Danh hiệu và giải thưởng</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm giải thưởng" aria-label="Thêm giải thưởng" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var list=section.querySelector('.simple-list');if(!list)return;var item=document.createElement('li');item.innerHTML='&lt;span&gt;Giải thưởng mới&lt;/span&gt;&lt;span class=\'sub-time\'&gt;2026&lt;/span&gt;';list.appendChild(item);if(list.focus){list.focus();}})(this,event)">+ Giải thưởng</button></div>
+          <ul class="simple-list" contenteditable="true" data-editable="true" data-field="awards" data-placeholder="Danh sách giải thưởng">
+            <li><span>Top 5 Nhân viên xuất sắc</span><span class="sub-time">2022</span></li>
+            <li><span>Top 10 Nhân viên đạt hiệu suất công việc cao nhất</span><span class="sub-time">2023</span></li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="interestTitle" data-placeholder="Tiêu đề" data-single-line="true">Sở thích</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm sở thích" aria-label="Thêm sở thích" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var list=section.querySelector('.interest-grid');if(!list)return;var item=document.createElement('li');item.setAttribute('contenteditable','true');item.setAttribute('data-editable','true');item.setAttribute('data-single-line','true');item.innerText='Sở thích mới';list.appendChild(item);if(item.focus){item.focus();}})(this,event)">+ Sở thích</button></div>
+          <ul class="interest-grid" contenteditable="true" data-editable="true" data-field="interests" data-placeholder="Sở thích">
+            <li>Đọc sách</li><li>Đi bộ</li><li>Nghe nhạc</li><li>Xem phim</li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="referenceTitle" data-placeholder="Tiêu đề" data-single-line="true">Người giới thiệu</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm người giới thiệu" aria-label="Thêm người giới thiệu" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var block=section.querySelector('[data-field=\'reference\']');if(!block)return;var value=String(block.innerText||'').replace(/\s*$/,'');block.innerText=(value?value+'\\n\\n':'')+'Người giới thiệu mới - Chức danh\\nEmail: example@email.com\\nĐiện thoại: 09xx xxx xxx';if(block.focus){block.focus();}})(this,event)">+ Người</button></div>
+          <p class="timeline-desc" contenteditable="true" data-editable="true" data-field="reference" data-placeholder="Thông tin người giới thiệu">Bà Trần Bích Thủy - Giám đốc công ty TNHH CJ Vietnam
+Email: abc@gmail.com
+Điện thoại: 0123 456 789</p>
+        </section>
+      </aside>
+
+      <main class="main-column">
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="objectiveTitle" data-placeholder="Tiêu đề" data-single-line="true">Mục tiêu nghề nghiệp</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm đoạn mục tiêu" aria-label="Thêm đoạn mục tiêu" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var block=section.querySelector('[data-field=\'summary\']');if(!block)return;var value=String(block.innerText||'').replace(/\s*$/,'');block.innerText=(value?value+'\\n\\n':'')+'- Nội dung mục tiêu mới';if(block.focus){block.focus();}})(this,event)">+ Đoạn</button></div>
+          <p class="timeline-desc" contenteditable="true" data-editable="true" data-field="summary" data-placeholder="Mục tiêu nghề nghiệp">Biên phiên dịch Hàn - Anh - Việt với 5 năm kinh nghiệm làm việc trong các doanh nghiệp công nghệ và du lịch. Thành thạo 4 kỹ năng nghe - nói - đọc - viết. Góp phần giúp doanh nghiệp ký kết 3 hợp đồng có giá trị 2 triệu USD trong năm 2024. Với năng lực sẵn có cùng tinh thần cầu tiến, tôi tin mình sẽ trở thành mảnh ghép quan trọng trên chặng đường phát triển của MW Group trong tương lai.</p>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="educationTitle" data-placeholder="Tiêu đề" data-single-line="true">Học vấn</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm học vấn" aria-label="Thêm học vấn" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var list=section.querySelector('.timeline-list');if(!list)return;var item=document.createElement('li');item.className='timeline-item';item.setAttribute('contenteditable','true');item.setAttribute('data-editable','true');item.innerHTML='&lt;div class=&quot;timeline-head&quot;&gt;&lt;span class=&quot;timeline-time&quot;&gt;MM/YYYY - MM/YYYY&lt;/span&gt;&lt;span class=&quot;timeline-org&quot;&gt;Trường / Tổ chức&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;timeline-role&quot;&gt;Chuyên ngành / Vai trò&lt;/div&gt;&lt;p class=&quot;timeline-desc&quot;&gt;Mô tả ngắn...&lt;/p&gt;';list.appendChild(item);if(item.focus){item.focus();}})(this,event)">+ Học vấn</button></div>
+          <ul class="timeline-list">
+            <li class="timeline-item" contenteditable="true" data-editable="true" data-field="education" data-placeholder="Thông tin học vấn">
+              <div class="timeline-head"><span class="timeline-time">10/2014 - 06/2018</span><span class="timeline-org">Đại học TopCV</span></div>
+              <div class="timeline-role">Ngôn ngữ Hàn Quốc</div>
+              <p class="timeline-desc">Xếp loại: Xuất sắc
+Giải thưởng: Top 10 sinh viên tiêu biểu niên khóa 2016 - 2017, 2017 - 2018</p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="experienceTitle" data-placeholder="Tiêu đề" data-single-line="true">Kinh nghiệm làm việc</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm kinh nghiệm" aria-label="Thêm kinh nghiệm" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var list=section.querySelector('.timeline-list');if(!list)return;var item=document.createElement('li');item.className='timeline-item';item.setAttribute('contenteditable','true');item.setAttribute('data-editable','true');item.innerHTML='&lt;div class=&quot;timeline-head&quot;&gt;&lt;span class=&quot;timeline-time&quot;&gt;MM/YYYY - MM/YYYY&lt;/span&gt;&lt;span class=&quot;timeline-org&quot;&gt;Công ty / Tổ chức&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;timeline-role&quot;&gt;Vị trí công việc&lt;/div&gt;&lt;p class=&quot;timeline-desc&quot;&gt;Mô tả kinh nghiệm...&lt;/p&gt;';list.appendChild(item);if(item.focus){item.focus();}})(this,event)">+ Kinh nghiệm</button></div>
+          <ul class="timeline-list">
+            <li class="timeline-item" contenteditable="true" data-editable="true" data-field="experience" data-placeholder="Kinh nghiệm làm việc">
+              <div class="timeline-head"><span class="timeline-time">01/2021 - Nay</span><span class="timeline-org">Công ty du lịch Bittersweet &amp; Partners</span></div>
+              <div class="timeline-role">Trợ lý Giám đốc kinh doanh (làm việc bằng tiếng Hàn)</div>
+              <p class="timeline-desc">Phiên dịch trực tiếp trong các cuộc họp nội bộ và gặp gỡ đối tác Hàn Quốc, đảm bảo truyền đạt chính xác thông tin chiến lược và chuyên môn.
+Biên dịch hợp đồng, tài liệu đào tạo và báo cáo tài chính từ tiếng Hàn sang tiếng Việt (và ngược lại), góp phần rút ngắn 40% thời gian xử lý tài liệu.
+Hỗ trợ Giám đốc Hàn Quốc điều phối hoạt động kinh doanh, theo dõi hiệu suất đội ngũ và đề xuất cải tiến quy trình, giúp tăng 18% hiệu quả công việc.</p>
+            </li>
+            <li class="timeline-item" contenteditable="true" data-editable="true" data-field="experience2" data-placeholder="Kinh nghiệm làm việc trước đó">
+              <div class="timeline-head"><span class="timeline-time">04/2018 - 12/2020</span><span class="timeline-org">Công ty TNHH CJ Vietnam</span></div>
+              <div class="timeline-role">Nhân viên chăm sóc khách hàng (thị trường Hàn Quốc)</div>
+              <p class="timeline-desc">Tư vấn và xử lý yêu cầu của khách hàng Hàn Quốc qua điện thoại và nền tảng trực tuyến, duy trì chỉ số hài lòng trên 90%.
+Sử dụng tiếng Hàn trong cả nói và viết để hỗ trợ khách hàng xử lý sự cố kỹ thuật, bảo hành sản phẩm và theo dõi đơn hàng, góp phần giảm 25% khiếu nại.
+Biên - phiên dịch Hàn - Việt thông tin sản phẩm, tài liệu hướng dẫn và chính sách, giúp chuẩn hóa quy trình chăm sóc khách hàng cho thị trường Hàn Quốc.</p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="activityTitle" data-placeholder="Tiêu đề" data-single-line="true">Hoạt động</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm hoạt động" aria-label="Thêm hoạt động" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var list=section.querySelector('.timeline-list');if(!list)return;var item=document.createElement('li');item.className='timeline-item';item.setAttribute('contenteditable','true');item.setAttribute('data-editable','true');item.innerHTML='&lt;div class=&quot;timeline-head&quot;&gt;&lt;span class=&quot;timeline-time&quot;&gt;MM/YYYY - MM/YYYY&lt;/span&gt;&lt;span class=&quot;timeline-org&quot;&gt;Tên hoạt động&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;timeline-role&quot;&gt;Vai trò&lt;/div&gt;&lt;p class=&quot;timeline-desc&quot;&gt;Mô tả hoạt động...&lt;/p&gt;';list.appendChild(item);if(item.focus){item.focus();}})(this,event)">+ Hoạt động</button></div>
+          <ul class="timeline-list">
+            <li class="timeline-item" contenteditable="true" data-editable="true" data-field="activity" data-placeholder="Hoạt động nổi bật">
+              <div class="timeline-head"><span class="timeline-time">05/2024 - 06/2024</span><span class="timeline-org">Lễ hội Giao lưu Văn hóa Việt - Hàn 2024</span></div>
+              <div class="timeline-role">Tình nguyện viên Phiên dịch &amp; Hỗ trợ sự kiện</div>
+              <p class="timeline-desc">Phụ trách phiên dịch trực tiếp tại các gian hàng trải nghiệm văn hóa, hỗ trợ giao tiếp giữa ban tổ chức người Hàn và khách tham quan người Việt. Dịch thuật các tài liệu giới thiệu ngắn và hướng dẫn trong sự kiện.</p>
+            </li>
+          </ul>
+        </section>
+
+        <section class="section">
+          <div class="section-tools no-print">
+            <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+            <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+            <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+            <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+          </div>
+          <div class="section-head"><h2 class="section-title" contenteditable="true" data-editable="true" data-field="additionalTitle" data-placeholder="Tiêu đề" data-single-line="true">Thông tin thêm</h2><div class="section-line"></div><button type="button" class="section-item-add-btn no-print" title="Thêm thông tin" aria-label="Thêm thông tin" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var block=section.querySelector('[data-field=\'projects\']');if(!block)return;var value=String(block.innerText||'').replace(/\s*$/,'');block.innerText=(value?value+'\\n':'')+'- Thông tin bổ sung mới';if(block.focus){block.focus();}})(this,event)">+ Thêm dòng</button></div>
+          <p class="timeline-desc" contenteditable="true" data-editable="true" data-field="projects" data-placeholder="Thông tin bổ sung">Điền thêm các thông tin bổ sung (nếu có).</p>
+        </section>
+      </main>
+    </div>
+  </article>
+
+  <template id="cv-section-template">
+    <section class="section cv-custom-section">
+      <div class="section-tools no-print">
+        <button type="button" class="tool-btn tool-add" title="Thêm mục" aria-label="Thêm mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');var tpl=document.getElementById('cv-section-template');if(!host||!tpl)return;var node=tpl.content&amp;&amp;tpl.content.firstElementChild?tpl.content.firstElementChild.cloneNode(true):null;if(!node)return;host.insertAdjacentElement('afterend',node);var target=node.querySelector('.section-title');if(target&amp;&amp;target.focus){target.focus();}})(this,event)">+</button>
+        <button type="button" class="tool-btn tool-up" title="Đưa lên" aria-label="Đưa lên" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var prev=host.previousElementSibling;if(!prev)return;host.parentNode.insertBefore(host,prev);})(this,event)">↑</button>
+        <button type="button" class="tool-btn tool-down" title="Đưa xuống" aria-label="Đưa xuống" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var next=host.nextElementSibling;if(!next)return;host.parentNode.insertBefore(next,host);})(this,event)">↓</button>
+        <button type="button" class="tool-btn tool-remove" title="Xóa mục" aria-label="Xóa mục" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var host=btn.closest('section');if(!host||!host.parentNode)return;var parent=host.parentNode;var count=0;for(var i=0;i&lt;parent.children.length;i++){var child=parent.children[i];if(child.tagName&amp;&amp;child.tagName.toLowerCase()==='section')count++;}if(count&lt;=1)return;host.remove();})(this,event)">×</button>
+      </div>
+      <div class="section-head">
+        <h2 class="section-title" contenteditable="true" data-editable="true" data-placeholder="Tiêu đề" data-single-line="true">Mục mới</h2>
+        <div class="section-line"></div>
+        <button type="button" class="section-item-add-btn no-print" title="Thêm nội dung" aria-label="Thêm nội dung" onclick="(function(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var section=btn.closest('section');if(!section)return;var block=section.querySelector('.timeline-desc');if(!block)return;var value=String(block.innerText||'').replace(/\s*$/,'');block.innerText=(value?value+'\\n':'')+'- Nội dung mới';if(block.focus){block.focus();}})(this,event)">+ Nội dung</button>
+      </div>
+      <p class="timeline-desc" contenteditable="true" data-editable="true" data-placeholder="Nhập nội dung tại đây">Nhập nội dung bạn muốn thêm tại đây...</p>
+    </section>
+  </template>
+
+
+
+</body></html>

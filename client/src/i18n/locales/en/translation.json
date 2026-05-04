@@ -1052,7 +1052,8 @@
     },
     "labels": {
       "updatedAt": "Updated: {{date}}",
-      "status": "Status: {{status}}"
+      "status": "Status: {{status}}",
+      "skills": "Skills"
     },
     "actions": {
       "uploading": "Uploading...",
@@ -1206,6 +1207,7 @@
       "dropdown": {
         "profile": "My profile",
         "dashboard": "Dashboard",
+        "messages": "Messages",
         "jobs": "Manage job postings",
         "notifications": "Notifications",
         "logout": "Log out"
@@ -1331,7 +1333,8 @@
       "noResults": "No matching CVs found",
       "foundResults": "Found {{count}} CVs",
       "results": {
-        "updatedAt": "Updated:"
+        "updatedAt": "Updated:",
+        "skillsLabel": "Skills"
       },
       "actions": {
         "viewCv": "View CV",
@@ -1360,7 +1363,7 @@
     },
     "jobDetailPage": {
       "title": "Job details",
-      "backButton": "← Back",
+      "backButton": "Back",
       "editButton": "Edit",
       "jobListButton": "Job listings",
       "loading": "Loading...",

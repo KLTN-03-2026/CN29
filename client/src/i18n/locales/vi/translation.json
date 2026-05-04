@@ -1052,7 +1052,8 @@
     },
     "labels": {
       "updatedAt": "Cập nhật: {{date}}",
-      "status": "Trạng thái: {{status}}"
+      "status": "Trạng thái: {{status}}",
+      "skills": "Kỹ năng"
     },
     "actions": {
       "uploading": "Đang tải...",
@@ -1206,6 +1207,7 @@
       "dropdown": {
         "profile": "Hồ sơ của tôi",
         "dashboard": "Dashboard",
+        "messages": "Tin nhắn",
         "jobs": "Quản lý tin tuyển dụng",
         "notifications": "Thông báo",
         "logout": "Đăng xuất"
@@ -1331,7 +1333,8 @@
       "noResults": "Không tìm thấy CV phù hợp",
       "foundResults": "Tìm thấy {{count}} CV",
       "results": {
-        "updatedAt": "Cập nhật:"
+        "updatedAt": "Cập nhật:",
+        "skillsLabel": "Kỹ năng"
       },
       "actions": {
         "viewCv": "Xem CV",
@@ -1360,7 +1363,7 @@
     },
     "jobDetailPage": {
       "title": "Chi tiết tin tuyển dụng",
-      "backButton": "← Quay lại",
+      "backButton": "Quay lại",
       "editButton": "Chỉnh sửa",
       "jobListButton": "Danh sách tin",
       "loading": "Đang tải...",

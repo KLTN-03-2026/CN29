@@ -251,13 +251,13 @@
 .aiw-messages {
   flex: 1;
   overflow: auto;
-  padding: 12px;
+  padding: 10px;
   background: #f5f9ff;
 }
 
 .aiw-msg {
   display: flex;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 .aiw-msg.user {
@@ -269,14 +269,23 @@
 }
 
 .aiw-bubble {
-  max-width: 88%;
-  padding: 10px 12px;
-  border-radius: 14px;
+  max-width: 94%;
+  padding: 7px 10px;
+  border-radius: 10px;
   border: 1px solid #d9e6f4;
   background: #fff;
-  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 3px 8px rgba(15, 23, 42, 0.05);
   color: #111827;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 12.5px;
+  line-height: 1.45;
+  text-align: left;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.aiw-msg.assistant .aiw-bubble {
+  width: 94%;
 }
 
 .aiw-bubble a,
@@ -285,6 +294,61 @@
   text-decoration: underline;
   font-weight: 700;
   word-break: break-all;
+}
+
+.aiw-bubble a.aiw-link-chip,
+.aiw-thread-bubble a.aiw-link-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  margin: 2px 0;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  word-break: normal;
+  white-space: nowrap;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.aiw-bubble a.aiw-link-chip-job,
+.aiw-thread-bubble a.aiw-link-chip-job {
+  background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+  color: #fff;
+  border: 1px solid #1e40af;
+}
+
+.aiw-bubble a.aiw-link-chip-job:hover,
+.aiw-thread-bubble a.aiw-link-chip-job:hover {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+  color: #fff;
+  transform: translateY(-1px);
+}
+
+.aiw-bubble a.aiw-link-chip-guide,
+.aiw-thread-bubble a.aiw-link-chip-guide {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #6ee7b7;
+}
+
+.aiw-bubble a.aiw-link-chip-guide:hover,
+.aiw-thread-bubble a.aiw-link-chip-guide:hover {
+  background: #d1fae5;
+  color: #065f46;
+  transform: translateY(-1px);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-bubble a.aiw-link-chip-job {
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  border-color: #1e40af;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .aiw-bubble a.aiw-link-chip-guide {
+  background: rgba(16, 185, 129, 0.18);
+  color: #6ee7b7;
+  border-color: rgba(110, 231, 183, 0.45);
 }
 
 .aiw-msg.user .aiw-bubble a {

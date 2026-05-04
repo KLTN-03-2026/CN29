@@ -479,6 +479,9 @@ const CVSearch = () => {
                                     const isSaved = Number.isFinite(parsedCvId) && savedCvIds.has(parsedCvId);
                                     const isSaving = Number.isFinite(parsedCvId) && savingCvIds.has(parsedCvId);
                                     const isHighlighted = Number.isFinite(parsedCvId) && savedHighlightIds.has(parsedCvId);
+                                    const skills = Array.isArray(cv?.skills) ? cv.skills : [];
+                                    const visibleSkills = skills.slice(0, 8);
+                                    const extraSkills = Math.max(skills.length - visibleSkills.length, 0);
 
                                     return (
                                         <div key={idx} className="col-12">
@@ -506,6 +509,23 @@ const CVSearch = () => {
 
                                                     {cv.summary && (
                                                         <p className="card-text mb-2">{cv.summary}</p>
+                                                    )}
+
+                                                    {skills.length > 0 && (
+                                                        <div className="cv-search-skills">
+                                                            <span className="cv-search-skills-label">{t('employer.cvSearchPage.results.skillsLabel')}</span>
+                                                            <div className="cv-skill-list">
+                                                                {visibleSkills.map((skill, index) => (
+                                                                    <span key={`${skill?.id || skill?.name || 'skill'}-${index}`} className="cv-skill-chip">
+                                                                        <span>{String(skill?.name || skill?.TenKyNang || '').trim()}</span>
+                                                                        {skill?.level || skill?.MucDo ? <small>{skill?.level || skill?.MucDo}</small> : null}
+                                                                    </span>
+                                                                ))}
+                                                                {extraSkills > 0 && (
+                                                                    <span className="cv-skill-chip cv-skill-chip--more">+{extraSkills}</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
                                                     )}
 
                                                     <div className="d-flex flex-wrap gap-2 mb-2">

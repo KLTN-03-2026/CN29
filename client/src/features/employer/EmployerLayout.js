@@ -5,9 +5,8 @@ import {
     BriefcaseBusiness,
     LayoutDashboard,
     LogOut,
+    Mail,
     Menu,
-    Moon,
-    Sun,
     UserRound
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -69,7 +68,7 @@ const EmployerLayout = () => {
     const location = useLocation();
     const { t, i18n } = useTranslation();
     const { requestConfirm } = useNotification();
-    const { isDarkMode, setTheme, toggleDarkMode } = useDarkMode();
+    const { isDarkMode, setTheme } = useDarkMode();
     const [user, setUser] = useState(() => readStoredUser());
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -293,6 +292,12 @@ const EmployerLayout = () => {
             onClick: () => handleHeaderMenuNavigate('/employer')
         },
         {
+            key: 'messages',
+            icon: Mail,
+            label: t('employer.layout.dropdown.messages'),
+            onClick: () => handleHeaderMenuNavigate('/employer/messages')
+        },
+        {
             key: 'jobs',
             icon: BriefcaseBusiness,
             label: t('employer.layout.dropdown.jobs'),
@@ -303,15 +308,6 @@ const EmployerLayout = () => {
             icon: Bell,
             label: t('employer.layout.dropdown.notifications'),
             onClick: () => handleHeaderMenuNavigate('/employer/notifications')
-        },
-        {
-            key: 'theme',
-            icon: isDarkMode ? Sun : Moon,
-            label: isDarkMode ? t('common.switchToLight') : t('common.switchToDark'),
-            onClick: () => {
-                setShowProfileDropdown(false);
-                toggleDarkMode();
-            }
         },
         {
             key: 'logout',

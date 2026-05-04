@@ -165,6 +165,237 @@ const sqlRun = (sql, params = []) => new Promise((resolve, reject) => {
     });
 });
 
+const CV_SKILL_LIMIT = 24;
+const CV_SKILL_DEFAULT_LEVEL = 'Trung bình';
+const CV_SKILL_LEVEL_SCORE = {
+    'Cơ bản': 1,
+    'Trung bình': 2,
+    'Khá': 3,
+    'Chuyên gia': 4
+};
+
+const stripDiacritics = (value = '') => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+const normalizeSkillName = (value = '') => String(value || '')
+    .replace(/\u2022/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const normalizeCvSkillLevel = (value = '') => {
+    const raw = stripDiacritics(value).toLowerCase();
+    if (!raw) return CV_SKILL_DEFAULT_LEVEL;
+    if (raw.includes('chuyen gia')) return 'Chuyên gia';
+    if (raw.includes('kha') || raw.includes('thanh thao') || raw.includes('nang cao')) return 'Khá';
+    if (raw.includes('co ban')) return 'Cơ bản';
+    if (raw.includes('trung binh')) return 'Trung bình';
+    return CV_SKILL_DEFAULT_LEVEL;
+};
+
+const pickHigherCvLevel = (currentLevel, nextLevel) => {
+    const currentScore = CV_SKILL_LEVEL_SCORE[currentLevel] || 0;
+    const nextScore = CV_SKILL_LEVEL_SCORE[nextLevel] || 0;
+    return nextScore > currentScore ? nextLevel : currentLevel;
+};
+
+const splitCvSkillString = (value = '') => String(value || '')
+    .replace(/\r/g, '\n')
+    .replace(/\u2022/g, '\n')
+    .split(/\n+/)
+    .map((item) => item.replace(/^[\s\-*]+/, ''))
+    .map((item) => normalizeSkillName(item))
+    .filter(Boolean);
+
+const parseCvSkillItem = (value = '') => {
+    const cleaned = normalizeSkillName(value);
+    if (!cleaned) return null;
+
+    const separators = [' - ', ' – ', ' — ', ':'];
+    let name = cleaned;
+    let level = CV_SKILL_DEFAULT_LEVEL;
+
+    for (const sep of separators) {
+        if (!cleaned.includes(sep)) continue;
+        const [left, ...rest] = cleaned.split(sep);
+        const right = rest.join(sep).trim();
+        const candidate = normalizeCvSkillLevel(right);
+        if (candidate !== CV_SKILL_DEFAULT_LEVEL) {
+            name = left.trim();
+            level = candidate;
+        }
+        break;
+    }
+
+    return name ? { name, level } : null;
+};
+
+const normalizeCvSkillsInput = (rawSkills) => {
+    const source = Array.isArray(rawSkills)
+        ? rawSkills
+        : (typeof rawSkills === 'string' ? splitCvSkillString(rawSkills) : []);
+
+    const normalized = [];
+    const seen = new Map();
+
+    for (const item of source) {
+        let name = '';
+        let level = CV_SKILL_DEFAULT_LEVEL;
+
+        if (item && typeof item === 'object' && !Array.isArray(item)) {
+            name = normalizeSkillName(
+                item.name
+                ?? item.skill
+                ?? item.label
+                ?? item.tenKyNang
+                ?? item.TenKyNang
+                ?? ''
+            );
+            level = normalizeCvSkillLevel(item.level ?? item.mucDo ?? item.MucDo ?? item.grade ?? '');
+        } else {
+            const parsed = parseCvSkillItem(item);
+            if (!parsed) continue;
+            name = parsed.name;
+            level = parsed.level;
+        }
+
+        if (!name) continue;
+        if (name.length > 120) {
+            name = name.slice(0, 120).trim();
+            if (!name) continue;
+        }
+
+        const key = stripDiacritics(name).toLowerCase();
+        if (seen.has(key)) {
+            const index = seen.get(key);
+            normalized[index].level = pickHigherCvLevel(normalized[index].level, level);
+            continue;
+        }
+
+        seen.set(key, normalized.length);
+        normalized.push({ name, level });
+        if (normalized.length >= CV_SKILL_LIMIT) break;
+    }
+
+    return normalized;
+};
+
+const getOrCreateSkillId = async (skillName) => {
+    if (!skillName) return null;
+
+    const existing = await sqlGet(
+        'SELECT MaKyNang FROM KyNang WHERE lower(TenKyNang) = lower(?) LIMIT 1',
+        [skillName]
+    ).catch(() => null);
+
+    if (existing?.MaKyNang) return Number(existing.MaKyNang);
+
+    try {
+        const inserted = await sqlRun('INSERT INTO KyNang (TenKyNang) VALUES (?)', [skillName]);
+        if (inserted?.lastID) return Number(inserted.lastID);
+    } catch (err) {
+        const fallback = await sqlGet(
+            'SELECT MaKyNang FROM KyNang WHERE lower(TenKyNang) = lower(?) LIMIT 1',
+            [skillName]
+        ).catch(() => null);
+        if (fallback?.MaKyNang) return Number(fallback.MaKyNang);
+        throw err;
+    }
+
+    const fallback = await sqlGet(
+        'SELECT MaKyNang FROM KyNang WHERE lower(TenKyNang) = lower(?) LIMIT 1',
+        [skillName]
+    ).catch(() => null);
+    return fallback?.MaKyNang ? Number(fallback.MaKyNang) : null;
+};
+
+const syncCvSkills = async (cvId, rawSkills) => {
+    const numericCvId = Number(cvId);
+    if (!Number.isFinite(numericCvId) || numericCvId <= 0) return [];
+
+    const normalizedSkills = normalizeCvSkillsInput(rawSkills);
+
+    await sqlRun('DELETE FROM ChiTietCV_KyNang WHERE MaCV = ?', [numericCvId]);
+
+    for (const skill of normalizedSkills) {
+        const skillId = await getOrCreateSkillId(skill.name);
+        if (!skillId) continue;
+
+        try {
+            await sqlRun(
+                'INSERT INTO ChiTietCV_KyNang (MaCV, MaKyNang, MucDo) VALUES (?, ?, ?)',
+                [numericCvId, skillId, skill.level]
+            );
+        } catch (err) {
+            const message = String(err?.message || '').toLowerCase();
+            if (message.includes('unique') || message.includes('duplicate') || message.includes('constraint')) {
+                await sqlRun(
+                    'UPDATE ChiTietCV_KyNang SET MucDo = ? WHERE MaCV = ? AND MaKyNang = ?',
+                    [skill.level, numericCvId, skillId]
+                ).catch(() => null);
+                continue;
+            }
+            throw err;
+        }
+    }
+
+    return normalizedSkills;
+};
+
+const getCvSkillsMap = async (cvIds = []) => {
+    const normalizedIds = Array.from(
+        new Set((cvIds || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))
+    );
+
+    if (normalizedIds.length === 0) return new Map();
+
+    const placeholders = normalizedIds.map(() => '?').join(', ');
+    const rows = await sqlAll(
+        `SELECT
+            ctk.MaCV,
+            ctk.MaKyNang,
+            ctk.MucDo,
+            kn.TenKyNang
+         FROM ChiTietCV_KyNang ctk
+         JOIN KyNang kn ON kn.MaKyNang = ctk.MaKyNang
+         WHERE ctk.MaCV IN (${placeholders})
+         ORDER BY ctk.MaCV ASC, kn.TenKyNang ASC`,
+        normalizedIds
+    ).catch(() => []);
+
+    const map = new Map();
+
+    for (const row of rows) {
+        const cvId = Number(row?.MaCV);
+        if (!Number.isFinite(cvId)) continue;
+
+        if (!map.has(cvId)) map.set(cvId, []);
+        map.get(cvId).push({
+            id: Number(row?.MaKyNang) || null,
+            name: String(row?.TenKyNang || '').trim(),
+            level: normalizeCvSkillLevel(row?.MucDo || '')
+        });
+    }
+
+    return map;
+};
+
+const attachSkillsToCvs = async (rows) => {
+    const source = Array.isArray(rows) ? rows : [];
+    if (source.length === 0) return source;
+
+    const cvIds = source
+        .map((row) => Number(row?.MaCV))
+        .filter((id) => Number.isFinite(id) && id > 0);
+
+    const skillsMap = await getCvSkillsMap(cvIds);
+    return source.map((row) => {
+        const cvId = Number(row?.MaCV);
+        const skills = Number.isFinite(cvId) ? (skillsMap.get(cvId) || []) : [];
+        return { ...row, skills };
+    });
+};
+
 let ensureCvTemplateTablePromise = null;
 const ensureCvTemplateTable = async () => {
     if (ensureCvTemplateTablePromise) return ensureCvTemplateTablePromise;
@@ -370,46 +601,48 @@ router.get('/templates', async (req, res) => {
     }
 });
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const userId = parseInt(req.query.userId, 10);
     if (isNaN(userId)) {
         return res.status(400).json({ success: false, error: 'userId không hợp lệ' });
     }
 
-    db.all(
-        'SELECT * FROM HoSoCV WHERE MaNguoiDung = ? ORDER BY NgayCapNhat DESC',
-        [userId],
-        (err, rows) => {
-            if (err) {
-                console.error('Lỗi lấy CV:', err);
-                return res.status(500).json({ success: false, error: 'Lỗi truy vấn CV' });
+    try {
+        const rows = await sqlAll(
+            'SELECT * FROM HoSoCV WHERE MaNguoiDung = ? ORDER BY NgayCapNhat DESC',
+            [userId]
+        );
+
+        const rowsWithSkills = await attachSkillsToCvs(rows);
+
+        const cvs = rowsWithSkills.map(row => {
+            const filename = row.TepCV || '';
+            const relative = filename ? buildCvRelativePath(filename) : '';
+            const absolute = buildAbsoluteUrl(req, relative);
+            const diskPath = filename ? path.join(cvStoragePath, filename) : '';
+            let sizeLabel = '0 KB';
+            if (diskPath && fs.existsSync(diskPath)) {
+                const stats = fs.statSync(diskPath);
+                sizeLabel = `${(stats.size / 1024).toFixed(2)} KB`;
             }
+            return {
+                id: row.MaCV,
+                name: row.TieuDe || filename || 'CV',
+                summary: row.TomTat || '',
+                fileUrl: relative,
+                fileAbsoluteUrl: absolute,
+                size: sizeLabel,
+                uploadDate: row.NgayCapNhat || row.NgayTao || '',
+                isDefault: row.MacDinh === 1,
+                skills: Array.isArray(row.skills) ? row.skills : []
+            };
+        });
 
-            const cvs = rows.map(row => {
-                const filename = row.TepCV || '';
-                const relative = filename ? buildCvRelativePath(filename) : '';
-                const absolute = buildAbsoluteUrl(req, relative);
-                const diskPath = filename ? path.join(cvStoragePath, filename) : '';
-                let sizeLabel = '0 KB';
-                if (diskPath && fs.existsSync(diskPath)) {
-                    const stats = fs.statSync(diskPath);
-                    sizeLabel = `${(stats.size / 1024).toFixed(2)} KB`;
-                }
-                return {
-                    id: row.MaCV,
-                    name: row.TieuDe || filename || 'CV',
-                    summary: row.TomTat || '',
-                    fileUrl: relative,
-                    fileAbsoluteUrl: absolute,
-                    size: sizeLabel,
-                    uploadDate: row.NgayCapNhat || row.NgayTao || '',
-                    isDefault: row.MacDinh === 1
-                };
-            });
-
-            return res.json({ success: true, cvs });
-        }
-    );
+        return res.json({ success: true, cvs });
+    } catch (err) {
+        console.error('Lỗi lấy CV:', err);
+        return res.status(500).json({ success: false, error: 'Lỗi truy vấn CV' });
+    }
 });
 
 router.post('/', upload.single('cvFile'), (req, res) => {
@@ -469,6 +702,7 @@ router.post('/online', async (req, res) => {
 
         const summary = String(req.body?.summary || '').trim();
         const content = safeJsonParse(req.body?.content) || {};
+        const rawSkills = content?.skills ?? '';
         const templateKey = normalizeTemplateKey(req.body?.templateKey);
         const avatarUrl = String(req.body?.avatarUrl || '').trim();
         const html = String(req.body?.html || '').trim();
@@ -508,10 +742,17 @@ router.post('/online', async (req, res) => {
                          SET TieuDe = ?, TomTat = ?, TepCV = ?, NgayCapNhat = datetime('now', 'localtime')
                          WHERE MaCV = ? AND MaNguoiDung = ?`,
                         [title, summary, filename, existingCvId, numUserId],
-                        function (uErr) {
+                        async function (uErr) {
                             if (uErr) {
                                 console.error('Lỗi update CV online:', uErr);
                                 return res.status(500).json({ success: false, error: 'Không thể lưu CV online' });
+                            }
+
+                            try {
+                                await syncCvSkills(existingCvId, rawSkills);
+                            } catch (syncErr) {
+                                console.error('Lỗi lưu kỹ năng CV:', syncErr);
+                                return res.status(500).json({ success: false, error: 'Không thể lưu kỹ năng CV' });
                             }
 
                             const relative = buildCvRelativePath(filename);
@@ -548,10 +789,17 @@ router.post('/online', async (req, res) => {
             `INSERT INTO HoSoCV (MaNguoiDung, TieuDe, TomTat, TepCV, NgayTao, NgayCapNhat)
              VALUES (?, ?, ?, ?, datetime('now', 'localtime'), datetime('now', 'localtime'))`,
             [numUserId, title, summary, filename],
-            function (err) {
+            async function (err) {
                 if (err) {
                     console.error('Lỗi lưu CV online:', err);
                     return res.status(500).json({ success: false, error: 'Không thể lưu CV online' });
+                }
+
+                try {
+                    await syncCvSkills(this.lastID, rawSkills);
+                } catch (syncErr) {
+                    console.error('Lỗi lưu kỹ năng CV:', syncErr);
+                    return res.status(500).json({ success: false, error: 'Không thể lưu kỹ năng CV' });
                 }
 
                 return res.status(201).json({
@@ -672,7 +920,7 @@ router.delete('/:cvId', (req, res) => {
 });
 
 // Search CVs (for employers)
-router.get('/search', (req, res) => {
+router.get('/search', async (req, res) => {
     const { keyword = '', city = '', experience = '' } = req.query;
 
     let sql = `
@@ -698,9 +946,21 @@ router.get('/search', (req, res) => {
     const params = [];
 
     if (keyword) {
-        sql += ` AND (cv.TieuDe LIKE ? OR cv.TomTat LIKE ? OR hsv.ChucDanh LIKE ? OR nd.HoTen LIKE ?)`;
+        sql += ` AND (
+            cv.TieuDe LIKE ?
+            OR cv.TomTat LIKE ?
+            OR hsv.ChucDanh LIKE ?
+            OR nd.HoTen LIKE ?
+            OR EXISTS (
+                SELECT 1
+                FROM ChiTietCV_KyNang ctk
+                JOIN KyNang kn ON kn.MaKyNang = ctk.MaKyNang
+                WHERE ctk.MaCV = cv.MaCV
+                  AND lower(kn.TenKyNang) LIKE lower(?)
+            )
+        )`;
         const kw = `%${keyword}%`;
-        params.push(kw, kw, kw, kw);
+        params.push(kw, kw, kw, kw, kw);
     }
 
     if (city) {
@@ -712,13 +972,11 @@ router.get('/search', (req, res) => {
 
     sql += ` ORDER BY cv.NgayCapNhat DESC LIMIT 50`;
 
-    db.all(sql, params, (err, rows) => {
-        if (err) {
-            console.error('Lỗi search CV:', err);
-            return res.status(500).json({ success: false, error: 'Lỗi truy vấn' });
-        }
+    try {
+        const rows = await sqlAll(sql, params);
+        const rowsWithSkills = await attachSkillsToCvs(rows);
 
-        const results = rows.map((row) => {
+        const results = rowsWithSkills.map((row) => {
             const fileMeta = resolveCvPublicUrls(req, row.TepCV);
 
             return {
@@ -734,12 +992,16 @@ router.get('/search', (req, res) => {
                 level: row.TrinhDoHocVan || '',
                 industry: row.ChucDanh || '',
                 updatedAt: row.NgayCapNhat || '',
+                skills: Array.isArray(row.skills) ? row.skills : [],
                 ...fileMeta
             };
         });
 
         return res.json({ success: true, results, count: results.length });
-    });
+    } catch (err) {
+        console.error('Lỗi search CV:', err);
+        return res.status(500).json({ success: false, error: 'Lỗi truy vấn' });
+    }
 });
 
 // ===== Saved CVs (for employers) =====
@@ -800,7 +1062,9 @@ router.get('/saved', authenticateToken, authorizeRole(['Nhà tuyển dụng']), 
             params
         );
 
-        const saved = rows.map((r) => {
+        const rowsWithSkills = await attachSkillsToCvs(rows);
+
+        const saved = rowsWithSkills.map((r) => {
             const fileMeta = resolveCvPublicUrls(req, r.TepCV);
 
             return {
@@ -819,6 +1083,7 @@ router.get('/saved', authenticateToken, authorizeRole(['Nhà tuyển dụng']), 
                 experience: '',
                 level: r.TrinhDoHocVan || '',
                 industry: r.ChucDanh || '',
+                skills: Array.isArray(r.skills) ? r.skills : [],
                 ...fileMeta
             };
         });

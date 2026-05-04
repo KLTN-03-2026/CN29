@@ -24,6 +24,7 @@ const normalizeCv = (cv, index) => {
   const fileAbsoluteUrl = String(cv?.fileAbsoluteUrl || cv?.FileAbsoluteUrl || '').trim();
   const uploadDate = cv?.uploadDate || cv?.NgayTao || cv?.createdAt || null;
   const updatedAt = cv?.updatedAt || cv?.NgayCapNhat || uploadDate || null;
+  const skills = Array.isArray(cv?.skills) ? cv.skills : [];
 
   const previewUrl = fileAbsoluteUrl || fileUrl;
   const safeUrl = previewUrl.split('?')[0].toLowerCase();
@@ -41,7 +42,8 @@ const normalizeCv = (cv, index) => {
     updatedMs: toDateMs(updatedAt),
     isOnlineCv,
     typeLabel: isOnlineCv ? 'CV Online' : (extension ? `File ${extension.toUpperCase()}` : 'CV tài liệu'),
-    status: String(cv?.status || cv?.TrangThai || '').trim()
+    status: String(cv?.status || cv?.TrangThai || '').trim(),
+    skills
   };
 };
 
@@ -312,6 +314,22 @@ const CvManagementPage = () => {
                         <span>{t('cvManagement.labels.updatedAt', { date: formatDate(cv.updatedAt || cv.uploadDate, currentLocale) })}</span>
                         {cv.status ? <span>{t('cvManagement.labels.status', { status: cv.status })}</span> : null}
                       </div>
+                      {cv.skills.length > 0 && (
+                        <div className="cv-management-skills">
+                          <span className="cv-management-skills-label">{t('cvManagement.labels.skills')}</span>
+                          <div className="cv-management-skills-list">
+                            {cv.skills.slice(0, 6).map((skill, index) => (
+                              <span key={`${skill?.id || skill?.name || 'skill'}-${index}`} className="cv-management-skill-chip">
+                                <span>{String(skill?.name || skill?.TenKyNang || '').trim()}</span>
+                                {skill?.level || skill?.MucDo ? <small>{skill?.level || skill?.MucDo}</small> : null}
+                              </span>
+                            ))}
+                            {cv.skills.length > 6 && (
+                              <span className="cv-management-skill-chip cv-management-skill-chip--more">+{cv.skills.length - 6}</span>
+                            )}
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="cv-management-item-actions icon-only">

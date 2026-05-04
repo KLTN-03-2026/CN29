@@ -286,7 +286,9 @@ const JobSearchPage = () => {
 
   const [keyword, setKeyword] = useState('');
   const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedProvinceLabel, setSelectedProvinceLabel] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategoryLabel, setSelectedCategoryLabel] = useState('');
 
   const [isIndustryOpen, setIsIndustryOpen] = useState(false);
   const [isLocationOpen, setIsLocationOpen] = useState(false);
@@ -539,8 +541,8 @@ const JobSearchPage = () => {
     }).format(new Date());
   }, [currentLocale]);
 
-  const selectedIndustryLabel = selectedCategory || t('jobSearch.search.allIndustries');
-  const selectedLocationLabel = selectedProvince || t('jobSearch.search.nationwide');
+  const selectedIndustryLabel = selectedCategoryLabel || selectedCategory || t('jobSearch.search.allIndustries');
+  const selectedLocationLabel = selectedProvinceLabel || selectedProvince || t('jobSearch.search.nationwide');
 
   const handleSearchSubmit = (event) => {
     event.preventDefault();
@@ -642,7 +644,7 @@ const JobSearchPage = () => {
                   aria-haspopup="listbox"
                   aria-expanded={isIndustryOpen}
                 >
-                  <span className="jf-jobs-select-text">{selectedIndustryLabel}</span>
+                  <span className="jf-jobs-select-text" data-i18n-skip="true">{selectedIndustryLabel}</span>
                   <i className="bi bi-chevron-down"></i>
                 </button>
 
@@ -655,6 +657,7 @@ const JobSearchPage = () => {
                         className={`jf-jobs-select-option ${selectedCategory === entry.value ? 'is-active' : ''}`}
                         onClick={() => {
                           setSelectedCategory(entry.value);
+                          setSelectedCategoryLabel(entry.value ? entry.label : '');
                           setIsIndustryOpen(false);
                         }}
                       >
@@ -680,7 +683,7 @@ const JobSearchPage = () => {
                   aria-haspopup="listbox"
                   aria-expanded={isLocationOpen}
                 >
-                  <span className="jf-jobs-select-text">{selectedLocationLabel}</span>
+                  <span className="jf-jobs-select-text" data-i18n-skip="true">{selectedLocationLabel}</span>
                   <i className="bi bi-chevron-down"></i>
                 </button>
 
@@ -708,6 +711,7 @@ const JobSearchPage = () => {
                             className={`jf-jobs-select-option ${selectedProvince === entry.value ? 'is-active' : ''}`}
                             onClick={() => {
                               setSelectedProvince(entry.value);
+                              setSelectedProvinceLabel(entry.value ? entry.label : '');
                               setIsLocationOpen(false);
                             }}
                           >

@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next';
 
 const CHAT_REALTIME_POLL_INTERVAL_MS = 5000;
 const THREAD_SCROLL_BOTTOM_THRESHOLD_PX = 72;
-const INLINE_LINK_PATTERN = /(https?:\/\/[^\s<>"']+|\/career-guide\/[a-zA-Z0-9\-._~%]+)/gi;
+const INLINE_LINK_PATTERN = /(https?:\/\/[^\s<>"']+|\/career-guide\/[a-zA-Z0-9\-._~%]+|\/jobs\/\d+)/gi;
 
 const buildInitialAiMessages = (t) => [
   {
@@ -28,7 +28,22 @@ const splitTrailingPunctuation = (token = '') => {
   return { link, trailingText };
 };
 
-const renderTextWithLinks = (text = '') => {
+const JOB_LINK_PATTERN = /^\/jobs\/\d+$/;
+const CAREER_GUIDE_LINK_PATTERN = /^\/career-guide\/[a-zA-Z0-9\-._~%]+$/;
+
+const renderLinkLabel = (link) => {
+  if (JOB_LINK_PATTERN.test(link)) return 'Xem chi tiết tin →';
+  if (CAREER_GUIDE_LINK_PATTERN.test(link)) return 'Đọc bài viết →';
+  return link;
+};
+
+const renderLinkClassName = (link) => {
+  if (JOB_LINK_PATTERN.test(link)) return 'aiw-link-chip aiw-link-chip-job';
+  if (CAREER_GUIDE_LINK_PATTERN.test(link)) return 'aiw-link-chip aiw-link-chip-guide';
+  return '';
+};
+
+const renderTextWithLinks = (text = '', { onInternalNavigate } = {}) => {
   const value = String(text || '');
   const lines = value.split('\n');
 
@@ -43,9 +58,24 @@ const renderTextWithLinks = (text = '') => {
 
       const { link, trailingText } = splitTrailingPunctuation(match);
       if (link) {
+        const isInternal = link.startsWith('/');
+        const className = renderLinkClassName(link);
+        const label = renderLinkLabel(link);
+        const linkProps = isInternal
+          ? {
+              href: link,
+              className: className || undefined,
+              onClick: (event) => {
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.button === 1) return;
+                event.preventDefault();
+                if (onInternalNavigate) onInternalNavigate(link);
+              }
+            }
+          : { href: link, target: '_blank', rel: 'noreferrer' };
+
         nodes.push(
-          <a key={`line-${lineIndex}-link-${offset}`} href={link} target="_blank" rel="noreferrer">
-            {link}
+          <a key={`line-${lineIndex}-link-${offset}`} {...linkProps}>
+            {label}
           </a>
         );
       }
@@ -769,7 +799,7 @@ const AIAssistantWidget = () => {
                     return (
                       <div key={m.id} className={`aiw-thread-msg ${isMe ? 'me' : 'other'}`}>
                         <div>
-                          <div className="aiw-thread-bubble">{renderTextWithLinks(m.content)}</div>
+                          <div className="aiw-thread-bubble">{renderTextWithLinks(m.content, { onInternalNavigate: navigate })}</div>
                           {timeText && <div className="aiw-thread-time">{timeText}</div>}
                         </div>
                       </div>
@@ -829,7 +859,12 @@ const AIAssistantWidget = () => {
           <div className="aiw-messages" ref={listRef}>
             {messages.map((m, idx) => (
               <div key={idx} className={`aiw-msg ${m.role === 'user' ? 'user' : 'assistant'}`}>
-                <div className="aiw-bubble">{renderTextWithLinks(m.content)}</div>
+                <div className="aiw-bubble">{renderTextWithLinks(m.content, {
+                  onInternalNavigate: (path) => {
+                    setOpen(false);
+                    navigate(path);
+                  }
+                })}</div>
               </div>
             ))}
             {uploading && (

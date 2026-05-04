@@ -445,10 +445,18 @@ const toVndLabel = (value) => {
 const formatJobSuggestionLine = (job, index) => {
   const salaryFrom = toVndLabel(job?.salaryFrom);
   const salaryTo = toVndLabel(job?.salaryTo);
-  const salary = salaryFrom || salaryTo ? `, lương ${salaryFrom || '...'}${salaryTo ? ` - ${salaryTo}` : ''}` : '';
-  const city = job?.city ? `, ${job.city}` : '';
+  const salaryLabel = salaryFrom || salaryTo
+    ? `${salaryFrom || '...'}${salaryTo ? ` - ${salaryTo}` : ''}`
+    : '';
+  const metaParts = [];
+  if (job?.city) metaParts.push(`Địa điểm: ${job.city}`);
+  if (job?.experience) metaParts.push(`Kinh nghiệm: ${job.experience}`);
+  if (salaryLabel) metaParts.push(`Lương: ${salaryLabel}`);
+  const metaLine = metaParts.length ? metaParts.join(' | ') : '';
   const company = job?.company ? ` - ${job.company}` : '';
-  return `${index + 1}. ${job?.title || 'Vị trí phù hợp'}${company}${city}${salary}`;
+  const linkLine = job?.jobId ? `/jobs/${job.jobId}` : '';
+  const titleLine = `${index + 1}. ${job?.title || 'Vị trí phù hợp'}${company}`;
+  return [titleLine, metaLine, linkLine].filter(Boolean).join('\n');
 };
 
 const pickTop = (arr, n) => arr.slice(0, Math.max(0, n));
@@ -750,17 +758,13 @@ router.post('/chat', async (req, res) => {
 
       // Free-form chat. Keep it general-purpose and helpful.
       const system =
-        'Bạn là trợ lý của website JobFinder. Bạn có thể trả lời 2 nhóm câu hỏi: ' +
-        '(1) hướng dẫn sử dụng website JobFinder (tính năng, điều hướng, người dùng bấm ở đâu, các trang/đường dẫn), ' +
-        '(2) nội dung liên quan CV/hồ sơ/phỏng vấn/tìm việc. ' +
-        'Nếu người dùng hỏi chủ đề không liên quan đến JobFinder hoặc sự nghiệp (sức khỏe, tài chính cá nhân, đời tư, code, chính trị, v.v.), hãy từ chối lịch sự và gợi ý họ hỏi về JobFinder/CV/việc làm. ' +
-        'Chỉ mô tả những tính năng chắc chắn có trong JobFinder; nếu không chắc, hãy hỏi lại 1-2 câu hoặc hướng dẫn người dùng kiểm tra trên menu. ' +
-        'Gợi ý điều hướng phổ biến (nếu phù hợp với câu hỏi): Trang chủ (/), Tìm việc (/jobs), Xem chi tiết việc (/jobs/:id), Tạo CV (/create-cv), Hồ sơ (/profile), Đăng nhập/Đăng ký. ' +
-        'Khi người dùng xin bài viết tham khảo/cẩm nang, hãy ưu tiên gửi kèm đường dẫn cụ thể theo định dạng /career-guide/:id. ' +
+        'Bạn là trợ lý của JobFinder. Trả lời tiếng Việt, chi tiết và hữu ích, có giải thích rõ ràng nhưng không lan man. Không markdown, không *, -, #, không tiêu đề. ' +
+        'Độ dài: 4-8 câu, có thể xuống dòng giữa các ý để dễ đọc. ' +
+        'Phạm vi: hướng dẫn dùng JobFinder và chủ đề CV/hồ sơ/phỏng vấn/việc làm. Câu hỏi ngoài phạm vi: từ chối 1 câu rồi mời quay lại chủ đề. ' +
+        'Khi nhắc đến trang nội bộ, BẮT BUỘC kèm đường dẫn cụ thể: / (Trang chủ), /jobs (Tìm việc), /jobs/{id} (Chi tiết tin tuyển dụng), /create-cv (Tạo CV), /cv-management (Quản lý CV), /profile (Hồ sơ). ' +
+        'Khi người dùng xin bài viết tham khảo/cẩm nang, gửi kèm /career-guide/{id} cụ thể từ danh sách dưới. ' +
         (careerGuideContext ? `${careerGuideContext}\n` : '') +
-        'Trả lời tiếng Việt, ngắn gọn, không dùng markdown, không dùng dấu *, -, #, không dùng tiêu đề. ' +
-        'Viết tối đa 6 câu; có thể xuống dòng giữa các ý. ' +
-        'Nếu thiếu thông tin, hỏi tối đa 2 câu ngắn để làm rõ.'; 
+        'Nếu thiếu thông tin để trả lời chính xác, hỏi 1-2 câu ngắn để làm rõ trước khi đưa ra hướng dẫn.';
 
       // Ensure there is one system message at the start.
       const hasSystem = chatMessages.some((m) => m.role === 'system');
@@ -886,11 +890,13 @@ router.post('/chat/cv-file', handleCvUpload, async (req, res) => {
     }
 
     const system =
-      'Bạn là trợ lý CV của JobFinder. Phân tích CV và đưa nhận xét ngắn gọn, cụ thể. ' +
-      'Trả lời tiếng Việt, không markdown, không bullet (*, -, #). Viết tối đa 8 câu, có thể xuống dòng. ' +
-      'Nhấn mạnh 1) tóm tắt nhanh, 2) điểm mạnh, 3) thiếu thông tin, 4) gợi ý chỉnh sửa. ' +
-      'Chỉ dùng dữ liệu xuất hiện trong CV; không tự thêm ngành nghề, kinh nghiệm hoặc công nghệ không có trong văn bản CV. ' +
-      'Nếu thông tin CV mâu thuẫn, hãy nêu mâu thuẫn ngắn gọn và hỏi lại người dùng muốn theo định hướng nào.';
+      'Bạn là trợ lý CV của JobFinder. Trả lời tiếng Việt, chi tiết và cụ thể, không markdown, không *, -, #. ' +
+      'Cấu trúc BẮT BUỘC theo từng khối, mỗi ý xuống dòng:\n' +
+      'Khối 1 (2-3 câu): tóm tắt nhanh CV — vị trí/định hướng, số năm kinh nghiệm, lĩnh vực chính.\n' +
+      'Khối 2 (2-3 câu): điểm mạnh nổi bật — kỹ năng cốt lõi, dự án/thành tích đáng chú ý.\n' +
+      'Khối 3 (1-2 câu): thông tin còn thiếu — chỉ rõ trường nào nên bổ sung (vd: thiếu số liệu thành tích, thiếu mô tả công nghệ, thiếu liên hệ...).\n' +
+      'Khối 4 (2-3 câu): gợi ý chỉnh sửa cụ thể — đưa ra ví dụ câu/từ ngữ có thể dùng, hoặc cách viết lại 1 mục cho ấn tượng hơn.\n' +
+      'Chỉ dùng dữ liệu trong CV, không bịa ngành/kỹ năng/kinh nghiệm. Nếu CV mâu thuẫn về định hướng, nêu mâu thuẫn 1 câu rồi hỏi lại định hướng mong muốn.';
 
     const userContent =
       (question ? `Yêu cầu của người dùng: ${question}\n\n` : '') +
@@ -1002,12 +1008,20 @@ router.post('/chat/cv-stored', authenticateToken, async (req, res) => {
 
     if (hasAIKey) {
       const system =
-        'Bạn là trợ lý nghề nghiệp của JobFinder. Nhiệm vụ: đọc nội dung CV, đánh giá nhanh, và gợi ý việc làm phù hợp từ danh sách job được cung cấp. ' +
-        'Chỉ trả lời tiếng Việt, không markdown, không dùng *, -, #. ' +
-        'Tối đa 10 câu, có thể xuống dòng. ' +
-        'Bắt buộc nêu: 1) nhận xét CV, 2) điểm cần cải thiện, 3) 3-5 việc làm phù hợp nhất kèm lý do ngắn. ' +
-        'Chỉ dùng thông tin có trong CV và danh sách job bên dưới, không suy diễn thêm hồ sơ/ngành khác. ' +
-        'Nếu CV có dấu hiệu nhiều định hướng nghề, ưu tiên định hướng trùng với câu hỏi người dùng hoặc vị trí mong muốn trong hồ sơ; không trộn lẫn hai nhóm nghề trái ngữ cảnh trong cùng đề xuất.';
+        'Bạn là trợ lý nghề nghiệp của JobFinder. Trả lời tiếng Việt, chi tiết nhưng không lan man. Không markdown, không *, -, #. ' +
+        'Cấu trúc BẮT BUỘC theo từng khối, mỗi ý xuống dòng:\n' +
+        'Khối 1 (2-3 câu): nhận xét CV — nêu vị trí/định hướng chính, kinh nghiệm nổi bật, kỹ năng cốt lõi mà bạn nhận thấy.\n' +
+        'Khối 2 (1-2 câu): điểm cần cải thiện cụ thể (vd: thiếu số liệu thành tích, thiếu công nghệ X, mô tả dự án quá ngắn...).\n' +
+        'Khối 3: liệt kê 3-5 việc làm phù hợp. Mỗi việc phải có ĐẦY ĐỦ 3 dòng theo đúng thứ tự sau:\n' +
+        '  Dòng A: "{số}. {tiêu đề công việc} - {công ty}"\n' +
+        '  Dòng B: "Địa điểm: {thành phố} | Kinh nghiệm: {experience} | Lương: {salaryFrom}-{salaryTo}" (bỏ qua field nào thiếu).\n' +
+        '  Dòng C: "Lý do phù hợp: {1-2 câu nêu kỹ năng/kinh nghiệm trong CV khớp với yêu cầu của tin}. /jobs/{jobId}"\n' +
+        'BẮT BUỘC chèn đúng "/jobs/{jobId}" ở cuối Dòng C với jobId lấy nguyên từ danh sách bên dưới — KHÔNG tự bịa số, KHÔNG bỏ qua link, KHÔNG chỉ in mỗi link.\n' +
+        'Chỉ chọn việc trong danh sách job được cung cấp; ưu tiên việc khớp với câu hỏi người dùng và định hướng chính trong CV.\n' +
+        'Ví dụ cho 1 việc:\n' +
+        '1. Frontend Developer - Công ty ABC\n' +
+        'Địa điểm: Hà Nội | Kinh nghiệm: 1-3 năm | Lương: 15-25 triệu\n' +
+        'Lý do phù hợp: CV của bạn có 2 năm React và đã làm dự án tối ưu UI, khớp với yêu cầu "thành thạo React" và "tối ưu hiệu năng" trong tin. /jobs/16';
 
       const ai = await callLLMChat({
         messages: [
@@ -1034,16 +1048,19 @@ router.post('/chat/cv-stored', authenticateToken, async (req, res) => {
     }
 
     const lines = [
-      `Mình đã đọc CV: ${cvRow.title || 'CV của bạn'}.`,
-      `CV hiện đã có dữ liệu để đánh giá, nhưng bạn nên bổ sung rõ hơn thành tích theo số liệu và công nghệ/kỹ năng cốt lõi.`,
-      `Các công việc phù hợp trên JobFinder:`
+      `Đã đọc CV: ${cvRow.title || 'CV của bạn'}.`,
+      `CV có dữ liệu cơ bản nhưng nên bổ sung thành tích theo số liệu cụ thể, làm rõ công nghệ/kỹ năng cốt lõi và thêm mô tả ngắn cho mỗi dự án để tạo ấn tượng tốt hơn với nhà tuyển dụng.`,
+      ``,
+      `Một số việc làm phù hợp với hồ sơ của bạn:`,
+      ``
     ];
 
     jobBrief.slice(0, 5).forEach((job, index) => {
       lines.push(formatJobSuggestionLine(job, index));
+      lines.push('');
     });
 
-    lines.push('Nếu bạn muốn, mình sẽ viết luôn phiên bản tóm tắt CV tối ưu cho 1 vị trí trong danh sách trên.');
+    lines.push('Bấm vào nút "Xem chi tiết tin" ở mỗi việc để mở trang tuyển dụng và ứng tuyển.');
 
     return res.json({
       success: true,

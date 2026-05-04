@@ -312,6 +312,52 @@
   padding: 4px 8px;
 }
 
+.cv-management-skills {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cv-management-skills-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #5b7692;
+  font-weight: 800;
+}
+
+.cv-management-skills-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cv-management-skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #cfe0f1;
+  border-radius: 999px;
+  background: #f4f9ff;
+  color: #2f5d86;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+}
+
+.cv-management-skill-chip small {
+  color: #5b7692;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.cv-management-skill-chip--more {
+  background: #eaf2ff;
+  border-color: #c7ddf2;
+  color: #1d4ed8;
+}
+
 .cv-management-item-actions {
   display: flex;
   align-items: center;
@@ -389,7 +435,8 @@
 :is(html.dark, html[data-bs-theme='dark']) .cv-management-empty,
 :is(html.dark, html[data-bs-theme='dark']) .cv-action-icon,
 :is(html.dark, html[data-bs-theme='dark']) .cv-management-filter-row button,
-:is(html.dark, html[data-bs-theme='dark']) .cv-management-meta span {
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-meta span,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-skill-chip {
   background: #111f33;
   border-color: #304a66;
   box-shadow: 0 14px 28px rgba(2, 10, 20, 0.42);
@@ -405,8 +452,16 @@
 :is(html.dark, html[data-bs-theme='dark']) .cv-management-board-head p,
 :is(html.dark, html[data-bs-theme='dark']) .cv-management-empty p,
 :is(html.dark, html[data-bs-theme='dark']) .cv-management-meta span,
-:is(html.dark, html[data-bs-theme='dark']) .cv-management-stat-card span {
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-stat-card span,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-skills-label,
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-skill-chip small {
   color: #9eb8d2;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .cv-management-skill-chip--more {
+  background: #193651;
+  border-color: #366c98;
+  color: #8bd6ff;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .cv-management-board-actions input {
