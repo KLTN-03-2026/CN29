@@ -545,7 +545,7 @@
 
 .auth-social-btn {
   width: 100%;
-  height: 46px;
+  height: 48px;
   border-radius: 12px;
   border: 1px solid #d4e4f4;
   background: #ffffff;
@@ -553,20 +553,42 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 12px;
   font-weight: 700;
-  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  font-size: 0.95rem;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .auth-social-btn:hover:not(:disabled) {
   background: #f6fbff;
   border-color: #bfd9f2;
   transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(48, 143, 229, 0.14);
 }
 
 .auth-social-btn:disabled {
   opacity: 0.72;
   cursor: not-allowed;
+}
+
+.auth-social-btn--google {
+  border-color: #dfe5ee;
+  color: #3c4043;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(60, 64, 67, 0.08);
+}
+
+.auth-social-btn--google:hover:not(:disabled) {
+  background: #f8faff;
+  border-color: #c8d2e0;
+  box-shadow: 0 6px 16px rgba(60, 64, 67, 0.16);
+}
+
+.auth-social-btn--google:active:not(:disabled) {
+  transform: translateY(0);
+  background: #f1f5fc;
 }
 
 .auth-social-icon {
@@ -579,6 +601,27 @@
   background: #f1f7ff;
   color: #2e90e6;
   font-size: 0.95rem;
+}
+
+.auth-social-icon--google {
+  background: transparent;
+  width: 22px;
+  height: 22px;
+}
+
+.auth-social-icon--google svg {
+  display: block;
+}
+
+.auth-google-hidden {
+  position: absolute;
+  left: -9999px;
+  top: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }
 
 
@@ -981,6 +1024,19 @@
 :is(html.dark, html[data-bs-theme='dark']) .auth-social-btn:hover:not(:disabled) {
   border-color: #5e85ad;
   background: #1f3b59;
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-btn--google {
+  background: #132943;
+  border-color: #3b5b7b;
+  color: #e8f3ff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.32);
+}
+
+:is(html.dark, html[data-bs-theme='dark']) .auth-social-btn--google:hover:not(:disabled) {
+  background: #1a3552;
+  border-color: #5e85ad;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .auth-avatar-clear-btn {
