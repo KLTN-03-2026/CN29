@@ -613,15 +613,60 @@
   display: block;
 }
 
-.auth-google-hidden {
+.auth-google-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.auth-google-button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 44px;
+  border-radius: 12px;
+  transition: opacity 0.2s ease;
+}
+
+.auth-google-button > div {
+  width: 100% !important;
+  max-width: 400px;
+}
+
+.auth-google-button iframe {
+  margin: 0 auto !important;
+}
+
+.auth-google-placeholder {
   position: absolute;
-  left: -9999px;
-  top: -9999px;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  opacity: 0;
+  inset: 0;
+  width: 100%;
   pointer-events: none;
+  background: #ffffff;
+}
+
+.auth-google-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #4d6377;
+}
+
+.auth-google-spinner {
+  display: inline-block;
+  animation: auth-google-spin 0.9s linear infinite;
+  color: #2e90e6;
+}
+
+@keyframes auth-google-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 

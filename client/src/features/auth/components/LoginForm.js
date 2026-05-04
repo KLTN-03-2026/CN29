@@ -139,12 +139,15 @@ const LoginForm = ({ onSuccess }) => {
   const googleButtonContainerRef = useRef(null);
   const googleInitializedRef = useRef(false);
   const googleInitializedClientIdRef = useRef('');
-  const googleCallbackReceivedRef = useRef(false);
-  const googlePopupHintTimeoutRef = useRef(null);
+  const googleCredentialHandlerRef = useRef(null);
   const initialGoogleClientId = resolveGoogleClientId();
 
   // State for Google Client ID with fallback support
   const [googleClientId, setGoogleClientId] = useState(initialGoogleClientId);
+  const [googleScriptReady, setGoogleScriptReady] = useState(
+    typeof window !== 'undefined' && Boolean(window.google?.accounts?.id)
+  );
+  const [googleButtonRendered, setGoogleButtonRendered] = useState(false);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -196,17 +199,28 @@ const LoginForm = ({ onSuccess }) => {
     };
   }, [apiBase, initialGoogleClientId]);
 
-  const clearGooglePopupHintTimeout = () => {
-    if (!googlePopupHintTimeoutRef.current) return;
-    window.clearTimeout(googlePopupHintTimeoutRef.current);
-    googlePopupHintTimeoutRef.current = null;
-  };
-
+  // Wait for the Google Identity Services script to load (it is loaded async)
   useEffect(() => {
+    if (googleScriptReady) return undefined;
+    if (typeof window === 'undefined') return undefined;
+
+    let cancelled = false;
+    const start = Date.now();
+
+    const intervalId = window.setInterval(() => {
+      if (window.google?.accounts?.id) {
+        if (!cancelled) setGoogleScriptReady(true);
+        window.clearInterval(intervalId);
+      } else if (Date.now() - start > 15000) {
+        window.clearInterval(intervalId);
+      }
+    }, 200);
+
     return () => {
-      clearGooglePopupHintTimeout();
+      cancelled = true;
+      window.clearInterval(intervalId);
     };
-  }, []);
+  }, [googleScriptReady]);
 
   useEffect(() => {
     const rememberedIdentity = localStorage.getItem(REMEMBER_KEY);
@@ -270,21 +284,38 @@ const LoginForm = ({ onSuccess }) => {
     handleLoginSuccess(data, data?.user?.email || email);
   };
 
-  const handleGoogleLogin = () => {
-    setError('');
+  // Keep a stable ref to the credential handler so the GIS callback (which is
+  // captured at initialize time) always uses the latest closure.
+  useEffect(() => {
+    googleCredentialHandlerRef.current = async (response) => {
+      const credential = String(response?.credential || '').trim();
+      if (!credential) {
+        setError(getGooglePopupErrorMessage('missing_credential', t));
+        return;
+      }
 
-    googleCallbackReceivedRef.current = false;
-    clearGooglePopupHintTimeout();
+      setGoogleLoading(true);
+      setError('');
 
-    if (!googleClientId) {
-      setError(t('authPages.loginForm.errors.missingGoogleClientId'));
-      return;
-    }
+      try {
+        await handleGoogleCredential(credential);
+      } catch (err) {
+        setError(err.message || t('authPages.loginForm.errors.googleLoginFailed'));
+      } finally {
+        setGoogleLoading(false);
+      }
+    };
+  });
 
-    if (!window.google?.accounts?.id) {
-      setError(t('authPages.loginForm.errors.googleApiNotReady'));
-      return;
-    }
+  // Render the official Google Sign-In button as soon as GIS + clientId are ready.
+  // We render it visibly so the user clicks the iframe directly, which lets GIS
+  // use FedCM in browsers that block third-party cookies (Edge production case).
+  useEffect(() => {
+    if (!googleScriptReady) return;
+    if (!googleClientId) return;
+    const container = googleButtonContainerRef.current;
+    if (!container) return;
+    if (!window.google?.accounts?.id) return;
 
     const shouldInitialize = !googleInitializedRef.current
       || googleInitializedClientIdRef.current !== googleClientId;
@@ -295,73 +326,40 @@ const LoginForm = ({ onSuccess }) => {
         use_fedcm_for_prompt: true,
         itp_support: true,
         ux_mode: 'popup',
+        auto_select: false,
+        cancel_on_tap_outside: false,
         error_callback: (googleError) => {
-          googleCallbackReceivedRef.current = true;
-          clearGooglePopupHintTimeout();
           setGoogleLoading(false);
           setError(getGooglePopupErrorMessage(googleError?.type || googleError?.message, t));
         },
-        callback: async (response) => {
-          const credential = String(response?.credential || '').trim();
-          if (!credential) {
-            clearGooglePopupHintTimeout();
-            setError(getGooglePopupErrorMessage('missing_credential', t));
-            return;
+        callback: (response) => {
+          if (googleCredentialHandlerRef.current) {
+            googleCredentialHandlerRef.current(response);
           }
-
-          googleCallbackReceivedRef.current = true;
-          clearGooglePopupHintTimeout();
-
-          setGoogleLoading(true);
-          setError('');
-
-          try {
-            await handleGoogleCredential(credential);
-          } catch (err) {
-            setError(err.message || t('authPages.loginForm.errors.googleLoginFailed'));
-          } finally {
-            setGoogleLoading(false);
-          }
-        },
-        auto_select: false,
-        cancel_on_tap_outside: false
+        }
       });
 
       googleInitializedRef.current = true;
       googleInitializedClientIdRef.current = googleClientId;
     }
 
-    if (!googleButtonContainerRef.current) {
-      setError(t('authPages.loginForm.errors.googleButtonInitFailed'));
-      return;
-    }
+    container.innerHTML = '';
 
-    googleButtonContainerRef.current.innerHTML = '';
-    window.google.accounts.id.renderButton(googleButtonContainerRef.current, {
+    const measuredWidth = container.offsetWidth || container.parentElement?.offsetWidth || 360;
+    const buttonWidth = Math.max(240, Math.min(400, Math.floor(measuredWidth)));
+
+    window.google.accounts.id.renderButton(container, {
+      type: 'standard',
       theme: 'outline',
       size: 'large',
       text: 'continue_with',
-      shape: 'pill'
+      shape: 'rectangular',
+      logo_alignment: 'left',
+      width: buttonWidth
     });
 
-    const googleButton = googleButtonContainerRef.current.querySelector('div[role="button"]');
-    if (!googleButton) {
-      clearGooglePopupHintTimeout();
-      setError(t('authPages.loginForm.errors.googlePopupCannotOpen'));
-      return;
-    }
-
-    googleButton.click();
-
-    googlePopupHintTimeoutRef.current = window.setTimeout(() => {
-      if (!googleCallbackReceivedRef.current) {
-        console.warn('Google popup timed out before returning credential.', {
-          origin: typeof window !== 'undefined' ? window.location.origin : '',
-          clientId: googleClientId
-        });
-      }
-    }, 10000);
-  };
+    setGoogleButtonRendered(true);
+  }, [googleScriptReady, googleClientId, t]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -469,26 +467,38 @@ const LoginForm = ({ onSuccess }) => {
         <span>{t('authPages.loginForm.or')}</span>
       </div>
 
-      <button
-        type="button"
-        className="auth-social-btn auth-social-btn--google"
-        onClick={handleGoogleLogin}
-        disabled={loading || googleLoading || !googleClientId}
-      >
-        <span className="auth-social-icon auth-social-icon--google" aria-hidden="true">
-          <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-            <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-            <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-            <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-            <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-          </svg>
-        </span>
-        <span>{googleLoading
-          ? t('authPages.loginForm.processing')
-          : t('authPages.loginForm.continueWithGoogle')}</span>
-      </button>
+      <div className="auth-google-wrap">
+        <div
+          ref={googleButtonContainerRef}
+          className="auth-google-button"
+          aria-busy={!googleButtonRendered}
+        ></div>
 
-      <div ref={googleButtonContainerRef} className="auth-google-hidden" aria-hidden="true" tabIndex={-1}></div>
+        {!googleButtonRendered ? (
+          <button
+            type="button"
+            className="auth-social-btn auth-social-btn--google auth-google-placeholder"
+            disabled
+          >
+            <span className="auth-social-icon auth-social-icon--google" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
+                <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
+                <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
+                <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
+              </svg>
+            </span>
+            <span>{t('authPages.loginForm.continueWithGoogle')}</span>
+          </button>
+        ) : null}
+
+        {googleLoading ? (
+          <div className="auth-google-loading">
+            <i className="bi bi-arrow-repeat auth-google-spinner" aria-hidden="true"></i>
+            <span>{t('authPages.loginForm.processing')}</span>
+          </div>
+        ) : null}
+      </div>
 
       <p className="auth-switch-inline">
         {t('authPages.loginForm.noAccount')} <Link to="/register">{t('authPages.loginForm.register')}</Link>
