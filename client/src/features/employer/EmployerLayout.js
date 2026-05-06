@@ -253,12 +253,6 @@ const EmployerLayout = () => {
             subtitleKey: 'employer.layout.menuSubtitle.notifications'
         },
         {
-            path: '/employer/applications',
-            icon: 'bi-file-earmark-person',
-            labelKey: 'employer.layout.menu.applications',
-            subtitleKey: 'employer.layout.menuSubtitle.applications'
-        },
-        {
             path: '/employer/messages',
             icon: 'bi-chat-dots',
             labelKey: 'employer.layout.menu.messages',

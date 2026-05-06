@@ -471,7 +471,9 @@ const getOrCreateCompanyId = async (userId) => {
 // Multer config for company logo
 const companyLogoStorage = multer.diskStorage({
     destination: function (req, file, cb) {
-        cb(null, path.join(__dirname, '../public/images/company-logos'));
+        const dest = path.join(__dirname, '../public/images/company-logos');
+        fs.mkdirSync(dest, { recursive: true });
+        cb(null, dest);
     },
     filename: function (req, file, cb) {
         const ext = path.extname(file.originalname);

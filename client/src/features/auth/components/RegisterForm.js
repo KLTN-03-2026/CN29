@@ -5,6 +5,7 @@ import { useNotification } from '../../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const pad2 = (value) => String(value).padStart(2, '0');
+const normalizePhoneInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 12);
 
 const parseIsoDate = (value) => {
   const text = String(value || '').trim();
@@ -86,9 +87,10 @@ const RegisterForm = ({ onSuccess }) => {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    const nextValue = name === 'phone' ? normalizePhoneInput(value) : value;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === 'checkbox' ? checked : nextValue
     }));
   };
 
@@ -482,6 +484,10 @@ const RegisterForm = ({ onSuccess }) => {
             className="auth-input"
             placeholder={t('authPages.registerForm.placeholders.phone')}
             value={formData.phone}
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={12}
+            autoComplete="tel"
             onChange={handleChange}
           />
         </div>

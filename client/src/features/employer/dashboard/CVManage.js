@@ -5,34 +5,47 @@ import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
 const STATUS_FILTER_KEYS = [
     { key: 'all', labelKey: 'employer.cvManagePage.filters.all', icon: 'bi-collection' },
-    { key: 'viewed', labelKey: 'employer.cvManagePage.filters.viewed', icon: 'bi-eye' },
-    { key: 'contacted', labelKey: 'employer.cvManagePage.filters.contacted', icon: 'bi-chat-dots' }
+    { key: 'saved', labelKey: 'employer.cvManagePage.filters.saved', icon: 'bi-bookmark-check' },
+    { key: 'applied', labelKey: 'employer.cvManagePage.filters.applied', icon: 'bi-briefcase' }
 ];
-
-const STATUS_VALUE_BY_FILTER = {
-    viewed: 'Đã xem',
-    contacted: 'Đã liên hệ'
-};
 
 const STATUS_CLASS_BY_VALUE = {
     'N/A': 'na',
+    'Đã lưu': 'na',
     'Đã xem': 'viewed',
-    'Đã liên hệ': 'contacted'
+    'Đã liên hệ': 'contacted',
+    'Đã nộp': 'viewed',
+    'Đang xem xét': 'contacted',
+    'Phỏng vấn': 'suitable',
+    'Đề nghị': 'suitable',
+    'Từ chối': 'rejected',
+    'Đã nhận': 'suitable'
 };
 
-const normalizeCvStatus = (status) => {
+const normalizeSavedStatus = (status) => {
     const value = String(status || '').trim();
-    if (value === 'Đã xem' || value === 'Đã liên hệ') return value;
-    return 'N/A';
+    if (value === 'Đã lưu' || value === 'Đã xem' || value === 'Đã liên hệ') return value;
+    return 'Đã lưu';
+};
+
+const formatDate = (value, locale) => {
+    if (!value) return 'N/A';
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return 'N/A';
+    const normalizedLocale = String(locale || '').toLowerCase().startsWith('en') ? 'en-US' : 'vi-VN';
+    return new Intl.DateTimeFormat(normalizedLocale, { dateStyle: 'short' }).format(parsed);
 };
 
 const CVManage = () => {
-    const { t } = useTranslation();
+    const { t, i18n } = useTranslation();
     const API_BASE = CLIENT_API_BASE;
     const navigate = useNavigate();
+    const locale = String(i18n.resolvedLanguage || i18n.language || 'vi');
     const [savedCVs, setSavedCVs] = useState([]);
+    const [appliedCVs, setAppliedCVs] = useState([]);
     const [filter, setFilter] = useState('all');
-    const [loading, setLoading] = useState(false);
+    const [loadingSaved, setLoadingSaved] = useState(false);
+    const [loadingApplied, setLoadingApplied] = useState(false);
     const [error, setError] = useState('');
 
     const STATUS_FILTERS = useMemo(() => STATUS_FILTER_KEYS.map((item) => ({
@@ -47,12 +60,12 @@ const CVManage = () => {
     }), [token]);
 
     const fetchSavedCVs = useCallback(async () => {
-        setLoading(true);
+        setLoadingSaved(true);
         setError('');
         if (!token) {
             setError(t('employer.cvManagePage.errors.notLoggedIn'));
             setSavedCVs([]);
-            setLoading(false);
+            setLoadingSaved(false);
             return;
         }
 
@@ -65,13 +78,37 @@ const CVManage = () => {
             setError(err?.message || 'Có lỗi xảy ra');
             setSavedCVs([]);
         } finally {
-            setLoading(false);
+            setLoadingSaved(false);
         }
-    }, [API_BASE, authHeaders, token]);
+    }, [API_BASE, authHeaders, t, token]);
+
+    const fetchAppliedCVs = useCallback(async () => {
+        setLoadingApplied(true);
+        setError('');
+        if (!token) {
+            setError(t('employer.cvManagePage.errors.notLoggedIn'));
+            setAppliedCVs([]);
+            setLoadingApplied(false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE}/applications`, { headers: authHeaders });
+            const data = await res.json().catch(() => null);
+            if (!res.ok) throw new Error(data?.error || t('employer.cvManagePage.errors.loadApplied'));
+            setAppliedCVs(Array.isArray(data) ? data : []);
+        } catch (err) {
+            setError(err?.message || t('employer.cvManagePage.errors.loadApplied'));
+            setAppliedCVs([]);
+        } finally {
+            setLoadingApplied(false);
+        }
+    }, [API_BASE, authHeaders, token, t]);
 
     useEffect(() => {
         fetchSavedCVs();
-    }, [fetchSavedCVs]);
+        fetchAppliedCVs();
+    }, [fetchAppliedCVs, fetchSavedCVs]);
 
     const setCvStatus = async (cvId, status, options = {}) => {
         const { silent = false } = options;
@@ -113,7 +150,7 @@ const CVManage = () => {
     };
 
     const openCvPreview = async (cv) => {
-        const fileUrl = String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim();
+        const fileUrl = String(cv?.fileUrl || '').trim();
         if (!fileUrl) {
             alert(t('employer.cvManagePage.errors.noFile'));
             return;
@@ -129,7 +166,9 @@ const CVManage = () => {
             // Keep opening behavior to avoid blocking when HEAD cannot be performed.
         }
 
-        await setCvStatus(cv.cvId, 'Đã xem', { silent: true });
+        if (cv.source === 'saved') {
+            await setCvStatus(cv.cvId, 'Đã xem', { silent: true });
+        }
         window.open(fileUrl, '_blank', 'noopener,noreferrer');
     };
 
@@ -140,7 +179,9 @@ const CVManage = () => {
             return;
         }
 
-        await setCvStatus(cv.cvId, 'Đã liên hệ', { silent: true });
+        if (cv.source === 'saved') {
+            await setCvStatus(cv.cvId, 'Đã liên hệ', { silent: true });
+        }
 
         const params = new URLSearchParams({
             userId: String(candidateUserId),
@@ -152,18 +193,213 @@ const CVManage = () => {
         navigate(`/employer/messages?${params.toString()}`);
     };
 
-    const counts = useMemo(() => {
-        const all = savedCVs.length;
-        const viewed = savedCVs.filter((x) => normalizeCvStatus(x.status) === 'Đã xem').length;
-        const contacted = savedCVs.filter((x) => normalizeCvStatus(x.status) === 'Đã liên hệ').length;
-        return { all, viewed, contacted };
-    }, [savedCVs]);
+    const savedItems = useMemo(() => savedCVs.map((cv) => ({
+        source: 'saved',
+        key: `saved-${cv.savedId}-${cv.cvId}`,
+        cvId: cv.cvId,
+        savedId: cv.savedId,
+        candidateUserId: cv.candidateUserId,
+        candidateName: cv.candidateName || 'N/A',
+        candidateEmail: cv.candidateEmail || 'N/A',
+        city: cv.city || '',
+        experience: cv.experience || '',
+        status: cv.status || '',
+        skills: Array.isArray(cv?.skills) ? cv.skills : [],
+        fileUrl: cv.cvFileAbsoluteUrl || cv.cvFileUrl || '',
+        savedAt: cv.savedAt || '',
+        updatedAt: cv.updatedAt || ''
+    })), [savedCVs]);
 
-    const filteredSavedCVs = useMemo(() => {
-        if (filter === 'all') return savedCVs;
-        const statusValue = STATUS_VALUE_BY_FILTER[filter];
-        return savedCVs.filter((item) => normalizeCvStatus(item.status) === statusValue);
-    }, [filter, savedCVs]);
+    const appliedItems = useMemo(() => appliedCVs.map((app) => ({
+        source: 'applied',
+        key: `applied-${app.MaUngTuyen || app.MaCV || app.MaTin}`,
+        applicationId: app.MaUngTuyen,
+        cvId: app.MaCV,
+        candidateUserId: app.MaUngVien,
+        candidateName: app.TenUngVien || 'N/A',
+        candidateEmail: app.EmailUngVien || 'N/A',
+        jobTitle: app.TieuDe || '',
+        submittedAt: app.NgayNop || '',
+        status: app.TrangThai || '',
+        fileUrl: app.CvFileAbsoluteUrl || ''
+    })), [appliedCVs]);
+
+    const allItems = useMemo(() => {
+        const merged = [...savedItems, ...appliedItems];
+        return merged.sort((a, b) => {
+            const aDate = a.source === 'applied' ? a.submittedAt : (a.savedAt || a.updatedAt);
+            const bDate = b.source === 'applied' ? b.submittedAt : (b.savedAt || b.updatedAt);
+            const aTs = Date.parse(aDate || '');
+            const bTs = Date.parse(bDate || '');
+            return (Number.isNaN(bTs) ? 0 : bTs) - (Number.isNaN(aTs) ? 0 : aTs);
+        });
+    }, [appliedItems, savedItems]);
+
+    const counts = useMemo(() => {
+        const saved = savedItems.length;
+        const applied = appliedItems.length;
+        return { all: saved + applied, saved, applied };
+    }, [appliedItems.length, savedItems.length]);
+
+    const loading = loadingSaved || loadingApplied;
+
+    const showSavedSection = filter === 'all' || filter === 'saved';
+    const showAppliedSection = filter === 'all' || filter === 'applied';
+    const isEmpty = filter === 'saved'
+        ? savedItems.length === 0
+        : filter === 'applied'
+            ? appliedItems.length === 0
+            : allItems.length === 0;
+
+    const renderSavedTable = (items) => (
+        <div className="table-responsive">
+            <table className="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>{t('employer.cvManagePage.table.candidate')}</th>
+                        <th>{t('employer.cvManagePage.table.email')}</th>
+                        <th>{t('employer.cvManagePage.table.location')}</th>
+                        <th>{t('employer.cvManagePage.table.experience')}</th>
+                        <th>{t('employer.cvManagePage.table.status')}</th>
+                        <th className="text-end">{t('employer.cvManagePage.table.actions')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items.map((cv) => {
+                        const statusLabel = normalizeSavedStatus(cv.status);
+                        const skills = Array.isArray(cv.skills) ? cv.skills : [];
+                        const visibleSkills = skills.slice(0, 5);
+                        const extraSkills = Math.max(skills.length - visibleSkills.length, 0);
+                        return (
+                            <tr key={cv.key}>
+                                <td className="fw-semibold">
+                                    <div>{cv.candidateName || 'N/A'}</div>
+                                    {skills.length > 0 && (
+                                        <div className="cv-skill-list cv-skill-list--compact">
+                                            {visibleSkills.map((skill, index) => (
+                                                <span key={`${skill?.id || skill?.name || 'skill'}-${index}`} className="cv-skill-chip">
+                                                    <span>{String(skill?.name || skill?.TenKyNang || '').trim()}</span>
+                                                    {skill?.level || skill?.MucDo ? <small>{skill?.level || skill?.MucDo}</small> : null}
+                                                </span>
+                                            ))}
+                                            {extraSkills > 0 && (
+                                                <span className="cv-skill-chip cv-skill-chip--more">+{extraSkills}</span>
+                                            )}
+                                        </div>
+                                    )}
+                                </td>
+                                <td>{cv.candidateEmail || 'N/A'}</td>
+                                <td>{cv.city || 'N/A'}</td>
+                                <td>{cv.experience || 'N/A'}</td>
+                                <td>
+                                    <span className={`cv-manage-status-pill ${STATUS_CLASS_BY_VALUE[statusLabel] || 'default'}`}>
+                                        {statusLabel}
+                                    </span>
+                                </td>
+                                <td className="text-end">
+                                    <div className="cv-manage-row-actions">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-primary cv-manage-action-icon"
+                                            title={t('employer.cvManagePage.actions.viewCv')}
+                                            aria-label={t('employer.cvManagePage.actions.viewCv')}
+                                            onClick={() => openCvPreview(cv)}
+                                        >
+                                            <i className="bi bi-eye"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-info cv-manage-action-icon"
+                                            title={t('employer.cvManagePage.actions.message')}
+                                            aria-label={t('employer.cvManagePage.actions.message')}
+                                            onClick={() => openMessageBox(cv)}
+                                        >
+                                            <i className="bi bi-chat-dots"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-danger cv-manage-action-icon"
+                                            title={t('employer.cvManagePage.actions.removeSaved')}
+                                            aria-label={t('employer.cvManagePage.actions.removeSaved')}
+                                            onClick={() => removeSavedCv(cv.cvId)}
+                                        >
+                                            <i className="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const renderAppliedTable = (items) => (
+        <div className="table-responsive">
+            <table className="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>{t('employer.cvManagePage.table.candidate')}</th>
+                        <th>{t('employer.cvManagePage.table.email')}</th>
+                        <th>{t('employer.cvManagePage.table.jobTitle')}</th>
+                        <th>{t('employer.cvManagePage.table.submittedAt')}</th>
+                        <th>{t('employer.cvManagePage.table.status')}</th>
+                        <th className="text-end">{t('employer.cvManagePage.table.actions')}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {items.map((app) => {
+                        const statusLabel = String(app.status || 'N/A').trim() || 'N/A';
+                        return (
+                            <tr key={app.key}>
+                                <td className="fw-semibold">{app.candidateName || 'N/A'}</td>
+                                <td>{app.candidateEmail || 'N/A'}</td>
+                                <td>{app.jobTitle || 'N/A'}</td>
+                                <td>{formatDate(app.submittedAt, locale)}</td>
+                                <td>
+                                    <span className={`cv-manage-status-pill ${STATUS_CLASS_BY_VALUE[statusLabel] || 'default'}`}>
+                                        {statusLabel}
+                                    </span>
+                                </td>
+                                <td className="text-end">
+                                    <div className="cv-manage-row-actions">
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-primary cv-manage-action-icon"
+                                            title={t('employer.cvManagePage.actions.viewCv')}
+                                            aria-label={t('employer.cvManagePage.actions.viewCv')}
+                                            onClick={() => openCvPreview(app)}
+                                        >
+                                            <i className="bi bi-eye"></i>
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className="btn btn-sm btn-outline-info cv-manage-action-icon"
+                                            title={t('employer.cvManagePage.actions.message')}
+                                            aria-label={t('employer.cvManagePage.actions.message')}
+                                            onClick={() => openMessageBox(app)}
+                                        >
+                                            <i className="bi bi-chat-dots"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
+    );
+
+    const emptyTitle = filter === 'saved'
+        ? t('employer.cvManagePage.emptySaved')
+        : filter === 'applied'
+            ? t('employer.cvManagePage.emptyApplied')
+            : t('employer.cvManagePage.emptyAll');
+    const emptyHint = filter === 'applied'
+        ? t('employer.cvManagePage.emptyAppliedHint')
+        : t('employer.cvManagePage.emptyHint');
 
     return (
         <div>
@@ -209,100 +445,35 @@ const CVManage = () => {
                         </div>
                     )}
 
-                    {!loading && filteredSavedCVs.length === 0 ? (
+                    {!loading && isEmpty ? (
                         <div className="text-center py-5">
                             <i className="bi bi-file-earmark-x fs-1 text-muted"></i>
                             <p className="text-muted mt-3">
-                                {filter === 'all'
-                                    ? t('employer.cvManagePage.emptyAll')
-                                    : t('employer.cvManagePage.emptyFiltered')}
+                                {emptyTitle}
                                 <br />
-                                {t('employer.cvManagePage.emptyHint')}
+                                {emptyHint}
                             </p>
                         </div>
                     ) : (
                         !loading && (
-                            <div className="table-responsive">
-                                <table className="table table-hover align-middle">
-                                    <thead>
-                                        <tr>
-                                            <th>{t('employer.cvManagePage.table.candidate')}</th>
-                                            <th>{t('employer.cvManagePage.table.email')}</th>
-                                            <th>{t('employer.cvManagePage.table.location')}</th>
-                                            <th>{t('employer.cvManagePage.table.experience')}</th>
-                                            <th>{t('employer.cvManagePage.table.status')}</th>
-                                            <th className="text-end">{t('employer.cvManagePage.table.actions')}</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filteredSavedCVs.map((cv) => {
-                                            const statusLabel = normalizeCvStatus(cv.status);
-                                            const skills = Array.isArray(cv?.skills) ? cv.skills : [];
-                                            const visibleSkills = skills.slice(0, 5);
-                                            const extraSkills = Math.max(skills.length - visibleSkills.length, 0);
-                                            return (
-                                                <tr key={`${cv.savedId}-${cv.cvId}`}>
-                                                    <td className="fw-semibold">
-                                                        <div>{cv.candidateName || 'N/A'}</div>
-                                                        {skills.length > 0 && (
-                                                            <div className="cv-skill-list cv-skill-list--compact">
-                                                                {visibleSkills.map((skill, index) => (
-                                                                    <span key={`${skill?.id || skill?.name || 'skill'}-${index}`} className="cv-skill-chip">
-                                                                        <span>{String(skill?.name || skill?.TenKyNang || '').trim()}</span>
-                                                                        {skill?.level || skill?.MucDo ? <small>{skill?.level || skill?.MucDo}</small> : null}
-                                                                    </span>
-                                                                ))}
-                                                                {extraSkills > 0 && (
-                                                                    <span className="cv-skill-chip cv-skill-chip--more">+{extraSkills}</span>
-                                                                )}
-                                                            </div>
-                                                        )}
-                                                    </td>
-                                                    <td>{cv.candidateEmail || 'N/A'}</td>
-                                                    <td>{cv.city || 'N/A'}</td>
-                                                    <td>{cv.experience || 'N/A'}</td>
-                                                    <td>
-                                                        <span className={`cv-manage-status-pill ${STATUS_CLASS_BY_VALUE[statusLabel] || 'default'}`}>
-                                                            {statusLabel}
-                                                        </span>
-                                                    </td>
-                                                    <td className="text-end">
-                                                        <div className="cv-manage-row-actions">
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-sm btn-outline-primary cv-manage-action-icon"
-                                                                title={t('employer.cvManagePage.actions.viewCv')}
-                                                                aria-label={t('employer.cvManagePage.actions.viewCv')}
-                                                                onClick={() => openCvPreview(cv)}
-                                                            >
-                                                                <i className="bi bi-eye"></i>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-sm btn-outline-info cv-manage-action-icon"
-                                                                title={t('employer.cvManagePage.actions.message')}
-                                                                aria-label={t('employer.cvManagePage.actions.message')}
-                                                                onClick={() => openMessageBox(cv)}
-                                                            >
-                                                                <i className="bi bi-chat-dots"></i>
-                                                            </button>
-                                                            <button
-                                                                type="button"
-                                                                className="btn btn-sm btn-outline-danger cv-manage-action-icon"
-                                                                title={t('employer.cvManagePage.actions.removeSaved')}
-                                                                aria-label={t('employer.cvManagePage.actions.removeSaved')}
-                                                                onClick={() => removeSavedCv(cv.cvId)}
-                                                            >
-                                                                <i className="bi bi-trash"></i>
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <>
+                                {showSavedSection && savedItems.length > 0 && (
+                                    <div className={filter === 'all' ? 'mb-4' : ''}>
+                                        {filter === 'all' && (
+                                            <h6 className="text-muted mb-3">{t('employer.cvManagePage.filters.saved')}</h6>
+                                        )}
+                                        {renderSavedTable(savedItems)}
+                                    </div>
+                                )}
+                                {showAppliedSection && appliedItems.length > 0 && (
+                                    <div>
+                                        {filter === 'all' && (
+                                            <h6 className="text-muted mb-3">{t('employer.cvManagePage.filters.applied')}</h6>
+                                        )}
+                                        {renderAppliedTable(appliedItems)}
+                                    </div>
+                                )}
+                            </>
                         )
                     )}
                 </div>

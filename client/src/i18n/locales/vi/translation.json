@@ -1267,21 +1267,26 @@
       }
     },
     "cvManagePage": {
-      "title": "Quản lý CV",
-      "filterAriaLabel": "Lọc CV đã lưu",
+      "title": "CV đã lưu và CV đã ứng tuyển",
+      "filterAriaLabel": "Lọc CV đã lưu và CV đã ứng tuyển",
       "filters": {
         "all": "Tất cả",
-        "viewed": "Đã xem",
-        "contacted": "Đã liên hệ"
+        "saved": "CV đã lưu",
+        "applied": "CV đã ứng tuyển"
       },
-      "emptyAll": "Bạn chưa lưu CV nào.",
+      "emptyAll": "Chưa có CV đã lưu hoặc CV ứng tuyển.",
+      "emptySaved": "Bạn chưa lưu CV nào.",
+      "emptyApplied": "Chưa có CV ứng tuyển nào.",
       "emptyFiltered": "Không có CV phù hợp với bộ lọc hiện tại.",
       "emptyHint": "Tìm ứng viên phù hợp và lưu CV của họ.",
+      "emptyAppliedHint": "Theo dõi hồ sơ ứng tuyển từ các tin tuyển dụng đã đăng.",
       "table": {
         "candidate": "Ứng viên",
         "email": "Email",
         "location": "Địa điểm",
         "experience": "Kinh nghiệm",
+        "jobTitle": "Tin tuyển dụng",
+        "submittedAt": "Ngày nộp",
         "status": "Trạng thái",
         "actions": "Hành động"
       },
@@ -1297,7 +1302,8 @@
         "notLoggedIn": "Bạn cần đăng nhập.",
         "noFile": "Chưa có tệp CV.",
         "missingCandidate": "Không xác định được ứng viên để nhắn tin.",
-        "fileMissing": "Tệp CV không còn tồn tại. Vui lòng yêu cầu ứng viên cập nhật lại."
+        "fileMissing": "Tệp CV không còn tồn tại. Vui lòng yêu cầu ứng viên cập nhật lại.",
+        "loadApplied": "Không tải được CV ứng tuyển."
       },
       "loading": "Đang tải..."
     },
@@ -2433,6 +2439,7 @@
         "uploadAvatarFailed": "Tải ảnh đại diện thất bại.",
         "candidateRequiredFields": "Vui lòng điền đầy đủ các trường bắt buộc cho ứng viên.",
         "employerRequiredFields": "Vui lòng điền đầy đủ các trường bắt buộc cho nhà tuyển dụng.",
+        "invalidPhone": "Số điện thoại không hợp lệ.",
         "saveProfileFailed": "Không thể lưu hồ sơ."
       }
     }

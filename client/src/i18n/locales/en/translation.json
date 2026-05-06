@@ -1267,21 +1267,26 @@
       }
     },
     "cvManagePage": {
-      "title": "CV Management",
-      "filterAriaLabel": "Filter saved CVs",
+      "title": "Saved & Applied CVs",
+      "filterAriaLabel": "Filter saved and applied CVs",
       "filters": {
         "all": "All",
-        "viewed": "Viewed",
-        "contacted": "Contacted"
+        "saved": "Saved CVs",
+        "applied": "Applied CVs"
       },
-      "emptyAll": "You haven't saved any CVs yet.",
+      "emptyAll": "No saved or applied CVs yet.",
+      "emptySaved": "You haven't saved any CVs yet.",
+      "emptyApplied": "No applied CVs yet.",
       "emptyFiltered": "No CVs match the current filter.",
       "emptyHint": "Search for suitable candidates and save their CVs.",
+      "emptyAppliedHint": "Track applications submitted to your job posts.",
       "table": {
         "candidate": "Candidate",
         "email": "Email",
         "location": "Location",
         "experience": "Experience",
+        "jobTitle": "Job post",
+        "submittedAt": "Submitted at",
         "status": "Status",
         "actions": "Action"
       },
@@ -1297,7 +1302,8 @@
         "notLoggedIn": "You need to sign in.",
         "noFile": "No CV file available.",
         "missingCandidate": "Unable to identify the candidate for messaging.",
-        "fileMissing": "The CV file is not available. Ask the candidate to update it."
+        "fileMissing": "The CV file is not available. Ask the candidate to update it.",
+        "loadApplied": "Unable to load applied CVs."
       },
       "loading": "Loading..."
     },
@@ -2433,6 +2439,7 @@
         "uploadAvatarFailed": "Avatar upload failed.",
         "candidateRequiredFields": "Please fill all required candidate fields.",
         "employerRequiredFields": "Please fill all required employer fields.",
+        "invalidPhone": "Invalid phone number.",
         "saveProfileFailed": "Unable to save profile."
       }
     }

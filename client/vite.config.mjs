@@ -8,6 +8,7 @@ const PROXY_PATHS = [
   '/users',
   '/applications',
   '/cvs',
+  '/jobs',
   '/images/avatars',
   '/images/company-logos'
 ];

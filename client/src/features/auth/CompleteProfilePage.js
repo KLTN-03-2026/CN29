@@ -10,6 +10,9 @@ const EMPLOYER_ROLE = 'Nhà tuyển dụng';
 const MAX_AVATAR_FILE_SIZE = 2 * 1024 * 1024;
 
 const pad2 = (value) => String(value).padStart(2, '0');
+const normalizePhoneInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 12);
+const normalizeTaxCodeInput = (value) => String(value || '').replace(/\D/g, '').slice(0, 13);
+const PHONE_REGEX = /^[0-9]{9,12}$/;
 
 const normalizeIsoDate = (value) => {
   const text = String(value || '').trim();
@@ -154,15 +157,31 @@ const CompleteProfilePage = () => {
 
   const handleCandidateChange = (event) => {
     const { name, value } = event.target;
+    let nextValue = value;
+
+    if (name === 'phone') {
+      nextValue = normalizePhoneInput(value);
+    } else if (name === 'experienceYears') {
+      nextValue = Number(value);
+    }
+
     setCandidateForm((prev) => ({
       ...prev,
-      [name]: name === 'experienceYears' ? Number(value) : value
+      [name]: nextValue
     }));
   };
 
   const handleEmployerChange = (event) => {
     const { name, value } = event.target;
-    setEmployerForm((prev) => ({ ...prev, [name]: value }));
+    let nextValue = value;
+
+    if (name === 'phone') {
+      nextValue = normalizePhoneInput(value);
+    } else if (name === 'taxCode') {
+      nextValue = normalizeTaxCodeInput(value);
+    }
+
+    setEmployerForm((prev) => ({ ...prev, [name]: nextValue }));
   };
 
   const handleBirthdayChange = (nextBirthday) => {
@@ -228,6 +247,11 @@ const CompleteProfilePage = () => {
           throw new Error(t('authPages.completeProfile.errors.candidateRequiredFields'));
         }
 
+        const normalizedCandidatePhone = candidateForm.phone.trim();
+        if (!PHONE_REGEX.test(normalizedCandidatePhone)) {
+          throw new Error(t('authPages.completeProfile.errors.invalidPhone'));
+        }
+
         let resolvedAvatar = String(candidateForm.avatar || '').trim();
 
         if (avatarFile) {
@@ -259,7 +283,7 @@ const CompleteProfilePage = () => {
         payload = {
           role,
           fullName: candidateForm.fullName,
-          phone: candidateForm.phone,
+          phone: normalizedCandidatePhone,
           address: candidateForm.address,
           birthday: candidateForm.birthday,
           gender: candidateForm.gender,
@@ -277,10 +301,15 @@ const CompleteProfilePage = () => {
           throw new Error(t('authPages.completeProfile.errors.employerRequiredFields'));
         }
 
+        const normalizedEmployerPhone = employerForm.phone.trim();
+        if (!PHONE_REGEX.test(normalizedEmployerPhone)) {
+          throw new Error(t('authPages.completeProfile.errors.invalidPhone'));
+        }
+
         payload = {
           role,
           fullName: employerForm.fullName,
-          phone: employerForm.phone,
+          phone: normalizedEmployerPhone,
           address: employerForm.address,
           companyName: employerForm.companyName,
           taxCode: employerForm.taxCode,
@@ -346,7 +375,19 @@ const CompleteProfilePage = () => {
               </div>
               <div className="auth-field">
                 <label className="auth-field-label" htmlFor="candidatePhone">{t('authPages.completeProfile.labels.phone')}</label>
-                <input id="candidatePhone" name="phone" className="auth-input" value={candidateForm.phone} onChange={handleCandidateChange} required />
+                <input
+                  id="candidatePhone"
+                  name="phone"
+                  type="tel"
+                  className="auth-input"
+                  value={candidateForm.phone}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={12}
+                  autoComplete="tel"
+                  onChange={handleCandidateChange}
+                  required
+                />
               </div>
             </div>
 
@@ -457,7 +498,19 @@ const CompleteProfilePage = () => {
               </div>
               <div className="auth-field">
                 <label className="auth-field-label" htmlFor="employerPhone">{t('authPages.completeProfile.labels.phone')}</label>
-                <input id="employerPhone" name="phone" className="auth-input" value={employerForm.phone} onChange={handleEmployerChange} required />
+                <input
+                  id="employerPhone"
+                  name="phone"
+                  type="tel"
+                  className="auth-input"
+                  value={employerForm.phone}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={12}
+                  autoComplete="tel"
+                  onChange={handleEmployerChange}
+                  required
+                />
               </div>
             </div>
 
@@ -468,7 +521,16 @@ const CompleteProfilePage = () => {
               </div>
               <div className="auth-field">
                 <label className="auth-field-label" htmlFor="employerTaxCode">{t('authPages.completeProfile.labels.taxCode')}</label>
-                <input id="employerTaxCode" name="taxCode" className="auth-input" value={employerForm.taxCode} onChange={handleEmployerChange} />
+                <input
+                  id="employerTaxCode"
+                  name="taxCode"
+                  className="auth-input"
+                  value={employerForm.taxCode}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={13}
+                  onChange={handleEmployerChange}
+                />
               </div>
             </div>
 

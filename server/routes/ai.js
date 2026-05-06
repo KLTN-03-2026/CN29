@@ -7,7 +7,7 @@ const { jobs: mockJobs } = require('../data/mockJobs');
 const multer = require('multer');
 const pdfParse = require('pdf-parse');
 const mammoth = require('mammoth');
-const { authenticateToken } = require('../middleware/auth');
+const { authenticateToken, authorizeRole } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -1072,5 +1072,174 @@ router.post('/chat/cv-stored', authenticateToken, async (req, res) => {
     return res.status(500).json({ success: false, error: err.message || 'Lỗi phân tích CV đã lưu.' });
   }
 });
+
+// AI tư vấn cho Nhà tuyển dụng: nhập JD, hệ thống lọc thô CV trong CSDL rồi
+// đưa danh sách rút gọn cho LLM phân tích và đề xuất ứng viên phù hợp nhất.
+router.post(
+  '/chat/employer-cv-search',
+  authenticateToken,
+  authorizeRole(['Nhà tuyển dụng']),
+  async (req, res) => {
+    try {
+      const jobDescription = String(req.body?.jobDescription || '').trim();
+      const limit = Math.max(1, Math.min(20, parseInt(req.body?.limit, 10) || 5));
+
+      if (jobDescription.length < 10) {
+        return res.status(400).json({
+          success: false,
+          error: 'Vui lòng cung cấp mô tả công việc cụ thể (ít nhất 10 ký tự).'
+        });
+      }
+
+      // 1. Lấy hồ sơ ứng viên + tên + kỹ năng (gộp từ tất cả CV của họ)
+      const allCvs = await dbAll(
+        `SELECT
+            h.MaNguoiDung,
+            nd.HoTen,
+            h.ChucDanh,
+            h.TrinhDoHocVan,
+            h.ThanhPho,
+            h.GioiThieuBanThan,
+            (
+              SELECT GROUP_CONCAT(DISTINCT k.TenKyNang)
+              FROM HoSoCV cv
+              JOIN ChiTietCV_KyNang ck ON ck.MaCV = cv.MaCV
+              JOIN KyNang k ON k.MaKyNang = ck.MaKyNang
+              WHERE cv.MaNguoiDung = h.MaNguoiDung
+            ) AS KyNang
+         FROM HoSoUngVien h
+         JOIN NguoiDung nd ON nd.MaNguoiDung = h.MaNguoiDung
+         WHERE nd.VaiTro = 'Ứng viên'
+           AND nd.TrangThai = 1
+           AND h.ChucDanh IS NOT NULL
+           AND TRIM(h.ChucDanh) <> ''`
+      );
+
+      if (!allCvs.length) {
+        return res.json({
+          success: true,
+          reply: 'Hiện tại hệ thống chưa có hồ sơ ứng viên nào phù hợp để gợi ý.',
+          matchedCvs: []
+        });
+      }
+
+      // 2. Lọc thô bằng từ khóa: trọng số ưu tiên theo trường (ChucDanh > KyNang > còn lại)
+      const keywords = extractKeywordsFromText(jobDescription, 20);
+      if (!keywords.length) {
+        return res.json({
+          success: true,
+          reply: 'Không trích xuất được từ khóa kỹ năng từ mô tả công việc. Bạn vui lòng nêu rõ vị trí, công nghệ và yêu cầu cụ thể hơn.',
+          matchedCvs: []
+        });
+      }
+
+      const scoredCvs = allCvs
+        .map((cv) => {
+          const titleNorm = normalizeForMatch(cv.ChucDanh);
+          const skillsNorm = normalizeForMatch(cv.KyNang || '');
+          const eduNorm = normalizeForMatch(cv.TrinhDoHocVan || '');
+          const cityNorm = normalizeForMatch(cv.ThanhPho || '');
+          const aboutNorm = normalizeForMatch(cv.GioiThieuBanThan || '');
+
+          let score = 0;
+          let titleHits = 0;
+          keywords.forEach((kw, idx) => {
+            const depthBoost = idx < 6 ? 1.2 : 1;
+            if (titleNorm.includes(kw)) {
+              score += 10 * depthBoost;
+              titleHits += 1;
+            } else if (skillsNorm.includes(kw)) {
+              score += 7 * depthBoost;
+            } else if (aboutNorm.includes(kw)) {
+              score += 3 * depthBoost;
+            } else if (eduNorm.includes(kw) || cityNorm.includes(kw)) {
+              score += 1.5 * depthBoost;
+            }
+          });
+
+          return { ...cv, score, titleHits };
+        })
+        .filter((cv) => cv.score > 0)
+        .sort((a, b) => {
+          if (b.score !== a.score) return b.score - a.score;
+          return b.titleHits - a.titleHits;
+        })
+        .slice(0, limit);
+
+      if (!scoredCvs.length) {
+        return res.json({
+          success: true,
+          reply: 'Chưa tìm thấy ứng viên nào trong hệ thống khớp với từ khóa của mô tả công việc này. Bạn thử mô tả lại bằng các từ khóa kỹ năng/vị trí cụ thể hơn.',
+          matchedCvs: []
+        });
+      }
+
+      // 3. Rút gọn payload trước khi đẩy cho LLM (tránh tốn token)
+      const cvBriefs = scoredCvs.map((cv) => ({
+        userId: cv.MaNguoiDung,
+        fullName: cv.HoTen || `Ứng viên #${cv.MaNguoiDung}`,
+        position: cv.ChucDanh || '',
+        education: cv.TrinhDoHocVan || '',
+        city: cv.ThanhPho || '',
+        skills: cv.KyNang || '',
+        summary: String(cv.GioiThieuBanThan || '').slice(0, 320),
+        score: Number(cv.score.toFixed(2))
+      }));
+
+      const systemPrompt =
+        'Bạn là trợ lý tuyển dụng AI của JobFinder, tư vấn cho Nhà tuyển dụng chọn ứng viên phù hợp nhất. ' +
+        'Trả lời tiếng Việt, chuyên nghiệp, không markdown, không *, -, #. ' +
+        'Cấu trúc bắt buộc, mỗi ý xuống dòng:\n' +
+        'Khối 1 (1-2 câu): tóm tắt yêu cầu công việc bạn hiểu được từ JD.\n' +
+        'Khối 2: liệt kê tối đa 3 ứng viên phù hợp nhất, mỗi ứng viên đúng 2 dòng:\n' +
+        '  Dòng A: "{số}. {Họ tên} - {Chức danh hiện tại} (#{userId})"\n' +
+        '  Dòng B: "Lý do phù hợp: {1-2 câu nêu cụ thể kỹ năng/kinh nghiệm/học vấn của ứng viên khớp với yêu cầu}"\n' +
+        'Chỉ chọn ứng viên trong danh sách được cung cấp, KHÔNG bịa thêm. ' +
+        'Nếu không có ứng viên nào thực sự phù hợp, trả lời thẳng thắn rằng danh sách hiện tại chưa khớp với yêu cầu.';
+
+      const userPrompt =
+        `Yêu cầu của Nhà tuyển dụng:\n${jobDescription}\n\n` +
+        `Danh sách ứng viên đã được lọc thô (đã sort theo điểm match giảm dần):\n` +
+        JSON.stringify(cvBriefs);
+
+      const ai = await callLLMChat({
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.3
+      });
+
+      if (ai.ok) {
+        return res.json({
+          success: true,
+          reply: ai.text,
+          matchedCvs: cvBriefs,
+          keywords
+        });
+      }
+
+      console.warn('AI employer-cv-search failure:', {
+        provider: ai.provider || AI_PROVIDER,
+        fallbackUsed: Boolean(ai.fallbackUsed),
+        primaryError: ai.primaryError || null,
+        error: ai.error || null
+      });
+
+      return res.json({
+        success: true,
+        reply: toFriendlyAiFailureMessage({
+          errorText: ai.error || ai.primaryError || '',
+          fallbackUsed: Boolean(ai.fallbackUsed)
+        }),
+        matchedCvs: cvBriefs,
+        keywords
+      });
+    } catch (err) {
+      console.error('Employer CV Search Error:', err);
+      return res.status(500).json({ success: false, error: 'Đã xảy ra lỗi hệ thống.' });
+    }
+  }
+);
 
 module.exports = router;
