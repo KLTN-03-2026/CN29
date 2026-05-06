@@ -107,7 +107,7 @@
       "templatesCreate": "Tạo template mới",
       "reports": "Báo cáo",
       "careerGuidePosts": "Quản lý bài viết hướng nghiệp",
-      "auditLogs": "Nhật ký quản trị",
+      "auditLogs": "Nhật ký hoạt động",
       "profile": "Hồ sơ admin"
     },
     "pageTitle": {
@@ -118,7 +118,7 @@
       "templates": "Quản lý template CV",
       "reports": "Báo cáo",
       "careerGuidePosts": "Quản lý bài viết hướng nghiệp",
-      "auditLogs": "Nhật ký quản trị",
+      "auditLogs": "Nhật ký hoạt động",
       "profile": "Hồ sơ"
     },
     "dropdown": {
@@ -607,7 +607,7 @@
       }
     },
     "auditLogsPage": {
-      "title": "Nhật ký quản trị",
+      "title": "Nhật ký hoạt động",
       "meta": {
         "total": "Tổng bản ghi",
         "page": "Trang"
@@ -641,8 +641,8 @@
       "export": {
         "downloadButton": "Tải Excel",
         "exporting": "Đang xuất...",
-        "sheetName": "Nhật ký quản trị",
-        "title": "JOBFINDER - NHẬT KÝ QUẢN TRỊ",
+        "sheetName": "Nhật ký hoạt động",
+        "title": "JOBFINDER - NHẬT KÝ HOẠT ĐỘNG",
         "exportedAt": "Ngày xuất: {{value}}",
         "totalNote": "Tổng bản ghi: {{total}} | Nguồn dữ liệu: JobFinder Admin",
         "footer": "Báo cáo được xuất từ hệ thống JobFinder. Vui lòng không chỉnh sửa dữ liệu gốc khi đối soát.",
@@ -1173,6 +1173,67 @@
     }
   },
   "employer": {
+    "homePage": {
+      "hero": {
+        "eyebrow": "JobFinder for Recruiters",
+        "greeting": "Xin chào,",
+        "subtitle": "Quản lý tuyển dụng tập trung — đăng tin, tìm kiếm CV và trao đổi với ứng viên ngay trên một nền tảng.",
+        "ctaPostJob": "Đăng tin tuyển dụng",
+        "ctaDashboard": "Vào Dashboard",
+        "summaryLabel": "Tóm tắt nhanh",
+        "stats": {
+          "activeJobs": "tin đang đăng",
+          "applications": "lượt ứng tuyển",
+          "pending": "ứng viên chờ duyệt",
+          "unreadMessages": "tin nhắn chưa đọc"
+        }
+      },
+      "quickStart": {
+        "title": "Bắt đầu nhanh",
+        "subtitle": "Các tác vụ chính dành cho nhà tuyển dụng — chỉ một cú click."
+      },
+      "actions": {
+        "postJob": {
+          "title": "Đăng tin tuyển dụng",
+          "desc": "Tạo tin tuyển dụng mới và tiếp cận hàng chục nghìn ứng viên.",
+          "cta": "Đăng ngay"
+        },
+        "searchCv": {
+          "title": "Tìm kiếm CV",
+          "desc": "Lọc kho dữ liệu ứng viên theo kỹ năng, kinh nghiệm, địa điểm.",
+          "cta": "Tìm CV"
+        },
+        "manageCv": {
+          "title": "Quản lý CV ứng tuyển",
+          "desc": "Theo dõi tiến trình và phản hồi nhanh ứng viên đã ứng tuyển.",
+          "cta": "Xem ứng viên"
+        },
+        "messages": {
+          "title": "Tin nhắn",
+          "desc": "Nhắn tin trực tiếp với ứng viên tiềm năng.",
+          "cta": "Vào hộp thư"
+        }
+      },
+      "recentJobs": {
+        "title": "Tin tuyển dụng gần đây",
+        "viewAll": "Xem tất cả",
+        "loading": "Đang tải...",
+        "empty": "Bạn chưa đăng tin tuyển dụng nào.",
+        "emptyCta": "Đăng tin đầu tiên"
+      },
+      "tips": {
+        "title": "Mẹo tuyển dụng hiệu quả",
+        "items": {
+          "trafficTitle": "Tiêu đề rõ ràng tăng 3× lượt ứng tuyển",
+          "trafficBody": "Đặt vị trí + từ khoá quan trọng ngay đầu tiêu đề tin.",
+          "aiTitle": "CV gợi ý phù hợp tự động",
+          "aiBody": "Hệ thống dùng AI để gợi ý CV khớp nhất với mô tả công việc.",
+          "metricTitle": "Theo dõi hiệu suất tin tuyển",
+          "metricBody": "Xem lượt xem, ứng tuyển, tỉ lệ phản hồi trong dashboard."
+        }
+      },
+      "fallbackName": "Nhà tuyển dụng"
+    },
     "layout": {
       "defaultDisplayName": "Nhà tuyển dụng",
       "defaultSubtitle": "Quản lý tuyển dụng",

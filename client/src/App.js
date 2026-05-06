@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import Header from './components/Header';
 import HomePage from './features/public/HomePage';
+import EmployerHomePage from './features/employer/EmployerHomePage';
 import JobSearchPage from './features/public/JobSearchPage';
 import JobPublicDetail from './features/public/JobPublicDetail';
 import SavedJobsPage from './features/candidate/SavedJobsPage';
 import AppliedJobsPage from './features/candidate/AppliedJobsPage';
-import MatchingJobsPage from './features/candidate/MatchingJobsPage';
 import LoginPage from './features/auth/LoginPage';
 import RegisterPage from './features/auth/RegisterPage';
 import ForgotPasswordPage from './features/auth/ForgotPasswordPage';
@@ -121,9 +121,9 @@ function AppContent() {
 
     const segments = pathname.split('/').filter(Boolean);
 
-    // Allow only job detail path like /jobs/:id (not /jobs/saved|applied|matching)
+    // Allow only job detail path like /jobs/:id (not /jobs/saved|applied)
     if (segments[0] === 'jobs' && segments.length === 2) {
-      const blockedJobSubRoutes = new Set(['saved', 'applied', 'matching']);
+      const blockedJobSubRoutes = new Set(['saved', 'applied']);
       return !blockedJobSubRoutes.has(segments[1]);
     }
 
@@ -179,11 +179,10 @@ function AppContent() {
 
       <main className="AppMain">
         <Routes>
-          <Route path="/" element={<HomePage />} />
+          <Route path="/" element={getUserRoleNormalized(currentUser) === 'nha tuyen dung' ? <EmployerHomePage /> : <HomePage />} />
           <Route path="/jobs" element={<JobSearchPage />} />
           <Route path="/jobs/saved" element={<SavedJobsPage />} />
           <Route path="/jobs/applied" element={<AppliedJobsPage />} />
-          <Route path="/jobs/matching" element={<MatchingJobsPage />} />
           <Route path="/jobs/:id" element={<JobPublicDetail />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />

@@ -7,6 +7,7 @@ const db = require('../config/db');
 const { authenticateToken } = require('../middleware/auth');
 const { isCloudinaryConfigured, uploadImageFromPath } = require('../config/cloudinary');
 const articleSamples = require('../mocks/articleSamples');
+const { logActivity } = require('../utils/activityLog');
 
 const isMysql = /^mysql:\/\//i.test(process.env.DATABASE_URL || '');
 
@@ -794,6 +795,13 @@ router.post('/', authenticateToken, async (req, res) => {
 
     const inserted = await dbRun(sql, insertValues);
 
+    logActivity({
+      userId: req.user?.id,
+      action: 'Đăng bài viết hướng nghiệp',
+      entityType: 'BaiVietHuongNghiep',
+      entityId: inserted.lastID
+    });
+
     return res.json({
       success: true,
       postId: inserted.lastID,
@@ -876,6 +884,13 @@ router.post('/:id/comments', authenticateToken, async (req, res) => {
         message: 'Bình luận chứa từ ngữ không phù hợp nên đã được ẩn khỏi danh sách hiển thị.'
       });
     }
+
+    logActivity({
+      userId,
+      action: 'Bình luận bài viết hướng nghiệp',
+      entityType: 'BinhLuanBaiViet',
+      entityId: inserted.lastID
+    });
 
     return res.json({ success: true, commentId: inserted.lastID, hidden: false, message: 'Bình luận thành công' });
   } catch (err) {

@@ -198,6 +198,7 @@ const Profile = ({ initialTab = 'overview' }) => {
         education: '',
         avatarUrl: ''
     });
+    const [formErrors, setFormErrors] = useState({});
     const [profileSnapshot, setProfileSnapshot] = useState(EMPTY_PROFILE_SNAPSHOT);
     const [profileSummary, setProfileSummary] = useState({
         position: '',
@@ -797,23 +798,114 @@ const Profile = ({ initialTab = 'overview' }) => {
         [applications]
     );
 
+    // Per-field input filtering — prevents wrong characters from entering the
+    // field at all. Saved data is also re-validated on submit.
+    const sanitizeFieldValue = (name, raw) => {
+        const value = String(raw ?? '');
+        switch (name) {
+            case 'fullName':
+                // Letters (incl. Vietnamese accents), spaces, hyphen and apostrophe only.
+                return value.replace(/[^\p{L}\s'\-]/gu, '').replace(/\s{2,}/g, ' ').slice(0, 100);
+            case 'phone':
+                // Digits only. Allow up to 11 (VN mobile is 10, +84 prefix can stretch to 11).
+                return value.replace(/\D/g, '').slice(0, 11);
+            case 'experienceYears': {
+                const digits = value.replace(/\D/g, '').slice(0, 2);
+                if (!digits) return '';
+                const num = Math.min(60, Math.max(0, parseInt(digits, 10)));
+                return String(num);
+            }
+            case 'personalLink':
+                // Strip whitespace; let blur-time validation flag bad URLs.
+                return value.replace(/\s/g, '').slice(0, 300);
+            case 'position':
+            case 'education':
+                return value.slice(0, 120);
+            case 'address':
+            case 'district':
+                return value.slice(0, 200);
+            default:
+                return value;
+        }
+    };
+
+    const validateField = (name, value) => {
+        const text = String(value ?? '').trim();
+        switch (name) {
+            case 'fullName':
+                if (!text) return 'Vui lòng nhập họ tên.';
+                if (text.length < 2) return 'Họ tên phải có ít nhất 2 ký tự.';
+                return '';
+            case 'phone':
+                if (!text) return '';
+                if (!/^0\d{9,10}$/.test(text)) return 'Số điện thoại phải bắt đầu bằng 0 và có 10–11 chữ số.';
+                return '';
+            case 'experienceYears':
+                if (text === '') return '';
+                if (!/^\d+$/.test(text)) return 'Số năm kinh nghiệm phải là số nguyên.';
+                return '';
+            case 'personalLink':
+                if (!text) return '';
+                try {
+                    const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
+                    if (!url.hostname.includes('.')) return 'Liên kết không hợp lệ.';
+                    return '';
+                } catch {
+                    return 'Liên kết không hợp lệ.';
+                }
+            case 'birthday': {
+                if (!text) return '';
+                const d = new Date(text);
+                if (Number.isNaN(d.getTime())) return 'Ngày sinh không hợp lệ.';
+                if (d > new Date()) return 'Ngày sinh không thể ở tương lai.';
+                return '';
+            }
+            default:
+                return '';
+        }
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        const cleanValue = sanitizeFieldValue(name, value);
+
         setFormData(prev => ({
             ...prev,
-            [name]: value
+            [name]: cleanValue
         }));
+
+        setFormErrors((prev) => {
+            const next = { ...prev };
+            const message = validateField(name, cleanValue);
+            if (message) next[name] = message; else delete next[name];
+            return next;
+        });
 
         const snapshotKey = FORM_TO_SNAPSHOT_KEY[name];
         if (snapshotKey) {
             setProfileSnapshot((prev) => ({
                 ...prev,
-                [snapshotKey]: snapshotKey === 'SoNamKinhNghiem' ? Number(value || 0) : value
+                [snapshotKey]: snapshotKey === 'SoNamKinhNghiem' ? Number(cleanValue || 0) : cleanValue
             }));
         }
     };
 
     const handleSaveProfile = async () => {
+        // Run all field validations once more before submit so the user can't
+        // bypass the on-type guards (e.g. by pasting invalid values).
+        const fieldsToValidate = ['fullName', 'phone', 'experienceYears', 'personalLink', 'birthday'];
+        const nextErrors = {};
+        fieldsToValidate.forEach((field) => {
+            const message = validateField(field, formData[field]);
+            if (message) nextErrors[field] = message;
+        });
+        if (Object.keys(nextErrors).length > 0) {
+            setFormErrors(nextErrors);
+            notify({ type: 'error', message: 'Vui lòng kiểm tra lại các trường được đánh dấu đỏ.' });
+            return;
+        }
+        setFormErrors({});
+
         // Ưu tiên id dạng số, fallback MaNguoiDung
         let userId = user?.id || user?.MaNguoiDung || user?.maNguoiDung || user?.userId;
         if (!userId && user) {
@@ -1177,29 +1269,37 @@ const Profile = ({ initialTab = 'overview' }) => {
                                         <div className="col-xl-9">
                                             <div className="row g-3">
                                                 <div className="col-12">
-                                                    <div className="small text-uppercase fw-bold text-muted profile-edit-section-title">Thông tin cơ bản</div>
+                                                    <div className="small text-uppercase fw-bold profile-edit-section-title">Thông tin cơ bản</div>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Họ và tên</label>
+                                                    <label className="form-label fw-semibold">Họ và tên <span className="text-danger">*</span></label>
                                                     <input
                                                         type="text"
-                                                        className="form-control profile-modal-input"
+                                                        className={`form-control profile-modal-input ${formErrors.fullName ? 'is-invalid' : ''}`}
                                                         name="fullName"
                                                         value={formData.fullName}
                                                         onChange={handleInputChange}
                                                         placeholder="Nhập họ và tên"
+                                                        maxLength={100}
+                                                        autoComplete="name"
                                                     />
+                                                    {formErrors.fullName ? <div className="invalid-feedback d-block small">{formErrors.fullName}</div> : null}
                                                 </div>
                                                 <div className="col-md-6">
                                                     <label className="form-label fw-semibold">Số điện thoại</label>
                                                     <input
                                                         type="tel"
-                                                        className="form-control profile-modal-input"
+                                                        className={`form-control profile-modal-input ${formErrors.phone ? 'is-invalid' : ''}`}
                                                         name="phone"
                                                         value={formData.phone}
                                                         onChange={handleInputChange}
-                                                        placeholder="Nhập số điện thoại"
+                                                        placeholder="VD: 0987654321"
+                                                        inputMode="numeric"
+                                                        pattern="[0-9]{10,11}"
+                                                        maxLength={11}
+                                                        autoComplete="tel"
                                                     />
+                                                    {formErrors.phone ? <div className="invalid-feedback d-block small">{formErrors.phone}</div> : null}
                                                 </div>
 
                                                 <div className="col-md-4">
@@ -1214,8 +1314,10 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                         })}
                                                         placeholder="Chọn ngày sinh"
                                                         maxDate={new Date()}
-                                                        inputClassName="form-control profile-modal-input"
+                                                        inputClassName={`form-control profile-modal-input ${formErrors.birthday ? 'is-invalid' : ''}`}
+                                                        menuClassName="calendar-date-picker__menu--compact"
                                                     />
+                                                    {formErrors.birthday ? <div className="invalid-feedback d-block small">{formErrors.birthday}</div> : null}
                                                 </div>
                                                 <div className="col-md-4">
                                                     <label className="form-label fw-semibold">Giới tính</label>
@@ -1233,13 +1335,17 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                 <div className="col-md-4">
                                                     <label className="form-label fw-semibold">Số năm kinh nghiệm</label>
                                                     <input
-                                                        type="number"
-                                                        min="0"
-                                                        className="form-control profile-modal-input"
+                                                        type="text"
+                                                        inputMode="numeric"
+                                                        pattern="[0-9]*"
+                                                        maxLength={2}
+                                                        className={`form-control profile-modal-input ${formErrors.experienceYears ? 'is-invalid' : ''}`}
                                                         name="experienceYears"
                                                         value={formData.experienceYears}
                                                         onChange={handleInputChange}
+                                                        placeholder="0"
                                                     />
+                                                    {formErrors.experienceYears ? <div className="invalid-feedback d-block small">{formErrors.experienceYears}</div> : null}
                                                 </div>
 
                                                 <div className="col-md-6">
@@ -1335,13 +1441,15 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                 <div className="col-md-6">
                                                     <label className="form-label fw-semibold">Liên kết cá nhân</label>
                                                     <input
-                                                        type="text"
-                                                        className="form-control profile-modal-input"
+                                                        type="url"
+                                                        className={`form-control profile-modal-input ${formErrors.personalLink ? 'is-invalid' : ''}`}
                                                         name="personalLink"
                                                         value={formData.personalLink}
                                                         onChange={handleInputChange}
-                                                        placeholder="https://"
+                                                        placeholder="https://linkedin.com/in/..."
+                                                        autoComplete="url"
                                                     />
+                                                    {formErrors.personalLink ? <div className="invalid-feedback d-block small">{formErrors.personalLink}</div> : null}
                                                 </div>
 
                                             </div>

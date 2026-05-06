@@ -574,11 +574,48 @@
   border-radius: 11px;
   min-height: 42px;
   background: #ffffff;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
 }
 
 .profile-modal-input:focus {
   border-color: #60a5fa;
   box-shadow: 0 0 0 0.15rem rgba(37, 99, 235, 0.14);
+}
+
+.profile-modal-input.is-invalid {
+  border-color: #ef4444 !important;
+  background-image: none;
+  padding-right: 0.75rem;
+}
+
+.profile-modal-input.is-invalid:focus {
+  box-shadow: 0 0 0 0.15rem rgba(239, 68, 68, 0.18);
+}
+
+.profile-edit-modal-body .invalid-feedback {
+  color: #b91c1c;
+  margin-top: 4px;
+}
+
+/* Section header — visual separator between Thông tin cơ bản / Địa chỉ / etc. */
+.profile-edit-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0 2px;
+  margin-top: 4px;
+  border-bottom: 1px dashed #d4e2f5;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+
+.profile-edit-section-title::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 14px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, #3b82f6 0%, #2563eb 100%);
 }
 
 .profile-modal-footer {

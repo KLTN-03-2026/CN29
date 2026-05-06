@@ -387,13 +387,34 @@ body {
 .jf-nav-dropdown-menu {
   display: none;
   position: absolute;
-  top: calc(100% + 4px);
+  top: 100%;
   left: 0;
+  margin-top: 8px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.1), 0 2px 8px rgba(0, 0, 0, 0.06);
   border-radius: 12px;
   overflow: hidden;
   animation: jf-dropdown-appear 0.15s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Hover bridge: a transparent strip that fills the visual gap between the
+   trigger and the dropdown menu. Because it is an absolutely positioned
+   descendant of `.jf-nav-dropdown`, hovering it keeps the parent `:hover`
+   state active so the menu does not close while the cursor crosses the gap. */
+.jf-nav-dropdown::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 12px;
+  pointer-events: auto;
+  display: none;
+}
+
+.jf-nav-dropdown:hover::after,
+.jf-nav-dropdown:focus-within::after {
+  display: block;
 }
 
 @keyframes jf-dropdown-appear {

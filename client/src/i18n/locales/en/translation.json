@@ -107,7 +107,7 @@
       "templatesCreate": "Create new template",
       "reports": "Reports",
       "careerGuidePosts": "Career guide posts",
-      "auditLogs": "Admin audit logs",
+      "auditLogs": "Activity log",
       "profile": "Admin profile"
     },
     "pageTitle": {
@@ -118,7 +118,7 @@
       "templates": "CV template management",
       "reports": "Reports",
       "careerGuidePosts": "Career guide posts",
-      "auditLogs": "Admin audit logs",
+      "auditLogs": "Activity log",
       "profile": "Profile"
     },
     "dropdown": {
@@ -607,7 +607,7 @@
       }
     },
     "auditLogsPage": {
-      "title": "Admin audit logs",
+      "title": "Activity log",
       "meta": {
         "total": "Total records",
         "page": "Page"
@@ -641,8 +641,8 @@
       "export": {
         "downloadButton": "Download Excel",
         "exporting": "Exporting...",
-        "sheetName": "Admin audit logs",
-        "title": "JOBFINDER - ADMIN AUDIT LOGS",
+        "sheetName": "Activity log",
+        "title": "JOBFINDER - ACTIVITY LOG",
         "exportedAt": "Exported at: {{value}}",
         "totalNote": "Total records: {{total}} | Data source: JobFinder Admin",
         "footer": "This report was exported from JobFinder. Please do not edit original data during reconciliation.",
@@ -1173,6 +1173,67 @@
     }
   },
   "employer": {
+    "homePage": {
+      "hero": {
+        "eyebrow": "JobFinder for Recruiters",
+        "greeting": "Hello,",
+        "subtitle": "All-in-one recruiting — post jobs, search CVs and chat with candidates from a single platform.",
+        "ctaPostJob": "Post a job",
+        "ctaDashboard": "Open Dashboard",
+        "summaryLabel": "Quick summary",
+        "stats": {
+          "activeJobs": "active jobs",
+          "applications": "applications",
+          "pending": "candidates pending review",
+          "unreadMessages": "unread messages"
+        }
+      },
+      "quickStart": {
+        "title": "Get started",
+        "subtitle": "The key recruiter actions — one click away."
+      },
+      "actions": {
+        "postJob": {
+          "title": "Post a job",
+          "desc": "Create a new job posting and reach thousands of candidates.",
+          "cta": "Post now"
+        },
+        "searchCv": {
+          "title": "Search CVs",
+          "desc": "Filter the candidate database by skills, experience and location.",
+          "cta": "Find CVs"
+        },
+        "manageCv": {
+          "title": "Manage applications",
+          "desc": "Track progress and respond quickly to candidates who applied.",
+          "cta": "View candidates"
+        },
+        "messages": {
+          "title": "Messages",
+          "desc": "Chat directly with promising candidates.",
+          "cta": "Open inbox"
+        }
+      },
+      "recentJobs": {
+        "title": "Recent job postings",
+        "viewAll": "View all",
+        "loading": "Loading...",
+        "empty": "You have not posted any jobs yet.",
+        "emptyCta": "Post your first job"
+      },
+      "tips": {
+        "title": "Recruitment tips",
+        "items": {
+          "trafficTitle": "A clear title boosts applications 3×",
+          "trafficBody": "Lead with the role and key skills at the beginning of the title.",
+          "aiTitle": "AI-matched CV suggestions",
+          "aiBody": "Our AI surfaces the CVs that best match each job description.",
+          "metricTitle": "Track posting performance",
+          "metricBody": "Monitor views, applications and response rates in the dashboard."
+        }
+      },
+      "fallbackName": "Employer"
+    },
     "layout": {
       "defaultDisplayName": "Employer",
       "defaultSubtitle": "Recruitment management",

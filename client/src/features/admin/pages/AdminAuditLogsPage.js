@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import SmartPagination from '../../../components/SmartPagination';
 import { downloadBlobFile, loadExcelJs } from '../../../utils/excelExport';
 
-const PAGE_LIMIT = 30;
+const PAGE_LIMIT = 10;
 const EXPORT_BATCH_LIMIT = 200;
 const JOBFINDER_LOGO_PATH = '/images/logo.png';
 const EXCEL_MIME_TYPE = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
@@ -433,6 +433,7 @@ const AdminAuditLogsPage = ({ API_BASE, authHeaders, requestConfirm }) => {
                         pageSize={PAGE_LIMIT}
                         onPageChange={handlePageChange}
                         loading={loading}
+                        showPageNumbers
                     />
                 </div>
             </div>

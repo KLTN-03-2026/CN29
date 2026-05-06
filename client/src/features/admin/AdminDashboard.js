@@ -12,8 +12,6 @@ import {
     LayoutDashboard,
     LogOut,
     Menu,
-    Moon,
-    Sun,
     UserRound,
     Users,
     X
@@ -246,7 +244,7 @@ const AdminDashboard = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const { t, i18n } = useTranslation();
-    const { isDarkMode, setTheme, toggleDarkMode } = useDarkMode();
+    const { isDarkMode, setTheme } = useDarkMode();
 
     const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
     const isEnglish = normalizedLanguage.startsWith('en');
@@ -991,11 +989,6 @@ const AdminDashboard = () => {
         setTheme(normalizedTheme);
     };
 
-    const handleProfileMenuThemeToggle = () => {
-        toggleDarkMode();
-        setProfileMenuOpen(false);
-    };
-
     const adminHeaderMenuItems = [
         {
             key: 'dashboard',
@@ -1014,12 +1007,6 @@ const AdminDashboard = () => {
             icon: Bell,
             label: t('admin.dropdown.notifications'),
             onClick: () => handleProfileMenuNavigate('/admin/dashboard')
-        },
-        {
-            key: 'theme',
-            icon: isDarkMode ? Sun : Moon,
-            label: isDarkMode ? t('admin.dropdown.themeLight') : t('admin.dropdown.themeDark'),
-            onClick: handleProfileMenuThemeToggle
         },
         {
             key: 'logout',

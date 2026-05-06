@@ -219,10 +219,6 @@ const Header = () => {
                                         <i className="bi bi-file-earmark-check fs-5 text-primary"></i>
                                         <span className="fw-semibold">{t('header.jobsMenu.appliedJobs')}</span>
                                     </Link>
-                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/matching" onClick={collapseMobileNavbar}>
-                                        <i className="bi bi-hand-thumbs-up fs-5 text-primary"></i>
-                                        <span className="fw-semibold">{t('header.jobsMenu.matchingJobs')}</span>
-                                    </Link>
                                 </li>
                             </ul>
                         </li>

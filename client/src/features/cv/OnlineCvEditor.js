@@ -22,23 +22,45 @@ const stripScriptsFromHtml = (html = '') => String(html).replace(/<script\b[^<]*
 
 // Strip every editor-only artifact so the iframe truly behaves as read-only.
 // We can't trust persisted HTML to be clean (older saves may keep contenteditable
-// attrs or leftover toolbar nodes), so we sanitize at render time too.
+// attrs or inline onclick handlers / toolbar nodes), so we sanitize at render time.
 const sanitizeHtmlForReadOnly = (html = '') => {
   if (!html || typeof html !== 'string') return html;
   let cleaned = String(html);
+
   cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
   cleaned = cleaned.replace(/\s+contenteditable\s*=\s*"[^"]*"/gi, '');
   cleaned = cleaned.replace(/\s+contenteditable\s*=\s*'[^']*'/gi, '');
   cleaned = cleaned.replace(/\s+contenteditable(?=[\s>])/gi, '');
   cleaned = cleaned.replace(/\s+data-editable\s*=\s*"[^"]*"/gi, '');
   cleaned = cleaned.replace(/\s+data-editable\s*=\s*'[^']*'/gi, '');
-  // Drop any leftover live-editor toolbar nodes that might be baked into saved HTML.
-  cleaned = cleaned.replace(/<(\w+)[^>]*class="[^"]*\b(?:cv-live-add-slot|cv-live-add-section-btn|cv-live-remove-section-btn|toolbar)\b[^"]*"[^>]*>[\s\S]*?<\/\1>/gi, '');
-  cleaned = cleaned.replace(/<(\w+)[^>]*\bid="(?:resetBtn)"[^>]*>[\s\S]*?<\/\1>/gi, '');
+  // Strip ALL inline event handlers (onclick / onmouseover / onfocus / ...).
+  cleaned = cleaned.replace(/\s+on[a-z]+\s*=\s*"[^"]*"/gi, '');
+  cleaned = cleaned.replace(/\s+on[a-z]+\s*=\s*'[^']*'/gi, '');
+
+  // Inject a lockdown stylesheet that hides every known editor toolbar /
+  // add-section / remove-section / move button. We CANNOT hide every
+  // `.no-print` element because the template wraps the avatar in
+  // `.avatar-wrap.no-print` — the heart image lives inside it. Hide
+  // editor-only classes by name, and explicitly keep the avatar visible.
   return cleaned + `
 <style id="__cv_readonly_lockdown__">
   [data-cv-field],[data-editable],[contenteditable]{outline:none!important;cursor:default!important;-webkit-user-modify:read-only!important;user-select:text!important;}
-  .cv-live-add-slot,.cv-live-add-section-btn,.cv-live-remove-section-btn,.toolbar,.toolbar.no-print,#resetBtn{display:none!important;}
+  .section-tools,
+  .section-tools *,
+  .tool-btn,
+  .section-item-add-btn,
+  .section-add-btn,
+  .cv-live-add-slot,
+  .cv-live-add-section-btn,
+  .cv-live-remove-section-btn,
+  .toolbar.no-print,
+  .avatar-overlay,
+  #resetBtn,
+  [data-cv-runtime="1"]{display:none!important;visibility:hidden!important;pointer-events:none!important;}
+  /* Avatar must stay visible — only disable the click-to-edit affordance. */
+  .avatar-wrap,
+  .avatar-wrap.no-print{display:block!important;visibility:visible!important;cursor:default!important;pointer-events:none!important;}
+  .avatar-wrap img{display:block!important;visibility:visible!important;}
 </style>`;
 };
 
@@ -1440,14 +1462,20 @@ const OnlineCvEditor = () => {
   };
 
   const onPrint = async () => {
-    // Render the iframe contents to a canvas, then save as PDF directly —
-    // no print dialog. The iframe's `.cv-page` is the A4-sized root.
     const iframeDoc = previewFrameRef.current?.contentDocument;
-    const targetNode = iframeDoc?.querySelector('.cv-page')
-      || iframeDoc?.querySelector('.shell')
-      || iframeDoc?.body;
+    const iframeWin = previewFrameRef.current?.contentWindow;
+    if (!iframeDoc || !iframeWin) {
+      notify({ type: 'warning', message: 'Không thể tải nội dung CV để xuất PDF.' });
+      return;
+    }
 
-    if (!targetNode) {
+    // Each `.cv-page` is an A4 sheet — render separately so text/borders stay
+    // crisp instead of being scaled/sliced from one giant image.
+    const pageNodes = Array.from(iframeDoc.querySelectorAll('.cv-page'));
+    const fallbackNode = iframeDoc.querySelector('.shell') || iframeDoc.body;
+    const targets = pageNodes.length > 0 ? pageNodes : (fallbackNode ? [fallbackNode] : []);
+
+    if (targets.length === 0) {
       notify({ type: 'warning', message: 'Không thể tải nội dung CV để xuất PDF.' });
       return;
     }
@@ -1455,30 +1483,46 @@ const OnlineCvEditor = () => {
     notify({ type: 'info', message: 'Đang tạo file PDF...' });
 
     try {
-      const canvas = await html2canvas(targetNode, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        windowWidth: targetNode.scrollWidth,
-        windowHeight: targetNode.scrollHeight,
-      });
+      // Wait for fonts/images so html2canvas captures the final layout, not a
+      // half-loaded one (the heart-circle avatar issue came from this).
+      try { await iframeDoc.fonts?.ready; } catch (_) { /* ignore */ }
+      const imgWaits = Array.from(iframeDoc.images || []).map((img) => (
+        img.complete ? Promise.resolve() : new Promise((resolve) => {
+          img.addEventListener('load', resolve, { once: true });
+          img.addEventListener('error', resolve, { once: true });
+        })
+      ));
+      await Promise.all(imgWaits);
 
-      const imgData = canvas.toDataURL('image/jpeg', 0.95);
       const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-      let heightLeft = imgHeight;
-      let position = 0;
-      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      for (let index = 0; index < targets.length; index += 1) {
+        const node = targets[index];
+        const canvas = await html2canvas(node, {
+          scale: 2,
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          logging: false,
+          windowWidth: iframeDoc.documentElement.scrollWidth,
+          windowHeight: iframeDoc.documentElement.scrollHeight,
+        });
+
+        const imgData = canvas.toDataURL('image/jpeg', 0.95);
+        const ratio = canvas.height / canvas.width;
+        let renderWidth = pageWidth;
+        let renderHeight = pageWidth * ratio;
+        if (renderHeight > pageHeight) {
+          renderHeight = pageHeight;
+          renderWidth = pageHeight / ratio;
+        }
+        const offsetX = (pageWidth - renderWidth) / 2;
+        const offsetY = (pageHeight - renderHeight) / 2;
+
+        if (index > 0) pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', offsetX, offsetY, renderWidth, renderHeight);
       }
 
       const safeTitle = String(title || 'CV').trim().replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80) || 'CV';
