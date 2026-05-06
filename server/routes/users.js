@@ -167,8 +167,11 @@ router.post('/update-profile', (req, res) => {
     personalLink,
     introHtml,
     education,
-    avatar
+    avatar,
+    experienceYears
   } = req.body;
+
+  const safeExperienceYears = Number.isFinite(Number(experienceYears)) ? Number(experienceYears) : 0;
   
   if (!userId) {
     return res.status(400).json({ error: 'Thiếu userId' });
@@ -198,8 +201,8 @@ router.post('/update-profile', (req, res) => {
       if (row) {
         // HoSoUngVien exists, update it
         db.run(
-          `UPDATE HoSoUngVien 
-           SET NgaySinh = ?, GioiTinh = ?, DiaChi = ?, ThanhPho = ?, QuanHuyen = ?, ChucDanh = ?, LinkCaNhan = ?, GioiThieuBanThan = ?, TrinhDoHocVan = ?, AnhDaiDien = ?, NgayCapNhat = datetime("now", "localtime") 
+          `UPDATE HoSoUngVien
+           SET NgaySinh = ?, GioiTinh = ?, DiaChi = ?, ThanhPho = ?, QuanHuyen = ?, ChucDanh = ?, LinkCaNhan = ?, GioiThieuBanThan = ?, TrinhDoHocVan = ?, AnhDaiDien = ?, SoNamKinhNghiem = ?, NgayCapNhat = datetime("now", "localtime")
            WHERE MaNguoiDung = ?`,
           [
             birthday || '',
@@ -212,6 +215,7 @@ router.post('/update-profile', (req, res) => {
             introContent,
             education || '',
             avatar || '',
+            safeExperienceYears,
             numUserId
           ],
           function (updateErr) {
@@ -226,8 +230,8 @@ router.post('/update-profile', (req, res) => {
       } else {
         // HoSoUngVien doesn't exist, create it
         db.run(
-          `INSERT INTO HoSoUngVien (MaNguoiDung, NgaySinh, GioiTinh, DiaChi, ThanhPho, QuanHuyen, ChucDanh, LinkCaNhan, GioiThieuBanThan, TrinhDoHocVan, AnhDaiDien, NgayTao, NgayCapNhat)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "localtime"), datetime("now", "localtime"))`,
+          `INSERT INTO HoSoUngVien (MaNguoiDung, NgaySinh, GioiTinh, DiaChi, ThanhPho, QuanHuyen, ChucDanh, LinkCaNhan, GioiThieuBanThan, TrinhDoHocVan, AnhDaiDien, SoNamKinhNghiem, NgayTao, NgayCapNhat)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime("now", "localtime"), datetime("now", "localtime"))`,
           [
             numUserId,
             birthday || '',
@@ -239,7 +243,8 @@ router.post('/update-profile', (req, res) => {
             personalLink || '',
             introContent,
             education || '',
-            avatar || ''
+            avatar || '',
+            safeExperienceYears
           ],
           function (insertErr) {
             if (insertErr) {

@@ -218,9 +218,9 @@ db.serialize(() => {
     });
 
 
-    db.run('ALTER TABLE HoSoUngVien DROP COLUMN SoNamKinhNghiem', (err) => {
+    db.run('ALTER TABLE HoSoUngVien ADD COLUMN SoNamKinhNghiem INTEGER DEFAULT 0', (err) => {
         const message = String(err?.message || '').toLowerCase();
-        if (err && !message.includes('no such column') && !message.includes('syntax error')) console.error(err);
+        if (err && !message.includes('duplicate column')) console.error(err);
     });
     db.run('ALTER TABLE HoSoUngVien DROP COLUMN DanhSachHocVanJson', (err) => {
         const message = String(err?.message || '').toLowerCase();

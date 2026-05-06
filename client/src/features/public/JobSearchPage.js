@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
@@ -251,6 +251,7 @@ const getCardBadge = (job, t) => {
 
 const JobSearchPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { t, i18n } = useTranslation();
   const { notify } = useNotification();
   const currentLocale = i18n.language?.startsWith('en') ? 'en-US' : 'vi-VN';
@@ -293,6 +294,19 @@ const JobSearchPage = () => {
   const [companyField, setCompanyField] = useState(ADV_DEFAULTS.companyField);
   const [jobField, setJobField] = useState(ADV_DEFAULTS.jobField);
   const [workingForm, setWorkingForm] = useState(ADV_DEFAULTS.workingForm);
+
+  // Initialize filters from URL params (e.g. when navigating from homepage search)
+  const urlInitDoneRef = useRef(false);
+  useEffect(() => {
+    if (urlInitDoneRef.current) return;
+    urlInitDoneRef.current = true;
+    const loc = searchParams.get('location') || '';
+    const kw = searchParams.get('keyword') || '';
+    const ind = searchParams.get('industry') || '';
+    if (kw) setKeyword(kw);
+    if (loc) { setSelectedProvince(loc); setSelectedProvinceLabel(loc); }
+    if (ind) { setSelectedCategory(ind); setSelectedCategoryLabel(ind); }
+  }, [searchParams]);
 
   useEffect(() => {
     let cancelled = false;

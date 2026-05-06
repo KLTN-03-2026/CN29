@@ -689,7 +689,8 @@ router.get('/search', async (req, res) => {
             nd.SoDienThoai,
             hsv.ThanhPho,
             hsv.TrinhDoHocVan,
-            hsv.ChucDanh
+            hsv.ChucDanh,
+            COALESCE(hsv.SoNamKinhNghiem, 0) AS SoNamKinhNghiem
         FROM HoSoCV cv
         JOIN NguoiDung nd ON nd.MaNguoiDung = cv.MaNguoiDung
         LEFT JOIN HoSoUngVien hsv ON hsv.MaNguoiDung = nd.MaNguoiDung
@@ -710,11 +711,21 @@ router.get('/search', async (req, res) => {
     }
 
     if (city) {
-        sql += ` AND hsv.ThanhPho = ?`;
+        sql += ` AND TRIM(hsv.ThanhPho) = TRIM(?)`;
         params.push(city);
     }
 
-    void experience;
+    if (experience) {
+        if (experience === '0-1') {
+            sql += ` AND COALESCE(hsv.SoNamKinhNghiem, 0) <= 1`;
+        } else if (experience === '1-3') {
+            sql += ` AND COALESCE(hsv.SoNamKinhNghiem, 0) > 1 AND COALESCE(hsv.SoNamKinhNghiem, 0) <= 3`;
+        } else if (experience === '3-5') {
+            sql += ` AND COALESCE(hsv.SoNamKinhNghiem, 0) > 3 AND COALESCE(hsv.SoNamKinhNghiem, 0) <= 5`;
+        } else if (experience === '5+') {
+            sql += ` AND COALESCE(hsv.SoNamKinhNghiem, 0) > 5`;
+        }
+    }
 
     sql += ` ORDER BY cv.NgayCapNhat DESC LIMIT 50`;
 
@@ -732,7 +743,7 @@ router.get('/search', async (req, res) => {
                 candidateEmail: row.Email || '',
                 candidatePhone: row.SoDienThoai || '',
                 city: row.ThanhPho || '',
-                experience: '',
+                experience: row.SoNamKinhNghiem != null ? String(row.SoNamKinhNghiem) : '0',
                 level: row.TrinhDoHocVan || '',
                 industry: row.ChucDanh || '',
                 updatedAt: row.NgayCapNhat || '',
