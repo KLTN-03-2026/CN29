@@ -1013,6 +1013,13 @@ router.patch('/:id', authenticateToken, async (req, res) => {
       [postId]
     );
 
+    logActivity({
+      userId,
+      action: isAdmin && !isAuthor ? 'Quản trị viên cập nhật bài viết hướng nghiệp' : 'Cập nhật bài viết hướng nghiệp',
+      entityType: 'BaiVietHuongNghiep',
+      entityId: postId
+    });
+
     return res.json({
       success: true,
       message: 'Cập nhật bài viết thành công',
@@ -1069,6 +1076,12 @@ router.delete('/:id', authenticateToken, (req, res) => {
         if (err) {
           return res.status(500).json({ success: false, error: 'Lỗi khi xóa bài viết' });
         }
+        logActivity({
+          userId,
+          action: isAdmin && !isAuthor ? 'Quản trị viên xoá bài viết hướng nghiệp' : 'Xoá bài viết hướng nghiệp',
+          entityType: 'BaiVietHuongNghiep',
+          entityId: id
+        });
         res.json({ success: true, message: 'Xóa bài viết thành công' });
       });
     });

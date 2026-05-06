@@ -2,6 +2,7 @@ const express = require('express');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const db = require('../config/db');
 const { sendFirebaseMessageToToken } = require('../config/firebaseMessaging');
+const { logActivity } = require('../utils/activityLog');
 const router = express.Router();
 
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
@@ -147,6 +148,13 @@ router.post('/', authenticateToken, authorizeRole(['Ứng viên']), async (req, 
             [jobId, cvId || null, req.user.id]
         );
 
+        logActivity({
+            userId: req.user?.id,
+            action: 'Ứng tuyển vào tin tuyển dụng',
+            entityType: 'UngTuyen',
+            entityId: inserted.lastID
+        });
+
         // Best-effort increment
         await dbRun(
             'UPDATE TinTuyenDung SET SoLuongUngTuyen = COALESCE(SoLuongUngTuyen, 0) + 1 WHERE MaTin = ?',
@@ -289,6 +297,13 @@ router.patch('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']), 
         }
 
         await dbRun('UPDATE UngTuyen SET TrangThai = ? WHERE MaUngTuyen = ?', [trimmedStatus, appId]);
+
+        logActivity({
+            userId: req.user?.id,
+            action: `Cập nhật trạng thái hồ sơ ứng tuyển: ${trimmedStatus}`,
+            entityType: 'UngTuyen',
+            entityId: appId
+        });
 
         res.json({ success: true, message: 'Đã cập nhật trạng thái' });
     } catch (err) {

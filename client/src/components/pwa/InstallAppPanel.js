@@ -17,25 +17,11 @@ const InstallAppPanel = () => {
     activePlatform,
     setActivePlatform,
     promptInstall,
-    dismissInstall,
-    clearDismissed,
-    dismissedRecently,
   } = usePWAInstallPrompt();
 
   const [feedback, setFeedback] = useState("");
 
   const ensureArray = (value, fallback = []) => (Array.isArray(value) ? value : fallback);
-  const ensureTipGroup = (value, fallback) => {
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      return fallback;
-    }
-
-    return {
-      badge: String(value.badge || fallback.badge),
-      heading: String(value.heading || fallback.heading),
-      items: ensureArray(value.items, fallback.items)
-    };
-  };
 
   const platformLabels = useMemo(
     () => ({
@@ -46,35 +32,14 @@ const InstallAppPanel = () => {
     [t]
   );
 
+  // Show only the first 3 essential steps per platform — full guide trimmed
+  // for compactness; user can install correctly with these.
   const installSteps = useMemo(
     () => ({
-      [PLATFORM_ANDROID]: ensureArray(t('components.pwa.installAppPanel.steps.android', { returnObjects: true }), []),
-      [PLATFORM_IOS]: ensureArray(t('components.pwa.installAppPanel.steps.ios', { returnObjects: true }), []),
-      [PLATFORM_DESKTOP]: ensureArray(t('components.pwa.installAppPanel.steps.desktop', { returnObjects: true }), [])
+      [PLATFORM_ANDROID]: ensureArray(t('components.pwa.installAppPanel.steps.android', { returnObjects: true }), []).slice(0, 3),
+      [PLATFORM_IOS]: ensureArray(t('components.pwa.installAppPanel.steps.ios', { returnObjects: true }), []).slice(0, 3),
+      [PLATFORM_DESKTOP]: ensureArray(t('components.pwa.installAppPanel.steps.desktop', { returnObjects: true }), []).slice(0, 3)
     }),
-    [t],
-  );
-
-  const platformTips = useMemo(
-    () => ({
-      [PLATFORM_ANDROID]: ensureTipGroup(
-        t('components.pwa.installAppPanel.tips.android', { returnObjects: true }),
-        { badge: '', heading: '', items: [] }
-      ),
-      [PLATFORM_IOS]: ensureTipGroup(
-        t('components.pwa.installAppPanel.tips.ios', { returnObjects: true }),
-        { badge: '', heading: '', items: [] }
-      ),
-      [PLATFORM_DESKTOP]: ensureTipGroup(
-        t('components.pwa.installAppPanel.tips.desktop', { returnObjects: true }),
-        { badge: '', heading: '', items: [] }
-      )
-    }),
-    [t],
-  );
-
-  const quickChecklist = useMemo(
-    () => ensureArray(t('components.pwa.installAppPanel.checklistItems', { returnObjects: true }), []),
     [t],
   );
 
@@ -117,17 +82,8 @@ const InstallAppPanel = () => {
         ? t('components.pwa.installAppPanel.installButton.installNow')
         : t('components.pwa.installAppPanel.installButton.viewManualGuide');
 
-  const showChecklist = !isInstalled && !isStandalone && (isIOS || canTriggerPrompt);
-
   return (
     <section className="install-app-panel" aria-label={t('components.pwa.installAppPanel.sectionAriaLabel')}>
-      <div className="install-app-panel__intro">
-        <h5>{t('components.pwa.installAppPanel.introTitle')}</h5>
-        <p>
-          {t('components.pwa.installAppPanel.introDescription')}
-        </p>
-      </div>
-
       <div className="install-app-panel__tabs" role="tablist" aria-label={t('components.pwa.installAppPanel.tabsAriaLabel')}>
         <button
           type="button"
@@ -156,36 +112,11 @@ const InstallAppPanel = () => {
       </div>
 
       <div className="install-app-panel__body" role="tabpanel">
-        <div className="install-app-panel__platform-head">
-          <span className="install-app-panel__platform-chip">{platformLabels[activePlatform]}</span>
-          <span className="install-app-panel__platform-hint">{platformTips[activePlatform].badge}</span>
-        </div>
-
         <ol className="install-app-panel__steps">
           {installSteps[activePlatform].map((step) => (
             <li key={step}>{step}</li>
           ))}
         </ol>
-
-        <div className="install-app-panel__tip-box">
-          <h6>{platformTips[activePlatform].heading}</h6>
-          <ul>
-            {platformTips[activePlatform].items.map((tip) => (
-              <li key={tip}>{tip}</li>
-            ))}
-          </ul>
-        </div>
-
-        {showChecklist ? (
-          <div className="install-app-panel__checklist">
-            <h6>{t('components.pwa.installAppPanel.checklistTitle')}</h6>
-            <ul>
-              {quickChecklist.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
 
         <div className="install-app-panel__actions">
           <button
@@ -196,30 +127,6 @@ const InstallAppPanel = () => {
           >
             {installButtonLabel}
           </button>
-
-          <button
-            type="button"
-            className="install-app-panel__later-btn"
-            onClick={() => {
-              dismissInstall();
-              setFeedback(t('components.pwa.installAppPanel.feedback.hidden7Days'));
-            }}
-          >
-            {t('components.pwa.installAppPanel.laterButton')}
-          </button>
-
-          {dismissedRecently && (
-            <button
-              type="button"
-              className="install-app-panel__reset-btn"
-              onClick={() => {
-                clearDismissed();
-                setFeedback(t('components.pwa.installAppPanel.feedback.reenabled'));
-              }}
-            >
-              {t('components.pwa.installAppPanel.reenableButton')}
-            </button>
-          )}
         </div>
 
         {feedback && <p className="install-app-panel__feedback">{feedback}</p>}

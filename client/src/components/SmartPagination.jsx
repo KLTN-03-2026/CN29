@@ -33,7 +33,10 @@ const SmartPagination = ({
   onPageChange,
   loading = false,
   loop = false,
-  showPageNumbers = false,
+  // Default ON — every paginated table in the system gets numbered page
+  // buttons (1, 2, 3, ...) alongside the prev/next arrows. Pass
+  // `showPageNumbers={false}` to opt out for compact toolbars.
+  showPageNumbers = true,
   className = ''
 }) => {
   const { t } = useTranslation();

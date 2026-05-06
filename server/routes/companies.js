@@ -1,6 +1,7 @@
 const express = require('express');
 const db = require('../config/db');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
+const { logActivity } = require('../utils/activityLog');
 
 const router = express.Router();
 
@@ -227,11 +228,18 @@ router.post('/:employerId/comments', authenticateToken, authorizeRole(['Ứng vi
     }
 
     await ensureCommentTable();
-    await dbRun(
+    const inserted = await dbRun(
       `INSERT INTO BinhLuanCongTy (MaNhaTuyenDung, MaNguoiDung, NoiDung, NgayTao)
        VALUES (?, ?, ?, datetime('now','localtime'))`,
       [employerId, req.user.id, content]
     );
+
+    logActivity({
+      userId: req.user?.id,
+      action: 'Bình luận về công ty',
+      entityType: 'BinhLuanCongTy',
+      entityId: inserted?.lastID || employerId
+    });
 
     const comments = await listComments(employerId);
     return res.json({ success: true, comments });
@@ -270,6 +278,13 @@ router.post('/:employerId/reports', authenticateToken, authorizeRole(['Ứng vi�
       employerId,
       reason,
       detail
+    });
+
+    logActivity({
+      userId: req.user?.id,
+      action: 'Báo cáo công ty',
+      entityType: 'BaoCaoCongTy',
+      entityId: employerId
     });
 
     return res.json({ success: true, message: 'Đã gửi báo cáo. Chúng tôi sẽ xem xét.' });
@@ -355,6 +370,13 @@ router.post('/:employerId/ratings', authenticateToken, authorizeRole(['Ứng vi�
         [employerId, req.user.id, stars]
       );
     }
+
+    logActivity({
+      userId: req.user?.id,
+      action: existedRating?.MaDanhGia ? `Cập nhật đánh giá công ty (${stars} sao)` : `Đánh giá công ty (${stars} sao)`,
+      entityType: 'DanhGiaCongTy',
+      entityId: employerId
+    });
 
     const rating = await getRatingSummary(employerId, req.user.id);
     return res.json({ success: true, rating });

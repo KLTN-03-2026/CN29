@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import SmartPagination from '../../components/SmartPagination';
 import './CareerGuide.css';
 
 const TOPIC_FILTERS = [
@@ -26,6 +27,8 @@ function CareerGuide() {
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalPosts, setTotalPosts] = useState(0);
+  const PAGE_SIZE = 10;
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState('');
   const [user, setUser] = useState(null);
@@ -76,12 +79,13 @@ function CareerGuide() {
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/career-guide?page=${currentPage}&limit=9`);
+      const response = await fetch(`/api/career-guide?page=${currentPage}&limit=${PAGE_SIZE}`);
       const data = await response.json();
-      
+
       if (data.success) {
         setPosts(data.posts);
         setTotalPages(data.pagination.totalPages);
+        setTotalPosts(Number(data.pagination.total) || 0);
       } else {
         setError(t('careerGuide.errors.loadPosts'));
       }
@@ -360,44 +364,13 @@ function CareerGuide() {
               )}
 
             {totalPages > 1 && (
-              <div className="cg-pagination-wrapper">
-                <nav aria-label={t('careerGuide.pagination.ariaLabel')} className="cg-pagination-nav">
-                  <ul className="cg-pagination-list">
-                    <li className={`cg-page-item ${currentPage === 1 ? 'disabled' : ''}`}>
-                      <button
-                        className="cg-page-link"
-                        onClick={() => setCurrentPage(currentPage - 1)}
-                        disabled={currentPage === 1}
-                      >
-                        <i className="bi bi-chevron-left"></i>
-                      </button>
-                    </li>
-
-                    {[...Array(totalPages)].map((_, index) => (
-                      <li
-                        key={index + 1}
-                        className={`cg-page-item ${currentPage === index + 1 ? 'active' : ''}`}
-                      >
-                        <button
-                          className="cg-page-link"
-                          onClick={() => setCurrentPage(index + 1)}
-                        >
-                          {index + 1}
-                        </button>
-                      </li>
-                    ))}
-
-                    <li className={`cg-page-item ${currentPage === totalPages ? 'disabled' : ''}`}>
-                      <button
-                        className="cg-page-link"
-                        onClick={() => setCurrentPage(currentPage + 1)}
-                        disabled={currentPage === totalPages}
-                      >
-                        <i className="bi bi-chevron-right"></i>
-                      </button>
-                    </li>
-                  </ul>
-                </nav>
+              <div className="cg-pagination-wrapper d-flex justify-content-center">
+                <SmartPagination
+                  currentPage={currentPage}
+                  totalItems={totalPosts}
+                  pageSize={PAGE_SIZE}
+                  onPageChange={(nextPage) => setCurrentPage(nextPage)}
+                />
               </div>
             )}
 

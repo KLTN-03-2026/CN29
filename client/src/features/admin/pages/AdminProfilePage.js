@@ -395,104 +395,106 @@ const AdminProfilePage = ({ user, roleLabel, greetingName }) => {
 
     return (
         <section className="admin-profile-shell">
-            <div className="admin-profile-card">
-                <div className="admin-profile-avatar-wrap">
-                    <img
-                        src={resolvedAvatar || AVATAR_FALLBACK}
-                        alt={displayName}
-                        className="admin-profile-avatar-image"
-                        onError={(event) => {
-                            event.currentTarget.onerror = null;
-                            event.currentTarget.src = AVATAR_FALLBACK;
-                        }}
-                    />
+            {/* Hero card: avatar + identity + system meta + edit toggle */}
+            <div className="admin-profile-hero">
+                <div className="admin-profile-hero-main">
+                    <div className="admin-profile-avatar-wrap">
+                        <img
+                            src={resolvedAvatar || AVATAR_FALLBACK}
+                            alt={displayName}
+                            className="admin-profile-avatar-image"
+                            onError={(event) => {
+                                event.currentTarget.onerror = null;
+                                event.currentTarget.src = AVATAR_FALLBACK;
+                            }}
+                        />
+                        {isEditing ? (
+                            <button
+                                type="button"
+                                className="admin-profile-avatar-camera"
+                                onClick={() => avatarInputRef.current?.click()}
+                                disabled={uploadingAvatar}
+                                aria-label={t('admin.profilePage.avatar.selectImage')}
+                            >
+                                <Camera size={16} />
+                            </button>
+                        ) : null}
+                        <input
+                            ref={avatarInputRef}
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="d-none"
+                            onChange={handleAvatarSelect}
+                        />
+                    </div>
+
+                    <div className="admin-profile-hero-copy">
+                        <span className="admin-profile-role-badge">
+                            <ShieldCheck size={14} />
+                            {resolvedRoleLabel}
+                        </span>
+                        <h3>{displayName}</h3>
+                        <p className="admin-profile-hero-email">{resolvedEmail}</p>
+                        {avatarFile ? (
+                            <div className="admin-profile-avatar-actions">
+                                <button type="button" className="btn btn-primary btn-sm" onClick={handleAvatarUpload} disabled={uploadingAvatar}>
+                                    {uploadingAvatar ? t('admin.profilePage.avatar.uploading') : t('admin.profilePage.avatar.updateAvatar')}
+                                </button>
+                                <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => clearPendingAvatar()} disabled={uploadingAvatar}>
+                                    {t('admin.profilePage.avatar.clearSelection')}
+                                </button>
+                            </div>
+                        ) : null}
+                    </div>
                 </div>
-                <div className="admin-profile-card-copy">
-                    <h3>{displayName}</h3>
-                    <p>{resolvedRoleLabel}</p>
-                    <small>{t('admin.profilePage.avatar.hint')}</small>
-                </div>
-                <div className="admin-profile-card-actions">
-                    <input
-                        ref={avatarInputRef}
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        className="d-none"
-                        onChange={handleAvatarSelect}
-                    />
-                    <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => avatarInputRef.current?.click()} disabled={!isEditing || uploadingAvatar}>
-                        <Camera size={14} />
-                        <span>{t('admin.profilePage.avatar.selectImage')}</span>
-                    </button>
-                    <button type="button" className="btn btn-primary btn-sm" onClick={handleAvatarUpload} disabled={!isEditing || !avatarFile || uploadingAvatar}>
-                        {uploadingAvatar ? t('admin.profilePage.avatar.uploading') : t('admin.profilePage.avatar.updateAvatar')}
-                    </button>
-                    {avatarFile ? (
-                        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={() => clearPendingAvatar()} disabled={!isEditing || uploadingAvatar}>
-                            {t('admin.profilePage.avatar.clearSelection')}
+
+                <div className="admin-profile-hero-actions">
+                    {!isEditing ? (
+                        <button type="button" className="btn btn-primary btn-sm d-inline-flex align-items-center gap-1" onClick={handleStartEditing}>
+                            <PencilLine size={14} />
+                            <span>{t('admin.profilePage.form.editButton')}</span>
                         </button>
-                    ) : null}
+                    ) : (
+                        <>
+                            <button type="button" className="btn btn-success btn-sm d-inline-flex align-items-center gap-1" onClick={handleSaveProfile} disabled={saving}>
+                                <Save size={14} />
+                                <span>{saving ? t('admin.profilePage.form.saving') : t('admin.profilePage.form.saveButton')}</span>
+                            </button>
+                            <button type="button" className="btn btn-outline-secondary btn-sm" onClick={handleCancelEditing} disabled={saving}>
+                                {t('admin.profilePage.form.cancelButton')}
+                            </button>
+                        </>
+                    )}
                 </div>
+
+                <dl className="admin-profile-meta-strip">
+                    <div>
+                        <dt>{t('admin.profilePage.info.createdAt')}</dt>
+                        <dd>{formatDateTime(resolvedCreatedAt, locale, t('admin.profilePage.info.noData'))}</dd>
+                    </div>
+                    <div>
+                        <dt>{t('admin.profilePage.info.updatedAt')}</dt>
+                        <dd>{formatDateTime(resolvedUpdatedAt, locale, t('admin.profilePage.info.noData'))}</dd>
+                    </div>
+                    <div>
+                        <dt>{t('admin.profilePage.info.status')}</dt>
+                        <dd className="admin-profile-status">
+                            <ShieldCheck size={14} />
+                            {t('admin.profilePage.info.active')}
+                        </dd>
+                    </div>
+                </dl>
             </div>
 
             {error && <div className="alert alert-danger mb-3">{error}</div>}
             {message && <div className="alert alert-success mb-3">{message}</div>}
             {loading && <div className="alert alert-info mb-3">{t('admin.profilePage.messages.loadingProfile')}</div>}
 
-            <div className="admin-profile-grid">
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.email')}</span>
-                    <strong>{resolvedEmail}</strong>
-                </article>
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.role')}</span>
-                    <strong>{resolvedRoleLabel}</strong>
-                </article>
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.createdAt')}</span>
-                    <strong>{formatDateTime(resolvedCreatedAt, locale, t('admin.profilePage.info.noData'))}</strong>
-                </article>
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.updatedAt')}</span>
-                    <strong>{formatDateTime(resolvedUpdatedAt, locale, t('admin.profilePage.info.noData'))}</strong>
-                </article>
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.phone')}</span>
-                    <strong>{resolvedPhone}</strong>
-                </article>
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.city')}</span>
-                    <strong>{resolvedCity}</strong>
-                </article>
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.address')}</span>
-                    <strong>{resolvedAddress}</strong>
-                </article>
-                <article className="admin-profile-item">
-                    <span>{t('admin.profilePage.info.status')}</span>
-                    <strong className="admin-profile-status">
-                        <ShieldCheck size={14} />
-                        {t('admin.profilePage.info.active')}
-                    </strong>
-                </article>
-            </div>
-
+            {/* Single editable form — no duplicate "static info" card above. */}
             <section className="admin-profile-form">
                 <div className="admin-profile-form-head">
-                    <div className="admin-profile-form-head-copy">
-                        <h4>{t('admin.profilePage.form.title')}</h4>
-                        <p>{t('admin.profilePage.form.subtitle')}</p>
-                    </div>
-                    {!isEditing ? (
-                        <button type="button" className="btn btn-outline-primary btn-sm d-inline-flex align-items-center gap-1" onClick={handleStartEditing}>
-                            <PencilLine size={14} />
-                            <span>{t('admin.profilePage.form.editButton')}</span>
-                        </button>
-                    ) : (
-                        <button type="button" className="btn btn-outline-secondary btn-sm" onClick={handleCancelEditing} disabled={saving}>
-                            {t('admin.profilePage.form.cancelButton')}
-                        </button>
-                    )}
+                    <h4>{t('admin.profilePage.form.title')}</h4>
+                    <p>{t('admin.profilePage.form.subtitle')}</p>
                 </div>
 
                 <div className="admin-profile-form-grid">
@@ -506,7 +508,7 @@ const AdminProfilePage = ({ user, roleLabel, greetingName }) => {
                     </label>
                     <label className="admin-profile-field">
                         <span>{t('admin.profilePage.form.fields.phone')}</span>
-                        <input className="form-control" value={form.phone} onChange={handleFieldChange('phone')} disabled={!isEditing} />
+                        <input className="form-control" value={form.phone} onChange={handleFieldChange('phone')} disabled={!isEditing} placeholder="0987654321" />
                     </label>
                     <label className="admin-profile-field">
                         <span>{t('admin.profilePage.form.fields.city')}</span>
@@ -522,19 +524,8 @@ const AdminProfilePage = ({ user, roleLabel, greetingName }) => {
                     </label>
                     <label className="admin-profile-field">
                         <span>{t('admin.profilePage.form.fields.personalLink')}</span>
-                        <input className="form-control" value={form.personalLink} onChange={handleFieldChange('personalLink')} disabled={!isEditing} />
+                        <input className="form-control" value={form.personalLink} onChange={handleFieldChange('personalLink')} disabled={!isEditing} placeholder="https://" />
                     </label>
-                </div>
-
-                <div className="admin-profile-form-actions">
-                    {isEditing ? (
-                        <button type="button" className="btn btn-primary" onClick={handleSaveProfile} disabled={saving}>
-                            <Save size={14} className="me-2" />
-                            {saving ? t('admin.profilePage.form.saving') : t('admin.profilePage.form.saveButton')}
-                        </button>
-                    ) : (
-                        <span className="admin-profile-form-hint">{t('admin.profilePage.form.editHint')}</span>
-                    )}
                 </div>
             </section>
 

@@ -7,6 +7,7 @@ const path = require('path');
 const multer = require('multer');
 const db = require('../config/db');
 const { isCloudinaryConfigured, uploadImageFromPath } = require('../config/cloudinary');
+const { logActivity } = require('../utils/activityLog');
 const router = express.Router();
 
 const JWT_SECRET = 'your_jwt_secret';
@@ -847,6 +848,13 @@ router.post('/', authenticateToken, authorizeRole(['Nhà tuyển dụng']), asyn
             ]
         );
 
+        logActivity({
+            userId: req.user?.id,
+            action: 'Đăng tin tuyển dụng',
+            entityType: 'TinTuyenDung',
+            entityId: inserted.lastID
+        });
+
         res.status(201).json({
             message: 'Đăng tin thành công',
             jobId: inserted.lastID
@@ -925,6 +933,13 @@ router.put('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']), as
             ]
         );
 
+        logActivity({
+            userId: req.user?.id,
+            action: 'Cập nhật tin tuyển dụng',
+            entityType: 'TinTuyenDung',
+            entityId: id
+        });
+
         res.json({ message: 'Cập nhật tin thành công' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -956,6 +971,13 @@ router.delete('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']),
         if (!deleted.changes) {
             return res.status(404).json({ error: 'Không tìm thấy tin tuyển dụng' });
         }
+
+        logActivity({
+            userId: req.user?.id,
+            action: 'Xoá tin tuyển dụng',
+            entityType: 'TinTuyenDung',
+            entityId: jobId
+        });
 
         return res.json({ success: true, message: 'Đã xóa tin tuyển dụng thành công' });
     } catch (err) {
