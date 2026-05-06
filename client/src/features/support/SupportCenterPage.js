@@ -426,6 +426,9 @@ const SupportCenterPage = () => {
     setPermissionState(result.permission);
 
     if (result.permission === 'granted') {
+      if (result.fcmToken) {
+        window.dispatchEvent(new CustomEvent('jobfinder:fcm-token', { detail: { token: result.fcmToken } }));
+      }
       notify({
         type: 'success',
         mode: 'toast',

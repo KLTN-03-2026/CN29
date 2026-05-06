@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
 import './MessagesPage.css';
 
-const MESSAGES_POLL_INTERVAL_MS = 6000;
+const MESSAGES_POLL_INTERVAL_MS = 15000;
 const THREAD_SCROLL_BOTTOM_THRESHOLD_PX = 72;
 
 const parseUserFromStorage = () => {
@@ -123,6 +123,10 @@ const MessagesPage = () => {
     const shouldAutoScroll = !silent || isThreadNearBottom();
     setActiveUser((prev) => (Number(prev?.userId || 0) === Number(targetUser.userId) ? prev : targetUser));
     if (!silent) setThreadLoading(true);
+
+    if (markRead) {
+      setInbox((prev) => prev.map((c) => Number(c.userId) === Number(targetUser.userId) ? { ...c, unread: 0 } : c));
+    }
 
     try {
       const data = await apiFetch(`/api/messages/conversation/${targetUser.userId}`);

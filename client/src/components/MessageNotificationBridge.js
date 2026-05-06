@@ -173,9 +173,9 @@ const MessageNotificationBridge = () => {
         const previous = lastSnapshotRef.current.get(userId);
         const previousUnread = Number(previous?.unread || 0);
         const previousLastAt = String(previous?.lastAt || '');
-        const shouldNotify = !initial && unread > 0 && (
-          unread > previousUnread
-          || (lastAt && lastAt !== previousLastAt)
+        const shouldNotify = !initial && (
+          (unread > 0 && unread > previousUnread)
+          || (lastAt && previous !== undefined && lastAt !== previousLastAt)
         );
 
         if (shouldNotify) {

@@ -5,7 +5,7 @@ import './AIAssistantWidget.css';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
-const CHAT_REALTIME_POLL_INTERVAL_MS = 5000;
+const CHAT_REALTIME_POLL_INTERVAL_MS = 15000;
 const THREAD_SCROLL_BOTTOM_THRESHOLD_PX = 72;
 const INLINE_LINK_PATTERN = /(https?:\/\/[^\s<>"']+|\/career-guide\/[a-zA-Z0-9\-._~%]+|\/jobs\/\d+)/gi;
 
@@ -449,6 +449,15 @@ const AIAssistantWidget = () => {
     const shouldAutoScroll = !silent || isThreadNearBottom();
     setActiveChatUser((prev) => (Number(prev?.userId || 0) === Number(user.userId) ? prev : user));
     if (!silent) setThreadLoading(true);
+
+    if (markRead) {
+      setInbox((prev) => prev.map((c) => Number(c.userId) === Number(user.userId) ? { ...c, unread: 0 } : c));
+      setUnreadConversations((prev) => {
+        const hadUnread = (inbox.find((c) => Number(c.userId) === Number(user.userId))?.unread || 0) > 0;
+        return hadUnread ? Math.max(0, prev - 1) : prev;
+      });
+    }
+
     try {
       const data = await apiFetch(`/api/messages/conversation/${user.userId}`);
       const nextMessages = Array.isArray(data?.messages) ? data.messages : [];

@@ -25,6 +25,26 @@ const isDuplicateColumnError = (error) => {
     return message.includes('duplicate column') || message.includes('duplicate field name') || message.includes('already exists');
 };
 
+let ensureDaDocColumnPromise = null;
+const ensureDaDocColumn = async () => {
+    if (!ensureDaDocColumnPromise) {
+        ensureDaDocColumnPromise = (async () => {
+            try {
+                await dbRun('ALTER TABLE TinNhan ADD COLUMN DaDoc TINYINT(1) NOT NULL DEFAULT 0');
+            } catch (error) {
+                if (!isDuplicateColumnError(error)) {
+                    throw error;
+                }
+            }
+        })().catch((error) => {
+            ensureDaDocColumnPromise = null;
+            throw error;
+        });
+    }
+
+    return ensureDaDocColumnPromise;
+};
+
 let ensureFcmTokenColumnPromise = null;
 const ensureFcmTokenColumn = async () => {
     if (!ensureFcmTokenColumnPromise) {
@@ -127,7 +147,12 @@ router.delete('/fcm-token', authenticateToken, authorizeRole(['Nhà tuyển dụ
 // Unread conversations count (number of distinct senders with unread messages)
 router.get('/unread-count', authenticateToken, authorizeRole(['Nhà tuyển dụng', 'Ứng viên']), async (req, res) => {
     try {
-        return res.json({ success: true, count: 0 });
+        await ensureDaDocColumn();
+        const row = await dbGet(
+            'SELECT COUNT(DISTINCT MaNguoiGui) AS cnt FROM TinNhan WHERE MaNguoiNhan = ? AND (DaDoc = 0 OR DaDoc IS NULL)',
+            [req.user.id]
+        );
+        return res.json({ success: true, count: Number(row?.cnt || 0) });
     } catch (err) {
         console.error('Unread count error:', err);
         return res.status(500).json({ success: false, error: err.message || 'Server error' });
@@ -156,7 +181,9 @@ router.get('/inbox', authenticateToken, authorizeRole(['Nhà tuyển dụng', '�
                  LIMIT 1) AS lastAt,
                 (SELECT COUNT(*)
                  FROM TinNhan t
-                                 WHERE 1 = 0) AS unread
+                 WHERE t.MaNguoiGui = u.MaNguoiDung
+                   AND t.MaNguoiNhan = ?
+                   AND (t.DaDoc = 0 OR t.DaDoc IS NULL)) AS unread
              FROM NguoiDung u
              WHERE u.MaNguoiDung <> ?
                AND EXISTS (
@@ -166,7 +193,7 @@ router.get('/inbox', authenticateToken, authorizeRole(['Nhà tuyển dụng', '�
                )
              ORDER BY datetime(lastAt) DESC
              LIMIT 50`,
-            [req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id]
+            [req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id, req.user.id]
         );
 
         const inbox = rows.map((r) => ({
@@ -193,7 +220,11 @@ router.patch('/mark-read/:userId', authenticateToken, authorizeRole(['Nhà tuy�
             return res.status(400).json({ success: false, error: 'userId không hợp lệ' });
         }
 
-        void otherUserId;
+        await ensureDaDocColumn();
+        await dbRun(
+            'UPDATE TinNhan SET DaDoc = 1 WHERE MaNguoiNhan = ? AND MaNguoiGui = ?',
+            [req.user.id, otherUserId]
+        );
 
         return res.json({ success: true });
     } catch (err) {

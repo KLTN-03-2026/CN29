@@ -733,13 +733,16 @@
 /* Thread/conversation area */
 .aiw-chat-thread {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   background: #fff;
+  overflow: hidden;
 }
 
 .aiw-thread-list {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 16px;
   background: linear-gradient(to bottom, #f8fafc, #fff);
