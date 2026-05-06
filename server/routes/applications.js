@@ -1,6 +1,7 @@
 const express = require('express');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
 const db = require('../config/db');
+const { sendFirebaseMessageToToken } = require('../config/firebaseMessaging');
 const router = express.Router();
 
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
@@ -151,6 +152,29 @@ router.post('/', authenticateToken, authorizeRole(['Ứng viên']), async (req, 
             'UPDATE TinTuyenDung SET SoLuongUngTuyen = COALESCE(SoLuongUngTuyen, 0) + 1 WHERE MaTin = ?',
             [jobId]
         ).catch(() => {});
+
+        try {
+            const ntd = await dbGet('SELECT MaNguoiDung FROM NhaTuyenDung WHERE MaNhaTuyenDung = ?', [tin.MaNhaTuyenDung]);
+            if (ntd?.MaNguoiDung) {
+                const employerUser = await dbGet('SELECT FcmToken FROM NguoiDung WHERE MaNguoiDung = ?', [ntd.MaNguoiDung]);
+                if (employerUser?.FcmToken) {
+                    const candidate = await dbGet('SELECT HoTen FROM NguoiDung WHERE MaNguoiDung = ?', [req.user.id]);
+                    const candidateName = candidate?.HoTen || 'Một ứng viên';
+                    
+                    await sendFirebaseMessageToToken({
+                        token: employerUser.FcmToken,
+                        title: 'Hồ sơ ứng tuyển mới',
+                        body: `${candidateName} vừa ứng tuyển vào vị trí ${tin.TieuDe}.`,
+                        data: {
+                            type: 'application',
+                            url: '/employer'
+                        }
+                    }).catch(err => console.warn('Application FCM skipped:', err.message || err));
+                }
+            }
+        } catch (pushErr) {
+            console.warn('Application push logic failed:', pushErr.message || pushErr);
+        }
 
         res.status(201).json({ message: 'Nộp hồ sơ thành công', applicationId: inserted.lastID, applied: true });
     } catch (err) {

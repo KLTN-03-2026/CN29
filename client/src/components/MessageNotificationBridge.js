@@ -147,8 +147,9 @@ const MessageNotificationBridge = () => {
 
     const syncInbox = async ({ initial = false } = {}) => {
       if (cancelled || syncInFlightRef.current) return;
-      if (!initial && typeof document !== 'undefined' && document.hidden) return;
-      if (!initial && isMessageScreenPath(window.location.pathname)) return;
+      
+      const isVisible = typeof document !== 'undefined' && !document.hidden;
+      if (!initial && isVisible && isMessageScreenPath(window.location.pathname)) return;
 
       syncInFlightRef.current = true;
       const inbox = await fetchInbox();
@@ -230,7 +231,6 @@ const MessageNotificationBridge = () => {
     window.addEventListener('jobfinder:messages-force-refresh', onForceRefresh);
 
     const intervalId = window.setInterval(() => {
-      if (typeof document !== 'undefined' && document.hidden) return;
       runSync({ initial: !bootstrappedRef.current, reason: 'interval' });
     }, INBOX_SYNC_INTERVAL_MS);
 
