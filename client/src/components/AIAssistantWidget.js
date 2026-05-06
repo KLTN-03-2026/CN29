@@ -110,6 +110,16 @@ const getUserId = () => {
   }
 };
 
+const getIsEmployer = () => {
+  try {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const role = String(user?.role || user?.vaiTro || user?.VaiTro || '').trim();
+    return role === 'Nhà tuyển dụng';
+  } catch {
+    return false;
+  }
+};
+
 const getToken = () => {
   try {
     return localStorage.getItem('token') || '';

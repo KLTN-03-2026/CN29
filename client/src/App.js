@@ -263,7 +263,7 @@ function AppContent() {
       </main>
 
       {showPublicChrome && <Footer />}
-      {showPublicChrome && <AIAssistantWidget />}
+      {showPublicChrome && getUserRoleNormalized(currentUser) !== 'nha tuyen dung' && <AIAssistantWidget />}
       <FirebaseMessagingBridge />
       <MessageNotificationBridge />
       <AccountInstallPrompt />

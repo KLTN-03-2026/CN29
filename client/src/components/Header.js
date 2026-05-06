@@ -191,6 +191,7 @@ const Header = () => {
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/" onClick={collapseMobileNavbar}>{t('header.nav.home')}</Link>
                         </li>
+                        {!isEmployer && (
                         <li className="nav-item dropdown jf-nav-dropdown">
                             <button
                                 type="button"
@@ -205,40 +206,41 @@ const Header = () => {
                                 <li className="jf-jobs-menu-head">
                                     {t('header.jobsMenu.title')}
                                 </li>
-                                <li className={`jf-jobs-menu-grid ${isEmployer ? 'is-employer' : 'is-candidate'}`}>
+                                <li className="jf-jobs-menu-grid is-candidate">
                                     <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs" onClick={collapseMobileNavbar}>
                                         <i className="bi bi-search fs-5 text-primary"></i>
                                         <span className="fw-semibold">{t('header.jobsMenu.findJobs')}</span>
                                     </Link>
-                                    {!isEmployer && (
-                                        <>
-                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/saved" onClick={collapseMobileNavbar}>
-                                                <i className="bi bi-bookmark fs-5 text-primary"></i>
-                                                <span className="fw-semibold">{t('header.jobsMenu.savedJobs')}</span>
-                                            </Link>
-                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/applied" onClick={collapseMobileNavbar}>
-                                                <i className="bi bi-file-earmark-check fs-5 text-primary"></i>
-                                                <span className="fw-semibold">{t('header.jobsMenu.appliedJobs')}</span>
-                                            </Link>
-                                            <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/matching" onClick={collapseMobileNavbar}>
-                                                <i className="bi bi-hand-thumbs-up fs-5 text-primary"></i>
-                                                <span className="fw-semibold">{t('header.jobsMenu.matchingJobs')}</span>
-                                            </Link>
-                                        </>
-                                    )}
+                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/saved" onClick={collapseMobileNavbar}>
+                                        <i className="bi bi-bookmark fs-5 text-primary"></i>
+                                        <span className="fw-semibold">{t('header.jobsMenu.savedJobs')}</span>
+                                    </Link>
+                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/applied" onClick={collapseMobileNavbar}>
+                                        <i className="bi bi-file-earmark-check fs-5 text-primary"></i>
+                                        <span className="fw-semibold">{t('header.jobsMenu.appliedJobs')}</span>
+                                    </Link>
+                                    <Link className="dropdown-item d-flex align-items-center gap-3 rounded p-2 jf-jobs-menu-link" to="/jobs/matching" onClick={collapseMobileNavbar}>
+                                        <i className="bi bi-hand-thumbs-up fs-5 text-primary"></i>
+                                        <span className="fw-semibold">{t('header.jobsMenu.matchingJobs')}</span>
+                                    </Link>
                                 </li>
                             </ul>
                         </li>
+                        )}
+                        {!isEmployer && (
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/create-cv/templates" onClick={collapseMobileNavbar}>
                                 {t('header.nav.cvTemplates')}
                             </Link>
                         </li>
+                        )}
+                        {!isEmployer && (
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/cv-management" onClick={collapseMobileNavbar}>
                                 {t('header.nav.cvManagement')}
                             </Link>
                         </li>
+                        )}
                         <li className="nav-item">
                             <Link className="nav-link fw-semibold fs-6" to="/career-guide" onClick={collapseMobileNavbar}>
                                 {t('header.nav.careerGuide')}
