@@ -546,7 +546,6 @@ const removeUserPermanently = async (userId) => {
     await deleteByNumericIds('UngTuyen', 'MaTin', jobIds);
     await deleteByNumericIds('TinNhan', 'MaTin', jobIds);
     await deleteByNumericIds('ThongKeCongViec', 'MaTin', jobIds);
-    await deleteByNumericIds('ChiTietTin_KyNang', 'MaTin', jobIds);
     await deleteByNumericIds('TinTuyenDung', 'MaTin', jobIds);
 
     await runDeleteIgnoreMissingTable('DELETE FROM LuuCV WHERE MaNhaTuyenDung = ?', [employerId]);
@@ -983,7 +982,6 @@ router.get('/overview', async (req, res) => {
     'BaoCao',
     'NhatKyQuanTri',
     'DanhMucCongViec',
-    'KyNang',
     'CvTemplate'
   ];
 

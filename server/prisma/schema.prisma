@@ -123,13 +123,6 @@ model LuuCV {
   @@map("LuuCV")
 }
 
-model KyNang {
-  maKyNang  Int     @id @default(autoincrement()) @map("MaKyNang")
-  tenKyNang String  @unique @db.VarChar(255) @map("TenKyNang")
-
-  @@map("KyNang")
-}
-
 model HoSoCV {
   maCV         Int       @id @default(autoincrement()) @map("MaCV")
   maNguoiDung  Int       @map("MaNguoiDung")
@@ -142,24 +135,6 @@ model HoSoCV {
   ngayCapNhat  DateTime  @default(now()) @map("NgayCapNhat")
 
   @@map("HoSoCV")
-}
-
-model ChiTietCV_KyNang {
-  maCV     Int    @map("MaCV")
-  maKyNang Int    @map("MaKyNang")
-  mucDo    String @default("Trung bình") @db.VarChar(50) @map("MucDo")
-
-  @@id([maCV, maKyNang])
-  @@map("ChiTietCV_KyNang")
-}
-
-model ChiTietTin_KyNang {
-  maTin       Int @map("MaTin")
-  maKyNang    Int @map("MaKyNang")
-  doQuanTrong Int @default(1) @map("DoQuanTrong")
-
-  @@id([maTin, maKyNang])
-  @@map("ChiTietTin_KyNang")
 }
 
 model UngTuyen {

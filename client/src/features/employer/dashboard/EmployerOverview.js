@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+
 import { useTranslation } from 'react-i18next';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
 
@@ -149,9 +149,9 @@ const EmployerOverview = () => {
                             </div>
                             <h3 className="mb-1">{formatCount(stats.applications)}</h3>
                             <p className="text-muted mb-2">{t('employer.overview.stats.applications')}</p>
-                            <Link to="/employer/applications" className="btn btn-sm btn-outline-success">
+                            <button type="button" className="btn btn-sm btn-outline-success" onClick={handleScrollToReports}>
                                 {t('employer.overview.actions.viewApplications')}
-                            </Link>
+                            </button>
                         </div>
                     </div>
                 </div>

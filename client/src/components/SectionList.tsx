@@ -38,9 +38,7 @@ import type {
   ProjectItem,
   ProjectSection,
   ReferenceItem,
-  ReferenceSection,
-  SkillItem,
-  SkillSection
+  ReferenceSection
 } from '../types/cv';
 
 const inputClassName =
@@ -218,46 +216,6 @@ const SortableSectionCard: React.FC<{ section: CVSection; index: number; total: 
     </div>
   );
 
-  const renderSkillItem = (item: SkillItem) => (
-    <div key={item.id} className={itemCardClassName}>
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Kỹ năng</p>
-        <button
-          type="button"
-          className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-red-200 text-red-500 transition hover:bg-red-50"
-          title="Xóa mục"
-          aria-label="Xóa mục"
-          onClick={() => removeListItem(section.id, item.id)}
-        >
-          <Trash2 size={15} />
-        </button>
-      </div>
-      <input
-        className={inputClassName}
-        value={item.name}
-        onChange={(event) => updateListItemField(section.id, item.id, 'name', event.target.value)}
-        placeholder="Tên kỹ năng"
-      />
-      <div className="mt-3 rounded-md border border-slate-200 bg-white px-3 py-2">
-        <div className="mb-2 flex items-center justify-between text-xs font-semibold text-slate-500">
-          <span>Mức độ</span>
-          <span>{item.level}/5</span>
-        </div>
-        <input
-          type="range"
-          min={1}
-          max={5}
-          step={1}
-          className="w-full accent-blue-500"
-          title="Mức độ kỹ năng"
-          aria-label="Mức độ kỹ năng"
-          value={item.level}
-          onChange={(event) => updateListItemField(section.id, item.id, 'level', Number(event.target.value))}
-        />
-      </div>
-    </div>
-  );
-
   const renderCertificateItem = (item: CertificateItem) => (
     <div key={item.id} className={itemCardClassName}>
       <div className="mb-2 flex items-center justify-between gap-2">
@@ -395,8 +353,6 @@ const SortableSectionCard: React.FC<{ section: CVSection; index: number; total: 
         return targetSection.data.items.map((item) => renderEducationItem(item as EducationItem));
       case 'activity':
         return targetSection.data.items.map((item) => renderActivityItem(item as ActivityItem));
-      case 'skill':
-        return targetSection.data.items.map((item) => renderSkillItem(item as SkillItem));
       case 'certificate':
         return targetSection.data.items.map((item) => renderCertificateItem(item as CertificateItem));
       case 'project':

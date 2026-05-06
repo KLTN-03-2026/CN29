@@ -1,17 +1,6 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-const getJobSkillNames = (job) => {
-  const source = Array.isArray(job?.skills) ? job.skills : [];
-  return source
-    .map((item) => {
-      if (typeof item === 'string') return String(item).trim();
-      return String(item?.name || item?.TenKyNang || '').trim();
-    })
-    .filter(Boolean)
-    .slice(0, 4);
-};
-
 const LatestJobsSection = ({
   jobs,
   totalJobs,
@@ -84,8 +73,6 @@ const LatestJobsSection = ({
           {jobs.map((job) => {
             const isSaved = savedSet.has(String(job.MaTin));
             const badgeLabel = getHighlightBadge(job);
-            const skillNames = getJobSkillNames(job);
-
             return (
               <article key={job.MaTin} className="home-job-card">
                 <div className="home-job-logo-wrap">
@@ -119,13 +106,6 @@ const LatestJobsSection = ({
                     <span><i className="bi bi-person-workspace"></i>{job.KinhNghiem || t('home.latest.noExperience')}</span>
                   </div>
 
-                  {skillNames.length > 0 ? (
-                    <div className="home-job-skills" data-i18n-skip="true">
-                      {skillNames.map((skillName) => (
-                        <span key={`${job.MaTin}-${skillName}`}>{skillName}</span>
-                      ))}
-                    </div>
-                  ) : null}
                 </div>
 
                 <div className="home-job-side">

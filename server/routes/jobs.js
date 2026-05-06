@@ -179,193 +179,7 @@ const callAIText = async (messages) => {
 const normalize = (s = '') => String(s || '').toLowerCase().trim();
 const uniq = (arr) => Array.from(new Set((arr || []).map((x) => String(x || '').trim()).filter(Boolean)));
 
-const SKILL_IMPORTANCE_MIN = 1;
-const SKILL_IMPORTANCE_MAX = 5;
-const SKILL_LIMIT_PER_JOB = 24;
-
-const normalizeSkillName = (value = '') => String(value || '')
-    .replace(/\u2022/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const clampSkillImportance = (value) => {
-    const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return SKILL_IMPORTANCE_MIN;
-    return Math.min(SKILL_IMPORTANCE_MAX, Math.max(SKILL_IMPORTANCE_MIN, Math.round(parsed)));
-};
-
-const splitSkillString = (value = '') => String(value || '')
-    .replace(/\r/g, '\n')
-    .split(/[\n,;|/]+/g)
-    .map((item) => normalizeSkillName(item))
-    .filter(Boolean);
-
-const normalizeSkillsInput = (rawSkills) => {
-    const source = Array.isArray(rawSkills)
-        ? rawSkills
-        : (typeof rawSkills === 'string' ? splitSkillString(rawSkills) : []);
-
-    const normalized = [];
-    const seen = new Map();
-
-    for (const item of source) {
-        let name = '';
-        let importance = SKILL_IMPORTANCE_MIN;
-
-        if (item && typeof item === 'object' && !Array.isArray(item)) {
-            name = normalizeSkillName(
-                item.name
-                ?? item.skill
-                ?? item.label
-                ?? item.tenKyNang
-                ?? item.TenKyNang
-                ?? ''
-            );
-            importance = clampSkillImportance(
-                item.importance
-                ?? item.priority
-                ?? item.level
-                ?? item.DoQuanTrong
-            );
-        } else {
-            name = normalizeSkillName(item);
-        }
-
-        if (!name) continue;
-        if (name.length > 120) {
-            name = name.slice(0, 120).trim();
-            if (!name) continue;
-        }
-
-        const key = name.toLocaleLowerCase('vi-VN');
-        if (seen.has(key)) {
-            const index = seen.get(key);
-            normalized[index].importance = Math.max(normalized[index].importance, importance);
-            continue;
-        }
-
-        seen.set(key, normalized.length);
-        normalized.push({ name, importance });
-        if (normalized.length >= SKILL_LIMIT_PER_JOB) break;
-    }
-
-    return normalized;
-};
-
-const hasSkillsPayload = (payload = {}) => Object.prototype.hasOwnProperty.call(payload, 'skills');
-
-const getOrCreateSkillId = async (skillName) => {
-    if (!skillName) return null;
-
-    const existing = await dbGet(
-        'SELECT MaKyNang FROM KyNang WHERE lower(TenKyNang) = lower(?) LIMIT 1',
-        [skillName]
-    ).catch(() => null);
-
-    if (existing?.MaKyNang) return Number(existing.MaKyNang);
-
-    try {
-        const inserted = await dbRun('INSERT INTO KyNang (TenKyNang) VALUES (?)', [skillName]);
-        if (inserted?.lastID) return Number(inserted.lastID);
-    } catch (err) {
-        const fallback = await dbGet(
-            'SELECT MaKyNang FROM KyNang WHERE lower(TenKyNang) = lower(?) LIMIT 1',
-            [skillName]
-        ).catch(() => null);
-        if (fallback?.MaKyNang) return Number(fallback.MaKyNang);
-        throw err;
-    }
-
-    const fallback = await dbGet(
-        'SELECT MaKyNang FROM KyNang WHERE lower(TenKyNang) = lower(?) LIMIT 1',
-        [skillName]
-    ).catch(() => null);
-    return fallback?.MaKyNang ? Number(fallback.MaKyNang) : null;
-};
-
-const syncJobSkills = async (jobId, rawSkills) => {
-    const normalizedSkills = normalizeSkillsInput(rawSkills);
-
-    await dbRun('DELETE FROM ChiTietTin_KyNang WHERE MaTin = ?', [jobId]);
-
-    for (const skill of normalizedSkills) {
-        const skillId = await getOrCreateSkillId(skill.name);
-        if (!skillId) continue;
-
-        try {
-            await dbRun(
-                'INSERT INTO ChiTietTin_KyNang (MaTin, MaKyNang, DoQuanTrong) VALUES (?, ?, ?)',
-                [jobId, skillId, skill.importance]
-            );
-        } catch (err) {
-            const message = String(err?.message || '').toLowerCase();
-            if (message.includes('unique') || message.includes('duplicate') || message.includes('constraint')) {
-                await dbRun(
-                    'UPDATE ChiTietTin_KyNang SET DoQuanTrong = ? WHERE MaTin = ? AND MaKyNang = ?',
-                    [skill.importance, jobId, skillId]
-                ).catch(() => null);
-                continue;
-            }
-            throw err;
-        }
-    }
-
-    return normalizedSkills;
-};
-
-const getJobSkillsMap = async (jobIds = []) => {
-    const normalizedIds = Array.from(
-        new Set((jobIds || []).map((id) => Number(id)).filter((id) => Number.isFinite(id) && id > 0))
-    );
-
-    if (normalizedIds.length === 0) return new Map();
-
-    const placeholders = normalizedIds.map(() => '?').join(', ');
-    const rows = await dbAll(
-        `SELECT
-            ctk.MaTin,
-            ctk.MaKyNang,
-            COALESCE(ctk.DoQuanTrong, 1) AS DoQuanTrong,
-            kn.TenKyNang
-         FROM ChiTietTin_KyNang ctk
-         JOIN KyNang kn ON kn.MaKyNang = ctk.MaKyNang
-         WHERE ctk.MaTin IN (${placeholders})
-         ORDER BY ctk.MaTin ASC, COALESCE(ctk.DoQuanTrong, 1) DESC, kn.TenKyNang ASC`,
-        normalizedIds
-    ).catch(() => []);
-
-    const map = new Map();
-
-    for (const row of rows) {
-        const jobId = Number(row?.MaTin);
-        if (!Number.isFinite(jobId)) continue;
-
-        if (!map.has(jobId)) map.set(jobId, []);
-        map.get(jobId).push({
-            id: Number(row?.MaKyNang) || null,
-            name: String(row?.TenKyNang || '').trim(),
-            importance: clampSkillImportance(row?.DoQuanTrong)
-        });
-    }
-
-    return map;
-};
-
-const attachSkillsToJobs = async (rows) => {
-    const source = Array.isArray(rows) ? rows : [];
-    if (source.length === 0) return source;
-
-    const jobIds = source
-        .map((row) => Number(row?.MaTin))
-        .filter((id) => Number.isFinite(id) && id > 0);
-
-    const skillsMap = await getJobSkillsMap(jobIds);
-    return source.map((row) => {
-        const jobId = Number(row?.MaTin);
-        const skills = Number.isFinite(jobId) ? (skillsMap.get(jobId) || []) : [];
-        return { ...row, skills };
-    });
-};
+// Skill normalization removed with KyNang feature cleanup.
 
 const extractMatchingSignals = async ({ city, title, education, intro }) => {
     const rawText = [title, education, intro].filter(Boolean).join('\n');
@@ -668,8 +482,7 @@ router.get('/', async (req, res) => {
              ORDER BY datetime(ttd.NgayDang) DESC`
         );
 
-        const rowsWithSkills = await attachSkillsToJobs(rows);
-        res.json(rowsWithSkills.map((r) => normalizeLogoField(req, r)));
+        res.json(rows.map((r) => normalizeLogoField(req, r)));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -689,8 +502,7 @@ router.get('/mine', authenticateToken, authorizeRole(['Nhà tuyển dụng']), a
             [employerId]
         );
 
-        const rowsWithSkills = await attachSkillsToJobs(rows);
-        res.json(rowsWithSkills.map((r) => normalizeLogoField(req, r)));
+        res.json(rows.map((r) => normalizeLogoField(req, r)));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -730,8 +542,7 @@ router.get('/saved', authenticateToken, async (req, res) => {
             [userId]
         );
 
-        const rowsWithSkills = await attachSkillsToJobs(rows);
-        return res.json(rowsWithSkills.map((r) => normalizeLogoField(req, r)));
+        return res.json(rows.map((r) => normalizeLogoField(req, r)));
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }
@@ -826,7 +637,7 @@ router.get('/matching', authenticateToken, authorizeRole(['Ứng viên']), async
              LIMIT 250`
         );
 
-        const rowsWithSkills = await attachSkillsToJobs(rows);
+        const rowsWithSkills = rows;
 
         const keywords = uniq([...(signals.keywords || []), ...(signals.languages || [])]).slice(0, 12);
         const fields = uniq(signals.fields || []).slice(0, 8);
@@ -838,10 +649,7 @@ router.get('/matching', authenticateToken, authorizeRole(['Ứng viên']), async
         const scored = rowsWithSkills.map((r) => {
             const titleText = normalize(r.TieuDe);
             const fieldText = normalize(`${r.LinhVucCongViec || ''} ${r.LinhVucCongTy || ''}`);
-            const skillText = Array.isArray(r.skills)
-                ? r.skills.map((item) => String(item?.name || '').trim()).filter(Boolean).join(' ')
-                : '';
-            const bodyText = normalize(`${r.YeuCau || ''} ${r.MoTa || ''} ${skillText}`);
+            const bodyText = normalize(`${r.YeuCau || ''} ${r.MoTa || ''}`);
             const jobCity = normalize(r.ThanhPho);
 
             let score = 0;
@@ -885,36 +693,6 @@ router.get('/matching', authenticateToken, authorizeRole(['Ứng viên']), async
         return res.json(best);
     } catch (err) {
         return res.status(500).json({ error: err.message });
-    }
-});
-
-router.get('/skills', async (req, res) => {
-    try {
-        const search = String(req.query?.q || '').trim().toLowerCase();
-        const sql = search
-            ? `SELECT MaKyNang, TenKyNang
-               FROM KyNang
-               WHERE lower(TenKyNang) LIKE ?
-               ORDER BY TenKyNang ASC
-               LIMIT 80`
-            : `SELECT MaKyNang, TenKyNang
-               FROM KyNang
-               ORDER BY TenKyNang ASC
-               LIMIT 120`;
-
-        const params = search ? [`%${search}%`] : [];
-        const rows = await dbAll(sql, params);
-
-        const skills = (rows || [])
-            .map((row) => ({
-                id: Number(row?.MaKyNang) || null,
-                name: String(row?.TenKyNang || '').trim()
-            }))
-            .filter((item) => item.name);
-
-        return res.json({ success: true, skills });
-    } catch (err) {
-        return res.status(500).json({ success: false, error: err.message || 'Không thể tải danh sách kỹ năng' });
     }
 });
 
@@ -1002,8 +780,7 @@ router.get('/:id', async (req, res) => {
             }
         }
 
-        const [rowWithSkills] = await attachSkillsToJobs([row]);
-        res.json(normalizeLogoField(req, rowWithSkills || row));
+        res.json(normalizeLogoField(req, row));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -1024,7 +801,6 @@ router.post('/', authenticateToken, authorizeRole(['Nhà tuyển dụng']), asyn
         experience,
         level,
         jobField,
-        skills,
         employmentType,
         deadline,
         status
@@ -1071,12 +847,9 @@ router.post('/', authenticateToken, authorizeRole(['Nhà tuyển dụng']), asyn
             ]
         );
 
-        const normalizedSkills = await syncJobSkills(inserted.lastID, skills);
-
         res.status(201).json({
             message: 'Đăng tin thành công',
-            jobId: inserted.lastID,
-            skills: normalizedSkills
+            jobId: inserted.lastID
         });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1099,7 +872,6 @@ router.put('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']), as
         experience,
         level,
         jobField,
-        skills,
         employmentType,
         deadline,
         status
@@ -1153,10 +925,6 @@ router.put('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']), as
             ]
         );
 
-        if (hasSkillsPayload(req.body)) {
-            await syncJobSkills(Number(id), skills);
-        }
-
         res.json({ message: 'Cập nhật tin thành công' });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -1184,8 +952,6 @@ router.delete('/:id', authenticateToken, authorizeRole(['Nhà tuyển dụng']),
         // Remove related records first to avoid FK conflicts.
         await dbRun('DELETE FROM UngTuyen WHERE MaTin = ?', [jobId]).catch(() => null);
         await dbRun('DELETE FROM LuuTin WHERE MaTin = ?', [jobId]).catch(() => null);
-        await dbRun('DELETE FROM ChiTietTin_KyNang WHERE MaTin = ?', [jobId]).catch(() => null);
-
         const deleted = await dbRun('DELETE FROM TinTuyenDung WHERE MaTin = ?', [jobId]);
         if (!deleted.changes) {
             return res.status(404).json({ error: 'Không tìm thấy tin tuyển dụng' });

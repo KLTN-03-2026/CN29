@@ -1307,32 +1307,6 @@ body.cv-editor-focus-mode .online-cv-editor-page {
   color: #64748b;
 }
 
-.job-detail-skills {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.job-detail-skill-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #cbe0f3;
-  border-radius: 999px;
-  background: #f2f9ff;
-  color: #11406a;
-  padding: 5px 11px;
-  font-size: 0.82rem;
-  font-weight: 700;
-}
-
-.job-detail-skill-chip small {
-  color: #3f6484;
-  font-size: 0.72rem;
-  font-weight: 700;
-}
-
 :is(html.dark, html[data-bs-theme='dark']) .job-detail-page {
   background: radial-gradient(circle at 6% 8%, rgba(59, 130, 246, 0.12), transparent 30%),
     radial-gradient(circle at 92% 12%, rgba(16, 185, 129, 0.12), transparent 30%),
@@ -1374,16 +1348,6 @@ body.cv-editor-focus-mode .online-cv-editor-page {
   background: rgba(15, 23, 42, 0.72);
   border-color: rgba(255, 255, 255, 0.12);
   color: #cbd5e1;
-}
-
-:is(html.dark, html[data-bs-theme='dark']) .job-detail-skill-chip {
-  background: rgba(20, 42, 64, 0.86);
-  border-color: #335271;
-  color: #b7d3ed;
-}
-
-:is(html.dark, html[data-bs-theme='dark']) .job-detail-skill-chip small {
-  color: #90b2d0;
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .job-detail-rich-block em {
@@ -2837,25 +2801,6 @@ body.cv-editor-focus-mode .online-cv-editor-page {
   font-size: 0.8rem;
 }
 
-.jf-jobs-result-skills {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.jf-jobs-result-skills span {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #cde0f2;
-  border-radius: 999px;
-  background: #f4f9ff;
-  color: #275173;
-  font-size: 0.73rem;
-  font-weight: 700;
-  padding: 3px 8px;
-}
-
 .jf-jobs-result-side {
   min-width: 170px;
   display: flex;
@@ -3031,7 +2976,6 @@ body.cv-editor-focus-mode .online-cv-editor-page {
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-meta span,
-:is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-skills span,
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-result-badge,
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-alert-btn,
 :is(html.dark, html[data-bs-theme='dark']) .jf-jobs-state-card,

@@ -43,17 +43,6 @@ async function main() {
   try {
     report.push(
       await runDelete(
-        'ChiTietCV_KyNang (candidate CV skills)',
-        `DELETE ctk
-         FROM ChiTietCV_KyNang ctk
-         JOIN HoSoCV cv ON cv.MaCV = ctk.MaCV
-         JOIN NguoiDung u ON u.MaNguoiDung = cv.MaNguoiDung
-         WHERE u.VaiTro IN (?, ?)`
-      )
-    );
-
-    report.push(
-      await runDelete(
         'LuuCV (saved candidate CVs)',
         `DELETE lc
          FROM LuuCV lc
@@ -124,18 +113,6 @@ async function main() {
         `DELETE tk
          FROM ThongKeCongViec tk
          JOIN TinTuyenDung ttd ON ttd.MaTin = tk.MaTin
-         JOIN NhaTuyenDung ntd ON ntd.MaNhaTuyenDung = ttd.MaNhaTuyenDung
-         JOIN NguoiDung u ON u.MaNguoiDung = ntd.MaNguoiDung
-         WHERE u.VaiTro IN (?, ?)`
-      )
-    );
-
-    report.push(
-      await runDelete(
-        'ChiTietTin_KyNang (job skills)',
-        `DELETE ctt
-         FROM ChiTietTin_KyNang ctt
-         JOIN TinTuyenDung ttd ON ttd.MaTin = ctt.MaTin
          JOIN NhaTuyenDung ntd ON ntd.MaNhaTuyenDung = ttd.MaNhaTuyenDung
          JOIN NguoiDung u ON u.MaNguoiDung = ntd.MaNguoiDung
          WHERE u.VaiTro IN (?, ?)`
@@ -279,19 +256,6 @@ async function main() {
         `DELETE bl
          FROM BinhLuanCongTy bl
          LEFT JOIN NhaTuyenDung n ON n.MaNhaTuyenDung = bl.MaNhaTuyenDung
-         LEFT JOIN NguoiDung u ON u.MaNguoiDung = n.MaNguoiDung
-         WHERE u.MaNguoiDung IS NULL`,
-        []
-      )
-    );
-
-    report.push(
-      await runDelete(
-        'ChiTietTin_KyNang (orphans by missing employer)',
-        `DELETE ctt
-         FROM ChiTietTin_KyNang ctt
-         JOIN TinTuyenDung t ON t.MaTin = ctt.MaTin
-         LEFT JOIN NhaTuyenDung n ON n.MaNhaTuyenDung = t.MaNhaTuyenDung
          LEFT JOIN NguoiDung u ON u.MaNguoiDung = n.MaNguoiDung
          WHERE u.MaNguoiDung IS NULL`,
         []

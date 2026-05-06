@@ -217,14 +217,6 @@ db.serialize(() => {
         if (err) console.error(err);
     });
 
-    db.run('ALTER TABLE CamNangNgheNghiep RENAME TO BaiVietHuongNghiep', (err) => {
-        const message = String(err?.message || '').toLowerCase();
-        if (err && !message.includes('no such table') && !message.includes('already exists')) console.error(err);
-    });
-    db.run('ALTER TABLE BinhLuanCamNangNgheNghiep RENAME TO BinhLuanBaiVietHuongNghiep', (err) => {
-        const message = String(err?.message || '').toLowerCase();
-        if (err && !message.includes('no such table') && !message.includes('already exists')) console.error(err);
-    });
 
     db.run('ALTER TABLE HoSoUngVien DROP COLUMN SoNamKinhNghiem', (err) => {
         const message = String(err?.message || '').toLowerCase();
@@ -251,14 +243,6 @@ db.serialize(() => {
         if (err && !message.includes('no such column') && !message.includes('syntax error')) console.error(err);
     });
 
-    // KyNang table
-    db.run(`
-        CREATE TABLE IF NOT EXISTS KyNang (
-            MaKyNang INTEGER PRIMARY KEY AUTOINCREMENT,
-            TenKyNang TEXT UNIQUE NOT NULL
-        )
-    `);
-
     // HoSoCV table
     db.run(`
         CREATE TABLE IF NOT EXISTS HoSoCV (
@@ -272,30 +256,6 @@ db.serialize(() => {
             NgayTao TEXT DEFAULT (datetime('now', 'localtime')),
             NgayCapNhat TEXT DEFAULT (datetime('now', 'localtime')),
             FOREIGN KEY (MaNguoiDung) REFERENCES NguoiDung(MaNguoiDung) ON DELETE CASCADE
-        )
-    `);
-
-    // ChiTietCV_KyNang table
-    db.run(`
-        CREATE TABLE IF NOT EXISTS ChiTietCV_KyNang (
-            MaCV INTEGER NOT NULL,
-            MaKyNang INTEGER NOT NULL,
-            MucDo TEXT CHECK (MucDo IN ('Cơ bản', 'Trung bình', 'Khá', 'Chuyên gia')) DEFAULT 'Trung bình',
-            PRIMARY KEY (MaCV, MaKyNang),
-            FOREIGN KEY (MaCV) REFERENCES HoSoCV(MaCV) ON DELETE CASCADE,
-            FOREIGN KEY (MaKyNang) REFERENCES KyNang(MaKyNang) ON DELETE CASCADE
-        )
-    `);
-
-    // ChiTietTin_KyNang table
-    db.run(`
-        CREATE TABLE IF NOT EXISTS ChiTietTin_KyNang (
-            MaTin INTEGER NOT NULL,
-            MaKyNang INTEGER NOT NULL,
-            DoQuanTrong INTEGER DEFAULT 1,
-            PRIMARY KEY (MaTin, MaKyNang),
-            FOREIGN KEY (MaTin) REFERENCES TinTuyenDung(MaTin) ON DELETE CASCADE,
-            FOREIGN KEY (MaKyNang) REFERENCES KyNang(MaKyNang) ON DELETE CASCADE
         )
     `);
 

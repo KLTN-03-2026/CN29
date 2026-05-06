@@ -21,11 +21,6 @@ const createId = () => {
   return `id-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 };
 
-const clampSkillLevel = (value: number) => {
-  const normalized = Number.isFinite(value) ? Math.round(value) : 3;
-  return Math.min(5, Math.max(1, normalized));
-};
-
 const createListItemByType = (type: ListSectionType): CVListItem => {
   switch (type) {
     case 'experience':
@@ -55,12 +50,6 @@ const createListItemByType = (type: ListSectionType): CVListItem => {
         endDate: '2020',
         description: 'Tổ chức sự kiện gây quỹ và các hoạt động cộng đồng.'
       };
-    case 'skill':
-      return {
-        id: createId(),
-        name: 'Giao tiếp và đàm phán',
-        level: 4
-      };
     case 'certificate':
       return {
         id: createId(),
@@ -89,7 +78,8 @@ const createListItemByType = (type: ListSectionType): CVListItem => {
       return {
         id: createId(),
         name: '',
-        level: 3
+        issuer: '',
+        date: ''
       };
   }
 };
@@ -137,8 +127,7 @@ const initialSections: CVSection[] = [
   createSection('objective'),
   createSection('education'),
   createSection('activity'),
-  createSection('experience'),
-  createSection('skill')
+  createSection('experience')
 ];
 
 const isListSection = (section: CVSection): section is ListSection => section.type !== 'objective';
@@ -168,10 +157,6 @@ const hydrateListItems = (type: ListSectionType, rawItems: unknown): CVListItem[
 
       if (typeof record.id === 'string' && record.id.trim()) {
         next.id = record.id;
-      }
-
-      if (type === 'skill') {
-        next.level = clampSkillLevel(Number(next.level));
       }
 
       return next as CVListItem;
@@ -379,10 +364,6 @@ export const useCVStore = create<CVStoreState>((set, get) => ({
               let nextValue: string | number = value;
               if (typeof currentValue === 'number') {
                 nextValue = Number(value);
-              }
-
-              if (section.type === 'skill' && field === 'level') {
-                nextValue = clampSkillLevel(Number(value));
               }
 
               return {

@@ -241,17 +241,6 @@ const getNumericSalaryText = (job, t, locale = 'vi-VN') => {
   return t('jobSearch.salary.negotiable');
 };
 
-const getJobSkillNames = (job) => {
-  const source = Array.isArray(job?.skills) ? job.skills : [];
-  return source
-    .map((item) => {
-      if (typeof item === 'string') return String(item).trim();
-      return String(item?.name || item?.TenKyNang || '').trim();
-    })
-    .filter(Boolean)
-    .slice(0, 4);
-};
-
 const getCardBadge = (job, t) => {
   const salaryTop = toNumber(job?.LuongDen) ?? toNumber(job?.LuongTu) ?? 0;
   if (salaryTop >= 30000000) return t('jobSearch.badges.goodSalary');
@@ -979,8 +968,6 @@ const JobSearchPage = () => {
                 {sortedJobs.map((job) => {
                   const isSaved = savedSet.has(String(job.MaTin));
                   const badge = getCardBadge(job, t);
-                  const skillNames = getJobSkillNames(job);
-
                   return (
                     <article key={job.MaTin} className="jf-jobs-result-card">
                       <div className="jf-jobs-result-main">
@@ -1016,13 +1003,6 @@ const JobSearchPage = () => {
                             <span><i className="bi bi-cash-coin"></i>{formatSalary(job, t, currentLocale)}</span>
                           </div>
 
-                          {skillNames.length > 0 ? (
-                            <div className="jf-jobs-result-skills" data-i18n-skip="true">
-                              {skillNames.map((skillName) => (
-                                <span key={`${job.MaTin}-${skillName}`}>{skillName}</span>
-                              ))}
-                            </div>
-                          ) : null}
                         </div>
                       </div>
 

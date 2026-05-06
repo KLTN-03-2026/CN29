@@ -456,8 +456,6 @@ const isMissingCareerGuideTableError = (error) => {
   const mentionsCareerGuideTable =
     message.includes('baiviethuongnghiep')
     || message.includes('binhluanbaiviethuongnghiep')
-    || message.includes('camnangnghenghiep')
-    || message.includes('binhluancamnangnghenghiep')
     || message.includes('careerguide');
 
   return mentionsCareerGuideTable

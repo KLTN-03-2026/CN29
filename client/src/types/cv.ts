@@ -3,7 +3,6 @@ export type SectionType =
   | 'experience'
   | 'education'
   | 'activity'
-  | 'skill'
   | 'certificate'
   | 'project'
   | 'reference';
@@ -51,11 +50,6 @@ export interface ActivityItem extends CVItemBase {
   description: string;
 }
 
-export interface SkillItem extends CVItemBase {
-  name: string;
-  level: number;
-}
-
 export interface CertificateItem extends CVItemBase {
   name: string;
   issuer: string;
@@ -81,7 +75,6 @@ export type CVListItem =
   | ExperienceItem
   | EducationItem
   | ActivityItem
-  | SkillItem
   | CertificateItem
   | ProjectItem
   | ReferenceItem;
@@ -129,11 +122,6 @@ export type ActivitySection = CVSection & {
   data: { items: ActivityItem[] };
 };
 
-export type SkillSection = CVSection & {
-  type: 'skill';
-  data: { items: SkillItem[] };
-};
-
 export type CertificateSection = CVSection & {
   type: 'certificate';
   data: { items: CertificateItem[] };
@@ -165,7 +153,6 @@ export const SECTION_OPTIONS: SectionOption[] = [
   { type: 'experience', label: 'Kinh nghiệm làm việc', defaultTitle: 'KINH NGHIỆM LÀM VIỆC' },
   { type: 'education', label: 'Học vấn', defaultTitle: 'HỌC VẤN' },
   { type: 'activity', label: 'Hoạt động', defaultTitle: 'HOẠT ĐỘNG' },
-  { type: 'skill', label: 'Kỹ năng', defaultTitle: 'KỸ NĂNG' },
   { type: 'certificate', label: 'Chứng chỉ', defaultTitle: 'CHỨNG CHỈ' },
   { type: 'project', label: 'Dự án', defaultTitle: 'DỰ ÁN' },
   { type: 'reference', label: 'Người tham chiếu', defaultTitle: 'NGƯỜI THAM CHIẾU' }

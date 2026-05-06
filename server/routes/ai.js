@@ -1091,7 +1091,7 @@ router.post(
         });
       }
 
-      // 1. Lấy hồ sơ ứng viên + tên + kỹ năng (gộp từ tất cả CV của họ)
+      // 1. Lấy hồ sơ ứng viên + tên (không dùng kỹ năng đã gỡ bỏ)
       const allCvs = await dbAll(
         `SELECT
             h.MaNguoiDung,
@@ -1099,14 +1099,7 @@ router.post(
             h.ChucDanh,
             h.TrinhDoHocVan,
             h.ThanhPho,
-            h.GioiThieuBanThan,
-            (
-              SELECT GROUP_CONCAT(DISTINCT k.TenKyNang)
-              FROM HoSoCV cv
-              JOIN ChiTietCV_KyNang ck ON ck.MaCV = cv.MaCV
-              JOIN KyNang k ON k.MaKyNang = ck.MaKyNang
-              WHERE cv.MaNguoiDung = h.MaNguoiDung
-            ) AS KyNang
+            h.GioiThieuBanThan
          FROM HoSoUngVien h
          JOIN NguoiDung nd ON nd.MaNguoiDung = h.MaNguoiDung
          WHERE nd.VaiTro = 'Ứng viên'
@@ -1123,12 +1116,12 @@ router.post(
         });
       }
 
-      // 2. Lọc thô bằng từ khóa: trọng số ưu tiên theo trường (ChucDanh > KyNang > còn lại)
+      // 2. Lọc thô bằng từ khóa: trọng số ưu tiên theo trường (ChucDanh > còn lại)
       const keywords = extractKeywordsFromText(jobDescription, 20);
       if (!keywords.length) {
         return res.json({
           success: true,
-          reply: 'Không trích xuất được từ khóa kỹ năng từ mô tả công việc. Bạn vui lòng nêu rõ vị trí, công nghệ và yêu cầu cụ thể hơn.',
+          reply: 'Không trích xuất được từ khóa từ mô tả công việc. Bạn vui lòng nêu rõ vị trí, công nghệ và yêu cầu cụ thể hơn.',
           matchedCvs: []
         });
       }
@@ -1136,7 +1129,6 @@ router.post(
       const scoredCvs = allCvs
         .map((cv) => {
           const titleNorm = normalizeForMatch(cv.ChucDanh);
-          const skillsNorm = normalizeForMatch(cv.KyNang || '');
           const eduNorm = normalizeForMatch(cv.TrinhDoHocVan || '');
           const cityNorm = normalizeForMatch(cv.ThanhPho || '');
           const aboutNorm = normalizeForMatch(cv.GioiThieuBanThan || '');
@@ -1148,8 +1140,6 @@ router.post(
             if (titleNorm.includes(kw)) {
               score += 10 * depthBoost;
               titleHits += 1;
-            } else if (skillsNorm.includes(kw)) {
-              score += 7 * depthBoost;
             } else if (aboutNorm.includes(kw)) {
               score += 3 * depthBoost;
             } else if (eduNorm.includes(kw) || cityNorm.includes(kw)) {
@@ -1169,7 +1159,7 @@ router.post(
       if (!scoredCvs.length) {
         return res.json({
           success: true,
-          reply: 'Chưa tìm thấy ứng viên nào trong hệ thống khớp với từ khóa của mô tả công việc này. Bạn thử mô tả lại bằng các từ khóa kỹ năng/vị trí cụ thể hơn.',
+          reply: 'Chưa tìm thấy ứng viên nào trong hệ thống khớp với từ khóa của mô tả công việc này. Bạn thử mô tả lại bằng các từ khóa vị trí hoặc yêu cầu cụ thể hơn.',
           matchedCvs: []
         });
       }
@@ -1181,7 +1171,6 @@ router.post(
         position: cv.ChucDanh || '',
         education: cv.TrinhDoHocVan || '',
         city: cv.ThanhPho || '',
-        skills: cv.KyNang || '',
         summary: String(cv.GioiThieuBanThan || '').slice(0, 320),
         score: Number(cv.score.toFixed(2))
       }));

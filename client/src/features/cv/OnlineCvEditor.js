@@ -725,7 +725,6 @@ const injectPreviewEditorScript = (html) => {
 const SAMPLE_DATA = {
   title: 'CV Ứng Viên Chuyên Nghiệp',
   summary: 'Tôi là người có tinh thần trách nhiệm, ham học hỏi và chủ động trong công việc. Có khả năng làm việc nhóm tốt, thích nghi nhanh với môi trường mới và luôn sẵn sàng tiếp thu kiến thức để phát triển bản thân.',
-  skills: `• Quản lý dự án và làm việc nhóm\n• Giao tiếp và thuyết trình\n• Tin học văn phòng: Word, Excel, PowerPoint\n• Kỹ năng giải quyết vấn đề\n• Tư duy sáng tạo và phân tích`,
   experience: `Nhân viên Marketing - Công ty ABC\n01/2022 - Hiện tại\n• Xây dựng và triển khai chiến dịch marketing trên mạng xã hội\n• Phân tích dữ liệu khách hàng và đề xuất giải pháp tối ưu`,
   education: `Đại học Kinh tế TP.HCM\n09/2018 - 06/2022\nChuyên ngành: Quản trị Marketing`,
   languages: `• Tiếng Việt: Bản ngữ\n• Tiếng Anh: Thành thạo (IELTS 7.0)`,
@@ -771,7 +770,6 @@ const OnlineCvEditor = () => {
 
   const [title, setTitle] = useState(isNewCv ? SAMPLE_DATA.title : 'CV Online');
   const [summary, setSummary] = useState(isNewCv ? SAMPLE_DATA.summary : '');
-  const [skills, setSkills] = useState(isNewCv ? SAMPLE_DATA.skills : '');
   const [experience, setExperience] = useState(isNewCv ? SAMPLE_DATA.experience : '');
   const [education, setEducation] = useState(isNewCv ? SAMPLE_DATA.education : '');
   const [languages, setLanguages] = useState(isNewCv ? SAMPLE_DATA.languages : '');
@@ -806,7 +804,6 @@ const OnlineCvEditor = () => {
     switch (field) {
       case 'title': setTitle((prev) => (prev === value ? prev : value)); break;
       case 'summary': setSummary((prev) => (prev === value ? prev : value)); break;
-      case 'skills': setSkills((prev) => (prev === value ? prev : value)); break;
       case 'experience': setExperience((prev) => (prev === value ? prev : value)); break;
       case 'education': setEducation((prev) => (prev === value ? prev : value)); break;
       case 'languages': setLanguages((prev) => (prev === value ? prev : value)); break;
@@ -1208,7 +1205,6 @@ const OnlineCvEditor = () => {
 
             setTitle(data.cv?.title || 'CV Online');
             setSummary(data.cv?.summary || '');
-            setSkills(data.cv?.content?.skills || '');
             setExperience(data.cv?.content?.experience || '');
             setEducation(data.cv?.content?.education || '');
             setLanguages(data.cv?.content?.languages || '');
@@ -1279,10 +1275,11 @@ const OnlineCvEditor = () => {
       stripScriptsFromHtml(String(persistedEditedHtml || selectedTemplateHtml || '').trim())
     );
     if (managedTemplateHtml) {
+      const skillsText = '';
       const tokenMap = {
         title,
         summary,
-        skills,
+        skills: skillsText,
         experience,
         education,
         languages,
@@ -1380,7 +1377,6 @@ const OnlineCvEditor = () => {
         templateKey: normalizeTemplateKey(templateKey),
         avatarUrl: normalizeAvatarUrl(avatarImageUrl) || DEFAULT_AVATAR_DATA_URI,
         content: {
-          skills: String(skills || ''),
           experience: String(experience || ''),
           projects: String(projects || ''),
           education: String(education || ''),

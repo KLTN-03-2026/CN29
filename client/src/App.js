@@ -21,7 +21,6 @@ import CVManage from './features/employer/dashboard/CVManage';
 import JobManagement from './features/employer/dashboard/JobManagement';
 import JobCreate from './features/employer/dashboard/JobCreate';
 import JobDetail from './features/employer/dashboard/JobDetail';
-import ApplicationManagement from './features/employer/dashboard/ApplicationManagement';
 import CompanyProfile from './features/employer/dashboard/CompanyProfile';
 import EmployerAccount from './features/employer/dashboard/EmployerAccount';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -252,7 +251,7 @@ function AppContent() {
             <Route path="jobs/create" element={<JobCreate />} />
             <Route path="jobs/:id/edit" element={<JobCreate />} />
             <Route path="jobs/:id" element={<JobDetail />} />
-            <Route path="applications" element={<ApplicationManagement />} />
+            <Route path="applications" element={<Navigate to="/employer" replace />} />
             <Route path="messages" element={<MessagesPage />} />
             <Route path="notifications" element={<SupportCenterPage />} />
             <Route path="statistics" element={<Navigate to="/employer" replace />} />

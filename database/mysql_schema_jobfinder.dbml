@@ -45,11 +45,6 @@ Table DanhMucCongViec {
   }
 }
 
-Table KyNang {
-  MaKyNang int [pk, increment]
-  TenKyNang varchar(255) [not null, unique]
-}
-
 Table CongTy {
   MaCongTy int [pk, increment]
   TenCongTy varchar(255) [not null]
@@ -150,28 +145,6 @@ Table ThongKeCongViec {
   LuotXem int [not null, default: 0]
   SoLuongUngTuyen int [not null, default: 0]
   LanXemCuoi datetime
-}
-
-Table ChiTietTin_KyNang {
-  MaTin int [not null]
-  MaKyNang int [not null]
-  DoQuanTrong int [not null, default: 1]
-
-  indexes {
-    (MaTin, MaKyNang) [pk]
-    MaKyNang [name: "IDX_ChiTietTin_KyNang_MaKyNang"]
-  }
-}
-
-Table ChiTietCV_KyNang {
-  MaCV int [not null]
-  MaKyNang int [not null]
-  MucDo varchar(50) [not null]
-
-  indexes {
-    (MaCV, MaKyNang) [pk]
-    MaKyNang [name: "IDX_ChiTietCV_KyNang_MaKyNang"]
-  }
 }
 
 Table LuuCV {
@@ -321,10 +294,6 @@ Ref: HoSoCV.MaNguoiDung > NguoiDung.MaNguoiDung
 Ref: TinTuyenDung.MaNhaTuyenDung > NhaTuyenDung.MaNhaTuyenDung
 Ref: TinTuyenDung.MaDanhMuc > DanhMucCongViec.MaDanhMuc
 Ref: ThongKeCongViec.MaTin > TinTuyenDung.MaTin
-Ref: ChiTietTin_KyNang.MaTin > TinTuyenDung.MaTin
-Ref: ChiTietTin_KyNang.MaKyNang > KyNang.MaKyNang
-Ref: ChiTietCV_KyNang.MaCV > HoSoCV.MaCV
-Ref: ChiTietCV_KyNang.MaKyNang > KyNang.MaKyNang
 Ref: LuuCV.MaNhaTuyenDung > NhaTuyenDung.MaNhaTuyenDung
 Ref: LuuCV.MaCV > HoSoCV.MaCV
 Ref: UngTuyen.MaTin > TinTuyenDung.MaTin

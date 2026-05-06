@@ -680,25 +680,6 @@
   font-weight: 700;
 }
 
-.home-job-skills {
-  margin-top: 8px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.home-job-skills span {
-  display: inline-flex;
-  align-items: center;
-  border: 1px solid #d3e4f4;
-  border-radius: 999px;
-  background: #f5faff;
-  color: #2f5478;
-  font-size: 0.73rem;
-  font-weight: 700;
-  padding: 3px 8px;
-}
-
 .home-job-side {
   align-self: stretch;
   display: flex;
@@ -1119,7 +1100,6 @@
 }
 
 :is(html.dark, html[data-bs-theme='dark']) .home-job-meta span,
-:is(html.dark, html[data-bs-theme='dark']) .home-job-skills span,
 :is(html.dark, html[data-bs-theme='dark']) .home-job-badge {
   background: #13253b;
   border-color: #335271;

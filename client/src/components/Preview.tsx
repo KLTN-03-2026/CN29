@@ -8,8 +8,7 @@ import type {
   EducationItem,
   ExperienceItem,
   ProjectItem,
-  ReferenceItem,
-  SkillItem
+  ReferenceItem
 } from '../types/cv';
 
 interface PreviewProps {
@@ -67,30 +66,6 @@ const renderActivity = (items: ActivityItem[]) => (
         </div>
       </div>
     ))}
-  </div>
-);
-
-const renderSkill = (items: SkillItem[]) => (
-  <div className="space-y-3">
-    {items.map((item) => {
-      const level = Math.max(1, Math.min(5, Math.round(Number(item.level) || 1)));
-      return (
-        <div key={item.id} className="space-y-1.5">
-          <div className="flex items-center justify-between text-[14px]">
-            <span className="font-semibold text-slate-700">{item.name}</span>
-            <span className="text-slate-500">{item.level}/5</span>
-          </div>
-          <div className="grid grid-cols-5 gap-1.5">
-            {Array.from({ length: 5 }, (_, index) => (
-              <span
-                key={`${item.id}-${index}`}
-                className={`h-2.5 rounded-full ${index < level ? 'bg-blue-500' : 'bg-slate-200'}`}
-              />
-            ))}
-          </div>
-        </div>
-      );
-    })}
   </div>
 );
 
@@ -152,8 +127,6 @@ const renderSectionBody = (section: CVSection) => {
       return renderEducation(items as EducationItem[]);
     case 'activity':
       return renderActivity(items as ActivityItem[]);
-    case 'skill':
-      return renderSkill(items as SkillItem[]);
     case 'certificate':
       return renderCertificate(items as CertificateItem[]);
     case 'project':

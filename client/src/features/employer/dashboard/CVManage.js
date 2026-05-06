@@ -204,7 +204,6 @@ const CVManage = () => {
         city: cv.city || '',
         experience: cv.experience || '',
         status: cv.status || '',
-        skills: Array.isArray(cv?.skills) ? cv.skills : [],
         fileUrl: cv.cvFileAbsoluteUrl || cv.cvFileUrl || '',
         savedAt: cv.savedAt || '',
         updatedAt: cv.updatedAt || ''
@@ -267,26 +266,10 @@ const CVManage = () => {
                 <tbody>
                     {items.map((cv) => {
                         const statusLabel = normalizeSavedStatus(cv.status);
-                        const skills = Array.isArray(cv.skills) ? cv.skills : [];
-                        const visibleSkills = skills.slice(0, 5);
-                        const extraSkills = Math.max(skills.length - visibleSkills.length, 0);
                         return (
                             <tr key={cv.key}>
                                 <td className="fw-semibold">
                                     <div>{cv.candidateName || 'N/A'}</div>
-                                    {skills.length > 0 && (
-                                        <div className="cv-skill-list cv-skill-list--compact">
-                                            {visibleSkills.map((skill, index) => (
-                                                <span key={`${skill?.id || skill?.name || 'skill'}-${index}`} className="cv-skill-chip">
-                                                    <span>{String(skill?.name || skill?.TenKyNang || '').trim()}</span>
-                                                    {skill?.level || skill?.MucDo ? <small>{skill?.level || skill?.MucDo}</small> : null}
-                                                </span>
-                                            ))}
-                                            {extraSkills > 0 && (
-                                                <span className="cv-skill-chip cv-skill-chip--more">+{extraSkills}</span>
-                                            )}
-                                        </div>
-                                    )}
                                 </td>
                                 <td>{cv.candidateEmail || 'N/A'}</td>
                                 <td>{cv.city || 'N/A'}</td>
