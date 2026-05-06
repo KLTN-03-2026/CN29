@@ -168,6 +168,7 @@ const AIAssistantWidget = () => {
   const [pillExpanded, setPillExpanded] = useState(true);
 
   const [chatOpen, setChatOpen] = useState(false);
+  const [mobileThreadOpen, setMobileThreadOpen] = useState(false);
   const [unreadConversations, setUnreadConversations] = useState(0);
   const [inbox, setInbox] = useState([]);
   const [inboxLoading, setInboxLoading] = useState(false);
@@ -217,6 +218,10 @@ const AIAssistantWidget = () => {
 
   const busy = loading || uploading;
   const activeChatUserId = Number(activeChatUser?.userId || 0) || null;
+  const activeChatUserIdRef = useRef(activeChatUserId);
+  const activeChatUserRef = useRef(activeChatUser);
+  useEffect(() => { activeChatUserIdRef.current = activeChatUserId; });
+  useEffect(() => { activeChatUserRef.current = activeChatUser; });
   const showFloatingUnreadBadge = unreadConversations > 0 && !chatOpen;
 
   const requireLogin = (message = t('components.aiAssistantWidget.errors.loginRequiredAssistant')) => {
@@ -694,18 +699,22 @@ const AIAssistantWidget = () => {
     (async () => {
       const token = getToken();
       if (!token) {
-        // Don't show error - user might not have logged in yet
         setChatOpen(false);
         return;
       }
 
+      // Read from refs so this effect only needs to depend on chatOpen,
+      // preventing re-runs (and inbox flicker) when the user switches conversations manually.
+      const currentActiveChatUserId = activeChatUserIdRef.current;
+      const currentActiveChatUser = activeChatUserRef.current;
+
       const list = await refreshInbox({ silent: false, showErrorToast: true });
       if (cancelled) return;
 
-      if (!activeChatUserId && list.length > 0) {
+      if (!currentActiveChatUserId && list.length > 0) {
         await openConversation(list[0], { markRead: true, silent: false, refreshSidebar: false, refreshUnread: false });
-      } else if (activeChatUserId) {
-        const currentUser = list.find((item) => Number(item.userId) === Number(activeChatUserId)) || activeChatUser;
+      } else if (currentActiveChatUserId) {
+        const currentUser = list.find((item) => Number(item.userId) === Number(currentActiveChatUserId)) || currentActiveChatUser;
         if (currentUser) {
           await openConversation(currentUser, { markRead: true, silent: false, refreshSidebar: false, refreshUnread: false });
         }
@@ -716,7 +725,7 @@ const AIAssistantWidget = () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatOpen, activeChatUserId]);
+  }, [chatOpen]);
 
   useEffect(() => {
     if (!chatOpen) return undefined;
@@ -730,8 +739,13 @@ const AIAssistantWidget = () => {
         const list = await refreshInbox({ silent: true, showErrorToast: false });
         if (cancelled) return;
 
-        if (activeChatUserId) {
-          const currentUser = list.find((item) => Number(item.userId) === Number(activeChatUserId)) || activeChatUser;
+        // Read from refs — no deps on activeChatUserId to avoid resetting the
+        // interval (and firing an immediate poll) on every conversation switch.
+        const currentActiveChatUserId = activeChatUserIdRef.current;
+        const currentActiveChatUser = activeChatUserRef.current;
+
+        if (currentActiveChatUserId) {
+          const currentUser = list.find((item) => Number(item.userId) === Number(currentActiveChatUserId)) || currentActiveChatUser;
           if (currentUser) {
             const shouldMarkRead = Number(currentUser?.unread || 0) > 0;
             await openConversation(currentUser, {
@@ -749,7 +763,6 @@ const AIAssistantWidget = () => {
       }
     };
 
-    pollRealtimeChat();
     const intervalId = window.setInterval(pollRealtimeChat, CHAT_REALTIME_POLL_INTERVAL_MS);
 
     return () => {
@@ -758,66 +771,130 @@ const AIAssistantWidget = () => {
       window.clearInterval(intervalId);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatOpen, activeChatUserId]);
+  }, [chatOpen]); // activeChatUserId removed — read via ref to prevent poll restart on every conversation switch
 
   return (
     <div className={`aiw-root ${open ? 'aiw-open' : ''}`}>
       {!open && chatOpen && (
         <div className="aiw-chat-panel" role="dialog" aria-label={t('components.aiAssistantWidget.chat.dialogAriaLabel')}>
-          <div className="aiw-header">
-            <div className="aiw-title">
-              <div className="aiw-avatar">💬</div>
-              <div>
-                <div className="aiw-title-text">{t('components.aiAssistantWidget.chat.title')}</div>
-                <div className="aiw-title-sub">{t('components.aiAssistantWidget.chat.subtitle')}</div>
-              </div>
+          {/* Context-aware header: shows inbox title OR active contact name on mobile */}
+          <div className="aiw-chat-panel-header">
+            <button
+              type="button"
+              className={`aiw-chat-back-btn${mobileThreadOpen && activeChatUser ? ' aiw-chat-back-btn--visible' : ''}`}
+              onClick={() => setMobileThreadOpen(false)}
+              aria-label="Quay lại danh sách"
+            >
+              <i className="bi bi-arrow-left" />
+            </button>
+
+            <div className="aiw-chat-header-info">
+              {mobileThreadOpen && activeChatUser ? (
+                <>
+                  <div className="aiw-chat-contact-initial">
+                    {String(activeChatUser.name || '?')[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="aiw-chat-header-name">{activeChatUser.name}</div>
+                    {activeChatUser.email ? <div className="aiw-chat-header-sub">{activeChatUser.email}</div> : null}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="aiw-chat-icon-emoji">💬</div>
+                  <div>
+                    <div className="aiw-chat-header-name">{t('components.aiAssistantWidget.chat.title')}</div>
+                    <div className="aiw-chat-header-sub">{t('components.aiAssistantWidget.chat.subtitle')}</div>
+                  </div>
+                </>
+              )}
             </div>
-            <button type="button" className="aiw-close" onClick={() => setChatOpen(false)} aria-label={t('components.aiAssistantWidget.common.close')}>
-              <i className="bi bi-x"></i>
+
+            <button type="button" className="aiw-close" onClick={() => { setChatOpen(false); setMobileThreadOpen(false); }} aria-label={t('components.aiAssistantWidget.common.close')}>
+              <i className="bi bi-x" />
             </button>
           </div>
 
           <div className="aiw-chat-body">
-            <div className="aiw-chat-inbox">
+            {/* Inbox sidebar — hidden on mobile when thread is open */}
+            <div className={`aiw-chat-inbox${mobileThreadOpen ? ' aiw-chat-inbox--mobile-hidden' : ''}`}>
               {inboxLoading ? (
-                <div style={{ padding: 12, color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.loading')}</div>
+                <div className="aiw-inbox-empty">{t('components.aiAssistantWidget.chat.loading')}</div>
               ) : inbox.length === 0 ? (
-                <div style={{ padding: 12, color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.noConversation')}</div>
+                <div className="aiw-inbox-empty">{t('components.aiAssistantWidget.chat.noConversation')}</div>
               ) : (
                 inbox.map((c) => (
                   <button
                     key={c.userId}
                     type="button"
-                    className={`aiw-inbox-item ${activeChatUser?.userId === c.userId ? 'active' : ''}`}
-                    onClick={() => openConversation(c)}
+                    className={`aiw-inbox-item${activeChatUser?.userId === c.userId ? ' active' : ''}`}
+                    onClick={() => { openConversation(c); setMobileThreadOpen(true); }}
                   >
-                    <div className="aiw-inbox-top">
-                      <div className="aiw-inbox-name">{c.name}</div>
-                      {c.unread > 0 && <div className="aiw-inbox-unread">{c.unread}</div>}
+                    <div className="aiw-inbox-item-avatar">
+                      {String(c.name || '?')[0].toUpperCase()}
                     </div>
-                    <div className="aiw-inbox-last">{c.lastMessage}</div>
+                    <div className="aiw-inbox-item-content">
+                      <div className="aiw-inbox-top">
+                        <span className="aiw-inbox-name">{c.name || c.email}</span>
+                        {c.unread > 0 && <span className="aiw-inbox-unread">{c.unread}</span>}
+                      </div>
+                      <div className="aiw-inbox-last">{c.lastMessage || t('components.aiAssistantWidget.chat.noConversation')}</div>
+                    </div>
                   </button>
                 ))
               )}
             </div>
 
-            <div className="aiw-chat-thread">
+            {/* Thread area — hidden on mobile when inbox is shown */}
+            <div className={`aiw-chat-thread${!mobileThreadOpen ? ' aiw-chat-thread--mobile-hidden' : ''}`}>
+              {/* Per-contact header (desktop only) */}
+              <div className="aiw-thread-contact-header">
+                {activeChatUser ? (
+                  <>
+                    <div className="aiw-thread-contact-avatar">
+                      {String(activeChatUser.name || '?')[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div className="aiw-thread-contact-name">{activeChatUser.name}</div>
+                      {activeChatUser.email ? <div className="aiw-thread-contact-sub">{activeChatUser.email}</div> : null}
+                    </div>
+                  </>
+                ) : (
+                  <span className="aiw-thread-contact-empty">{t('components.aiAssistantWidget.chat.selectConversation')}</span>
+                )}
+              </div>
+
               <div className="aiw-thread-list" ref={threadListRef}>
                 {!activeChatUser ? (
-                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.selectConversation')}</div>
+                  <div className="aiw-thread-placeholder">
+                    <i className="bi bi-chat-dots" />
+                    <span>{t('components.aiAssistantWidget.chat.selectConversation')}</span>
+                  </div>
                 ) : threadLoading ? (
-                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.loadingMessages')}</div>
+                  <div className="aiw-thread-placeholder">
+                    <span>{t('components.aiAssistantWidget.chat.loadingMessages')}</span>
+                  </div>
                 ) : threadMessages.length === 0 ? (
-                  <div style={{ color: 'rgba(15, 23, 42, 0.7)', fontWeight: 700 }}>{t('components.aiAssistantWidget.chat.noMessages')}</div>
+                  <div className="aiw-thread-placeholder">
+                    <i className="bi bi-chat" />
+                    <span>{t('components.aiAssistantWidget.chat.noMessages')}</span>
+                  </div>
                 ) : (
                   threadMessages.map((m) => {
                     const myId = getUserId();
                     const isMe = myId != null && String(m.fromUserId) === String(myId);
                     const dt = m.createdAt ? new Date(m.createdAt) : null;
-                    const timeText = dt && !Number.isNaN(dt.getTime()) ? dt.toLocaleString() : '';
+                    const timeText = dt && !Number.isNaN(dt.getTime())
+                      ? dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                      : '';
                     return (
                       <div key={m.id} className={`aiw-thread-msg ${isMe ? 'me' : 'other'}`}>
-                        <div>
+                        {!isMe && (
+                          <div className="aiw-thread-msg-avatar">
+                            {String(activeChatUser?.name || '?')[0].toUpperCase()}
+                          </div>
+                        )}
+                        <div className="aiw-thread-msg-body">
                           <div className="aiw-thread-bubble">{renderTextWithLinks(m.content, { onInternalNavigate: navigate })}</div>
                           {timeText && <div className="aiw-thread-time">{timeText}</div>}
                         </div>
@@ -831,16 +908,20 @@ const AIAssistantWidget = () => {
                 <input
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') sendChatMessage();
-                  }}
+                  onKeyDown={(e) => { if (e.key === 'Enter') sendChatMessage(); }}
                   placeholder={activeChatUser
                     ? t('components.aiAssistantWidget.chat.inputPlaceholderWithName', { name: activeChatUser.name })
                     : t('components.aiAssistantWidget.chat.inputPlaceholderNoConversation')}
                   disabled={!activeChatUser}
                 />
-                <button type="button" onClick={sendChatMessage} disabled={!activeChatUser || !chatInput.trim()}>
-                  {t('components.aiAssistantWidget.chat.sendButton')}
+                <button
+                  type="button"
+                  className="aiw-send-btn"
+                  onClick={sendChatMessage}
+                  disabled={!activeChatUser || !chatInput.trim()}
+                  aria-label={t('components.aiAssistantWidget.chat.sendButton')}
+                >
+                  <i className="bi bi-send-fill" />
                 </button>
               </div>
             </div>

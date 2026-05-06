@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import { useNotification } from '../../components/NotificationProvider';
 import { API_BASE } from '../../config/apiBase';
 import './OnlineCvEditor.css';
@@ -17,6 +19,28 @@ const escapeHtml = (s = '') => String(s)
   .replace(/'/g, '&#039;');
 
 const stripScriptsFromHtml = (html = '') => String(html).replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+// Strip every editor-only artifact so the iframe truly behaves as read-only.
+// We can't trust persisted HTML to be clean (older saves may keep contenteditable
+// attrs or leftover toolbar nodes), so we sanitize at render time too.
+const sanitizeHtmlForReadOnly = (html = '') => {
+  if (!html || typeof html !== 'string') return html;
+  let cleaned = String(html);
+  cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+  cleaned = cleaned.replace(/\s+contenteditable\s*=\s*"[^"]*"/gi, '');
+  cleaned = cleaned.replace(/\s+contenteditable\s*=\s*'[^']*'/gi, '');
+  cleaned = cleaned.replace(/\s+contenteditable(?=[\s>])/gi, '');
+  cleaned = cleaned.replace(/\s+data-editable\s*=\s*"[^"]*"/gi, '');
+  cleaned = cleaned.replace(/\s+data-editable\s*=\s*'[^']*'/gi, '');
+  // Drop any leftover live-editor toolbar nodes that might be baked into saved HTML.
+  cleaned = cleaned.replace(/<(\w+)[^>]*class="[^"]*\b(?:cv-live-add-slot|cv-live-add-section-btn|cv-live-remove-section-btn|toolbar)\b[^"]*"[^>]*>[\s\S]*?<\/\1>/gi, '');
+  cleaned = cleaned.replace(/<(\w+)[^>]*\bid="(?:resetBtn)"[^>]*>[\s\S]*?<\/\1>/gi, '');
+  return cleaned + `
+<style id="__cv_readonly_lockdown__">
+  [data-cv-field],[data-editable],[contenteditable]{outline:none!important;cursor:default!important;-webkit-user-modify:read-only!important;user-select:text!important;}
+  .cv-live-add-slot,.cv-live-add-section-btn,.cv-live-remove-section-btn,.toolbar,.toolbar.no-print,#resetBtn{display:none!important;}
+</style>`;
+};
 
 const normalizeTemplateDocumentHtml = (html = '') => {
   const raw = String(html || '').trim();
@@ -1415,40 +1439,53 @@ const OnlineCvEditor = () => {
     }
   };
 
-  const onPrint = () => {
-    const liveHtml = serializeLivePreviewHtml({ stripToolbar: true });
-    const html = liveHtml || buildHtml();
+  const onPrint = async () => {
+    // Render the iframe contents to a canvas, then save as PDF directly —
+    // no print dialog. The iframe's `.cv-page` is the A4-sized root.
+    const iframeDoc = previewFrameRef.current?.contentDocument;
+    const targetNode = iframeDoc?.querySelector('.cv-page')
+      || iframeDoc?.querySelector('.shell')
+      || iframeDoc?.body;
 
-    if (!html) {
-      notify({ type: 'warning', message: 'Không thể tải nội dung CV để in.' });
+    if (!targetNode) {
+      notify({ type: 'warning', message: 'Không thể tải nội dung CV để xuất PDF.' });
       return;
     }
 
-    const w = window.open('', '_blank');
-    if (!w) {
-      notify({ type: 'warning', message: 'Trình duyệt đã chặn cửa sổ in. Vui lòng cho phép pop-up và thử lại.' });
-      return;
-    }
+    notify({ type: 'info', message: 'Đang tạo file PDF...' });
 
-    w.document.open();
-    w.document.write(html);
-    w.document.close();
+    try {
+      const canvas = await html2canvas(targetNode, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        windowWidth: targetNode.scrollWidth,
+        windowHeight: targetNode.scrollHeight,
+      });
 
-    const triggerPrint = () => {
-      try {
-        w.focus();
-        w.print();
-      } catch (_) {
-        notify({ type: 'error', message: 'Không thể mở hộp thoại in PDF. Vui lòng thử lại.' });
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'JPEG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
       }
-    };
 
-    if (w.document.readyState === 'complete') {
-      setTimeout(triggerPrint, 180);
-      return;
+      const safeTitle = String(title || 'CV').trim().replace(/[\\/:*?"<>|]+/g, '_').slice(0, 80) || 'CV';
+      pdf.save(`${safeTitle}.pdf`);
+    } catch (err) {
+      notify({ type: 'error', message: err?.message || 'Không thể tạo file PDF. Vui lòng thử lại.' });
     }
-
-    w.addEventListener('load', () => setTimeout(triggerPrint, 180), { once: true });
   };
 
   const serializeLivePreviewHtml = useCallback(({ stripToolbar = false } = {}) => {
@@ -1498,7 +1535,9 @@ const OnlineCvEditor = () => {
   }, [avatarImageUrl]);
 
   const previewBaseHtml = buildHtml();
-  const previewHtml = isReadOnly ? previewBaseHtml : injectPreviewEditorScript(previewBaseHtml);
+  const previewHtml = isReadOnly
+    ? sanitizeHtmlForReadOnly(previewBaseHtml)
+    : injectPreviewEditorScript(previewBaseHtml);
 
   if (!userId) {
     return (
@@ -1516,7 +1555,7 @@ const OnlineCvEditor = () => {
             <h3><i className="bi bi-file-earmark-text me-2"></i>{isReadOnly ? 'Xem CV Online' : 'CV Online'}</h3>
             <div className="text-muted">
               {isReadOnly
-                ? 'Chế độ chỉ xem: bạn có thể xem và tải PDF, không thể chỉnh sửa nội dung CV.'
+                ? 'Chế độ chỉ xem: bạn có thể xem và tải file PDF về máy, không thể chỉnh sửa nội dung CV.'
                 : 'Bạn có thể chỉnh trực tiếp mọi nội dung hiển thị trong CV.'}
             </div>
           </div>

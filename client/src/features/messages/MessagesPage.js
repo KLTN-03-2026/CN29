@@ -28,6 +28,7 @@ const MessagesPage = () => {
   const location = useLocation();
   const threadRef = useRef(null);
   const pollInFlightRef = useRef(false);
+  const bootstrappedRef = useRef(false);
 
   const token = String(localStorage.getItem('token') || '').trim();
   const user = useMemo(() => parseUserFromStorage(), []);
@@ -46,6 +47,14 @@ const MessagesPage = () => {
   const [input, setInput] = useState('');
   const [error, setError] = useState('');
   const activeUserId = Number(activeUser?.userId || 0) || null;
+
+  // Refs let the polling effect read the latest active user without depending
+  // on it — otherwise every conversation switch would tear down/restart the
+  // interval and fire an immediate poll, causing API spam + UI flicker.
+  const activeUserRef = useRef(activeUser);
+  const activeUserIdRef = useRef(activeUserId);
+  useEffect(() => { activeUserRef.current = activeUser; });
+  useEffect(() => { activeUserIdRef.current = activeUserId; });
 
   const searchParams = useMemo(() => new URLSearchParams(location.search), [location.search]);
   const seededUserId = Number.parseInt(String(searchParams.get('userId') || ''), 10);
@@ -187,15 +196,21 @@ const MessagesPage = () => {
   };
 
   useEffect(() => {
+    // Bootstrap should only run once on mount (or when token first appears).
+    // Otherwise, any reference change in loadInbox/openConversation/t would
+    // re-run this and auto-switch the user back to the first conversation.
+    if (bootstrappedRef.current) return undefined;
+    if (!token) {
+      bootstrappedRef.current = true;
+      setError(t('employer.messagesPage.errors.loginRequired'));
+      setInitialLoading(false);
+      return undefined;
+    }
+    bootstrappedRef.current = true;
+
     let cancelled = false;
 
     const bootstrap = async () => {
-      if (!token) {
-        setError(t('employer.messagesPage.errors.loginRequired'));
-        setInitialLoading(false);
-        return;
-      }
-
       setInitialLoading(true);
       setError('');
 
@@ -240,7 +255,8 @@ const MessagesPage = () => {
     return () => {
       cancelled = true;
     };
-  }, [token, canSeedUser, seededUserId, seededName, seededEmail, loadInbox, openConversation, t]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]); // intentionally only [token] — bootstrappedRef guards against re-runs
 
   useEffect(() => {
     if (!token) return undefined;
@@ -250,8 +266,13 @@ const MessagesPage = () => {
       pollInFlightRef.current = true;
       try {
         const refreshedInbox = await loadInbox({ silent: true });
-        if (activeUser?.userId) {
-          const candidate = refreshedInbox.find((item) => Number(item.userId) === Number(activeUser.userId)) || activeUser;
+        // Read latest active user from refs so the effect itself does not
+        // depend on activeUser — switching conversations should NOT restart
+        // the polling interval or trigger an immediate poll.
+        const currentActiveUser = activeUserRef.current;
+        const currentActiveUserId = activeUserIdRef.current;
+        if (currentActiveUserId) {
+          const candidate = refreshedInbox.find((item) => Number(item.userId) === Number(currentActiveUserId)) || currentActiveUser;
           const shouldMarkRead = Number(candidate?.unread || 0) > 0;
           await openConversation(candidate, { markRead: shouldMarkRead, silent: true });
         }
@@ -275,8 +296,6 @@ const MessagesPage = () => {
     window.addEventListener('focus', onFocus);
     document.addEventListener('visibilitychange', onVisibilityChange);
 
-    void pollConversation();
-
     const intervalId = window.setInterval(pollConversation, MESSAGES_POLL_INTERVAL_MS);
 
     return () => {
@@ -285,7 +304,8 @@ const MessagesPage = () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibilityChange);
     };
-  }, [token, activeUser, activeUserId, loadInbox, openConversation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]); // activeUser/activeUserId removed — read via refs to prevent restart on every conversation switch
 
   return (
     <div className="messages-page">

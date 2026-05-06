@@ -5,7 +5,9 @@ import './AdminHeaderRightActions.css';
 const renderItemIcon = (icon) => {
     if (!icon) return null;
     if (React.isValidElement(icon)) return icon;
-    if (typeof icon === 'function') {
+    // lucide-react icons in older versions are forwardRef components
+    // (typeof === 'object'), not plain functions. Accept both.
+    if (typeof icon === 'function' || typeof icon === 'object') {
         const IconComponent = icon;
         return <IconComponent size={16} />;
     }
