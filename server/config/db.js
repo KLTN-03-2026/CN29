@@ -6,6 +6,7 @@ const useMysql = /^mysql:\/\//i.test(databaseUrl);
 const normalizeSql = (sql) => {
   let normalized = String(sql || '');
 
+  normalized = normalized.replace(/\bINTEGER\s+PRIMARY\s+KEY\s+AUTOINCREMENT\b/gi, 'INT AUTO_INCREMENT PRIMARY KEY');
   normalized = normalized.replace(/\bINSERT\s+OR\s+REPLACE\s+INTO\b/gi, 'REPLACE INTO');
   normalized = normalized.replace(/\bINSERT\s+OR\s+IGNORE\s+INTO\b/gi, 'INSERT IGNORE INTO');
   normalized = normalized.replace(/datetime\(\s*['"]now['"]\s*,\s*['"]localtime['"]\s*\)/gi, 'NOW()');
