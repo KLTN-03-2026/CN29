@@ -97,6 +97,11 @@ const buildYearOptions = (viewDate) => {
   return Array.from({ length: 12 }, (_, index) => startYear + index);
 };
 
+const getViewParts = (date) => ({
+  year: date.getFullYear(),
+  month: date.getMonth()
+});
+
 const getViewAnchorDate = (selectedDate) => {
   const source = selectedDate || new Date();
   return new Date(source.getFullYear(), source.getMonth(), 1);
@@ -122,8 +127,9 @@ const CalendarDatePicker = ({
   const minDateBound = useMemo(() => normalizeBoundDate(minDate), [minDate]);
   const maxDateBound = useMemo(() => normalizeBoundDate(maxDate), [maxDate]);
   const [isOpen, setIsOpen] = useState(false);
-  const [viewDate, setViewDate] = useState(() => getViewAnchorDate(selectedDate));
+  const [viewParts, setViewParts] = useState(() => getViewParts(getViewAnchorDate(selectedDate)));
   const [viewMode, setViewMode] = useState('days');
+  const viewDate = useMemo(() => new Date(viewParts.year, viewParts.month, 1), [viewParts.year, viewParts.month]);
   const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en') ? 'en-US' : 'vi-VN';
   const effectivePlaceholder = placeholder || t('components.calendarDatePicker.placeholder');
   const weekdayLabels = useMemo(() => ([
@@ -140,7 +146,7 @@ const CalendarDatePicker = ({
 
   useEffect(() => {
     if (isOpen) return;
-    setViewDate(getViewAnchorDate(selectedDate));
+    setViewParts(getViewParts(getViewAnchorDate(selectedDate)));
     setViewMode('days');
   }, [selectedDate, isOpen]);
 
@@ -178,20 +184,20 @@ const CalendarDatePicker = ({
   const triggerLabel = selectedDate ? formatDisplayDate(selectedDate) : effectivePlaceholder;
 
   const changeMonth = (amount) => {
-    setViewDate((prev) => moveMonth(prev, amount));
+    setViewParts((prev) => getViewParts(moveMonth(new Date(prev.year, prev.month, 1), amount)));
     setViewMode('days');
   };
 
   const changeYear = (amount) => {
-    setViewDate((prev) => moveYear(prev, amount));
+    setViewParts((prev) => getViewParts(moveYear(new Date(prev.year, prev.month, 1), amount)));
   };
 
   const changeYearPage = (amount) => {
-    setViewDate((prev) => moveYear(prev, amount * 12));
+    setViewParts((prev) => getViewParts(moveYear(new Date(prev.year, prev.month, 1), amount * 12)));
   };
 
   const selectYear = (year) => {
-    setViewDate((prev) => new Date(year, prev.getMonth(), 1));
+    setViewParts((prev) => ({ year, month: prev.month }));
     setViewMode('days');
   };
 
@@ -204,7 +210,7 @@ const CalendarDatePicker = ({
   const setToday = () => {
     if (!isInRange(today, minDateBound, maxDateBound)) return;
     onChange?.(toIsoDate(today));
-    setViewDate(getViewAnchorDate(today));
+    setViewParts(getViewParts(getViewAnchorDate(today)));
     setIsOpen(false);
   };
 

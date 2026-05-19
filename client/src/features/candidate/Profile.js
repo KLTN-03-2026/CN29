@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useNotification } from '../../components/NotificationProvider';
 import CalendarDatePicker from '../../components/date/CalendarDatePicker';
 import ProfileSidebar from './profile/ProfileSidebar';
@@ -95,7 +96,24 @@ const readStoredUser = () => {
     }
 };
 
+const formatProfileDateTime = (value, locale = 'vi-VN') => {
+    const raw = String(value || '').trim();
+    if (!raw) return '';
+
+    const date = new Date(raw);
+    if (Number.isNaN(date.getTime())) return raw;
+
+    return date.toLocaleString(locale, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+};
+
 const Profile = ({ initialTab = 'overview' }) => {
+    const { t, i18n } = useTranslation('translation');
     const location = useLocation();
     const { notify } = useNotification();
     const [user, setUser] = useState(() => readStoredUser());
@@ -183,7 +201,7 @@ const Profile = ({ initialTab = 'overview' }) => {
     const [isChangingPassword, setIsChangingPassword] = useState(false);
     const [showPasswordForm, setShowPasswordForm] = useState(false);
     const [formData, setFormData] = useState({
-        fullName: user?.name || 'Người dùng',
+        fullName: user?.name || t('candidatePages.profile.sidebar.defaultUser'),
         position: '',
         email: user?.email || '',
         phone: '',
@@ -211,6 +229,8 @@ const Profile = ({ initialTab = 'overview' }) => {
     const [applications, setApplications] = useState([]);
     const [applicationsLoading, setApplicationsLoading] = useState(false);
     const [applicationsError, setApplicationsError] = useState('');
+    const profileLocale = i18n.resolvedLanguage?.startsWith('en') ? 'en-US' : 'vi-VN';
+    const lastUpdatedDisplay = formatProfileDateTime(profileSnapshot.NgayCapNhat, profileLocale) || t('candidatePages.profile.modals.edit.notUpdated');
 
     useEffect(() => {
         const syncUser = (event) => {
@@ -313,13 +333,13 @@ const Profile = ({ initialTab = 'overview' }) => {
             }
             const normalized = data.cvs.map(cv => ({
                 ...cv,
-                uploadDate: cv.uploadDate ? new Date(cv.uploadDate).toLocaleDateString('vi-VN') : ''
+                uploadDate: cv.uploadDate ? new Date(cv.uploadDate).toLocaleDateString(i18n.resolvedLanguage?.startsWith('en') ? 'en-US' : 'vi-VN') : ''
             }));
             setCvList(normalized);
         } catch (err) {
             console.warn('Load CVs error', err);
         }
-    }, [userId]);
+    }, [userId, i18n.resolvedLanguage]);
 
     const handleCvUpload = async (e) => {
         const file = e.target.files[0];
@@ -327,19 +347,19 @@ const Profile = ({ initialTab = 'overview' }) => {
 
         const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
         if (!allowedTypes.includes(file.type)) {
-            notify({ type: 'error', message: 'Chỉ chấp nhận file PDF, DOC, hoặc DOCX' });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.invalidCvType') });
             e.target.value = '';
             return;
         }
 
         if (file.size > 5 * 1024 * 1024) {
-            notify({ type: 'error', message: 'Kích thước file không được vượt quá 5MB' });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.cvTooLarge') });
             e.target.value = '';
             return;
         }
 
         if (!userId) {
-            notify({ type: 'error', message: 'Vui lòng đăng nhập lại để tải CV.' });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.loginRequiredUploadCv') });
             e.target.value = '';
             return;
         }
@@ -357,12 +377,12 @@ const Profile = ({ initialTab = 'overview' }) => {
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
-                throw new Error(data.error || 'Không thể tải CV lên.');
+                throw new Error(data.error || t('candidatePages.profile.messages.cvUploadFailed'));
             }
             await fetchCvs();
-            notify({ type: 'success', message: 'Tải CV lên thành công.' });
+            notify({ type: 'success', message: t('candidatePages.profile.messages.cvUploadSuccess') });
         } catch (err) {
-            notify({ type: 'error', message: err.message || 'Không thể tải CV lên.' });
+            notify({ type: 'error', message: err.message || t('candidatePages.profile.messages.cvUploadFailed') });
         } finally {
             setIsCvUploading(false);
             e.target.value = '';
@@ -372,7 +392,7 @@ const Profile = ({ initialTab = 'overview' }) => {
     const handleDeleteCv = async (cv) => {
         if (!cv) return;
         if (!userId) {
-            notify({ type: 'error', message: 'Vui lòng đăng nhập lại để xóa CV.' });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.loginRequiredDeleteCv') });
             return;
         }
 
@@ -382,12 +402,12 @@ const Profile = ({ initialTab = 'overview' }) => {
             });
             const data = await res.json();
             if (!res.ok || !data.success) {
-                throw new Error(data.error || 'Không thể xóa CV.');
+                throw new Error(data.error || t('candidatePages.profile.messages.cvDeleteFailed'));
             }
             setCvList(prev => prev.filter(item => item.id !== cv.id));
             setCvPendingDelete(null);
         } catch (err) {
-            notify({ type: 'error', message: err.message || 'Không thể xóa CV. Vui lòng thử lại.' });
+            notify({ type: 'error', message: err.message || t('candidatePages.profile.messages.cvDeleteRetry') });
         }
     };
 
@@ -408,7 +428,7 @@ const Profile = ({ initialTab = 'overview' }) => {
         try {
             const token = localStorage.getItem('token');
             if (!token) {
-                throw new Error('Vui lòng đăng nhập lại để đổi mật khẩu.');
+                throw new Error(t('candidatePages.profile.messages.loginRequiredChangePassword'));
             }
 
             const response = await fetch('/auth/change-password', {
@@ -425,16 +445,16 @@ const Profile = ({ initialTab = 'overview' }) => {
 
             const data = await response.json();
             if (!response.ok) {
-                throw new Error(data.error || 'Đổi mật khẩu thất bại.');
+                throw new Error(data.error || t('candidatePages.profile.messages.passwordChangeFailed'));
             }
 
-            const successMessage = data.message || 'Đổi mật khẩu thành công.';
+            const successMessage = data.message || t('candidatePages.profile.messages.passwordChangeSuccess');
             setPasswordStatus({ type: 'success', message: successMessage });
             setPasswordForm({ current: '', next: '', confirm: '' });
             setShowPasswordForm(false);
             notify({ type: 'success', message: successMessage });
         } catch (error) {
-            setPasswordStatus({ type: 'error', message: error.message || 'Có lỗi xảy ra. Vui lòng thử lại.' });
+            setPasswordStatus({ type: 'error', message: error.message || t('candidatePages.profile.messages.genericRetry') });
         } finally {
             setIsChangingPassword(false);
         }
@@ -833,31 +853,31 @@ const Profile = ({ initialTab = 'overview' }) => {
         const text = String(value ?? '').trim();
         switch (name) {
             case 'fullName':
-                if (!text) return 'Vui lòng nhập họ tên.';
-                if (text.length < 2) return 'Họ tên phải có ít nhất 2 ký tự.';
+                if (!text) return t('candidatePages.profile.validation.fullNameRequired');
+                if (text.length < 2) return t('candidatePages.profile.validation.fullNameMin');
                 return '';
             case 'phone':
                 if (!text) return '';
-                if (!/^0\d{9,10}$/.test(text)) return 'Số điện thoại phải bắt đầu bằng 0 và có 10–11 chữ số.';
+                if (!/^0\d{9,10}$/.test(text)) return t('candidatePages.profile.validation.phoneInvalid');
                 return '';
             case 'experienceYears':
                 if (text === '') return '';
-                if (!/^\d+$/.test(text)) return 'Số năm kinh nghiệm phải là số nguyên.';
+                if (!/^\d+$/.test(text)) return t('candidatePages.profile.validation.experienceInteger');
                 return '';
             case 'personalLink':
                 if (!text) return '';
                 try {
                     const url = new URL(/^https?:\/\//i.test(text) ? text : `https://${text}`);
-                    if (!url.hostname.includes('.')) return 'Liên kết không hợp lệ.';
+                    if (!url.hostname.includes('.')) return t('candidatePages.profile.validation.linkInvalid');
                     return '';
                 } catch {
-                    return 'Liên kết không hợp lệ.';
+                    return t('candidatePages.profile.validation.linkInvalid');
                 }
             case 'birthday': {
                 if (!text) return '';
                 const d = new Date(text);
-                if (Number.isNaN(d.getTime())) return 'Ngày sinh không hợp lệ.';
-                if (d > new Date()) return 'Ngày sinh không thể ở tương lai.';
+                if (Number.isNaN(d.getTime())) return t('candidatePages.profile.validation.birthdayInvalid');
+                if (d > new Date()) return t('candidatePages.profile.validation.birthdayFuture');
                 return '';
             }
             default:
@@ -901,7 +921,7 @@ const Profile = ({ initialTab = 'overview' }) => {
         });
         if (Object.keys(nextErrors).length > 0) {
             setFormErrors(nextErrors);
-            notify({ type: 'error', message: 'Vui lòng kiểm tra lại các trường được đánh dấu đỏ.' });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.checkHighlightedFields') });
             return;
         }
         setFormErrors({});
@@ -909,7 +929,7 @@ const Profile = ({ initialTab = 'overview' }) => {
         // Ưu tiên id dạng số, fallback MaNguoiDung
         let userId = user?.id || user?.MaNguoiDung || user?.maNguoiDung || user?.userId;
         if (!userId && user) {
-            notify({ type: 'error', message: 'Không xác định được userId. Vui lòng đăng xuất và đăng nhập lại.' });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.missingUserId') });
             console.error('User object không có userId:', user);
             return;
         }
@@ -917,7 +937,7 @@ const Profile = ({ initialTab = 'overview' }) => {
         // Ensure userId is a number
         userId = parseInt(userId, 10);
         if (isNaN(userId)) {
-            notify({ type: 'error', message: 'userId không hợp lệ. Vui lòng đăng xuất và đăng nhập lại.' });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.invalidUserId') });
             return;
         }
 
@@ -951,11 +971,11 @@ const Profile = ({ initialTab = 'overview' }) => {
                     setProfileSnapshot((prev) => ({ ...prev, AnhDaiDien: newAvatarUrl }));
                     console.log('Avatar uploaded successfully:', newAvatarUrl);
                 } else {
-                    notify({ type: 'error', message: 'Lỗi upload ảnh: ' + (data.error || 'Không rõ') });
+                    notify({ type: 'error', message: t('candidatePages.profile.messages.avatarUploadFailed', { error: data.error || t('candidatePages.profile.messages.unknownError') }) });
                     return;
                 }
             } catch (err) {
-                notify({ type: 'error', message: 'Lỗi upload ảnh: ' + err.message });
+                notify({ type: 'error', message: t('candidatePages.profile.messages.avatarUploadFailed', { error: err.message }) });
                 return;
             }
         }
@@ -990,7 +1010,7 @@ const Profile = ({ initialTab = 'overview' }) => {
 
             const data = await res.json();
             if (!data.success) {
-                notify({ type: 'error', message: 'Lỗi cập nhật thông tin: ' + (data.error || 'Không rõ') });
+                notify({ type: 'error', message: t('candidatePages.profile.messages.updateFailed', { error: data.error || t('candidatePages.profile.messages.unknownError') }) });
                 return;
             }
 
@@ -1021,11 +1041,11 @@ const Profile = ({ initialTab = 'overview' }) => {
             }));
             console.log('Updated localStorage with avatar:', updatedUser.avatar);
 
-            notify({ type: 'success', message: 'Cập nhật thông tin thành công!' });
+            notify({ type: 'success', message: t('candidatePages.profile.messages.updateSuccess') });
             setShowEditModal(false);
             setAvatarFile(null); // Reset avatar file after successful upload
         } catch (err) {
-            notify({ type: 'error', message: 'Lỗi cập nhật thông tin: ' + err.message });
+            notify({ type: 'error', message: t('candidatePages.profile.messages.updateFailed', { error: err.message }) });
         }
     };
 
@@ -1033,7 +1053,7 @@ const Profile = ({ initialTab = 'overview' }) => {
         return (
             <div className="container my-5">
                 <div className="alert alert-warning">
-                    Vui lòng đăng nhập để xem hồ sơ
+                    {t('candidatePages.profile.messages.loginRequiredView')}
                 </div>
             </div>
         );
@@ -1046,7 +1066,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                     <ProfileSidebar
                         activeTab={activeTab}
                         onChangeTab={setActiveTab}
-                        userName={user?.name || 'Người dùng'}
+                        userName={user?.name || t('candidatePages.profile.sidebar.defaultUser')}
                         invitationCount={interviewInvitations.length}
                     />
 
@@ -1084,8 +1104,8 @@ const Profile = ({ initialTab = 'overview' }) => {
                             <div className="modal-content border-0 shadow-lg profile-password-modal-content profile-modal-shell">
                                 <div className="modal-header border-0 profile-modal-header">
                                     <div>
-                                        <p className="profile-modal-kicker mb-1">Bảo mật tài khoản</p>
-                                        <h5 className="modal-title fw-bold mb-0">Đổi mật khẩu</h5>
+                                        <p className="profile-modal-kicker mb-1">{t('candidatePages.profile.modals.password.kicker')}</p>
+                                        <h5 className="modal-title fw-bold mb-0">{t('candidatePages.profile.modals.password.title')}</h5>
                                     </div>
                                     <button
                                         type="button"
@@ -1098,10 +1118,10 @@ const Profile = ({ initialTab = 'overview' }) => {
                                 </div>
                                 <div className="modal-body profile-modal-body">
                                     <p className="profile-modal-description mb-3">
-                                        Mật khẩu mới cần tối thiểu 8 ký tự và khác mật khẩu hiện tại.
+                                        {t('candidatePages.profile.modals.password.description')}
                                     </p>
                                     <div className="mb-3">
-                                        <label className="form-label">Mật khẩu hiện tại</label>
+                                        <label className="form-label">{t('candidatePages.profile.modals.password.currentLabel')}</label>
                                         <input
                                             type="password"
                                             className="form-control profile-modal-input"
@@ -1110,11 +1130,11 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                 setPasswordForm({ ...passwordForm, current: e.target.value });
                                                 setPasswordStatus({ type: '', message: '' });
                                             }}
-                                            placeholder="Nhập mật khẩu hiện tại"
+                                            placeholder={t('candidatePages.profile.modals.password.currentPlaceholder')}
                                         />
                                     </div>
                                     <div className="mb-3">
-                                        <label className="form-label">Mật khẩu mới</label>
+                                        <label className="form-label">{t('candidatePages.profile.modals.password.newLabel')}</label>
                                         <input
                                             type="password"
                                             className={`form-control profile-modal-input ${passwordShort ? 'is-invalid' : ''}`}
@@ -1123,12 +1143,12 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                 setPasswordForm({ ...passwordForm, next: e.target.value });
                                                 setPasswordStatus({ type: '', message: '' });
                                             }}
-                                            placeholder="Tối thiểu 8 ký tự"
+                                            placeholder={t('candidatePages.profile.modals.password.newPlaceholder')}
                                         />
-                                        {passwordShort && <div className="invalid-feedback">Mật khẩu mới phải có ít nhất 8 ký tự.</div>}
+                                        {passwordShort && <div className="invalid-feedback">{t('candidatePages.profile.modals.password.tooShort')}</div>}
                                     </div>
                                     <div className="mb-0">
-                                        <label className="form-label">Xác nhận mật khẩu mới</label>
+                                        <label className="form-label">{t('candidatePages.profile.modals.password.confirmLabel')}</label>
                                         <input
                                             type="password"
                                             className={`form-control profile-modal-input ${passwordMismatch ? 'is-invalid' : ''}`}
@@ -1137,9 +1157,9 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                 setPasswordForm({ ...passwordForm, confirm: e.target.value });
                                                 setPasswordStatus({ type: '', message: '' });
                                             }}
-                                            placeholder="Nhập lại mật khẩu mới"
+                                            placeholder={t('candidatePages.profile.modals.password.confirmPlaceholder')}
                                         />
-                                        {passwordMismatch && <div className="invalid-feedback">Mật khẩu xác nhận không khớp.</div>}
+                                        {passwordMismatch && <div className="invalid-feedback">{t('candidatePages.profile.modals.password.mismatch')}</div>}
                                     </div>
                                     {passwordStatus.message && (
                                         <div className={`alert alert-${passwordStatus.type === 'success' ? 'success' : 'danger'} mt-3 mb-0`} role="alert">
@@ -1156,7 +1176,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                             setPasswordForm({ current: '', next: '', confirm: '' });
                                         }}
                                     >
-                                        Hủy
+                                        {t('common.cancel')}
                                     </button>
                                     <button
                                         type="button"
@@ -1164,7 +1184,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                         disabled={!isPasswordValid || isChangingPassword}
                                         onClick={handlePasswordChange}
                                     >
-                                        {isChangingPassword ? 'Đang xử lý...' : 'Đổi mật khẩu'}
+                                        {isChangingPassword ? t('candidatePages.profile.modals.password.processing') : t('candidatePages.profile.modals.password.submit')}
                                     </button>
                                 </div>
                             </div>
@@ -1186,8 +1206,8 @@ const Profile = ({ initialTab = 'overview' }) => {
                             <div className="modal-content border-0 shadow-lg profile-edit-modal-content profile-modal-shell">
                                 <div className="modal-header border-0 profile-modal-header">
                                     <div>
-                                        <p className="profile-modal-kicker mb-1">Hồ sơ ứng viên</p>
-                                        <h5 className="modal-title fw-bold fs-4 mb-0">Cập nhật hồ sơ chi tiết</h5>
+                                        <p className="profile-modal-kicker mb-1">{t('candidatePages.profile.modals.edit.kicker')}</p>
+                                        <h5 className="modal-title fw-bold fs-4 mb-0">{t('candidatePages.profile.modals.edit.title')}</h5>
                                     </div>
                                     <button
                                         type="button"
@@ -1212,7 +1232,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                     />
                                                     <div className="d-flex justify-content-center gap-2 mt-1 flex-wrap">
                                                         <button className="btn btn-sm profile-outline-btn" type="button" onClick={() => avatarInputRef.current?.click()}>
-                                                            <i className="bi bi-camera me-1"></i> Đổi ảnh
+                                                            <i className="bi bi-camera me-1"></i> {t('candidatePages.profile.modals.edit.changePhoto')}
                                                         </button>
                                                         <button
                                                             className="btn btn-sm btn-outline-secondary"
@@ -1224,7 +1244,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                                 setProfileSnapshot((prev) => ({ ...prev, AnhDaiDien: '' }));
                                                             }}
                                                         >
-                                                            <i className="bi bi-trash me-1"></i> Xóa
+                                                            <i className="bi bi-trash me-1"></i> {t('common.delete')}
                                                         </button>
                                                         <input
                                                             ref={avatarInputRef}
@@ -1235,11 +1255,11 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                                 const file = e.target.files[0];
                                                                 if (!file) return;
                                                                 if (!file.type.startsWith('image/')) {
-                                                                    notify({ type: 'error', message: 'Chỉ chấp nhận file ảnh.' });
+                                                                    notify({ type: 'error', message: t('candidatePages.profile.messages.invalidImageType') });
                                                                     return;
                                                                 }
                                                                 if (file.size > 2 * 1024 * 1024) {
-                                                                    notify({ type: 'error', message: 'Ảnh không được vượt quá 2MB.' });
+                                                                    notify({ type: 'error', message: t('candidatePages.profile.messages.imageTooLarge') });
                                                                     return;
                                                                 }
                                                                 const reader = new FileReader();
@@ -1253,15 +1273,15 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                     </div>
                                                 </div>
 
-                                                <div className="small text-muted mt-3 profile-edit-hint">Ảnh vuông, kích thước đề xuất 400×400px. Ảnh sẽ được lưu trên Cloudinary.</div>
+                                                <div className="small text-muted mt-3 profile-edit-hint">{t('candidatePages.profile.modals.edit.avatarHint')}</div>
 
                                                 <div className="mt-3">
-                                                    <label className="form-label small fw-semibold mb-1">Email tài khoản</label>
+                                                    <label className="form-label small fw-semibold mb-1">{t('candidatePages.profile.modals.edit.accountEmail')}</label>
                                                     <input className="form-control form-control-sm profile-edit-readonly" value={formData.email || ''} disabled />
                                                 </div>
                                                 <div className="mt-2">
-                                                    <label className="form-label small fw-semibold mb-1">Cập nhật gần nhất</label>
-                                                    <input className="form-control form-control-sm profile-edit-readonly" value={profileSnapshot.NgayCapNhat || 'Chưa cập nhật'} disabled />
+                                                    <label className="form-label small fw-semibold mb-1">{t('candidatePages.profile.modals.edit.lastUpdated')}</label>
+                                                    <input className="form-control form-control-sm profile-edit-readonly" value={lastUpdatedDisplay} disabled />
                                                 </div>
                                             </div>
                                         </div>
@@ -1269,31 +1289,31 @@ const Profile = ({ initialTab = 'overview' }) => {
                                         <div className="col-xl-9">
                                             <div className="row g-3">
                                                 <div className="col-12">
-                                                    <div className="small text-uppercase fw-bold profile-edit-section-title">Thông tin cơ bản</div>
+                                                    <div className="small text-uppercase fw-bold profile-edit-section-title">{t('candidatePages.profile.modals.edit.basicInfo')}</div>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Họ và tên <span className="text-danger">*</span></label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.fullName')} <span className="text-danger">*</span></label>
                                                     <input
                                                         type="text"
                                                         className={`form-control profile-modal-input ${formErrors.fullName ? 'is-invalid' : ''}`}
                                                         name="fullName"
                                                         value={formData.fullName}
                                                         onChange={handleInputChange}
-                                                        placeholder="Nhập họ và tên"
+                                                        placeholder={t('candidatePages.profile.modals.edit.fullNamePlaceholder')}
                                                         maxLength={100}
                                                         autoComplete="name"
                                                     />
                                                     {formErrors.fullName ? <div className="invalid-feedback d-block small">{formErrors.fullName}</div> : null}
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Số điện thoại</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.phone')}</label>
                                                     <input
                                                         type="tel"
                                                         className={`form-control profile-modal-input ${formErrors.phone ? 'is-invalid' : ''}`}
                                                         name="phone"
                                                         value={formData.phone}
                                                         onChange={handleInputChange}
-                                                        placeholder="VD: 0987654321"
+                                                        placeholder={t('candidatePages.profile.modals.edit.phonePlaceholder')}
                                                         inputMode="numeric"
                                                         pattern="[0-9]{10,11}"
                                                         maxLength={11}
@@ -1303,7 +1323,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                 </div>
 
                                                 <div className="col-md-4">
-                                                    <label className="form-label fw-semibold">Ngày sinh</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.birthday')}</label>
                                                     <CalendarDatePicker
                                                         value={formData.birthday}
                                                         onChange={(nextValue) => handleInputChange({
@@ -1312,7 +1332,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                                 value: nextValue
                                                             }
                                                         })}
-                                                        placeholder="Chọn ngày sinh"
+                                                        placeholder={t('candidatePages.profile.modals.edit.birthdayPlaceholder')}
                                                         maxDate={new Date()}
                                                         inputClassName={`form-control profile-modal-input ${formErrors.birthday ? 'is-invalid' : ''}`}
                                                         menuClassName="calendar-date-picker__menu--compact"
@@ -1320,20 +1340,20 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                     {formErrors.birthday ? <div className="invalid-feedback d-block small">{formErrors.birthday}</div> : null}
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label fw-semibold">Giới tính</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.gender')}</label>
                                                     <select
                                                         className="form-select profile-modal-input"
                                                         name="gender"
                                                         value={formData.gender}
                                                         onChange={handleInputChange}
                                                     >
-                                                        <option value="Nam">Nam</option>
-                                                        <option value="Nữ">Nữ</option>
-                                                        <option value="Khác">Khác</option>
+                                                        <option value="Nam">{t('candidatePages.profile.modals.edit.genderOptions.male')}</option>
+                                                        <option value="Nữ">{t('candidatePages.profile.modals.edit.genderOptions.female')}</option>
+                                                        <option value="Khác">{t('candidatePages.profile.modals.edit.genderOptions.other')}</option>
                                                     </select>
                                                 </div>
                                                 <div className="col-md-4">
-                                                    <label className="form-label fw-semibold">Số năm kinh nghiệm</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.experienceYears')}</label>
                                                     <input
                                                         type="text"
                                                         inputMode="numeric"
@@ -1349,12 +1369,12 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                 </div>
 
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Thành phố</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.city')}</label>
                                                     <div className="position-relative" ref={provinceDropdownRef}>
                                                         <input
                                                             type="text"
                                                             className="form-control profile-modal-input"
-                                                            placeholder="Tìm tỉnh/thành phố..."
+                                                            placeholder={t('candidatePages.profile.modals.edit.cityPlaceholder')}
                                                             value={provinceQuery}
                                                             onChange={(e) => {
                                                                 const value = e.target.value;
@@ -1372,7 +1392,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                         {showProvinceSuggestions && (
                                                             <div className="list-group position-absolute w-100 shadow-sm profile-city-suggestions" style={{ maxHeight: 200, overflowY: 'auto', zIndex: 1100 }}>
                                                                 {provinceSuggestions.length === 0 && (
-                                                                    <div className="list-group-item small text-muted">Không tìm thấy tỉnh/thành phố phù hợp</div>
+                                                                    <div className="list-group-item small text-muted">{t('candidatePages.profile.modals.edit.noCityResults')}</div>
                                                                 )}
                                                                 {provinceSuggestions.map((province) => (
                                                                     <button
@@ -1393,53 +1413,53 @@ const Profile = ({ initialTab = 'overview' }) => {
                                                     </div>
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Quận/Huyện</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.district')}</label>
                                                     <input
                                                         type="text"
                                                         className="form-control profile-modal-input"
                                                         name="district"
                                                         value={formData.district}
                                                         onChange={handleInputChange}
-                                                        placeholder="Nhập quận/huyện"
+                                                        placeholder={t('candidatePages.profile.modals.edit.districtPlaceholder')}
                                                     />
                                                 </div>
 
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Địa chỉ</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.address')}</label>
                                                     <input
                                                         type="text"
                                                         className="form-control profile-modal-input"
                                                         name="address"
                                                         value={formData.address}
                                                         onChange={handleInputChange}
-                                                        placeholder="Nhập địa chỉ"
+                                                        placeholder={t('candidatePages.profile.modals.edit.addressPlaceholder')}
                                                     />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Chức danh</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.position')}</label>
                                                     <input
                                                         type="text"
                                                         className="form-control profile-modal-input"
                                                         name="position"
                                                         value={formData.position}
                                                         onChange={handleInputChange}
-                                                        placeholder="Ví dụ: Frontend Developer"
+                                                        placeholder={t('candidatePages.profile.modals.edit.positionPlaceholder')}
                                                     />
                                                 </div>
 
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Trình độ học vấn</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.education')}</label>
                                                     <input
                                                         type="text"
                                                         className="form-control profile-modal-input"
                                                         name="education"
                                                         value={formData.education}
                                                         onChange={handleInputChange}
-                                                        placeholder="Ví dụ: Đại học"
+                                                        placeholder={t('candidatePages.profile.modals.edit.educationPlaceholder')}
                                                     />
                                                 </div>
                                                 <div className="col-md-6">
-                                                    <label className="form-label fw-semibold">Liên kết cá nhân</label>
+                                                    <label className="form-label fw-semibold">{t('candidatePages.profile.modals.edit.personalLink')}</label>
                                                     <input
                                                         type="url"
                                                         className={`form-control profile-modal-input ${formErrors.personalLink ? 'is-invalid' : ''}`}
@@ -1462,14 +1482,14 @@ const Profile = ({ initialTab = 'overview' }) => {
                                         className="btn profile-outline-btn px-4"
                                         onClick={() => setShowEditModal(false)}
                                     >
-                                        Huỷ
+                                        {t('common.cancel')}
                                     </button>
                                     <button
                                         type="button"
                                         className="btn profile-primary-btn px-4"
                                         onClick={handleSaveProfile}
                                     >
-                                        Lưu
+                                        {t('candidatePages.profile.common.save')}
                                     </button>
                                 </div>
                             </div>
@@ -1490,7 +1510,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                         <div className="modal-dialog modal-dialog-centered modal-lg">
                             <div className="modal-content">
                                 <div className="modal-header border-0">
-                                    <h5 className="modal-title fw-bold">Giới thiệu bản thân</h5>
+                                    <h5 className="modal-title fw-bold">{t('candidatePages.profile.modals.intro.title')}</h5>
                                     <button
                                         type="button"
                                         className="btn-close"
@@ -1502,7 +1522,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                     <div className="alert alert-warning d-flex align-items-start gap-2 mb-4" style={{ backgroundColor: '#fff8e1', border: 'none' }}>
                                         <i className="bi bi-lightbulb-fill text-warning fs-5"></i>
                                         <div>
-                                            <strong>Tip:</strong> Tóm tắt kinh nghiệm chuyên môn, chú ý làm nổi bật các kỹ năng và điểm mạnh.
+                                            <strong>{t('candidatePages.profile.modals.intro.tipLabel')}:</strong> {t('candidatePages.profile.modals.intro.tipText')}
                                         </div>
                                     </div>
 
@@ -1571,7 +1591,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                         />
                                     </div>
                                     <div className="text-muted small">
-                                        {introPlainText.length}/2500 ký tự
+                                        {t('candidatePages.profile.modals.intro.characterCount', { count: introPlainText.length })}
                                     </div>
                                 </div>
                                 <div className="modal-footer border-0">
@@ -1580,7 +1600,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                         className="btn btn-outline-secondary px-4"
                                         onClick={() => setShowIntroModal(false)}
                                     >
-                                        Huỷ
+                                        {t('common.cancel')}
                                     </button>
                                     <button
                                         type="button"
@@ -1590,7 +1610,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                             setShowIntroModal(false);
                                         }}
                                     >
-                                        Lưu
+                                        {t('candidatePages.profile.common.save')}
                                     </button>
                                 </div>
                             </div>
@@ -1607,7 +1627,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                         <div className="modal-dialog modal-dialog-centered modal-xl">
                             <div className="modal-content">
                                 <div className="modal-header border-0">
-                                    <h5 className="modal-title fw-bold fs-4">Học vấn</h5>
+                                    <h5 className="modal-title fw-bold fs-4">{t('candidatePages.profile.modals.education.title')}</h5>
                                     <button type="button" className="btn-close" onClick={() => setShowEducationModal(false)}></button>
                                 </div>
                                 <div className="modal-body">
@@ -1775,7 +1795,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                     </div>
                                 </div>
                                 <div className="modal-footer border-0">
-                                    <button type="button" className="btn btn-outline-secondary" onClick={() => setShowEducationModal(false)}>Huỷ</button>
+                                    <button type="button" className="btn btn-outline-secondary" onClick={() => setShowEducationModal(false)}>{t('common.cancel')}</button>
                                     <button
                                         type="button"
                                         className="btn btn-danger"
@@ -1802,7 +1822,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                                             setShowEducationModal(false);
                                         }}
                                     >
-                                        Lưu
+                                        {t('candidatePages.profile.common.save')}
                                     </button>
                                 </div>
                             </div>
@@ -1819,7 +1839,7 @@ const Profile = ({ initialTab = 'overview' }) => {
                         <div className="modal-dialog modal-dialog-centered modal-xl">
                             <div className="modal-content" style={{ maxHeight: '90vh', display: 'flex', flexDirection: 'column' }}>
                                 <div className="modal-header border-0 bg-white">
-                                    <h5 className="modal-title fw-bold fs-4">Kinh nghiệm làm việc</h5>
+                                    <h5 className="modal-title fw-bold fs-4">{t('candidatePages.profile.modals.work.title')}</h5>
                                     <button type="button" className="btn-close" onClick={() => setShowWorkModal(false)}></button>
                                 </div>
                                 <div className="modal-body" style={{ overflowY: 'auto', flex: 1 }}>

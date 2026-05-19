@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { API_BASE as CLIENT_API_BASE } from '../../../config/apiBase';
@@ -37,14 +37,6 @@ const CVSearch = () => {
 
     const [provinces, setProvinces] = useState([]);
     const [loadingProvinces, setLoadingProvinces] = useState(false);
-
-    const [isCityOpen, setIsCityOpen] = useState(false);
-    const [isExperienceOpen, setIsExperienceOpen] = useState(false);
-    const [cityQuery, setCityQuery] = useState('');
-
-    const cityRef = useRef(null);
-    const citySearchInputRef = useRef(null);
-    const experienceRef = useRef(null);
 
     useEffect(() => {
         let cancelled = false;
@@ -134,40 +126,6 @@ const CVSearch = () => {
         };
     }, [API_BASE]);
 
-    useEffect(() => {
-        const handlePointerDown = (event) => {
-            if (cityRef.current && !cityRef.current.contains(event.target)) {
-                setIsCityOpen(false);
-            }
-
-            if (experienceRef.current && !experienceRef.current.contains(event.target)) {
-                setIsExperienceOpen(false);
-            }
-        };
-
-        const handleKeyDown = (event) => {
-            if (event.key === 'Escape') {
-                setIsCityOpen(false);
-                setIsExperienceOpen(false);
-            }
-        };
-
-        document.addEventListener('mousedown', handlePointerDown);
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('mousedown', handlePointerDown);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, []);
-
-    useEffect(() => {
-        if (!isCityOpen) return;
-        requestAnimationFrame(() => {
-            citySearchInputRef.current?.focus();
-        });
-    }, [isCityOpen]);
-
     const cityEntries = useMemo(() => {
         const fromResults = searchResults
             .map((cv) => String(cv?.city || '').trim())
@@ -180,16 +138,6 @@ const CVSearch = () => {
         ];
     }, [provinces, searchResults, t, i18n.language]);
 
-    const visibleCityEntries = useMemo(() => {
-        const query = String(cityQuery || '').trim().toLowerCase();
-        if (!query) return cityEntries;
-
-        return cityEntries.filter((entry) => entry.value === '' || String(entry.label).toLowerCase().includes(query));
-    }, [cityEntries, cityQuery]);
-
-    const selectedCityLabel = searchParams.city || t('employer.cvSearchPage.filters.location.all');
-    const selectedExperienceLabel = EXPERIENCE_ENTRIES.find((entry) => entry.value === searchParams.experience)?.label || t('employer.cvSearchPage.filters.experience.all');
-
     const updateSearchParam = (name, value) => {
         setSearchParams((prev) => ({
             ...prev,
@@ -197,24 +145,11 @@ const CVSearch = () => {
         }));
     };
 
-    const selectCity = (value) => {
-        updateSearchParam('city', value);
-        setIsCityOpen(false);
-        setCityQuery('');
-    };
-
-    const selectExperience = (value) => {
-        updateSearchParam('experience', value);
-        setIsExperienceOpen(false);
-    };
-
     const handleSearch = async (e) => {
         e.preventDefault();
         setLoading(true);
         setError('');
         setSearched(true);
-        setIsCityOpen(false);
-        setIsExperienceOpen(false);
 
         try {
             const params = new URLSearchParams();
@@ -347,98 +282,42 @@ const CVSearch = () => {
                                 />
                             </div>
                             <div className="col-md-3">
-                                <div className="jf-jobs-search-field" ref={cityRef}>
+                                <div className="jf-jobs-search-field">
                                     <label>{t('employer.cvSearchPage.form.locationLabel')}</label>
-                                    <div className={`jf-jobs-select ${isCityOpen ? 'is-open' : ''}`}>
-                                        <button
-                                            type="button"
-                                            className="jf-jobs-select-trigger"
-                                            onClick={() => {
-                                                setIsCityOpen((prev) => !prev);
-                                                setIsExperienceOpen(false);
-                                                setCityQuery('');
-                                            }}
-                                            aria-haspopup="listbox"
-                                            aria-expanded={isCityOpen}
+                                    <div className="jf-jobs-select">
+                                        <select
+                                            className="jf-jobs-select-trigger jf-jobs-native-select"
+                                            name="city"
+                                            value={searchParams.city}
+                                            onChange={(event) => updateSearchParam('city', event.target.value)}
+                                            aria-label={t('employer.cvSearchPage.aria.locationListbox')}
                                         >
-                                            <span className="jf-jobs-select-text">{selectedCityLabel}</span>
-                                            <i className="bi bi-chevron-down"></i>
-                                        </button>
-
-                                        {isCityOpen ? (
-                                            <div className="jf-jobs-select-menu jf-jobs-select-menu--location" role="listbox" aria-label={t('employer.cvSearchPage.aria.locationListbox')}>
-                                                <div className="jf-jobs-select-search-wrap">
-                                                    <i className="bi bi-search"></i>
-                                                    <input
-                                                        ref={citySearchInputRef}
-                                                        type="text"
-                                                        placeholder={t('employer.cvSearchPage.filters.location.searchPlaceholder')}
-                                                        value={cityQuery}
-                                                        onChange={(event) => setCityQuery(event.target.value)}
-                                                    />
-                                                </div>
-
-                                                <div className="jf-jobs-select-scroll">
-                                                    {visibleCityEntries.length === 0 ? (
-                                                        <div className="jf-jobs-select-empty">{t('employer.cvSearchPage.filters.location.noResults')}</div>
-                                                    ) : (
-                                                        visibleCityEntries.map((entry) => (
-                                                            <button
-                                                                key={`${entry.value || 'all'}-${entry.label}`}
-                                                                type="button"
-                                                                className={`jf-jobs-select-option ${searchParams.city === entry.value ? 'is-active' : ''}`}
-                                                                onMouseDown={(event) => {
-                                                                    event.preventDefault();
-                                                                    selectCity(entry.value);
-                                                                }}
-                                                                onClick={() => selectCity(entry.value)}
-                                                            >
-                                                                {entry.label}
-                                                            </button>
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ) : null}
+                                            {cityEntries.map((entry) => (
+                                                <option key={`${entry.value || 'all'}-${entry.label}`} value={entry.value}>
+                                                    {entry.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>
                             <div className="col-md-3">
-                                <div className="jf-jobs-search-field" ref={experienceRef}>
+                                <div className="jf-jobs-search-field">
                                     <label>{t('employer.cvSearchPage.form.experienceLabel')}</label>
-                                    <div className={`jf-jobs-select ${isExperienceOpen ? 'is-open' : ''}`}>
-                                        <button
-                                            type="button"
-                                            className="jf-jobs-select-trigger"
-                                            onClick={() => {
-                                                setIsExperienceOpen((prev) => !prev);
-                                                setIsCityOpen(false);
-                                            }}
-                                            aria-haspopup="listbox"
-                                            aria-expanded={isExperienceOpen}
+                                    <div className="jf-jobs-select">
+                                        <select
+                                            className="jf-jobs-select-trigger jf-jobs-native-select"
+                                            name="experience"
+                                            value={searchParams.experience}
+                                            onChange={(event) => updateSearchParam('experience', event.target.value)}
+                                            aria-label={t('employer.cvSearchPage.aria.experienceListbox')}
                                         >
-                                            <span className="jf-jobs-select-text">{selectedExperienceLabel}</span>
-                                            <i className="bi bi-chevron-down"></i>
-                                        </button>
-
-                                        {isExperienceOpen ? (
-                                            <div className="jf-jobs-select-menu" role="listbox" aria-label={t('employer.cvSearchPage.aria.experienceListbox')}>
-                                                {EXPERIENCE_ENTRIES.map((entry) => (
-                                                    <button
-                                                        key={entry.value || 'all'}
-                                                        type="button"
-                                                        className={`jf-jobs-select-option ${searchParams.experience === entry.value ? 'is-active' : ''}`}
-                                                        onMouseDown={(event) => {
-                                                            event.preventDefault();
-                                                            selectExperience(entry.value);
-                                                        }}
-                                                        onClick={() => selectExperience(entry.value)}
-                                                    >
-                                                        {entry.label}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        ) : null}
+                                            {EXPERIENCE_ENTRIES.map((entry) => (
+                                                <option key={entry.value || 'all'} value={entry.value}>
+                                                    {entry.label}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
                                 </div>
                             </div>

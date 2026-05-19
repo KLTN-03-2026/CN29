@@ -2700,6 +2700,106 @@
         "emptyTitle": "No new notifications",
         "emptyDescription": "Important updates will appear here."
       },
+      "common": {
+        "save": "Save"
+      },
+      "validation": {
+        "fullNameRequired": "Please enter your full name.",
+        "fullNameMin": "Full name must contain at least 2 characters.",
+        "phoneInvalid": "Phone number must start with 0 and contain 10-11 digits.",
+        "experienceInteger": "Years of experience must be a whole number.",
+        "linkInvalid": "Invalid link.",
+        "birthdayInvalid": "Invalid birthday.",
+        "birthdayFuture": "Birthday cannot be in the future."
+      },
+      "messages": {
+        "loginRequiredView": "Please sign in to view your profile",
+        "invalidCvType": "Only PDF, DOC, or DOCX files are accepted.",
+        "cvTooLarge": "File size must not exceed 5MB.",
+        "loginRequiredUploadCv": "Please sign in again to upload a CV.",
+        "cvUploadFailed": "Unable to upload CV.",
+        "cvUploadSuccess": "CV uploaded successfully.",
+        "loginRequiredDeleteCv": "Please sign in again to delete a CV.",
+        "cvDeleteFailed": "Unable to delete CV.",
+        "cvDeleteRetry": "Unable to delete CV. Please try again.",
+        "loginRequiredChangePassword": "Please sign in again to change your password.",
+        "passwordChangeFailed": "Password change failed.",
+        "passwordChangeSuccess": "Password changed successfully.",
+        "genericRetry": "Something went wrong. Please try again.",
+        "invalidImageType": "Only image files are accepted.",
+        "imageTooLarge": "Image size must not exceed 2MB.",
+        "checkHighlightedFields": "Please check the highlighted fields.",
+        "missingUserId": "Unable to identify userId. Please sign out and sign in again.",
+        "invalidUserId": "Invalid userId. Please sign out and sign in again.",
+        "avatarUploadFailed": "Avatar upload failed: {{error}}",
+        "updateFailed": "Profile update failed: {{error}}",
+        "unknownError": "Unknown",
+        "updateSuccess": "Profile updated successfully!"
+      },
+      "modals": {
+        "password": {
+          "kicker": "Account security",
+          "title": "Change password",
+          "description": "Your new password must have at least 8 characters and be different from the current password.",
+          "currentLabel": "Current password",
+          "currentPlaceholder": "Enter current password",
+          "newLabel": "New password",
+          "newPlaceholder": "At least 8 characters",
+          "tooShort": "New password must contain at least 8 characters.",
+          "confirmLabel": "Confirm new password",
+          "confirmPlaceholder": "Re-enter new password",
+          "mismatch": "Password confirmation does not match.",
+          "processing": "Processing...",
+          "submit": "Change password"
+        },
+        "edit": {
+          "kicker": "Candidate profile",
+          "title": "Update detailed profile",
+          "changePhoto": "Change photo",
+          "avatarHint": "Square image, recommended size 400x400px. The image will be stored on Cloudinary.",
+          "accountEmail": "Account email",
+          "lastUpdated": "Last updated",
+          "notUpdated": "Not updated",
+          "basicInfo": "Basic information",
+          "fullName": "Full name",
+          "fullNamePlaceholder": "Enter full name",
+          "phone": "Phone number",
+          "phonePlaceholder": "E.g. 0987654321",
+          "birthday": "Birthday",
+          "birthdayPlaceholder": "Select birthday",
+          "gender": "Gender",
+          "genderOptions": {
+            "male": "Male",
+            "female": "Female",
+            "other": "Other"
+          },
+          "experienceYears": "Years of experience",
+          "city": "City",
+          "cityPlaceholder": "Search province/city...",
+          "noCityResults": "No matching province/city found",
+          "district": "District",
+          "districtPlaceholder": "Enter district",
+          "address": "Address",
+          "addressPlaceholder": "Enter address",
+          "position": "Position",
+          "positionPlaceholder": "E.g. Frontend Developer",
+          "education": "Education level",
+          "educationPlaceholder": "E.g. Bachelor's degree",
+          "personalLink": "Personal link"
+        },
+        "intro": {
+          "title": "About me",
+          "tipLabel": "Tip",
+          "tipText": "Summarize your professional experience and highlight your skills and strengths.",
+          "characterCount": "{{count}}/2500 characters"
+        },
+        "education": {
+          "title": "Education"
+        },
+        "work": {
+          "title": "Work experience"
+        }
+      },
       "settings": {
         "heroTitle": "Account settings",
         "heroDescription": "Manage security, profile details, and JobFinder app setup on your devices.",

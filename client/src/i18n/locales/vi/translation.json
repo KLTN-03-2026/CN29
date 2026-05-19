@@ -2700,6 +2700,106 @@
         "emptyTitle": "Chưa có thông báo mới",
         "emptyDescription": "Khi có cập nhật quan trọng từ hệ thống, bạn sẽ thấy tại đây."
       },
+      "common": {
+        "save": "Lưu"
+      },
+      "validation": {
+        "fullNameRequired": "Vui lòng nhập họ tên.",
+        "fullNameMin": "Họ tên phải có ít nhất 2 ký tự.",
+        "phoneInvalid": "Số điện thoại phải bắt đầu bằng 0 và có 10-11 chữ số.",
+        "experienceInteger": "Số năm kinh nghiệm phải là số nguyên.",
+        "linkInvalid": "Liên kết không hợp lệ.",
+        "birthdayInvalid": "Ngày sinh không hợp lệ.",
+        "birthdayFuture": "Ngày sinh không thể ở tương lai."
+      },
+      "messages": {
+        "loginRequiredView": "Vui lòng đăng nhập để xem hồ sơ",
+        "invalidCvType": "Chỉ chấp nhận file PDF, DOC hoặc DOCX.",
+        "cvTooLarge": "Kích thước file không được vượt quá 5MB.",
+        "loginRequiredUploadCv": "Vui lòng đăng nhập lại để tải CV.",
+        "cvUploadFailed": "Không thể tải CV lên.",
+        "cvUploadSuccess": "Tải CV lên thành công.",
+        "loginRequiredDeleteCv": "Vui lòng đăng nhập lại để xóa CV.",
+        "cvDeleteFailed": "Không thể xóa CV.",
+        "cvDeleteRetry": "Không thể xóa CV. Vui lòng thử lại.",
+        "loginRequiredChangePassword": "Vui lòng đăng nhập lại để đổi mật khẩu.",
+        "passwordChangeFailed": "Đổi mật khẩu thất bại.",
+        "passwordChangeSuccess": "Đổi mật khẩu thành công.",
+        "genericRetry": "Có lỗi xảy ra. Vui lòng thử lại.",
+        "invalidImageType": "Chỉ chấp nhận file ảnh.",
+        "imageTooLarge": "Ảnh không được vượt quá 2MB.",
+        "checkHighlightedFields": "Vui lòng kiểm tra lại các trường được đánh dấu đỏ.",
+        "missingUserId": "Không xác định được userId. Vui lòng đăng xuất và đăng nhập lại.",
+        "invalidUserId": "userId không hợp lệ. Vui lòng đăng xuất và đăng nhập lại.",
+        "avatarUploadFailed": "Lỗi upload ảnh: {{error}}",
+        "updateFailed": "Lỗi cập nhật thông tin: {{error}}",
+        "unknownError": "Không rõ",
+        "updateSuccess": "Cập nhật thông tin thành công!"
+      },
+      "modals": {
+        "password": {
+          "kicker": "Bảo mật tài khoản",
+          "title": "Đổi mật khẩu",
+          "description": "Mật khẩu mới cần tối thiểu 8 ký tự và khác mật khẩu hiện tại.",
+          "currentLabel": "Mật khẩu hiện tại",
+          "currentPlaceholder": "Nhập mật khẩu hiện tại",
+          "newLabel": "Mật khẩu mới",
+          "newPlaceholder": "Tối thiểu 8 ký tự",
+          "tooShort": "Mật khẩu mới phải có ít nhất 8 ký tự.",
+          "confirmLabel": "Xác nhận mật khẩu mới",
+          "confirmPlaceholder": "Nhập lại mật khẩu mới",
+          "mismatch": "Mật khẩu xác nhận không khớp.",
+          "processing": "Đang xử lý...",
+          "submit": "Đổi mật khẩu"
+        },
+        "edit": {
+          "kicker": "Hồ sơ ứng viên",
+          "title": "Cập nhật hồ sơ chi tiết",
+          "changePhoto": "Đổi ảnh",
+          "avatarHint": "Ảnh vuông, kích thước đề xuất 400x400px. Ảnh sẽ được lưu trên Cloudinary.",
+          "accountEmail": "Email tài khoản",
+          "lastUpdated": "Cập nhật gần nhất",
+          "notUpdated": "Chưa cập nhật",
+          "basicInfo": "Thông tin cơ bản",
+          "fullName": "Họ và tên",
+          "fullNamePlaceholder": "Nhập họ và tên",
+          "phone": "Số điện thoại",
+          "phonePlaceholder": "VD: 0987654321",
+          "birthday": "Ngày sinh",
+          "birthdayPlaceholder": "Chọn ngày sinh",
+          "gender": "Giới tính",
+          "genderOptions": {
+            "male": "Nam",
+            "female": "Nữ",
+            "other": "Khác"
+          },
+          "experienceYears": "Số năm kinh nghiệm",
+          "city": "Thành phố",
+          "cityPlaceholder": "Tìm tỉnh/thành phố...",
+          "noCityResults": "Không tìm thấy tỉnh/thành phố phù hợp",
+          "district": "Quận/Huyện",
+          "districtPlaceholder": "Nhập quận/huyện",
+          "address": "Địa chỉ",
+          "addressPlaceholder": "Nhập địa chỉ",
+          "position": "Chức danh",
+          "positionPlaceholder": "Ví dụ: Frontend Developer",
+          "education": "Trình độ học vấn",
+          "educationPlaceholder": "Ví dụ: Đại học",
+          "personalLink": "Liên kết cá nhân"
+        },
+        "intro": {
+          "title": "Giới thiệu bản thân",
+          "tipLabel": "Gợi ý",
+          "tipText": "Tóm tắt kinh nghiệm chuyên môn, chú ý làm nổi bật các kỹ năng và điểm mạnh.",
+          "characterCount": "{{count}}/2500 ký tự"
+        },
+        "education": {
+          "title": "Học vấn"
+        },
+        "work": {
+          "title": "Kinh nghiệm làm việc"
+        }
+      },
       "settings": {
         "heroTitle": "Cài đặt tài khoản",
         "heroDescription": "Quản lý bảo mật, hồ sơ cá nhân và cài đặt ứng dụng JobFinder trên thiết bị của bạn.",

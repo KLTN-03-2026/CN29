@@ -2359,6 +2359,12 @@ body.cv-editor-focus-mode .online-cv-editor-page {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.jf-jobs-native-select {
+  display: block;
+  cursor: pointer;
+  appearance: auto;
+}
+
 .jf-jobs-select-trigger:hover,
 .jf-jobs-select.is-open .jf-jobs-select-trigger {
   border-color: #8ebbe2;
@@ -3393,4 +3399,3 @@ html[data-bs-theme='dark'] .jobfinder-theme-toggle {
   border-color: #334155;
   box-shadow: 0 12px 30px rgba(2, 6, 23, 0.55);
 }
-

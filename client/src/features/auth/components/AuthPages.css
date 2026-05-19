@@ -192,6 +192,17 @@
   position: relative;
 }
 
+.auth-birthday-native-select {
+  width: 100%;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.auth-birthday-native-select.is-placeholder {
+  color: #7995b1;
+  font-weight: 500;
+}
+
 .auth-birthday-select-trigger {
   display: flex;
   align-items: center;
