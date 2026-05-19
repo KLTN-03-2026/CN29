@@ -19,6 +19,10 @@ const JobManagement = () => {
     const flash = location.state?.flash;
 
     const totalJobs = jobs.length;
+    const expiredJobs = useMemo(
+        () => jobs.filter((job) => job?.isExpired || Number(job?.IsExpired) === 1),
+        [jobs]
+    );
     const totalPages = Math.max(1, Math.ceil(totalJobs / PAGE_SIZE));
     const safeCurrentPage = Math.min(Math.max(1, Number(currentPage) || 1), totalPages);
 
@@ -135,6 +139,13 @@ const JobManagement = () => {
                 </div>
             )}
 
+            {!loading && expiredJobs.length > 0 && (
+                <div className="alert alert-warning d-flex align-items-start gap-2" role="alert">
+                    <i className="bi bi-exclamation-triangle-fill mt-1"></i>
+                    <div>{t('employer.jobManagementPage.expiredNotice', { count: expiredJobs.length })}</div>
+                </div>
+            )}
+
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
                     {loading ? (
@@ -162,9 +173,14 @@ const JobManagement = () => {
                                             <td className="fw-semibold">{j.TieuDe}</td>
                                             <td>{[j.DiaDiem, j.ThanhPho].filter(Boolean).join(', ') || '-'}</td>
                                             <td>
-                                                <span className={`badge ${j.TrangThai === 'Đã đăng' ? 'bg-success' : 'bg-secondary'}`}>
+                                                <span className={`badge ${j.TrangThai === 'Đã đăng' ? 'bg-success' : 'bg-secondary'} me-2`}>
                                                     {j.TrangThai}
                                                 </span>
+                                                {(j?.isExpired || Number(j?.IsExpired) === 1) && (
+                                                    <span className="badge bg-warning text-dark">
+                                                        {t('employer.jobManagementPage.expiredBadge')}
+                                                    </span>
+                                                )}
                                             </td>
                                             <td>{formatPostedDate(j.NgayDang)}</td>
                                             <td className="text-end">

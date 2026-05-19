@@ -10,6 +10,7 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const { registerRoutes } = require('./routes/registerRoutes');
+const { sanitizeHtmlForReadOnly, toSafeCvFilename } = require('./utils/cvReadOnlyHtml');
 
 var app = express();
 app.set('trust proxy', 1);
@@ -76,6 +77,21 @@ app.use(logger('dev'));
 app.use(express.json({ limit: '5mb' }));
 app.use(express.urlencoded({ extended: false, limit: '5mb' }));
 app.use(cookieParser());
+
+const cvHtmlStaticPrefix = BASE === '/' ? '/cvs' : `${BASE}/cvs`;
+app.get(`${cvHtmlStaticPrefix}/:filename`, (req, res, next) => {
+  const filename = toSafeCvFilename(req.params.filename);
+  if (!filename || !filename.toLowerCase().endsWith('.html')) return next();
+
+  const htmlPath = path.join(__dirname, 'public', 'cvs', filename);
+  if (!htmlPath.startsWith(path.join(__dirname, 'public', 'cvs'))) return next(createError(404));
+
+  require('fs').readFile(htmlPath, 'utf8', (err, html) => {
+    if (err) return next();
+    res.type('html').send(sanitizeHtmlForReadOnly(html));
+  });
+});
+
 // Serve static under base path too
 app.use(BASE, express.static(path.join(__dirname, 'public')));
 

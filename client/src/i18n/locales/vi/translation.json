@@ -1372,7 +1372,7 @@
       "title": "Tìm kiếm CV ứng viên",
       "form": {
         "keywordLabel": "Từ khóa",
-        "keywordPlaceholder": "Vị trí, kỹ năng, kinh nghiệm...",
+        "keywordPlaceholder": "Họ tên, vị trí, kỹ năng, học vấn, kinh nghiệm...",
         "locationLabel": "Địa điểm",
         "experienceLabel": "Kinh nghiệm",
         "searchButton": "Tìm kiếm"
@@ -1454,6 +1454,8 @@
       "loading": "Đang tải...",
       "emptyTitle": "Bạn chưa có tin tuyển dụng nào.",
       "emptyHint": "Hãy đăng tin đầu tiên để bắt đầu tìm kiếm ứng viên.",
+      "expiredNotice": "Có {{count}} tin tuyển dụng đã quá hạn nộp hồ sơ và đã được ẩn khỏi trang việc làm công khai.",
+      "expiredBadge": "Đã quá hạn",
       "table": {
         "title": "Tiêu đề",
         "location": "Địa điểm",

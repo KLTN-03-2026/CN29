@@ -1372,7 +1372,7 @@
       "title": "Search candidate CVs",
       "form": {
         "keywordLabel": "Keyword",
-        "keywordPlaceholder": "Position, skills, experience...",
+        "keywordPlaceholder": "Name, position, skills, education, experience...",
         "locationLabel": "Location",
         "experienceLabel": "Experience",
         "searchButton": "Search"
@@ -1454,6 +1454,8 @@
       "loading": "Loading...",
       "emptyTitle": "You don't have any job posts yet.",
       "emptyHint": "Create your first job post to start connecting with candidates.",
+      "expiredNotice": "{{count}} job post(s) have passed the application deadline and are hidden from the public jobs page.",
+      "expiredBadge": "Expired",
       "table": {
         "title": "Title",
         "location": "Location",

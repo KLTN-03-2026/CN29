@@ -4,6 +4,7 @@ const fs = require('fs');
 const multer = require('multer');
 const db = require('../config/db');
 const { authenticateToken, authorizeRole } = require('../middleware/auth');
+const { sanitizeHtmlForReadOnly } = require('../utils/cvReadOnlyHtml');
 
 const router = express.Router();
 
@@ -98,6 +99,97 @@ const safeJsonParse = (value) => {
     } catch {
         return null;
     }
+};
+
+const normalizeForCvSearch = (value = '') => String(value || '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/đ/g, 'd')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+
+const stripHtmlToSearchText = (html = '') => String(html || '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, ' ')
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&lt;/gi, '<')
+    .replace(/&gt;/gi, '>')
+    .replace(/&quot;/gi, '"')
+    .replace(/&#039;/gi, "'")
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const collectPlainValues = (value, output = []) => {
+    if (value == null) return output;
+    if (Array.isArray(value)) {
+        value.forEach((item) => collectPlainValues(item, output));
+        return output;
+    }
+    if (typeof value === 'object') {
+        Object.values(value).forEach((item) => collectPlainValues(item, output));
+        return output;
+    }
+    output.push(String(value));
+    return output;
+};
+
+const readCvSearchText = (filename) => {
+    const safeName = toSafeCvFilename(filename);
+    if (!safeName || !safeName.toLowerCase().endsWith('.html')) return '';
+
+    const parts = [];
+    const htmlPath = path.join(cvStoragePath, safeName);
+    if (fs.existsSync(htmlPath)) {
+        try {
+            parts.push(stripHtmlToSearchText(fs.readFileSync(htmlPath, 'utf8')));
+        } catch {
+            // Ignore unreadable CV file and continue with DB fields.
+        }
+    }
+
+    const metaPath = path.join(cvStoragePath, buildOnlineMetaFilename(safeName));
+    if (fs.existsSync(metaPath)) {
+        try {
+            const meta = safeJsonParse(fs.readFileSync(metaPath, 'utf8')) || {};
+            parts.push(collectPlainValues(meta).join(' '));
+        } catch {
+            // Ignore unreadable metadata file.
+        }
+    }
+
+    return parts.join(' ');
+};
+
+const buildCvSearchHaystack = (row) => normalizeForCvSearch([
+    row?.TieuDe,
+    row?.TomTat,
+    row?.LinhVuc,
+    row?.HoTen,
+    row?.Email,
+    row?.SoDienThoai,
+    row?.DiaChiNguoiDung,
+    row?.ThanhPho,
+    row?.QuanHuyen,
+    row?.DiaChiHoSo,
+    row?.GioiThieuBanThan,
+    row?.TrinhDoHocVan,
+    row?.ChucDanh,
+    row?.SoNamKinhNghiem,
+    readCvSearchText(row?.TepCV)
+].filter(Boolean).join(' '));
+
+const cvMatchesKeyword = (row, keyword) => {
+    const normalizedKeyword = normalizeForCvSearch(keyword);
+    if (!normalizedKeyword) return true;
+
+    const tokens = normalizedKeyword.split(/\s+/).filter(Boolean);
+    if (tokens.length === 0) return true;
+
+    const haystack = buildCvSearchHaystack(row);
+    return tokens.every((token) => haystack.includes(token));
 };
 
 const ONLINE_META_SUFFIX = '__online.json';
@@ -672,6 +764,37 @@ router.delete('/:cvId', (req, res) => {
     });
 });
 
+router.get('/preview/:cvId', async (req, res) => {
+    const cvId = parseInt(req.params.cvId, 10);
+    if (Number.isNaN(cvId)) {
+        return res.status(400).json({ success: false, error: 'cvId không hợp lệ' });
+    }
+
+    try {
+        const row = await sqlGet('SELECT TepCV FROM HoSoCV WHERE MaCV = ?', [cvId]);
+        if (!row) return res.status(404).json({ success: false, error: 'CV không tồn tại' });
+
+        const filename = toSafeCvFilename(row.TepCV);
+        if (!filename) return res.status(404).json({ success: false, error: 'CV không có file đính kèm' });
+
+        const relative = buildCvRelativePath(filename);
+        if (!filename.toLowerCase().endsWith('.html')) {
+            return res.redirect(relative);
+        }
+
+        const htmlPath = path.join(cvStoragePath, filename);
+        if (!fs.existsSync(htmlPath)) {
+            return res.status(404).json({ success: false, error: 'File CV không tồn tại' });
+        }
+
+        const html = fs.readFileSync(htmlPath, 'utf8');
+        return res.type('html').send(sanitizeHtmlForReadOnly(html));
+    } catch (err) {
+        console.error('Lỗi preview CV:', err);
+        return res.status(500).json({ success: false, error: 'Không thể mở CV' });
+    }
+});
+
 // Search CVs (for employers)
 router.get('/search', async (req, res) => {
     const { keyword = '', city = '', experience = '' } = req.query;
@@ -682,12 +805,17 @@ router.get('/search', async (req, res) => {
             cv.TieuDe,
             cv.TomTat,
             cv.TepCV,
+            cv.LinhVuc,
             cv.NgayCapNhat,
             nd.MaNguoiDung AS MaUngVien,
             nd.HoTen,
             nd.Email,
             nd.SoDienThoai,
+            nd.DiaChi AS DiaChiNguoiDung,
             hsv.ThanhPho,
+            hsv.QuanHuyen,
+            hsv.DiaChi AS DiaChiHoSo,
+            hsv.GioiThieuBanThan,
             hsv.TrinhDoHocVan,
             hsv.ChucDanh,
             COALESCE(hsv.SoNamKinhNghiem, 0) AS SoNamKinhNghiem
@@ -698,17 +826,6 @@ router.get('/search', async (req, res) => {
     `;
     
     const params = [];
-
-    if (keyword) {
-        sql += ` AND (
-            cv.TieuDe LIKE ?
-            OR cv.TomTat LIKE ?
-            OR hsv.ChucDanh LIKE ?
-            OR nd.HoTen LIKE ?
-        )`;
-        const kw = `%${keyword}%`;
-        params.push(kw, kw, kw, kw);
-    }
 
     if (city) {
         sql += ` AND TRIM(hsv.ThanhPho) = TRIM(?)`;
@@ -727,11 +844,15 @@ router.get('/search', async (req, res) => {
         }
     }
 
-    sql += ` ORDER BY cv.NgayCapNhat DESC LIMIT 50`;
+    sql += ` ORDER BY cv.NgayCapNhat DESC LIMIT ${keyword ? 250 : 50}`;
 
     try {
         const rows = await sqlAll(sql, params);
-        const results = rows.map((row) => {
+        const filteredRows = keyword
+            ? rows.filter((row) => cvMatchesKeyword(row, keyword)).slice(0, 50)
+            : rows;
+
+        const results = filteredRows.map((row) => {
             const fileMeta = resolveCvPublicUrls(req, row.TepCV);
 
             return {
@@ -745,7 +866,7 @@ router.get('/search', async (req, res) => {
                 city: row.ThanhPho || '',
                 experience: row.SoNamKinhNghiem != null ? String(row.SoNamKinhNghiem) : '0',
                 level: row.TrinhDoHocVan || '',
-                industry: row.ChucDanh || '',
+                industry: row.ChucDanh || row.LinhVuc || '',
                 updatedAt: row.NgayCapNhat || '',
                 ...fileMeta
             };

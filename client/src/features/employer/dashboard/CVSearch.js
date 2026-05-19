@@ -197,6 +197,17 @@ const CVSearch = () => {
         }));
     };
 
+    const selectCity = (value) => {
+        updateSearchParam('city', value);
+        setIsCityOpen(false);
+        setCityQuery('');
+    };
+
+    const selectExperience = (value) => {
+        updateSearchParam('experience', value);
+        setIsExperienceOpen(false);
+    };
+
     const handleSearch = async (e) => {
         e.preventDefault();
         setLoading(true);
@@ -266,14 +277,15 @@ const CVSearch = () => {
     };
 
     const openCvPreview = async (cv) => {
-        const fileUrl = String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim();
-        if (!fileUrl) {
+        const cvId = Number.parseInt(String(cv?.cvId || ''), 10);
+        const previewUrl = Number.isFinite(cvId) ? `${API_BASE}/api/cvs/preview/${cvId}` : '';
+        if (!previewUrl) {
             alert(t('employer.cvSearchPage.errors.noFileAttachment'));
             return;
         }
 
         try {
-            const response = await fetch(fileUrl, { method: 'HEAD' });
+            const response = await fetch(previewUrl, { method: 'HEAD' });
             if (!response.ok && response.status !== 405) {
                 alert(t('employer.cvSearchPage.errors.fileMissing'));
                 return;
@@ -282,7 +294,7 @@ const CVSearch = () => {
             // If preflight check fails unexpectedly, still try opening in a new tab.
         }
 
-        window.open(fileUrl, '_blank', 'noopener,noreferrer');
+        window.open(previewUrl, '_blank', 'noopener,noreferrer');
     };
 
     const hasCvAttachment = (cv) => Boolean(String(cv?.cvFileAbsoluteUrl || cv?.cvFileUrl || '').trim());
@@ -375,10 +387,11 @@ const CVSearch = () => {
                                                                 key={`${entry.value || 'all'}-${entry.label}`}
                                                                 type="button"
                                                                 className={`jf-jobs-select-option ${searchParams.city === entry.value ? 'is-active' : ''}`}
-                                                                onClick={() => {
-                                                                    updateSearchParam('city', entry.value);
-                                                                    setIsCityOpen(false);
+                                                                onMouseDown={(event) => {
+                                                                    event.preventDefault();
+                                                                    selectCity(entry.value);
                                                                 }}
+                                                                onClick={() => selectCity(entry.value)}
                                                             >
                                                                 {entry.label}
                                                             </button>
@@ -415,10 +428,11 @@ const CVSearch = () => {
                                                         key={entry.value || 'all'}
                                                         type="button"
                                                         className={`jf-jobs-select-option ${searchParams.experience === entry.value ? 'is-active' : ''}`}
-                                                        onClick={() => {
-                                                            updateSearchParam('experience', entry.value);
-                                                            setIsExperienceOpen(false);
+                                                        onMouseDown={(event) => {
+                                                            event.preventDefault();
+                                                            selectExperience(entry.value);
                                                         }}
+                                                        onClick={() => selectExperience(entry.value)}
                                                     >
                                                         {entry.label}
                                                     </button>

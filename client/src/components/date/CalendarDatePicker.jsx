@@ -91,6 +91,12 @@ const moveMonth = (date, amount) => new Date(date.getFullYear(), date.getMonth()
 
 const moveYear = (date, amount) => new Date(date.getFullYear() + amount, date.getMonth(), 1);
 
+const buildYearOptions = (viewDate) => {
+  const currentYear = viewDate.getFullYear();
+  const startYear = currentYear - (currentYear % 12);
+  return Array.from({ length: 12 }, (_, index) => startYear + index);
+};
+
 const getViewAnchorDate = (selectedDate) => {
   const source = selectedDate || new Date();
   return new Date(source.getFullYear(), source.getMonth(), 1);
@@ -117,6 +123,7 @@ const CalendarDatePicker = ({
   const maxDateBound = useMemo(() => normalizeBoundDate(maxDate), [maxDate]);
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => getViewAnchorDate(selectedDate));
+  const [viewMode, setViewMode] = useState('days');
   const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en') ? 'en-US' : 'vi-VN';
   const effectivePlaceholder = placeholder || t('components.calendarDatePicker.placeholder');
   const weekdayLabels = useMemo(() => ([
@@ -134,6 +141,7 @@ const CalendarDatePicker = ({
   useEffect(() => {
     if (isOpen) return;
     setViewDate(getViewAnchorDate(selectedDate));
+    setViewMode('days');
   }, [selectedDate, isOpen]);
 
   useEffect(() => {
@@ -142,12 +150,14 @@ const CalendarDatePicker = ({
     const onDocumentClick = (event) => {
       if (rootRef.current && !rootRef.current.contains(event.target)) {
         setIsOpen(false);
+        setViewMode('days');
       }
     };
 
     const onDocumentKeyDown = (event) => {
       if (event.key === 'Escape') {
         setIsOpen(false);
+        setViewMode('days');
       }
     };
 
@@ -163,8 +173,27 @@ const CalendarDatePicker = ({
   }, [isOpen]);
 
   const cells = useMemo(() => buildCalendarCells(viewDate), [viewDate]);
+  const yearOptions = useMemo(() => buildYearOptions(viewDate), [viewDate]);
 
   const triggerLabel = selectedDate ? formatDisplayDate(selectedDate) : effectivePlaceholder;
+
+  const changeMonth = (amount) => {
+    setViewDate((prev) => moveMonth(prev, amount));
+    setViewMode('days');
+  };
+
+  const changeYear = (amount) => {
+    setViewDate((prev) => moveYear(prev, amount));
+  };
+
+  const changeYearPage = (amount) => {
+    setViewDate((prev) => moveYear(prev, amount * 12));
+  };
+
+  const selectYear = (year) => {
+    setViewDate((prev) => new Date(year, prev.getMonth(), 1));
+    setViewMode('days');
+  };
 
   const selectDate = (date) => {
     if (!isInRange(date, minDateBound, maxDateBound)) return;
@@ -211,7 +240,7 @@ const CalendarDatePicker = ({
               <button
                 type="button"
                 className="calendar-date-picker__nav-btn"
-                onClick={() => setViewDate((prev) => moveYear(prev, -1))}
+                onClick={() => (viewMode === 'years' ? changeYearPage(-1) : changeYear(-1))}
                 aria-label={t('components.calendarDatePicker.prevYearAria')}
               >
                 <i className="bi bi-chevron-double-left"></i>
@@ -219,20 +248,29 @@ const CalendarDatePicker = ({
               <button
                 type="button"
                 className="calendar-date-picker__nav-btn"
-                onClick={() => setViewDate((prev) => moveMonth(prev, -1))}
+                onClick={() => changeMonth(-1)}
                 aria-label={t('components.calendarDatePicker.prevMonthAria')}
               >
                 <i className="bi bi-chevron-left"></i>
               </button>
             </div>
 
-            <div className="calendar-date-picker__title">{formatMonthTitle(viewDate, locale)}</div>
+            <button
+              type="button"
+              className="calendar-date-picker__title"
+              onClick={() => setViewMode((prev) => (prev === 'years' ? 'days' : 'years'))}
+              aria-label={formatMonthTitle(viewDate, locale)}
+            >
+              {viewMode === 'years'
+                ? `${yearOptions[0]} - ${yearOptions[yearOptions.length - 1]}`
+                : formatMonthTitle(viewDate, locale)}
+            </button>
 
             <div className="calendar-date-picker__nav-group">
               <button
                 type="button"
                 className="calendar-date-picker__nav-btn"
-                onClick={() => setViewDate((prev) => moveMonth(prev, 1))}
+                onClick={() => changeMonth(1)}
                 aria-label={t('components.calendarDatePicker.nextMonthAria')}
               >
                 <i className="bi bi-chevron-right"></i>
@@ -240,7 +278,7 @@ const CalendarDatePicker = ({
               <button
                 type="button"
                 className="calendar-date-picker__nav-btn"
-                onClick={() => setViewDate((prev) => moveYear(prev, 1))}
+                onClick={() => (viewMode === 'years' ? changeYearPage(1) : changeYear(1))}
                 aria-label={t('components.calendarDatePicker.nextYearAria')}
               >
                 <i className="bi bi-chevron-double-right"></i>
@@ -248,36 +286,62 @@ const CalendarDatePicker = ({
             </div>
           </div>
 
-          <div className="calendar-date-picker__weekdays" aria-hidden="true">
-            {weekdayLabels.map((label) => (
-              <div key={label} className="calendar-date-picker__weekday">{label}</div>
-            ))}
-          </div>
+          {viewMode === 'years' ? (
+            <div className="calendar-date-picker__year-grid">
+              {yearOptions.map((year) => {
+                const selected = selectedDate?.getFullYear() === year;
+                const current = viewDate.getFullYear() === year;
 
-          <div className="calendar-date-picker__grid">
-            {cells.map(({ date, inCurrentMonth }) => {
-              const disabledDate = !isInRange(date, minDateBound, maxDateBound);
-              const selected = selectedDate ? isSameDay(date, selectedDate) : false;
-              const todayCell = isSameDay(date, today);
+                return (
+                  <button
+                    key={year}
+                    type="button"
+                    className={[
+                      'calendar-date-picker__year-cell',
+                      selected ? 'is-selected' : '',
+                      current ? 'is-current' : ''
+                    ].filter(Boolean).join(' ')}
+                    onClick={() => selectYear(year)}
+                  >
+                    {year}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <>
+              <div className="calendar-date-picker__weekdays" aria-hidden="true">
+                {weekdayLabels.map((label) => (
+                  <div key={label} className="calendar-date-picker__weekday">{label}</div>
+                ))}
+              </div>
 
-              return (
-                <button
-                  key={toIsoDate(date)}
-                  type="button"
-                  className={[
-                    'calendar-date-picker__cell',
-                    inCurrentMonth ? '' : 'is-outside',
-                    selected ? 'is-selected' : '',
-                    todayCell ? 'is-today' : ''
-                  ].filter(Boolean).join(' ')}
-                  onClick={() => selectDate(date)}
-                  disabled={disabledDate}
-                >
-                  {date.getDate()}
-                </button>
-              );
-            })}
-          </div>
+              <div className="calendar-date-picker__grid">
+                {cells.map(({ date, inCurrentMonth }) => {
+                  const disabledDate = !isInRange(date, minDateBound, maxDateBound);
+                  const selected = selectedDate ? isSameDay(date, selectedDate) : false;
+                  const todayCell = isSameDay(date, today);
+
+                  return (
+                    <button
+                      key={toIsoDate(date)}
+                      type="button"
+                      className={[
+                        'calendar-date-picker__cell',
+                        inCurrentMonth ? '' : 'is-outside',
+                        selected ? 'is-selected' : '',
+                        todayCell ? 'is-today' : ''
+                      ].filter(Boolean).join(' ')}
+                      onClick={() => selectDate(date)}
+                      disabled={disabledDate}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            </>
+          )}
 
           {showTodayAction ? (
             <div className="calendar-date-picker__footer">

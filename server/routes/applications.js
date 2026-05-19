@@ -20,6 +20,31 @@ const dbRun = (sql, params = []) => new Promise((resolve, reject) => {
     });
 });
 
+const parseDeadlineDate = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+
+    const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (isoMatch) {
+        const [, year, month, day] = isoMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999);
+    }
+
+    const vnMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (vnMatch) {
+        const [, day, month, year] = vnMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999);
+    }
+
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isJobDeadlineExpired = (value) => {
+    const deadline = parseDeadlineDate(value);
+    return Boolean(deadline && deadline.getTime() < Date.now());
+};
+
 const BASE_PATH = (() => {
     const basePath = process.env.BASE_PATH || '/';
     let normalized = basePath;
@@ -116,7 +141,7 @@ router.post('/', authenticateToken, authorizeRole(['Ứng viên']), async (req, 
 
     try {
         const tin = await dbGet(
-            `SELECT MaTin, TrangThai FROM TinTuyenDung WHERE MaTin = ?`,
+            `SELECT MaTin, MaNhaTuyenDung, TrangThai, HanNopHoSo FROM TinTuyenDung WHERE MaTin = ?`,
             [jobId]
         );
         if (!tin) {
@@ -124,6 +149,9 @@ router.post('/', authenticateToken, authorizeRole(['Ứng viên']), async (req, 
         }
         if (tin.TrangThai !== 'Đã đăng') {
             return res.status(400).json({ error: 'Tin tuyển dụng chưa mở ứng tuyển' });
+        }
+        if (isJobDeadlineExpired(tin.HanNopHoSo)) {
+            return res.status(400).json({ error: 'Tin tuyển dụng đã hết hạn nộp hồ sơ' });
         }
 
         const existing = await dbGet(

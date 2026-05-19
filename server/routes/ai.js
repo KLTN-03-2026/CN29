@@ -22,6 +22,8 @@ const AI_PROVIDER = (process.env.AI_PROVIDER || (GEMINI_API_KEY ? 'gemini' : 'op
 const MAX_MESSAGE_CHARS = 6000;
 const MAX_MESSAGES = 20;
 const MAX_STORED_CV_CHARS = 14000;
+const MIN_EXTRACTED_CV_TEXT_CHARS = 40;
+const MAX_GEMINI_OCR_FILE_BYTES = 15 * 1024 * 1024;
 const CV_STORAGE_PATH = path.join(__dirname, '../public/cvs');
 const ONLINE_META_SUFFIX = '__online.json';
 const MAX_CAREER_GUIDE_LINKS = 5;
@@ -298,8 +300,7 @@ const extractTextFromStoredCv = async ({ filePath, filename }) => {
   const buffer = fs.readFileSync(filePath);
 
   if (ext === '.pdf') {
-    const parsed = await pdfParse(buffer);
-    return parsed.text || '';
+    return extractTextFromPdfBuffer(buffer);
   }
 
   if (ext === '.docx') {
@@ -340,6 +341,112 @@ const extractTextFromStoredCv = async ({ filePath, filename }) => {
   return String(buffer.toString('utf8') || '');
 };
 
+const extractTextWithGeminiOcr = async ({ buffer, mimeType = 'application/pdf' }) => {
+  if (!GEMINI_API_KEY) {
+    return {
+      ok: false,
+      error: 'PDF có thể là file scan/ảnh. Cần cấu hình GEMINI_API_KEY để OCR nội dung PDF.'
+    };
+  }
+
+  if (!Buffer.isBuffer(buffer) || buffer.length === 0) {
+    return { ok: false, error: 'File PDF rỗng hoặc không hợp lệ.' };
+  }
+
+  if (buffer.length > MAX_GEMINI_OCR_FILE_BYTES) {
+    return {
+      ok: false,
+      error: `File PDF quá lớn để OCR tự động. Vui lòng dùng file nhỏ hơn ${Math.round(MAX_GEMINI_OCR_FILE_BYTES / 1024 / 1024)}MB.`
+    };
+  }
+
+  const body = {
+    contents: [
+      {
+        role: 'user',
+        parts: [
+          {
+            text:
+              'Hãy trích xuất toàn bộ văn bản có thể đọc được từ CV trong file PDF này. ' +
+              'Giữ nguyên thông tin quan trọng như họ tên, email, số điện thoại, học vấn, kỹ năng, kinh nghiệm. ' +
+              'Chỉ trả về văn bản thuần, không nhận xét và không bọc markdown.'
+          },
+          {
+            inlineData: {
+              mimeType,
+              data: buffer.toString('base64')
+            }
+          }
+        ]
+      }
+    ],
+    generationConfig: {
+      temperature: 0.1
+    }
+  };
+
+  const payload = JSON.stringify(body);
+  const requestPath = `/v1beta/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(GEMINI_API_KEY)}`;
+
+  return new Promise((resolve) => {
+    const req = https.request(
+      {
+        method: 'POST',
+        hostname: 'generativelanguage.googleapis.com',
+        path: requestPath,
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload)
+        }
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => (data += chunk));
+        res.on('end', () => {
+          if (res.statusCode < 200 || res.statusCode >= 300) {
+            return resolve({ ok: false, error: `Gemini OCR error ${res.statusCode}: ${data}` });
+          }
+
+          const parsed = safeJsonParse(data);
+          if (!parsed.ok) return resolve({ ok: false, error: 'Không parse được response OCR từ Gemini.' });
+
+          const parts = parsed.value?.candidates?.[0]?.content?.parts || [];
+          const text = Array.isArray(parts)
+            ? parts.map((p) => p && (p.text || '')).filter(Boolean).join('')
+            : '';
+
+          resolve({ ok: true, text: String(text || '').trim() });
+        });
+      }
+    );
+
+    req.on('error', (err) => resolve({ ok: false, error: err.message }));
+    req.write(payload);
+    req.end();
+  });
+};
+
+const extractTextFromPdfBuffer = async (buffer) => {
+  let parsedText = '';
+
+  try {
+    const parsed = await pdfParse(buffer);
+    parsedText = String(parsed?.text || '').replace(/\s+/g, ' ').trim();
+  } catch (error) {
+    console.warn('pdf-parse failed, trying Gemini OCR:', error?.message || error);
+  }
+
+  if (parsedText.length >= MIN_EXTRACTED_CV_TEXT_CHARS) {
+    return parsedText;
+  }
+
+  const ocr = await extractTextWithGeminiOcr({ buffer, mimeType: 'application/pdf' });
+  if (ocr.ok && ocr.text) return ocr.text;
+
+  console.warn('Gemini OCR fallback failed:', ocr.error);
+  return parsedText;
+};
+
 const extractKeywordsFromText = (text = '', limit = 22) => {
   const freq = new Map();
   const tokens = normalizeForMatch(text)
@@ -358,6 +465,14 @@ const extractKeywordsFromText = (text = '', limit = 22) => {
     })
     .slice(0, Math.max(1, limit))
     .map(([token]) => token);
+};
+
+const getTodayDateKey = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 const loadPublishedJobs = async (limit = 120) => {
@@ -379,9 +494,10 @@ const loadPublishedJobs = async (limit = 120) => {
      FROM TinTuyenDung ttd
      JOIN NhaTuyenDung ntd ON ntd.MaNhaTuyenDung = ttd.MaNhaTuyenDung
      WHERE ttd.TrangThai = 'Đã đăng'
+       AND (ttd.HanNopHoSo IS NULL OR trim(ttd.HanNopHoSo) = '' OR date(ttd.HanNopHoSo) >= ?)
      ORDER BY ttd.NgayDang DESC
      LIMIT ?`,
-    [boundedLimit]
+    [getTodayDateKey(), boundedLimit]
   );
 };
 
@@ -487,8 +603,7 @@ const extractTextFromCv = async (file) => {
   const mime = file.mimetype;
 
   if (mime === 'application/pdf') {
-    const parsed = await pdfParse(file.buffer);
-    return parsed.text || '';
+    return extractTextFromPdfBuffer(file.buffer);
   }
 
   if (mime === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
@@ -884,8 +999,8 @@ router.post('/chat/cv-file', handleCvUpload, async (req, res) => {
       return res.status(400).json({
         success: false,
         error:
-          'Không đọc được nội dung CV (có thể là PDF scan/ảnh hoặc file bị khóa). ' +
-          'Vui lòng thử lại với file PDF xuất từ Word/Google Docs hoặc file DOCX.'
+          'Không đọc được nội dung CV. Nếu đây là PDF scan/ảnh, server cần GEMINI_API_KEY để OCR tự động. ' +
+          'Bạn cũng có thể thử lại với file PDF xuất từ Word/Google Docs hoặc file DOCX.'
       });
     }
 
@@ -974,7 +1089,8 @@ router.post('/chat/cv-stored', authenticateToken, async (req, res) => {
       return res.status(400).json({
         success: false,
         error:
-          'Không đọc được nội dung CV đã chọn. Với file PDF scan hoặc DOC cũ, vui lòng chuyển sang PDF văn bản hoặc DOCX.'
+          'Không đọc được nội dung CV đã chọn. Nếu đây là PDF scan/ảnh, server cần GEMINI_API_KEY để OCR tự động. ' +
+          'Bạn cũng có thể chuyển sang PDF văn bản hoặc DOCX.'
       });
     }
 

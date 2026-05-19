@@ -28,6 +28,8 @@ const levelOptions = [
     'Giám đốc'
 ];
 const jobFieldOptions = ['CNTT', 'Marketing', 'Bán hàng', 'Hành chính', 'Kỹ thuật', 'Tài chính', 'Sản xuất', 'Dịch vụ', 'Khác'];
+const activeDeadlineSql = "(ttd.HanNopHoSo IS NULL OR trim(ttd.HanNopHoSo) = '' OR date(ttd.HanNopHoSo) >= ?)";
+const expiredDeadlineSql = "(HanNopHoSo IS NOT NULL AND trim(HanNopHoSo) <> '' AND date(HanNopHoSo) < ?)";
 
 const isAbsoluteUrl = (value = '') => /^https?:\/\//i.test(value) || value.startsWith('//');
 const buildAbsoluteUrl = (req, relativePath) => {
@@ -45,6 +47,53 @@ const normalizeLogoField = (req, row) => {
         return { ...row, Logo: buildAbsoluteUrl(req, logo) };
     }
     return row;
+};
+
+const parseDeadlineDate = (value) => {
+    const raw = String(value || '').trim();
+    if (!raw) return null;
+
+    const isoMatch = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+    if (isoMatch) {
+        const [, year, month, day] = isoMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999);
+    }
+
+    const vnMatch = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+    if (vnMatch) {
+        const [, day, month, year] = vnMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day), 23, 59, 59, 999);
+    }
+
+    const parsed = new Date(raw);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isJobDeadlineExpired = (value) => {
+    const deadline = parseDeadlineDate(value);
+    return Boolean(deadline && deadline.getTime() < Date.now());
+};
+
+const getTodayDateKey = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+const attachDeadlineStatus = (row) => {
+    if (!row) return row;
+    const isExpired = row.IsExpired !== undefined
+        ? Number(row.IsExpired) === 1
+        : isJobDeadlineExpired(row.HanNopHoSo);
+
+    return {
+        ...row,
+        IsExpired: isExpired ? 1 : 0,
+        isExpired,
+        deadlineStatus: isExpired ? 'expired' : 'active'
+    };
 };
 
 const dbGet = (sql, params = []) => new Promise((resolve, reject) => {
@@ -480,10 +529,12 @@ router.get('/', async (req, res) => {
              JOIN NhaTuyenDung ntd ON ntd.MaNhaTuyenDung = ttd.MaNhaTuyenDung
              LEFT JOIN CongTy ct ON ct.NguoiDaiDien = ntd.MaNguoiDung
              WHERE ttd.TrangThai = 'Đã đăng'
-             ORDER BY datetime(ttd.NgayDang) DESC`
+               AND ${activeDeadlineSql}
+             ORDER BY datetime(ttd.NgayDang) DESC`,
+            [getTodayDateKey()]
         );
 
-        res.json(rows.map((r) => normalizeLogoField(req, r)));
+        res.json(rows.map((r) => normalizeLogoField(req, attachDeadlineStatus(r))));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -496,14 +547,15 @@ router.get('/mine', authenticateToken, authorizeRole(['Nhà tuyển dụng']), a
         const rows = await dbAll(
             `SELECT 
                      MaTin, TieuDe, MoTa, YeuCau, QuyenLoi, KinhNghiem, CapBac, LinhVucCongViec, LuongTu, LuongDen, KieuLuong,
-                     DiaDiem, ThanhPho, HinhThuc, TrangThai, NgayDang, HanNopHoSo, LuotXem, SoLuongUngTuyen
+                     DiaDiem, ThanhPho, HinhThuc, TrangThai, NgayDang, HanNopHoSo, LuotXem, SoLuongUngTuyen,
+                     CASE WHEN ${expiredDeadlineSql} THEN 1 ELSE 0 END AS IsExpired
              FROM TinTuyenDung
              WHERE MaNhaTuyenDung = ?
              ORDER BY datetime(NgayDang) DESC`,
-            [employerId]
+            [getTodayDateKey(), employerId]
         );
 
-        res.json(rows.map((r) => normalizeLogoField(req, r)));
+        res.json(rows.map((r) => normalizeLogoField(req, attachDeadlineStatus(r))));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -634,8 +686,10 @@ router.get('/matching', authenticateToken, authorizeRole(['Ứng viên']), async
              JOIN NhaTuyenDung ntd ON ntd.MaNhaTuyenDung = ttd.MaNhaTuyenDung
              LEFT JOIN CongTy ct ON ct.NguoiDaiDien = ntd.MaNguoiDung
              WHERE ttd.TrangThai = 'Đã đăng'
+               AND ${activeDeadlineSql}
              ORDER BY datetime(ttd.NgayDang) DESC
-             LIMIT 250`
+             LIMIT 250`,
+            [getTodayDateKey()]
         );
 
         const rowsWithSkills = rows;
@@ -680,14 +734,14 @@ router.get('/matching', authenticateToken, authorizeRole(['Ứng viên']), async
             .sort((a, b) => b.score - a.score)
             .filter((x) => x.score > 0 || (!cityNorm))
             .slice(0, 30)
-            .map((x) => normalizeLogoField(req, x.r));
+            .map((x) => normalizeLogoField(req, attachDeadlineStatus(x.r)));
 
         // If we couldn't score anything, fallback to city-only filter (previous behavior)
         if (best.length === 0) {
             const fallback = rowsWithSkills
                 .filter((r) => !cityNorm || normalize(r.ThanhPho) === cityNorm)
                 .slice(0, 30)
-                .map((r) => normalizeLogoField(req, r));
+                .map((r) => normalizeLogoField(req, attachDeadlineStatus(r)));
             return res.json(fallback);
         }
 
@@ -732,8 +786,10 @@ router.get('/:id', async (req, res) => {
 
         if (!row) return res.status(404).json({ error: 'Không tìm thấy tin tuyển dụng' });
 
-        // Public can only view posted jobs. Allow owner employer to view non-posted when authenticated.
-        if (row.TrangThai !== 'Đã đăng') {
+        const isExpired = isJobDeadlineExpired(row.HanNopHoSo);
+
+        // Public can only view posted and active jobs. Allow owner employer to view unavailable jobs when authenticated.
+        if (row.TrangThai !== 'Đã đăng' || isExpired) {
             const authHeader = req.headers['authorization'];
             const token = authHeader && authHeader.split(' ')[1];
             if (!token) return res.status(404).json({ error: 'Không tìm thấy tin tuyển dụng' });
@@ -756,7 +812,7 @@ router.get('/:id', async (req, res) => {
         }
 
         // Increase view count for posted jobs when viewed by non-owner
-        if (row.TrangThai === 'Đã đăng') {
+        if (row.TrangThai === 'Đã đăng' && !isExpired) {
             let isOwnerEmployer = false;
             const authHeader = req.headers['authorization'];
             const token = authHeader && authHeader.split(' ')[1];
@@ -781,7 +837,7 @@ router.get('/:id', async (req, res) => {
             }
         }
 
-        res.json(normalizeLogoField(req, row));
+        res.json(normalizeLogoField(req, attachDeadlineStatus({ ...row, IsExpired: isExpired ? 1 : 0 })));
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
