@@ -65,7 +65,14 @@ const RoleSelectionPage = () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify({ role: selectedRole })
+        body: JSON.stringify({
+          role: selectedRole,
+          fullName: prefill.fullName || currentUser?.name || '',
+          phone: prefill.phone || currentUser?.phone || currentUser?.SoDienThoai || '',
+          address: prefill.address || currentUser?.address || currentUser?.DiaChi || '',
+          birthday: prefill.birthday || currentUser?.birthday || currentUser?.NgaySinh || '',
+          gender: prefill.gender || currentUser?.gender || currentUser?.GioiTinh || ''
+        })
       });
 
       const data = await response.json();

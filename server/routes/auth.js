@@ -27,6 +27,7 @@ const ROLE_SUPER_ADMIN = 'Siêu quản trị viên';
 const ROLE_PENDING = 'Chưa chọn vai trò';
 const PENDING_REGISTRATION_TABLE = 'dangky';
 const LEGACY_PENDING_REGISTRATION_TABLE = 'DangKyTam';
+const isMysql = /^mysql:\/\//i.test(process.env.DATABASE_URL || '');
 
 const isTemplateGoogleClientId = (value) => /^(your_|react_app_|vite_|next_public_)/i.test(value);
 
@@ -50,7 +51,23 @@ const GOOGLE_AUDIENCES = Array.from(
 );
 const googleOAuthClient = new OAuth2Client();
 
-const PENDING_REGISTRATION_TABLE_SQL = `
+const PENDING_REGISTRATION_TABLE_SQL = isMysql ? `
+CREATE TABLE IF NOT EXISTS ${PENDING_REGISTRATION_TABLE} (
+    MaDangKy INT AUTO_INCREMENT PRIMARY KEY,
+    Email VARCHAR(191) NOT NULL UNIQUE,
+    MatKhau VARCHAR(255) NOT NULL,
+    VaiTro VARCHAR(50) NOT NULL DEFAULT 'Chưa chọn vai trò',
+    HoTen VARCHAR(255) NULL,
+    SoDienThoai VARCHAR(50) NULL,
+    DiaChi TEXT NULL,
+    NgaySinh DATE NULL,
+    GioiTinh VARCHAR(20) NULL,
+    TenCongTy VARCHAR(255) NULL,
+    MaSoThue VARCHAR(100) NULL,
+    MaXacThuc VARCHAR(20) NOT NULL,
+    ThoiGianMaXacThuc DATETIME NOT NULL,
+    NgayTao DATETIME DEFAULT CURRENT_TIMESTAMP
+)` : `
 CREATE TABLE IF NOT EXISTS ${PENDING_REGISTRATION_TABLE} (
     MaDangKy INTEGER PRIMARY KEY AUTOINCREMENT,
     Email VARCHAR(191) NOT NULL UNIQUE,
@@ -222,14 +239,7 @@ const passwordStrengthError = (password) => {
     return null;
 };
 
-const parseBooleanEnv = (value) => {
-    const normalized = String(value || '').trim().toLowerCase();
-    if (!normalized) return false;
-    return ['1', 'true', 'yes', 'on'].includes(normalized);
-};
-
-const shouldExposeOtpInResponse = process.env.NODE_ENV !== 'production'
-    || parseBooleanEnv(process.env.EXPOSE_OTP_IN_RESPONSE);
+const shouldExposeOtpInResponse = false;
 
 const isMissingTableError = (err) => {
     const message = String(err?.message || '').toLowerCase();
@@ -901,7 +911,13 @@ router.post('/select-role', authenticateToken, async (req, res) => {
             return res.status(404).json({ error: 'Không tìm thấy người dùng.' });
         }
 
-        await updateBasicUserInfo({ userId, role: selectedRole });
+        await updateBasicUserInfo({
+            userId,
+            role: selectedRole,
+            fullName: req.body?.fullName ?? req.body?.HoTen,
+            phone: req.body?.phone ?? req.body?.SoDienThoai,
+            address: req.body?.address ?? req.body?.DiaChi
+        });
 
         if (selectedRole === ROLE_EMPLOYER) {
             await ensureEmployerAndCompanyProfile({

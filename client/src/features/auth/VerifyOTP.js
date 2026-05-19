@@ -10,11 +10,9 @@ const VerifyOTP = () => {
     const email = location.state?.email || '';
     const otpDeliveryFailed = Boolean(location.state?.otpDeliveryFailed);
     const verificationMessage = String(location.state?.verificationMessage || '');
-    const initialOtp = String(location.state?.otp || '').replace(/\D/g, '').slice(0, 6);
     const apiBase = CLIENT_API_BASE;
     
-    const [otp, setOtp] = useState(initialOtp);
-    const [fallbackOtp, setFallbackOtp] = useState(initialOtp);
+    const [otp, setOtp] = useState('');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
@@ -113,12 +111,6 @@ const VerifyOTP = () => {
                 throw new Error(data.error || t('authPages.verifyOtp.errors.resendFailed'));
             }
 
-            const nextOtp = String(data.otp || '').replace(/\D/g, '').slice(0, 6);
-            if (nextOtp) {
-                setFallbackOtp(nextOtp);
-                setOtp(nextOtp);
-            }
-
             setSuccess(data.message);
         } catch (err) {
             setError(err.message);
@@ -148,13 +140,6 @@ const VerifyOTP = () => {
                                 <div className="alert alert-warning" role="alert">
                                     <i className="bi bi-exclamation-triangle-fill me-2"></i>
                                     {verificationMessage || t('authPages.verifyOtp.delivery.fallbackWarning')}
-                                </div>
-                            )}
-
-                            {fallbackOtp && (
-                                <div className="alert alert-info" role="alert">
-                                    <i className="bi bi-key-fill me-2"></i>
-                                    {t('authPages.verifyOtp.tempOtpLabel')} <strong>{fallbackOtp}</strong>
                                 </div>
                             )}
 

@@ -3,7 +3,6 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import AuthLayout from './components/AuthLayout';
 import { API_BASE as CLIENT_API_BASE } from '../../config/apiBase';
-import CalendarDatePicker from '../../components/date/CalendarDatePicker';
 
 const CANDIDATE_ROLE = 'Ứng viên';
 const EMPLOYER_ROLE = 'Nhà tuyển dụng';
@@ -15,7 +14,7 @@ const normalizeTaxCodeInput = (value) => String(value || '').replace(/\D/g, '').
 const PHONE_REGEX = /^[0-9]{9,12}$/;
 
 const normalizeIsoDate = (value) => {
-  const text = String(value || '').trim();
+  const text = String(value || '').trim().slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return '';
 
   const [yearRaw, monthRaw, dayRaw] = text.split('-');
@@ -68,6 +67,7 @@ const CompleteProfilePage = () => {
 
   const token = String(localStorage.getItem('token') || '').trim();
   const currentUser = readJsonStorage('user', {});
+  const currentUserId = resolveUserId(currentUser);
   const prefill = useMemo(
     () => location.state?.prefill || readJsonStorage('pending_onboarding_prefill', {}),
     [location.state]
@@ -98,10 +98,10 @@ const CompleteProfilePage = () => {
 
   const [candidateForm, setCandidateForm] = useState({
     fullName: prefill.fullName || currentUser?.name || '',
-    phone: prefill.phone || '',
-    address: prefill.address || '',
-    birthday: initialBirthday,
-    gender: prefill.gender || 'Nam',
+    phone: prefill.phone || currentUser?.phone || currentUser?.SoDienThoai || '',
+    address: prefill.address || currentUser?.address || currentUser?.DiaChi || '',
+    birthday: initialBirthday || normalizeIsoDate(currentUser?.birthday || currentUser?.NgaySinh),
+    gender: prefill.gender || currentUser?.gender || currentUser?.GioiTinh || 'Nam',
     city: '',
     district: '',
     introHtml: '',
@@ -139,6 +139,52 @@ const CompleteProfilePage = () => {
   }, [navigate, prefill, role, token]);
 
   useEffect(() => {
+    if (role !== CANDIDATE_ROLE) return undefined;
+
+    const userId = currentUserId;
+    if (!userId) return undefined;
+
+    let cancelled = false;
+
+    const hydrateCandidateProfile = async () => {
+      try {
+        const response = await fetch(`/users/profile/${userId}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined
+        });
+        const data = await response.json().catch(() => null);
+        if (!response.ok || cancelled) return;
+
+        const profile = data?.profile || {};
+        setCandidateForm((prev) => ({
+          ...prev,
+          fullName: prev.fullName || profile.fullName || '',
+          phone: prev.phone || normalizePhoneInput(profile.phone),
+          address: prev.address || profile.address || '',
+          birthday: prev.birthday || normalizeIsoDate(profile.birthday),
+          gender: prev.gender || profile.gender || 'Nam',
+          city: prev.city || profile.city || '',
+          district: prev.district || profile.district || '',
+          title: prev.title || profile.position || '',
+          personalLink: prev.personalLink || profile.personalLink || '',
+          education: prev.education || profile.education || '',
+          introHtml: prev.introHtml || profile.intro || '',
+          avatar: prev.avatar || profile.avatar || ''
+        }));
+        setAvatarPreview((prev) => prev || profile.avatar || '');
+      } catch {
+        // Prefill is best-effort; the form remains usable with registration state.
+      }
+    };
+
+    hydrateCandidateProfile();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentUserId, role, token]);
+
+  useEffect(() => {
+    if (!initialBirthday) return;
     setCandidateForm((prev) => ({
       ...prev,
       birthday: initialBirthday
@@ -187,7 +233,7 @@ const CompleteProfilePage = () => {
   const handleBirthdayChange = (nextBirthday) => {
     setCandidateForm((prev) => ({
       ...prev,
-      birthday: nextBirthday
+      birthday: normalizeIsoDate(nextBirthday)
     }));
   };
 
@@ -394,16 +440,16 @@ const CompleteProfilePage = () => {
             <div className="auth-grid-two">
               <div className="auth-field">
                 <label className="auth-field-label" htmlFor="candidateBirthday">{t('authPages.completeProfile.labels.birthday')}</label>
-                <div className="auth-birthday-grid">
-                  <CalendarDatePicker
-                    id="candidateBirthday"
-                    value={candidateForm.birthday}
-                    onChange={handleBirthdayChange}
-                    placeholder={t('authPages.completeProfile.placeholders.birthday')}
-                    maxDate={maxBirthdayDate}
-                    inputClassName="auth-input"
-                  />
-                </div>
+                <input
+                  id="candidateBirthday"
+                  name="birthday"
+                  type="date"
+                  className="auth-input"
+                  value={candidateForm.birthday}
+                  max={maxBirthdayDate}
+                  onChange={(event) => handleBirthdayChange(event.target.value)}
+                  required
+                />
               </div>
               <div className="auth-field">
                 <label className="auth-field-label" htmlFor="candidateGender">{t('authPages.completeProfile.labels.gender')}</label>
