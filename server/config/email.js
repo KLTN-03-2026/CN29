@@ -1,9 +1,5 @@
 const nodemailer = require('nodemailer');
 
-// Hỗ trợ 2 cách cấu hình Gmail:
-// 1) OAuth2 (không cần bật 2FA/App Password) với CLIENT_ID/SECRET + REFRESH_TOKEN
-// 2) App Password (yêu cầu bật 2FA) với EMAIL_USER/EMAIL_PASSWORD
-
 const toPositiveMs = (value, fallback) => {
     const parsed = Number(value);
     if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
