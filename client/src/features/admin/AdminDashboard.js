@@ -249,6 +249,7 @@ const AdminDashboard = () => {
     const normalizedLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
     const isEnglish = normalizedLanguage.startsWith('en');
     const currentLocale = isEnglish ? 'en-US' : 'vi-VN';
+    const dashboardT = i18n.getFixedT(normalizedLanguage);
 
     const API_BASE = CLIENT_API_BASE;
     const token = String(localStorage.getItem('token') || '').trim();
@@ -886,33 +887,33 @@ const AdminDashboard = () => {
     const statsCards = [
         {
             key: 'total-templates',
-            title: t('admin.stats.totalTemplatesTitle'),
+            title: dashboardT('admin.stats.totalTemplatesTitle'),
             value: totalTemplateCount,
-            meta: t('admin.stats.totalTemplatesMeta', { percent: totalTemplateCount > 0 ? '+12%' : '0%' }),
+            meta: dashboardT('admin.stats.totalTemplatesMeta', { percent: totalTemplateCount > 0 ? '+12%' : '0%' }),
             icon: FileStack,
             iconClass: 'sky'
         },
         {
             key: 'used-templates',
-            title: t('admin.stats.usedTemplatesTitle'),
+            title: dashboardT('admin.stats.usedTemplatesTitle'),
             value: usedTemplateCount,
-            meta: t('admin.stats.usedTemplatesMeta', { count: usedTemplateCount }),
+            meta: dashboardT('admin.stats.usedTemplatesMeta', { count: usedTemplateCount }),
             icon: BarChart3,
             iconClass: 'violet'
         },
         {
             key: 'users',
-            title: t('admin.stats.usersTitle'),
+            title: dashboardT('admin.stats.usersTitle'),
             value: safeNumber(counts?.NguoiDung),
-            meta: t('admin.stats.usersMeta', { percent: safeNumber(counts?.NguoiDung) > 0 ? '+6%' : '0%' }),
+            meta: dashboardT('admin.stats.usersMeta', { percent: safeNumber(counts?.NguoiDung) > 0 ? '+6%' : '0%' }),
             icon: Users,
             iconClass: 'blue'
         },
         {
             key: 'companies',
-            title: t('admin.stats.companiesTitle'),
+            title: dashboardT('admin.stats.companiesTitle'),
             value: safeNumber(counts?.CongTy),
-            meta: t('admin.stats.companiesMeta', { percent: safeNumber(counts?.CongTy) > 0 ? '+4%' : '0%' }),
+            meta: dashboardT('admin.stats.companiesMeta', { percent: safeNumber(counts?.CongTy) > 0 ? '+4%' : '0%' }),
             icon: Building2,
             iconClass: 'indigo'
         }
@@ -1178,6 +1179,7 @@ const AdminDashboard = () => {
                             path="dashboard"
                             element={
                                 <AdminOverviewPage
+                                    key={normalizedLanguage}
                                     currentAdminName={greetingName}
                                     statsCards={statsCards}
                                     recentTemplateActivities={recentTemplateActivities}

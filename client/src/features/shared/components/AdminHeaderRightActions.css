@@ -303,12 +303,7 @@
         flex-wrap: nowrap;
         justify-content: flex-end;
         gap: 0.4rem;
-        overflow-x: auto;
-        scrollbar-width: none;
-    }
-
-    .admin-header-user::-webkit-scrollbar {
-        display: none;
+        overflow: visible;
     }
 
     .admin-header-user-info {

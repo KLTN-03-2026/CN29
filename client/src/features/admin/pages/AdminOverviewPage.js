@@ -71,6 +71,8 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
     const locale = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase().startsWith('en')
         ? 'en-US'
         : 'vi-VN';
+    const activeLanguage = String(i18n.resolvedLanguage || i18n.language || 'vi').toLowerCase();
+    const dashboardT = i18n.getFixedT(activeLanguage);
 
     const handleExportDashboardExcel = async () => {
         if (exporting) return;
@@ -226,7 +228,7 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
         <>
             <section className="admin-hero-banner">
                 <div className="admin-hero-banner-head">
-                    <p className="admin-hero-chip">{t('admin.overview.heroChip')}</p>
+                    <p className="admin-hero-chip">{dashboardT('admin.overview.heroChip')}</p>
                     <button
                         type="button"
                         className="btn btn-light btn-sm admin-hero-export-btn"
@@ -234,11 +236,11 @@ const AdminOverviewPage = ({ currentAdminName, statsCards, recentTemplateActivit
                         disabled={exporting}
                     >
                         <Download size={14} />
-                        <span>{exporting ? t('admin.overview.exporting') : t('admin.overview.export')}</span>
+                        <span>{exporting ? dashboardT('admin.overview.exporting') : dashboardT('admin.overview.export')}</span>
                     </button>
                 </div>
-                <h1>{t('admin.overview.heroTitle', { name: currentAdminName || t('admin.greetingDefault') })}</h1>
-                <p>{t('admin.overview.heroSubtitle')}</p>
+                <h1>{dashboardT('admin.overview.heroTitle', { name: currentAdminName || dashboardT('admin.greetingDefault') })}</h1>
+                <p>{dashboardT('admin.overview.heroSubtitle')}</p>
             </section>
 
             {exportError ? <div className="alert alert-danger admin-feedback mb-0">{exportError}</div> : null}
