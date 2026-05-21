@@ -298,7 +298,60 @@
 }
 
 @media (max-width: 767px) {
+    .admin-header-user {
+        width: 100%;
+        flex-wrap: nowrap;
+        justify-content: flex-end;
+        gap: 0.4rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+    }
+
+    .admin-header-user::-webkit-scrollbar {
+        display: none;
+    }
+
     .admin-header-user-info {
         display: none;
+    }
+
+    .admin-header-user-trigger {
+        flex-shrink: 0;
+    }
+}
+
+@media (max-width: 420px) {
+    .admin-header-segmented-btn {
+        min-height: 31px;
+        min-width: 32px;
+        padding: 0.38rem 0.48rem;
+        font-size: 0.76rem;
+    }
+
+    .admin-header-theme-group .admin-header-segmented-btn {
+        min-width: 32px;
+        padding: 0.38rem 0.46rem;
+    }
+
+    .admin-header-home-btn {
+        min-height: 31px;
+        padding: 0.38rem 0.48rem;
+        border-radius: 10px;
+    }
+
+    .admin-header-user-trigger {
+        padding: 0.18rem 0.3rem;
+        border-radius: 10px;
+    }
+
+    .admin-header-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 8px;
+    }
+
+    .admin-header-user-chevron {
+        width: 14px;
+        height: 14px;
     }
 }

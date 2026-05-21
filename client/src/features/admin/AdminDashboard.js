@@ -1022,6 +1022,8 @@ const AdminDashboard = () => {
         return location.pathname === path || location.pathname.startsWith(`${path}/`);
     };
 
+    const effectiveSidebarCollapsed = sidebarCollapsed && !mobileMenuOpen;
+
     if (!token) {
         localStorage.removeItem('user');
         localStorage.removeItem('token');
@@ -1037,10 +1039,10 @@ const AdminDashboard = () => {
                 onClick={() => setMobileMenuOpen(false)}
             />
 
-            <div className={`admin-sidebar ${sidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'open' : ''}`}>
+            <div className={`admin-sidebar ${effectiveSidebarCollapsed ? 'collapsed' : ''} ${mobileMenuOpen ? 'open' : ''}`}>
                 <div className="admin-sidebar-brand" title="JobFinder">
                     <img src={SIDEBAR_LOGO_URL} alt="JobFinder" className="admin-sidebar-logo" />
-                    {!sidebarCollapsed && <span>JobFinder</span>}
+                    {!effectiveSidebarCollapsed && <span>JobFinder</span>}
                 </div>
 
                 <div className="admin-menu">
@@ -1050,7 +1052,7 @@ const AdminDashboard = () => {
 
                         if (Array.isArray(item.children) && item.children.length > 0) {
                             const isGroupActive = item.children.some((child) => isPathActive(child.to, child.exact));
-                            const isOpen = !sidebarCollapsed && (openMenus[item.key] || isGroupActive);
+                            const isOpen = !effectiveSidebarCollapsed && (openMenus[item.key] || isGroupActive);
 
                             return (
                                 <div key={item.key} className={`admin-menu-group ${isGroupActive ? 'active' : ''}`}>
@@ -1058,7 +1060,7 @@ const AdminDashboard = () => {
                                         type="button"
                                         className={`admin-menu-item admin-menu-parent ${isGroupActive ? 'active' : ''}`}
                                         onClick={() => {
-                                            if (sidebarCollapsed) {
+                                            if (effectiveSidebarCollapsed) {
                                                 navigate(item.children[0].to);
                                                 handleSidebarItemClick();
                                                 return;
@@ -1071,8 +1073,8 @@ const AdminDashboard = () => {
                                         title={itemLabel}
                                     >
                                         <Icon size={18} strokeWidth={2.1} />
-                                        {!sidebarCollapsed && <span>{itemLabel}</span>}
-                                        {!sidebarCollapsed && (
+                                        {!effectiveSidebarCollapsed && <span>{itemLabel}</span>}
+                                        {!effectiveSidebarCollapsed && (
                                             <ChevronDown
                                                 size={16}
                                                 className={`admin-menu-caret ${isOpen ? 'open' : ''}`}
@@ -1080,7 +1082,7 @@ const AdminDashboard = () => {
                                         )}
                                     </button>
 
-                                    {!sidebarCollapsed && isOpen && (
+                                    {!effectiveSidebarCollapsed && isOpen && (
                                         <div className="admin-submenu">
                                             {item.children.map((child) => (
                                                 <NavLink
@@ -1108,7 +1110,7 @@ const AdminDashboard = () => {
                                 title={itemLabel}
                             >
                                 <Icon size={18} strokeWidth={2.1} />
-                                {!sidebarCollapsed && <span>{itemLabel}</span>}
+                                {!effectiveSidebarCollapsed && <span>{itemLabel}</span>}
                             </NavLink>
                         );
                     })}
